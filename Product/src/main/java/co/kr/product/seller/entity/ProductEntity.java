@@ -14,10 +14,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 보호 (JPA 필수)
-@EntityListeners(AuditingEntityListener.class)     // 생성일/수정일 자동 관리
-@DynamicInsert // insert 시 null인 필드 제외 -> DB의 Default 값 적용을 위해 사용
-@Table(name = "products") // 테이블명 (이미지의 Products_IDX 등을 보아 products로 추정)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@DynamicInsert
+@Table(name = "Products")
 public class ProductEntity {
 
     @Id
@@ -25,13 +24,13 @@ public class ProductEntity {
     @Column(name = "Products_IDX")
     private Long productsIdx;
 
-    @Column(name = "User_IDX", nullable = false)
-    private Long userIdx;
+    @Column(name = "Seller_IDX", nullable = false)
+    private Long sellerIdx;
 
-    @Column(name = "Code", nullable = false, length = 36, unique = true)
+    @Column(name = "Products_Code", nullable = false, length = 36, unique = true)
     private String code;
 
-    @Column(name = "Name", nullable = false, length = 200)
+    @Column(name = "Products_Name", nullable = false, length = 200)
     private String name;
 
     @Column(name = "Description", columnDefinition = "MEDIUMTEXT")
@@ -68,13 +67,26 @@ public class ProductEntity {
     private Boolean del = false;
 
     @Builder
-    public ProductEntity(Long userIdx, String code, String name,String description, BigDecimal price, BigDecimal salePrice, Integer stock, String status) {
-        this.userIdx = userIdx;
+    public ProductEntity(Long sellerIdx, String code, String name,String description, BigDecimal price, BigDecimal salePrice, Integer stock, String status) {
+        this.sellerIdx = sellerIdx;
         this.code = code;
         this.name = name;
         this.description=  description;
         this.price = price;
         this.salePrice = salePrice;
         this.stock = stock;
+    }
+
+    public void update(String name, String description, BigDecimal price, BigDecimal salePrice, int stock) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.salePrice = salePrice;
+        this.stock = stock;
+
+    }
+
+    public void delete(){
+        this.del = true;
     }
 }

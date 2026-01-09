@@ -3,7 +3,7 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://LetsCo.iptime.org:3306/GutJJeu
     username: LetsCo
-    password: xf@F6jW78OUAr.WY
+    password:
 
 
   jpa:

@@ -1,22 +1,21 @@
 package co.kr.order.mapper;
 
 
+import co.kr.order.client.ProductClient;
 import co.kr.order.model.dto.CartDetails;
-import co.kr.order.model.entity.OrderEntity;
-import co.kr.order.model.entity.OrderItemEntity;
+import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.entity.CartEntity;
+
+import java.util.List;
 
 public class CartMapper {
 
-    public static CartDetails toDetails(OrderItemEntity itemEntity) {
+    private ProductClient productClient;
 
-        OrderEntity order = itemEntity.getOrder();
-
+    public static CartDetails toDetails(CartEntity cart, ProductInfo product) {
         return new CartDetails(
-                itemEntity.getId(),
-                "temp",
-                itemEntity.getCount(),
-                itemEntity.getPrice(),
-                order.getTotalAmount()
+                cart.getPrice(),
+                List.of(product)
         );
     }
 }

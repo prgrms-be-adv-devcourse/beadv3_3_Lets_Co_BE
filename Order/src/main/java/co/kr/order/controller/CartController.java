@@ -1,5 +1,6 @@
 package co.kr.order.controller;
 
+import co.kr.order.model.dto.BaseResponse;
 import co.kr.order.model.dto.CartDetails;
 import co.kr.order.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -16,18 +17,23 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public ResponseEntity<List<CartDetails>> getList() {
+    public ResponseEntity<BaseResponse<List<CartDetails>>> getList() {
 
         List<CartDetails> list = cartService.getCartList();
 
-        return ResponseEntity.ok(list);
+        BaseResponse<List<CartDetails>> res = new BaseResponse<>("ok", list);
+
+        return ResponseEntity.ok(res);
     }
 
-    @PostMapping
-    public ResponseEntity<CartDetails> add(@RequestBody) {
 
-        CartDetails details = cartService.add();
 
-        return ResponseEntity.ok(details);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable("id") Long id) {
+
+        cartService.deleteCart(id);
+        BaseResponse<Void> res = new BaseResponse<>("ok", null);
+
+        return ResponseEntity.ok(res);
     }
 }

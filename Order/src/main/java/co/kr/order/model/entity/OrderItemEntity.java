@@ -17,7 +17,8 @@ public class OrderItemEntity {
     @JoinColumn(name = "Order_IDX")
     private OrderEntity order;
 
-//    @Column(name = "Product_IDX")
+    @Column(name = "Product_IDX")
+    private Long productId;
 //    @Column(name = "Option_Group_IDX")
 
     @Column(name = "Price", precision = 19, scale = 2)

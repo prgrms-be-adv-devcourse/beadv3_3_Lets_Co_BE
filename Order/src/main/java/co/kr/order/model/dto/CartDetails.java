@@ -1,12 +1,10 @@
 package co.kr.order.model.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record CartDetails(
-        Long itemId,
-        String productName,  // product table
-        Integer count,
-        BigDecimal price,
-        BigDecimal amount
+        BigDecimal totalAmount,
+        List<ProductInfo> productList
 ) {}
 

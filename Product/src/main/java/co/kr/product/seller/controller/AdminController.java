@@ -1,13 +1,17 @@
 package co.kr.product.seller.controller;
 
+import co.kr.product.seller.document.ProductDocument;
 import co.kr.product.seller.model.dto.*;
 import co.kr.product.seller.service.ProductManagerService;
+import co.kr.product.seller.service.ProductSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -16,6 +20,12 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final ProductManagerService productManagerService;
+    private final ProductSearchService productSearchService;
+    @GetMapping("/test")
+    public ResponseEntity<List<ProductDocument>> testElastic(){
+        List<ProductDocument> test =  productSearchService.search();
+        return ResponseEntity.ok(test);
+    }
 
     @GetMapping("/products")
     public ResponseEntity<ProductListReponse> getProductList(

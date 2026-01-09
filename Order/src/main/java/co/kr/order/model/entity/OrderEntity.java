@@ -1,10 +1,7 @@
 package co.kr.order.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,29 +9,30 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name = "Orders")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Order_IDX")
+    @Column(name = "Orders_IDX")
     private Long id;
 
-    @Column(name = "Order_Code")
+    @Column(name = "Orders_Code", nullable = false)
     private String orderCode;
 
-    @OneToMany(mappedBy = "order")
+    @OneToMany(mappedBy = "orderIdx")
     private List<OrderItemEntity> orderItems;
 
-    // user 외래키로 받기
-    // address 외래키 받기
-    // card 외래키 받기
+    @Column(name = "Users_IDX", nullable = false)
+    private Long userIdx;
 
-    @Column(name = "Status")
+    @Column(name = "Card_IDX", nullable = false)
+    private Long cardIdx;
+
+    @Column(name = "Status", nullable = false)
     private String status;
 
-    @Column(name = "Items_Account", precision = 19, scale = 2)
-    private BigDecimal itemsAccount;
+    @Column(name = "Items_Amount", precision = 19, scale = 2, nullable = false)
+    private BigDecimal itemsAmount;
 
 //    @Column(name = "Discount_Amount", precision = 19, scale = 2)
 //    private BigDecimal discountAmount;
@@ -42,19 +40,9 @@ public class OrderEntity {
 //    @Column(name = "Shipping_Fee", precision = 19, scale = 2)
 //    private BigDecimal shippingFee;
 
-    @Column(name = "Total_Amount", precision = 19, scale = 2)
+    @Column(name = "Total_Amount", precision = 19, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    @Column(name = "Del")
+    @Column(name = "Del", nullable = false)
     private Boolean del;
-
-    @Builder
-    public OrderEntity(String orderCode, String status, BigDecimal itemsAccount, BigDecimal totalAmount) {
-
-        this.orderCode = orderCode;
-        this.status = status;
-        this.itemsAccount = itemsAccount;
-        this.totalAmount = totalAmount;
-        this.del = false;
-    }
 }

@@ -7,31 +7,38 @@ import java.math.BigDecimal;
 
 @Getter
 @Entity
+@Table(name = "Orders_Item")
 public class OrderItemEntity {
 
     @Id
-    @Column(name = "Order_Item_IDX")
+    @Column(name = "Orders_Item_IDX")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Order_IDX")
-    private OrderEntity order;
+    @JoinColumn(name = "Orders_IDX", nullable = false)
+    private OrderEntity orderIdx;
 
-    @Column(name = "Product_IDX")
-    private Long productId;
-//    @Column(name = "Option_Group_IDX")
+    @Column(name = "Products_IDX", nullable = false)
+    private Long productIdx;
 
-    @Column(name = "Price", precision = 19, scale = 2)
+    @Column(name = "Option_Group_IDX", nullable = false)
+    private Long optionIdx;
+
+//    @Column(name = "Products_Name")
+//    private String productsName;
+
+    @Column(name = "Option_Name")
+    private String optionName;
+
+    @Column(name = "Price", precision = 19, scale = 2, nullable = false)
     private BigDecimal price;
 
 //    @Column(name = "Sale_Price", precision = 19, scale = 2)
 //    private BigDecimal salePrice;
 
-    @Column(name = "Count")
+    @Column(name = "Count", nullable = false)
     private Integer count;
 
-    @Column(name = "Del")
+    @Column(name = "Del", nullable = false)
     private Boolean del;
-
-
 }

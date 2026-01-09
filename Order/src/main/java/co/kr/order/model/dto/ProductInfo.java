@@ -7,6 +7,5 @@ public record ProductInfo(
         String productName,
 //        String imageUrl,
         String optionContent,
-        BigDecimal price,
-        Integer count
+        BigDecimal price
 ) {}

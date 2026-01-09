@@ -1,11 +1,9 @@
 package co.kr.order.service;
 
-import co.kr.order.model.dto.CartDetails;
-
-import java.util.List;
+import co.kr.order.model.dto.CartInfo;
 
 public interface CartService {
 
-    List<CartDetails> getCartList();
-    void deleteCart(Long CartId);
+    CartInfo addCart(String token, Long productId, Long optionIdx);
+    CartInfo getCart(String token);
 }

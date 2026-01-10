@@ -94,22 +94,27 @@ public class CartServiceImpl implements CartService {
     public CartInfo getCart(String token) {
         Long userIdx = userClient.getUserIdx(token);
         List<CartEntity> cartList = cartJpaRepository.findAllByUserIdx(userIdx);
-        BigDecimal totalAmount = BigDecimal.ZERO;
 
         List<ProductInfo> productInfos = new ArrayList<>();
         for (CartEntity cart : cartList) {
-            ProductInfo info = productClient.getProductById(cart.getProductIdx());
+            ProductInfo getInfo = productClient.getProductById(cart.getProductIdx());
 
-            ProductInfo updatedInfo = info.withQuantity(cart.getQuantity());
-            productInfos.add(updatedInfo);
+            // 상품 가격 = 단가 * 수량
+            int quantity = cart.getQuantity();
+            BigDecimal totalPrice = getInfo.price().multiply(BigDecimal.valueOf(quantity));
 
-            BigDecimal itemTotal = updatedInfo.price().multiply(
-                    new BigDecimal(cart.getQuantity())
+            ProductInfo productInfo = new ProductInfo(
+                    getInfo.productId(),
+                    getInfo.productName(),
+                    getInfo.optionContent(),
+                    getInfo.price(),
+                    quantity,
+                    totalPrice
             );
-            totalAmount = totalAmount.add(itemTotal);
+            productInfos.add(productInfo);
         }
 
-        return CartMapper.toCartInfo(productInfos, totalAmount);
+        return CartMapper.toCartInfo(productInfos);
     }
 
     // 장바구니에 있는 품목에 x를 눌렀을때 cart 테이블의 내용을 소프트웨어적 삭제를 할 필요가 있음? 

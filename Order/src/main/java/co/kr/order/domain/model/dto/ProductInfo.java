@@ -8,9 +8,10 @@ public record ProductInfo(
 //        String imageUrl,
         String optionContent,
         BigDecimal price,
-        Integer quantity
+        Integer quantity,
+        BigDecimal totalPrice
 ) {
-    public ProductInfo withQuantity(int count) {
-        return new ProductInfo(this.productId, this.productName, this.optionContent, this.price, count);
+    public ProductInfo toProductInfo(int quantity, BigDecimal totalPrice) {
+        return new ProductInfo(this.productId, this.productName, this.optionContent, this.price, quantity, totalPrice);
     }
 }

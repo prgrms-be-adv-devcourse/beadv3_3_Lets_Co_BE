@@ -1,13 +1,15 @@
-package co.kr.order.service.impl;
+package co.kr.order.domain.service.impl;
 
-import co.kr.order.client.ProductClient;
-import co.kr.order.client.UserClient;
-import co.kr.order.mapper.CartMapper;
-import co.kr.order.model.dto.CartInfo;
-import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.entity.CartEntity;
-import co.kr.order.repository.CartJpaRepository;
-import co.kr.order.service.CartService;
+import co.kr.order.domain.client.ProductClient;
+import co.kr.order.domain.client.UserClient;
+import co.kr.order.domain.mapper.CartMapper;
+import co.kr.order.domain.model.dto.CartInfo;
+import co.kr.order.domain.model.dto.ProductInfo;
+import co.kr.order.domain.model.entity.CartEntity;
+import co.kr.order.domain.repository.CartJpaRepository;
+import co.kr.order.domain.service.CartService;
+import co.kr.order.global.exception.CartNotFoundException;
+import co.kr.order.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +83,7 @@ public class CartServiceImpl implements CartService {
             }
         }
         else {
-            throw new RuntimeException("장바구니를 찾을 수 없습니다.");
+            throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
         }
 
         return getCart(token);
@@ -97,6 +99,7 @@ public class CartServiceImpl implements CartService {
         List<ProductInfo> productInfos = new ArrayList<>();
         for (CartEntity cart : cartList) {
             ProductInfo info = productClient.getProductById(cart.getProductIdx());
+
             ProductInfo updatedInfo = info.withQuantity(cart.getQuantity());
             productInfos.add(updatedInfo);
 
@@ -123,7 +126,7 @@ public class CartServiceImpl implements CartService {
             cartJpaRepository.deleteById(entity.getId());
         }
         else {
-            throw new RuntimeException("장바구니를 찾을 수 없습니다.");
+            throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
         }
     }
 }

@@ -1,4 +1,4 @@
-package co.kr.order.model.entity;
+package co.kr.order.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -36,8 +36,8 @@ public class OrderItemEntity {
 //    @Column(name = "Sale_Price", precision = 19, scale = 2)
 //    private BigDecimal salePrice;
 
-    @Column(name = "Count", nullable = false)
-    private Integer count;
+    @Column(name = "Quantity", nullable = false)
+    private Integer quantity;
 
     @Column(name = "Del", nullable = false)
     private Boolean del;

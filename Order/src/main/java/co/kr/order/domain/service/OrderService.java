@@ -1,4 +1,4 @@
-package co.kr.order.service;
+package co.kr.order.domain.service;
 
 public interface OrderService {
 

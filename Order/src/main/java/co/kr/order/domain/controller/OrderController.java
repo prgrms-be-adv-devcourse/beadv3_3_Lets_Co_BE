@@ -1,6 +1,6 @@
-package co.kr.order.controller;
+package co.kr.order.domain.controller;
 
-import co.kr.order.service.OrderService;
+import co.kr.order.domain.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

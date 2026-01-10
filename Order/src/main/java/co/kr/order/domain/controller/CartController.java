@@ -1,9 +1,9 @@
-package co.kr.order.controller;
+package co.kr.order.domain.controller;
 
-import co.kr.order.model.dto.CartRequest;
-import co.kr.order.model.dto.BaseResponse;
-import co.kr.order.model.dto.CartInfo;
-import co.kr.order.service.CartService;
+import co.kr.order.domain.model.dto.CartRequest;
+import co.kr.order.domain.model.dto.BaseResponse;
+import co.kr.order.domain.model.dto.CartInfo;
+import co.kr.order.domain.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

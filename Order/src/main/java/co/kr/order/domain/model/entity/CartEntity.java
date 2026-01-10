@@ -1,4 +1,4 @@
-package co.kr.order.model.entity;
+package co.kr.order.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -1,6 +1,6 @@
-package co.kr.order.client;
+package co.kr.order.domain.client;
 
-import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.domain.model.dto.ProductInfo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

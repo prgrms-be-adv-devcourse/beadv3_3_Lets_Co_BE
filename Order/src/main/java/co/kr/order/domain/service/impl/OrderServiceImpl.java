@@ -1,7 +1,7 @@
-package co.kr.order.service.impl;
+package co.kr.order.domain.service.impl;
 
-import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.service.OrderService;
+import co.kr.order.domain.repository.OrderJpaRepository;
+import co.kr.order.domain.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

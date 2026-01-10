@@ -1,8 +1,8 @@
-package co.kr.order.mapper;
+package co.kr.order.domain.mapper;
 
 
-import co.kr.order.model.dto.CartInfo;
-import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.domain.model.dto.CartInfo;
+import co.kr.order.domain.model.dto.ProductInfo;
 
 import java.math.BigDecimal;
 import java.util.List;

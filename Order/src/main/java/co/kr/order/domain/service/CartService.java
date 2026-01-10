@@ -1,6 +1,6 @@
-package co.kr.order.service;
+package co.kr.order.domain.service;
 
-import co.kr.order.model.dto.CartInfo;
+import co.kr.order.domain.model.dto.CartInfo;
 
 public interface CartService {
 

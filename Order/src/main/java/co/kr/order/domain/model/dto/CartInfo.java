@@ -1,4 +1,4 @@
-package co.kr.order.model.dto;
+package co.kr.order.domain.model.dto;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -1,4 +1,4 @@
-package co.kr.order.client;
+package co.kr.order.domain.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

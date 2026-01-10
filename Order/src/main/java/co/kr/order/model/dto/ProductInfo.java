@@ -7,5 +7,10 @@ public record ProductInfo(
         String productName,
 //        String imageUrl,
         String optionContent,
-        BigDecimal price
-) {}
+        BigDecimal price,
+        Integer quantity
+) {
+    public ProductInfo withQuantity(int count) {
+        return new ProductInfo(this.productId, this.productName, this.optionContent, this.price, count);
+    }
+}

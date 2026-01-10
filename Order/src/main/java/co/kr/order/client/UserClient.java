@@ -8,5 +8,5 @@ import org.springframework.web.bind.annotation.RequestHeader;
 public interface UserClient {
 
     @GetMapping("/userIdx")
-    Long getUserId(@RequestHeader("Authorization") String token);
+    Long getUserIdx(@RequestHeader("Authorization") String token);
 }

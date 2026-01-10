@@ -1,6 +1,6 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.AddCartRequest;
+import co.kr.order.model.dto.CartRequest;
 import co.kr.order.model.dto.BaseResponse;
 import co.kr.order.model.dto.CartInfo;
 import co.kr.order.service.CartService;
@@ -15,13 +15,25 @@ public class CartController {
 
     private final CartService cartService;
 
-    @PostMapping
-    public ResponseEntity<BaseResponse<CartInfo>> addCart(
+    @PostMapping("/add")
+    public ResponseEntity<BaseResponse<CartInfo>> addCartItem(
             @RequestHeader("Authorization") String token,
-            @RequestBody AddCartRequest request
+            @RequestBody CartRequest request
     ) {
 
-        CartInfo info = cartService.addCart(token, request.productIdx(), request.optionIdx());
+        CartInfo info = cartService.addCartItem(token, request.productIdx(), request.optionIdx());
+        BaseResponse<CartInfo> res = new BaseResponse<>("ok", info);
+
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/subtract")
+    public ResponseEntity<BaseResponse<CartInfo>> subtractCartItem(
+            @RequestHeader("Authorization") String token,
+            @RequestBody CartRequest request
+    ) {
+
+        CartInfo info = cartService.subtractCartItem(token, request.productIdx(), request.optionIdx());
         BaseResponse<CartInfo> res = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(res);
@@ -32,6 +44,18 @@ public class CartController {
 
         CartInfo info = cartService.getCart(token);
         BaseResponse<CartInfo> res = new BaseResponse<>("ok", info);
+
+        return ResponseEntity.ok(res);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<BaseResponse<Void>> deleteCartItem(
+            @RequestHeader("Authorization") String token,
+            @RequestBody CartRequest request
+    ) {
+
+        cartService.deleteCartItem(token, request.productIdx(), request.optionIdx());
+        BaseResponse<Void> res = new BaseResponse<>("ok", null);
 
         return ResponseEntity.ok(res);
     }

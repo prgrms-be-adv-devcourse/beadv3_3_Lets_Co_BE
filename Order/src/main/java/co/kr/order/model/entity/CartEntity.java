@@ -32,18 +32,18 @@ public class CartEntity {
 //    @Column(name = "Sale_Price", precision = 19, scale = 2)
 //    private BigDecimal salePrice;
 
-    @Column(name = "Count", nullable = false)
-    private Integer count = 0;
+    @Column(name = "Quantity", nullable = false)
+    private Integer quantity = 0;
 
     @Column(name = "Del", nullable = false)
     Boolean del;
 
-    public void addProductToCart() {
-        this.count++;
+    public void plusQuantity() {
+        this.quantity++;
     }
 
-    public void delProductToCart() {
-        this.count--;
+    public void minusQuantity() {
+        this.quantity--;
     }
 
     public void addPrice(BigDecimal price) {
@@ -57,6 +57,6 @@ public class CartEntity {
     }
 
     public BigDecimal getTotalPrice(BigDecimal unitPrice) {
-        return unitPrice.multiply(new BigDecimal(this.count));
+        return unitPrice.multiply(new BigDecimal(this.quantity));
     }
 }

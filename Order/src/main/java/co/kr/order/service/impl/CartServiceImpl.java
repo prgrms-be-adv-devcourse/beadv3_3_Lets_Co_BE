@@ -8,10 +8,12 @@ import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.service.CartService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,26 +27,32 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartInfo addCart(String token, Long productIdx, Long optionIdx) {
-        Long userId = userClient.getUserId(token);
+    public CartInfo addCartItem(String token, Long productIdx, Long optionIdx) {
+        Long userId = userClient.getUserIdx(token);
 
         ProductInfo productInfo = productClient.getProductById(productIdx);
-
         Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
 
+
         if (existingCart.isPresent()) {
+            // 장바구니에서 상품을 + 했을 경우
             CartEntity entity = existingCart.get();
-            entity.addProductToCart();
+            entity.plusQuantity();
             entity.addPrice(productInfo.price());
+
             cartJpaRepository.save(entity);
-        } else {
+        }
+        else {
+            // 상품에서 직접 카트 담기 눌렀을 경우
             CartEntity newCart = new CartEntity();
+
             newCart.setUserIdx(userId);
             newCart.setProductIdx(productIdx);
             newCart.setOptionIdx(optionIdx);
-            newCart.setCount(1);
+            newCart.setQuantity(1);
             newCart.setPrice(productInfo.price());
             newCart.setDel(false);
+
             cartJpaRepository.save(newCart);
         }
 
@@ -52,14 +60,70 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
+    public CartInfo subtractCartItem(String token, Long productIdx, Long optionIdx) {
+        Long userId = userClient.getUserIdx(token);
+
+        ProductInfo productInfo = productClient.getProductById(productIdx);
+        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
+
+        if (existingCart.isPresent()) {
+            CartEntity entity = existingCart.get();
+
+            if(entity.getQuantity() > 1) {
+                entity.minusQuantity();
+                entity.subtractPrice(productInfo.price());
+                cartJpaRepository.save(entity);
+            }
+            else {
+                // 어차피 front에서 1 이하로 안내려가게 처리할거지만 혹시모르니 삭제 처리
+                cartJpaRepository.delete(entity);
+            }
+        }
+        else {
+            throw new RuntimeException("장바구니를 찾을 수 없습니다.");
+        }
+
+        return getCart(token);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CartInfo getCart(String token) {
-        Long userId = userClient.getUserId(token);
-        List<CartEntity> cartList = cartJpaRepository.findAllByUserIdx(userId);
+        Long userIdx = userClient.getUserIdx(token);
+        List<CartEntity> cartList = cartJpaRepository.findAllByUserIdx(userIdx);
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
-        List<ProductInfo> productInfos = cartList.stream()
-                .map(cart -> productClient.getProductById(cart.getProductIdx()))
-                .toList();
+        List<ProductInfo> productInfos = new ArrayList<>();
+        for (CartEntity cart : cartList) {
+            ProductInfo info = productClient.getProductById(cart.getProductIdx());
+            ProductInfo updatedInfo = info.withQuantity(cart.getQuantity());
+            productInfos.add(updatedInfo);
 
-        return CartMapper.toInfo(cartList, productInfos);
+            BigDecimal itemTotal = updatedInfo.price().multiply(
+                    new BigDecimal(cart.getQuantity())
+            );
+            totalAmount = totalAmount.add(itemTotal);
+        }
+
+        return CartMapper.toCartInfo(productInfos, totalAmount);
+    }
+
+    // 장바구니에 있는 품목에 x를 눌렀을때 cart 테이블의 내용을 소프트웨어적 삭제를 할 필요가 있음? 
+    // 장바구니 기록을 따로 가지고 있을 필요는 없다고 생각함
+    @Override
+    @Transactional
+    public void deleteCartItem(String token, Long productIdx, Long optionIdx) {
+        Long userId = userClient.getUserIdx(token);
+
+        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
+
+        if (existingCart.isPresent()) {
+            CartEntity entity = existingCart.get();
+            cartJpaRepository.deleteById(entity.getId());
+        }
+        else {
+            throw new RuntimeException("장바구니를 찾을 수 없습니다.");
+        }
     }
 }

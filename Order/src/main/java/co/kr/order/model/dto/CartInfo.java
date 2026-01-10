@@ -5,7 +5,6 @@ import java.util.List;
 
 public record CartInfo(
         List<ProductInfo> productList,
-        Integer count,
         BigDecimal totalAmount
 ) {}
 

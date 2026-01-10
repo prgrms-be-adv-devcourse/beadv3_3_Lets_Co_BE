@@ -1,6 +1,6 @@
 package co.kr.order.model.dto;
 
-public record AddCartRequest(
+public record CartRequest(
         Long productIdx,
         Long optionIdx
 ) { }

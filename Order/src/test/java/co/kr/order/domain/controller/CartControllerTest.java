@@ -1,8 +1,7 @@
-package co.kr.order.controller;
+package co.kr.order.domain.controller;
 
 import co.kr.order.domain.client.ProductClient;
 import co.kr.order.domain.client.UserClient;
-import co.kr.order.domain.controller.CartController;
 import co.kr.order.domain.model.dto.CartRequest;
 import co.kr.order.domain.model.dto.ProductInfo;
 import co.kr.order.domain.model.entity.CartEntity;
@@ -31,19 +30,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
 @Transactional
+@SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class CartControllerTest {
 
-    @Autowired MockMvc mvc;
-    @Autowired CartJpaRepository cartJpaRepository;
-
     @MockitoBean UserClient userClient;
     @MockitoBean ProductClient productClient;
 
+    @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
+
+    @Autowired CartJpaRepository cartRepository;
 
 
     @BeforeEach
@@ -51,11 +50,11 @@ class CartControllerTest {
         // given:
         given(userClient.getUserIdx(anyString())).willReturn(1L);
 
-        ProductInfo mockProduct1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), null, null);
-        ProductInfo mockProduct2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("12000.00"), null, null);
+        ProductInfo mockProduct1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"));
+        ProductInfo mockProduct2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("12000.00"));
 
-        given(productClient.getProductById(100L)).willReturn(mockProduct1);
-        given(productClient.getProductById(101L)).willReturn(mockProduct2);
+        given(productClient.getProduct(100L, 10L)).willReturn(mockProduct1);
+        given(productClient.getProduct(101L, 11L)).willReturn(mockProduct2);
 
         CartEntity cartItem1 = new CartEntity();
         cartItem1.setUserIdx(1L);
@@ -64,7 +63,7 @@ class CartControllerTest {
         cartItem1.setQuantity(2);
         cartItem1.setPrice(new BigDecimal("20000.00"));
         cartItem1.setDel(false);
-        cartJpaRepository.save(cartItem1);
+        cartRepository.save(cartItem1);
 
         CartEntity cartItem2 = new CartEntity();
         cartItem2.setUserIdx(1L);
@@ -73,7 +72,7 @@ class CartControllerTest {
         cartItem2.setQuantity(3);
         cartItem2.setPrice(new BigDecimal("36000.00"));
         cartItem2.setDel(false);
-        cartJpaRepository.save(cartItem2);
+        cartRepository.save(cartItem2);
     }
 
     @Test
@@ -108,7 +107,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.data.productList[1].quantity").value(3))
                 .andExpect(jsonPath("$.data.productList[1].totalPrice").value("36000.0"));
 
-        CartEntity entity = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
+        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(2);
         Assertions.assertThat(entity.getPrice()).isEqualByComparingTo("20000.00");
     }
@@ -118,10 +117,10 @@ class CartControllerTest {
     @DisplayName("장바구니 제품 추가 - 정상(상품 목록에서 장바구니 추가를 눌렀을 경우)")
     void 장바구니_추가_1() throws Exception {
 
-        CartRequest request = new CartRequest(102L, 10L);
+        CartRequest request = new CartRequest(102L, 12L);
 
-        ProductInfo mockProduct3 = new ProductInfo(102L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"), null, null);
-        given(productClient.getProductById(102L)).willReturn(mockProduct3);
+        ProductInfo mockProduct3 = new ProductInfo(102L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"));
+        given(productClient.getProduct(102L, 12L)).willReturn(mockProduct3);
 
         // when
         ResultActions resultActions = mvc
@@ -140,7 +139,7 @@ class CartControllerTest {
                 // productList[]의 1번 2번은 데이터가 있으니 3번으로 비교 (개수가 1개인지)
                 .andExpect(jsonPath("$.data.productList[2].quantity").value(1));
 
-        CartEntity entity = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 102L, 10L).get();
+        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 102L, 12L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(1);
         Assertions.assertThat(entity.getPrice()).isEqualByComparingTo("13000.00");
     }
@@ -168,7 +167,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.productList[0].quantity").value(3));
 
-        CartEntity entity = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
+        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(3);
     }
 
@@ -195,7 +194,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.productList[0].quantity").value(1));
 
-        CartEntity entity = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
+        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(1);
     }
 
@@ -221,7 +220,7 @@ class CartControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
-        Optional<CartEntity> entity = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L);
+        Optional<CartEntity> entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L);
         Assertions.assertThat(entity).isEmpty();
     }
 }

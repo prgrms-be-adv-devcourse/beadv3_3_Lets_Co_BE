@@ -2,10 +2,12 @@ package co.kr.order.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
+@Setter
 @Entity
 @Table(name = "Orders_Item")
 public class OrderItemEntity {
@@ -24,8 +26,8 @@ public class OrderItemEntity {
     @Column(name = "Option_Group_IDX", nullable = false)
     private Long optionIdx;
 
-//    @Column(name = "Products_Name")
-//    private String productsName;
+    @Column(name = "Products_Name")
+    private String productName;
 
     @Column(name = "Option_Name")
     private String optionName;

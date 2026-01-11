@@ -4,6 +4,7 @@ import co.kr.order.domain.client.ProductClient;
 import co.kr.order.domain.client.UserClient;
 import co.kr.order.domain.mapper.CartMapper;
 import co.kr.order.domain.model.dto.CartInfo;
+import co.kr.order.domain.model.dto.CartItemInfo;
 import co.kr.order.domain.model.dto.ProductInfo;
 import co.kr.order.domain.model.entity.CartEntity;
 import co.kr.order.domain.repository.CartJpaRepository;
@@ -32,7 +33,7 @@ public class CartServiceImpl implements CartService {
     public CartInfo addCartItem(String token, Long productIdx, Long optionIdx) {
         Long userId = userClient.getUserIdx(token);
 
-        ProductInfo productInfo = productClient.getProductById(productIdx);
+        ProductInfo productInfo = productClient.getProduct(productIdx, optionIdx);
         Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
 
 
@@ -66,7 +67,7 @@ public class CartServiceImpl implements CartService {
     public CartInfo subtractCartItem(String token, Long productIdx, Long optionIdx) {
         Long userId = userClient.getUserIdx(token);
 
-        ProductInfo productInfo = productClient.getProductById(productIdx);
+        ProductInfo productInfo = productClient.getProduct(productIdx, optionIdx);
         Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
 
         if (existingCart.isPresent()) {
@@ -95,26 +96,26 @@ public class CartServiceImpl implements CartService {
         Long userIdx = userClient.getUserIdx(token);
         List<CartEntity> cartList = cartJpaRepository.findAllByUserIdx(userIdx);
 
-        List<ProductInfo> productInfos = new ArrayList<>();
+        List<CartItemInfo> cartItemInfos = new ArrayList<>();
         for (CartEntity cart : cartList) {
-            ProductInfo getInfo = productClient.getProductById(cart.getProductIdx());
+            ProductInfo getInfo = productClient.getProduct(cart.getProductIdx(), cart.getOptionIdx());
 
             // 상품 가격 = 단가 * 수량
             int quantity = cart.getQuantity();
             BigDecimal totalPrice = getInfo.price().multiply(BigDecimal.valueOf(quantity));
 
-            ProductInfo productInfo = new ProductInfo(
-                    getInfo.productId(),
+            CartItemInfo cartItemInfo = new CartItemInfo(
+                    getInfo.productIdx(),
                     getInfo.productName(),
                     getInfo.optionContent(),
                     getInfo.price(),
                     quantity,
                     totalPrice
             );
-            productInfos.add(productInfo);
+            cartItemInfos.add(cartItemInfo);
         }
 
-        return CartMapper.toCartInfo(productInfos);
+        return CartMapper.toCartInfo(cartItemInfos);
     }
 
     // 장바구니에 있는 품목에 x를 눌렀을때 cart 테이블의 내용을 소프트웨어적 삭제를 할 필요가 있음? 

@@ -2,11 +2,13 @@ package co.kr.order.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
+@Setter
 @Entity
 @Table(name = "Orders")
 public class OrderEntity {
@@ -16,17 +18,21 @@ public class OrderEntity {
     @Column(name = "Orders_IDX")
     private Long id;
 
-    @Column(name = "Orders_Code", nullable = false)
-    private String orderCode;
-
     @OneToMany(mappedBy = "orderIdx")
     private List<OrderItemEntity> orderItems;
 
     @Column(name = "Users_IDX", nullable = false)
     private Long userIdx;
 
+    @Column(name = "Address_IDX", nullable = false)
+    private Long addressIdx;
+
     @Column(name = "Card_IDX", nullable = false)
     private Long cardIdx;
+
+
+    @Column(name = "Orders_Code", nullable = false)
+    private String orderCode;
 
     @Column(name = "Status", nullable = false)
     private String status;

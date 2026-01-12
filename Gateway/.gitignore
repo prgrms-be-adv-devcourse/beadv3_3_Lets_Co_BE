@@ -35,3 +35,18 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### YAML & Configuration (Secrets) ###
+application.yml
+application.yaml
+application-*.yml
+application-*.yaml
+config/*.yml
+config/*.yaml
+
+### Properties (Secrets) ###
+application.properties
+application-*.properties
+local.properties
+# 필요한 경우 아래 주석을 해제하여 모든 properties 파일을 무시할 수도 있습니다.
+# *.properties

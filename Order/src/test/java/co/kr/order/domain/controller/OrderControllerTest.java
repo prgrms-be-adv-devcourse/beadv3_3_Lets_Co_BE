@@ -1,12 +1,13 @@
 package co.kr.order.domain.controller;
 
-import co.kr.order.domain.client.ProductClient;
-import co.kr.order.domain.client.UserClient;
-import co.kr.order.domain.model.dto.ProductInfo;
-import co.kr.order.domain.model.entity.OrderEntity;
-import co.kr.order.domain.model.entity.OrderItemEntity;
-import co.kr.order.domain.repository.OrderItemJpaRepository;
-import co.kr.order.domain.repository.OrderJpaRepository;
+import co.kr.order.client.ProductClient;
+import co.kr.order.client.UserClient;
+import co.kr.order.controller.OrderController;
+import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.entity.OrderEntity;
+import co.kr.order.model.entity.OrderItemEntity;
+import co.kr.order.repository.OrderItemJpaRepository;
+import co.kr.order.repository.OrderJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

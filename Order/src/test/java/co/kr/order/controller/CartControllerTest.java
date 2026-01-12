@@ -1,4 +1,4 @@
-package co.kr.order.domain.controller;
+package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;

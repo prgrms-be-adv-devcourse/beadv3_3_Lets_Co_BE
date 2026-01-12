@@ -30,7 +30,6 @@ public class OrderEntity {
     @Column(name = "Card_IDX", nullable = false)
     private Long cardIdx;
 
-
     @Column(name = "Orders_Code", nullable = false)
     private String orderCode;
 

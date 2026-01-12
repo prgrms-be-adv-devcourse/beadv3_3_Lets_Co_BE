@@ -31,10 +31,10 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public CartInfo addCartItem(String token, Long productIdx, Long optionIdx) {
-        Long userId = userClient.getUserIdx(token);
+        Long userIdx = userClient.getUserIdx(token);
 
         ProductInfo productInfo = productClient.getProduct(productIdx, optionIdx);
-        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
+        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, productIdx, optionIdx);
 
 
         if (existingCart.isPresent()) {
@@ -49,7 +49,7 @@ public class CartServiceImpl implements CartService {
             // 상품에서 직접 카트 담기 눌렀을 경우
             CartEntity newCart = new CartEntity();
 
-            newCart.setUserIdx(userId);
+            newCart.setUserIdx(userIdx);
             newCart.setProductIdx(productIdx);
             newCart.setOptionIdx(optionIdx);
             newCart.setQuantity(1);
@@ -97,6 +97,8 @@ public class CartServiceImpl implements CartService {
         List<CartEntity> cartList = cartJpaRepository.findAllByUserIdx(userIdx);
 
         List<CartItemInfo> cartItemInfos = new ArrayList<>();
+
+        // todo N+1 문제 발생. 이거 나중에 안되도록 코드 수정해야함 (Order 기능 개발하고)
         for (CartEntity cart : cartList) {
             ProductInfo getInfo = productClient.getProduct(cart.getProductIdx(), cart.getOptionIdx());
 
@@ -118,8 +120,6 @@ public class CartServiceImpl implements CartService {
         return CartMapper.toCartInfo(cartItemInfos);
     }
 
-    // 장바구니에 있는 품목에 x를 눌렀을때 cart 테이블의 내용을 소프트웨어적 삭제를 할 필요가 있음? 
-    // 장바구니 기록을 따로 가지고 있을 필요는 없다고 생각함
     @Override
     @Transactional
     public void deleteCartItem(String token, Long productIdx, Long optionIdx) {

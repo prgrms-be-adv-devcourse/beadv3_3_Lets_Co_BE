@@ -18,7 +18,7 @@ public class OrderEntity {
     @Column(name = "Orders_IDX")
     private Long id;
 
-    @OneToMany(mappedBy = "orderIdx")
+    @OneToMany(mappedBy = "order")
     private List<OrderItemEntity> orderItems;
 
     @Column(name = "Users_IDX", nullable = false)

@@ -3,10 +3,10 @@ package co.kr.order.exception;
 import lombok.Getter;
 
 @Getter
-public class CartNotFoundException extends RuntimeException {
+public class NoInputOrderDataException extends RuntimeException {
     private final ErrorCode errorCode;
 
-    public CartNotFoundException(ErrorCode errorCode) {
+    public NoInputOrderDataException(ErrorCode errorCode) {
         super(errorCode.getMsg());
         this.errorCode = errorCode;
     }

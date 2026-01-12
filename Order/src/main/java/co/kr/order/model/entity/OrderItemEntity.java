@@ -18,7 +18,7 @@ public class OrderItemEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Orders_IDX", nullable = false)
-    private OrderEntity orderIdx;
+    private OrderEntity order;
 
     @Column(name = "Products_IDX", nullable = false)
     private Long productIdx;

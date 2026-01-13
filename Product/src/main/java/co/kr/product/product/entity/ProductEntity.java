@@ -1,5 +1,6 @@
 package co.kr.product.product.entity;
 
+import co.kr.product.product.dto.vo.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicInsert
 @Table(name = "Products") // DB 생성 SQL 기준
-public class Product {
+public class ProductEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,8 +50,9 @@ public class Product {
     @ColumnDefault("0")
     private Integer stock;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Status", length = 20)
-    private String status;
+    private ProductStatus status;
 
     @Column(name = "View_Count", nullable = false)
     @ColumnDefault("0")
@@ -68,14 +70,14 @@ public class Product {
     private Boolean del;
 
     @Builder
-    public Product(Long sellerIdx,
-                   String productsCode,
-                   String productsName,
-                   String description,
-                   BigDecimal price,
-                   BigDecimal salePrice,
-                   Integer stock,
-                   String status) {
+    public ProductEntity(Long sellerIdx,
+                         String productsCode,
+                         String productsName,
+                         String description,
+                         BigDecimal price,
+                         BigDecimal salePrice,
+                         Integer stock,
+                         ProductStatus status) {
 
         this.sellerIdx = sellerIdx;
         this.productsCode = productsCode;
@@ -89,15 +91,27 @@ public class Product {
         this.del = false;
     }
 
-    // soft delete 편의 메서드(선택)
-    public void softDelete() {
+    public void update(String productsName, String description, BigDecimal price,
+                       BigDecimal salePrice, int stock,ProductStatus status) {
+        this.productsName = productsName;
+        this.description = description;
+        this.price = price;
+        this.salePrice = salePrice;
+        this.stock = stock;
+        this.status = status;
+
+    }
+
+    //softDelete
+    public void delete(){
         this.del = true;
     }
 
     // 조회수 증가(상세 조회 시 사용)
     public void increaseViewCount() {
-        this.viewCount = (this.viewCount == null ? 1L : this.viewCount + 1L);
-    }
+        this.viewCount = (this.viewCount == null ? 1L : this.viewCount + 1L);}
+
+
 }
 
 

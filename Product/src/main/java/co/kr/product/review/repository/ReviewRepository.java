@@ -12,11 +12,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Optional<Review> findByReviewIdxAndDelFalse(Long reviewIdx);
 
-    Optional<Review> findByReviewIdxAndUserIdxAndDelFalse(Long reviewIdx, Long userIdx);
+    Optional<Review> findByReviewIdxAndUsersIdxAndDelFalse(Long reviewIdx, Long userIdx);
 
-    boolean existsByOrderItemIdxAndDelFalse(Long orderItemIdx);
+    boolean existsByOrdersItemIdxAndDelFalse(Long orderItemIdx);
 
-    boolean existsByProductsIdxAndUserIdxAndDelFalse(Long productsIdx, Long userIdx);
+    boolean existsByProductsIdxAndUsersIdxAndDelFalse(Long productsIdx, Long userIdx);
 
 }
 

@@ -1,4 +1,4 @@
-package co.kr.product.seller.model.dto;
+package co.kr.product.product.dto.response;
 
 public record ResultResponse(
         String resultCode

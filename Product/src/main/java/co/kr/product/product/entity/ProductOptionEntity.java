@@ -2,6 +2,7 @@ package co.kr.product.product.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
@@ -15,15 +16,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicInsert
 @Table(name = "Product_Option")
-public class ProductOption {
+public class ProductOptionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Option_Group_IDX")
     private Long optionGroupIdx;
 
-    @Column(name = "Products_IDX", nullable = false)
-    private Long productsIdx;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Products_IDX", nullable = false)
+    private ProductEntity product;
 
     @Column(name = "Option_Code", nullable = false, length = 50)
     private String optionCode;
@@ -58,5 +60,39 @@ public class ProductOption {
     @Column(name = "Del", nullable = false)
     @ColumnDefault("0")
     private Boolean del;
+
+
+    @Builder
+    public ProductOptionEntity(ProductEntity product, String optionCode, String optionName, Integer sortOrders,
+                               BigDecimal optionPrice, BigDecimal optionSalePrice, Integer stock, String status) {
+        this.product = product;
+        this.optionCode = optionCode;
+        this.optionName = optionName;
+        this.sortOrders = sortOrders != null ? sortOrders : 0;
+        this.optionPrice = optionPrice;
+        this.optionSalePrice = optionSalePrice;
+        this.stock = stock;
+        this.status = status;
+    }
+
+    public void update( String optionName,
+                        int sortOrders,
+                        BigDecimal optionPrice,
+                        BigDecimal optionSalePrice,
+                        int stock,
+                        String status){
+
+        this.optionName = optionName;
+        this.sortOrders =sortOrders;
+        this.optionPrice = optionPrice;
+        this.optionSalePrice =optionSalePrice;
+        this.stock = stock;
+        this.status = status;
+    }
+
+    public void delete(){
+        this.del = true;
+    }
+
 }
 

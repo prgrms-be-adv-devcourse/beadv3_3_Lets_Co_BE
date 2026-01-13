@@ -1,9 +1,13 @@
-package co.kr.product.seller.controller;
+package co.kr.product.product.controller;
 
-import co.kr.product.seller.document.ProductDocument;
-import co.kr.product.seller.model.dto.*;
-import co.kr.product.seller.service.ProductManagerService;
-import co.kr.product.seller.service.ProductSearchService;
+import co.kr.product.product.document.ProductDocument;
+import co.kr.product.product.dto.request.ProductListRequest;
+import co.kr.product.product.dto.request.UpsertProductRequest;
+import co.kr.product.product.dto.response.ProductDetailResponse;
+import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.dto.response.ResultResponse;
+import co.kr.product.product.service.ProductManagerService;
+import co.kr.product.product.service.ProductSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -28,12 +32,11 @@ public class AdminController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<ProductListReponse> getProductList(
+    public ResponseEntity<ProductListResponse> getProductList(
             @PageableDefault Pageable pageable,
             @ModelAttribute ProductListRequest requests
             ){
 
-        log.info(requests.search(),requests.category());
         return ResponseEntity.ok(null);
 
     }
@@ -44,7 +47,7 @@ public class AdminController {
             String accountCode,
             @PathVariable("code") String productCode){
 
-        ProductDetailResponse result = productManagerService.getProductDetail(accountCode, productCode);
+        ProductDetailResponse result = productManagerService.getManagerProductDetail(accountCode, productCode);
         return ResponseEntity.ok(result);
     }
 

@@ -1,7 +1,11 @@
-package co.kr.product.seller.controller;
+package co.kr.product.product.controller;
 
-import co.kr.product.seller.model.dto.*;
-import co.kr.product.seller.service.ProductManagerService;
+import co.kr.product.product.dto.request.ProductListRequest;
+import co.kr.product.product.dto.request.UpsertProductRequest;
+import co.kr.product.product.dto.response.ProductDetailResponse;
+import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.dto.response.ResultResponse;
+import co.kr.product.product.service.ProductManagerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -18,12 +22,12 @@ public class SellerController {
     private final ProductManagerService productManagerService;
 
     @GetMapping("/products")
-    public ResponseEntity<ProductListReponse> getLists(
+    public ResponseEntity<ProductListResponse> getLists(
             @PageableDefault Pageable pageable,
             @ModelAttribute ProductListRequest requests
             ){
 
-        ProductListReponse result = productManagerService.getLists(pageable, requests);
+        ProductListResponse result = productManagerService.getLists(pageable, requests);
 
         return ResponseEntity.ok(result);
     }
@@ -45,7 +49,7 @@ public class SellerController {
             String accountCode,
             @PathVariable("code") String productCode
     ){
-        ProductDetailResponse result = productManagerService.getProductDetail(accountCode,productCode);
+        ProductDetailResponse result = productManagerService.getManagerProductDetail(accountCode,productCode);
 
         return ResponseEntity.ok(result);
     }

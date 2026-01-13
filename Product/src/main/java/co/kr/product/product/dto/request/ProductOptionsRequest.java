@@ -1,8 +1,8 @@
-package co.kr.product.seller.model.dto;
+package co.kr.product.product.dto.request;
 
 import java.math.BigDecimal;
 
-public record ProductOptionsResponse(
+public record ProductOptionsRequest(
         String code,
         String name,
         int sortOrder,
@@ -10,5 +10,5 @@ public record ProductOptionsResponse(
         BigDecimal salePrice,
         int stock,
         String status
-) {
+        ) {
 }

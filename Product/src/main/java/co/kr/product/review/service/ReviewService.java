@@ -31,7 +31,7 @@ public class ReviewService {
                 .map(r -> new ReviewResponse(
                         r.getReviewIdx(),
                         r.getProductsIdx(),
-                        r.getUserIdx(),
+                        r.getUsersIdx(),
                         r.getEvaluation(),
                         r.getContent(),
                         r.getCreatedAt()
@@ -57,12 +57,12 @@ public class ReviewService {
         }
 
         // 정책: 같은 유저는 같은 상품에 리뷰 1개만 가능
-        if (reviewRepository.existsByProductsIdxAndUserIdxAndDelFalse(productsIdx, userIdx)) {
+        if (reviewRepository.existsByProductsIdxAndUsersIdxAndDelFalse(productsIdx, userIdx)) {
             throw new IllegalStateException("이미 해당 상품에 리뷰를 작성하셨습니다.");
         }
 
         // (추가 안전장치) 주문아이템당 리뷰 1개
-        if (reviewRepository.existsByOrderItemIdxAndDelFalse(req.getOrderItemIdx())) {
+        if (reviewRepository.existsByOrdersItemIdxAndDelFalse(req.getOrderItemIdx())) {
             throw new IllegalStateException("이미 해당 주문상품에 리뷰가 존재합니다.");
         }
 
@@ -80,7 +80,7 @@ public class ReviewService {
             return new ReviewResponse(
                     saved.getReviewIdx(),
                     saved.getProductsIdx(),
-                    saved.getUserIdx(),
+                    saved.getUsersIdx(),
                     saved.getEvaluation(),
                     saved.getContent(),
                     saved.getCreatedAt()
@@ -107,7 +107,7 @@ public class ReviewService {
             throw new IllegalArgumentException("content is required.");
         }
 
-        Review review = reviewRepository.findByReviewIdxAndUserIdxAndDelFalse(reviewIdx, userIdx)
+        Review review = reviewRepository.findByReviewIdxAndUsersIdxAndDelFalse(reviewIdx, userIdx)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰가 없거나 수정 권한이 없습니다."));
 
         review.update(req.getEvaluation(), req.getContent());
@@ -115,7 +115,7 @@ public class ReviewService {
         return new ReviewResponse(
                 review.getReviewIdx(),
                 review.getProductsIdx(),
-                review.getUserIdx(),
+                review.getUsersIdx(),
                 review.getEvaluation(),
                 review.getContent(),
                 review.getCreatedAt()
@@ -127,7 +127,7 @@ public class ReviewService {
     public void deleteReview(Long reviewIdx) {
         Long userIdx = CurrentUser.userIdxOrThrow();
 
-        Review review = reviewRepository.findByReviewIdxAndUserIdxAndDelFalse(reviewIdx, userIdx)
+        Review review = reviewRepository.findByReviewIdxAndUsersIdxAndDelFalse(reviewIdx, userIdx)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰가 없거나 삭제 권한이 없습니다."));
 
         review.softDelete();

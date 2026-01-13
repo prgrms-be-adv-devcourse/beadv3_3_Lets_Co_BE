@@ -1,13 +1,10 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductImageResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductOptionResponse;
-import co.kr.product.product.dto.response.ProductResponse;
-import co.kr.product.product.entity.Product;
-import co.kr.product.product.entity.ProductImage;
-import co.kr.product.product.entity.ProductOption;
+import co.kr.product.product.dto.response.*;
+import co.kr.product.product.dto.vo.ProductStatus;
+import co.kr.product.product.entity.ProductEntity;
+import co.kr.product.product.entity.ProductImageEntity;
+import co.kr.product.product.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
@@ -19,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+
+import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
 
 @Service
 @RequiredArgsConstructor
@@ -33,11 +33,12 @@ public class ProductService {
      */
     @Transactional(readOnly = true)
     public ProductListResponse getProducts(Pageable pageable) {
-        Page<Product> page = productRepository.findByDelFalse(pageable);
+        Page<ProductEntity> page = productRepository.findByDelFalse(pageable);
 
         List<ProductResponse> items = page.getContent().stream()
                 .map(p -> new ProductResponse(
                         p.getProductsIdx(),
+                        p.getProductsCode(),
                         p.getProductsName(),
                         p.getPrice(),
                         p.getSalePrice(),
@@ -54,55 +55,54 @@ public class ProductService {
      * - 이미지/옵션 포함
      */
     @Transactional
-    public ProductDetailResponse getProductDetail(Long productsIdx) {
+    public ProductDetailResponse getProductDetail(String productsCode) {
 
-        Product product = productRepository.findByProductsIdxAndDelFalse(productsIdx)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productsIdx));
+        ProductEntity productEntity = productRepository.findByProductsCodeAndDelFalse(productsCode)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productsCode));
 
         // 조회수 증가 (서비스에서 처리)
         // @Modifying 쿼리로 원자적 증가도 가능
         // product.increaseViewCount(); // 메서드 만들었으면 사용
         // 메서드가 주석이라면 아래처럼 직접 증가
-        Long vc = (product.getViewCount() == null ? 0L : product.getViewCount());
+        // Long vc = (productEntity.getViewCount() == null ? 0L : productEntity.getViewCount());
         // 리플렉션 없이는 setter가 없으니 "증가 메서드"를 Product에 다시 넣는 걸 권장
         // 여기서는 안전하게 update 쿼리로 처리하도록 아래 방식 추천:
         // -> 아래 5번에서 개선안 제공
 
+        // 해당 경우 return 한 productEntity에서는 증가된 조회수가 적용 안 됨.
+        // 하지만 이를위해 select를 한 번 더 쓰는것 보단 이게 좋다고 봅니다.
+        productEntity.increaseViewCount();
+
         // 이미지/옵션 조회
-        List<ProductImage> images = productImageRepository
-                .findByProductsIdxAndDelFalseOrderByIsThumbnailDescSortOrderAsc(productsIdx);
+        List<ProductImageEntity> images = productImageRepository
+                .findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(productEntity);
 
-        List<ProductOption> options = productOptionRepository
-                .findByProductsIdxAndDelFalseOrderBySortOrderAsc(productsIdx);
+        List<ProductOptionEntity> options = productOptionRepository
+                .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
 
-        List<ProductImageResponse> imageDtos = images.stream()
-                .map(i -> new ProductImageResponse(i.getImageIdx(), i.getUrl(), i.getSortOrder(), i.getIsThumbnail()))
-                .toList();
-
-        List<ProductOptionResponse> optionDtos = options.stream()
-                .map(o -> new ProductOptionResponse(
-                        o.getOptionGroupIdx(),
-                        o.getOptionName(),
-                        o.getOptionPrice(),
-                        o.getOptionSalePrice(),
-                        o.getStock(),
-                        o.getStatus()
-                ))
-                .toList();
-
-        //  viewCount 증가 반영을 제대로 하려면 아래 "5번 개선안" 적용 권장
-        return new ProductDetailResponse(
-                product.getProductsIdx(),
-                product.getProductsName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getSalePrice(),
-                product.getStock(),
-                product.getStatus(),
-                product.getViewCount(), // 현재 값
-                imageDtos,
-                optionDtos
+        return toProductDetail(
+                "success",
+                productEntity,
+                options,
+                images
         );
+    }
+
+    public ProductCheckStockResponse getCheckStock(String productsCode) {
+        ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
+                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+        if (product.getStock() <= 0 && product.getStatus().equals(ProductStatus.SOLD_OUT.name())) {
+            return new ProductCheckStockResponse(
+                    "Success",
+                    false
+            );
+        }
+        else {
+            return new ProductCheckStockResponse(
+                    "Success",
+                    true
+            );
+        }
     }
 }
 

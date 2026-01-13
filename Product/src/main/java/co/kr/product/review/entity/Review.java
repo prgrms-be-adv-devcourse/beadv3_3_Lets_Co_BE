@@ -24,12 +24,12 @@ public class Review {
     @Column(name = "Products_IDX", nullable = false)
     private Long productsIdx;
 
-    @Column(name = "User_IDX", nullable = false)
-    private Long userIdx;
+    @Column(name = "Users_IDX", nullable = false)
+    private Long usersIdx;
 
     // 주문아이템당 리뷰 1개 (DB에서도 UNIQUE)
-    @Column(name = "Order_Item_IDX", nullable = false, unique = true)
-    private Long orderItemIdx;
+    @Column(name = "Orders_Item_IDX", nullable = false, unique = true)
+    private Long ordersItemIdx;
 
     @Column(name = "Evaluation", nullable = false)
     private Integer evaluation; // 1~5 (DB CHECK)
@@ -47,10 +47,10 @@ public class Review {
     @ColumnDefault("0")
     private Boolean del;
 
-    public Review(Long productsIdx, Long userIdx, Long orderItemIdx, Integer evaluation, String content) {
+    public Review(Long productsIdx, Long usersIdx, Long ordersItemIdx, Integer evaluation, String content) {
         this.productsIdx = productsIdx;
-        this.userIdx = userIdx;
-        this.orderItemIdx = orderItemIdx;
+        this.usersIdx = usersIdx;
+        this.ordersItemIdx = ordersItemIdx;
         this.evaluation = evaluation;
         this.content = content;
         this.del = false;

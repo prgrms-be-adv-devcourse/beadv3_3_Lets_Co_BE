@@ -1,0 +1,41 @@
+name: elk
+
+services:
+  elasticsearch:
+    build: 
+      context: .
+      dockerfile: Dockerfile-elastic
+    container_name: elasticsearch
+
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node              
+      - xpack.security.enabled=false            
+      - xpack.security.http.ssl.enabled=false   
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ELASTIC_PASSWORD=
+
+    volumes:
+      - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
+
+
+  kibana:
+    image: kibana:9.2.2
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+  logstash:
+    build: 
+      context: .
+      dockerfile: Dockerfile-logstash
+    container_name: logstash
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ls/jars/mariadb-java-client-3.5.7.jar:/usr/share/logstash/logstash-core/lib/jars/mariadb-java-client-3.5.7.jar
+      - ./ls/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+      - ./ls/pipeline:/usr/share/logstash/pipeline

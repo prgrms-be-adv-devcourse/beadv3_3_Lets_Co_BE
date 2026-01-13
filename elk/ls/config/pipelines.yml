@@ -1,0 +1,17 @@
+# 데이터 적재 파이프라인 1 Products
+- pipeline.id: products_pipeline
+  pipeline.workers: 1
+  pipeline.batch.size: 1
+  path.config: '/usr/share/logstash/pipeline/logstash-products.conf'
+
+# 데이터 적재 파이프라인 2 ProductsOption
+#- pipeline.id: option_pipeline
+#  pipeline.workers: 1
+#  pipeline.batch.size: 1
+#  path.config: "/usr/share/logstash/pipeline/logstash-option.conf"
+
+  # 데이터 적재 파이프라인 2 ProductsImages
+#- pipeline.id: image_pipeline
+#  pipeline.workers: 1
+#  pipeline.batch.size: 1
+#  path.config: "/usr/share/logstash/pipeline/logstash-image.conf"

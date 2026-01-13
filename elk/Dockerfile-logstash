@@ -1,0 +1,5 @@
+
+FROM docker.elastic.co/logstash/logstash:9.2.2
+
+# http 플러그인 설치
+RUN bin/logstash-plugin install logstash-filter-http

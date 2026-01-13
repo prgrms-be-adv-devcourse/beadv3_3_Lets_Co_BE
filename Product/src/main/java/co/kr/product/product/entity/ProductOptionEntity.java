@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicInsert
+@DynamicUpdate
 @Table(name = "Product_Option")
 public class ProductOptionEntity {
 
@@ -51,15 +53,15 @@ public class ProductOptionEntity {
     @Column(name = "Status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "Created_at", nullable = false, updatable = false)
+    @Column(name = "Created_at",updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "Updated_at", nullable = false)
+    @Column(name = "Updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "Del", nullable = false)
     @ColumnDefault("0")
-    private Boolean del;
+    private Boolean del = false;
 
 
     @Builder

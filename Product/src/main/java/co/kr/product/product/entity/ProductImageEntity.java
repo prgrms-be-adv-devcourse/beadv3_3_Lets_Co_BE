@@ -37,12 +37,12 @@ public class ProductImageEntity {
     @ColumnDefault("0")
     private Boolean isThumbnail;
 
-    @Column(name = "Created_at", nullable = false, updatable = false)
+    @Column(name = "Created_at",updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "Del", nullable = false)
     @ColumnDefault("0")
-    private Boolean del;
+    private Boolean del = false;
 
     @Builder
     public ProductImageEntity(ProductEntity product, String url, Integer sortOrders, Boolean isThumbnail) {

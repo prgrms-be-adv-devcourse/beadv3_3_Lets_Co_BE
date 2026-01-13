@@ -7,7 +7,6 @@ import co.kr.product.product.dto.response.ProductListResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductManagerService {
-    ProductListResponse getLists(Pageable pageable, ProductListRequest request);
 
     ProductDetailResponse addProduct(String accountCode, UpsertProductRequest request);
 
@@ -16,4 +15,6 @@ public interface ProductManagerService {
     ProductDetailResponse updateProduct(String accountCode, String code, UpsertProductRequest request);
 
     void deleteProduct(String accountCode, String code);
+
+    ProductListResponse getListsBySeller(String accountCode, Pageable pageable, ProductListRequest requests);
 }

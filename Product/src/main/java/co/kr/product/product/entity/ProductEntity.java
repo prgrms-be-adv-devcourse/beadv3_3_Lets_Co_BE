@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,8 +16,10 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+// createdAt,Updated_at을 null로 보낼 수 있도록 함
 @DynamicInsert
-@Table(name = "Products") // DB 생성 SQL 기준
+@DynamicUpdate
+@Table(name = "Products")
 public class ProductEntity {
 
     @Id
@@ -24,15 +27,12 @@ public class ProductEntity {
     @Column(name = "Products_IDX")
     private Long productsIdx;
 
-    // DB 컬럼: Seller_IDX (User_IDX 아님)
     @Column(name = "Seller_IDX", nullable = false)
     private Long sellerIdx;
 
-    // DB 컬럼: Products_Code
     @Column(name = "Products_Code", nullable = false, length = 50, unique = true)
     private String productsCode;
 
-    // DB 컬럼: Products_Name
     @Column(name = "Products_Name", nullable = false, length = 200)
     private String productsName;
 
@@ -58,16 +58,15 @@ public class ProductEntity {
     @ColumnDefault("0")
     private Long viewCount;
 
-    @Column(name = "Created_at", nullable = false, updatable = false)
+    @Column(name = "Created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "Updated_at", nullable = false)
+    @Column(name = "Updated_at")
     private LocalDateTime updatedAt;
 
-    // DB는 TINYINT(1), JPA에서 Boolean 매핑
     @Column(name = "Del", nullable = false)
     @ColumnDefault("0")
-    private Boolean del;
+    private Boolean del = false;
 
     @Builder
     public ProductEntity(Long sellerIdx,

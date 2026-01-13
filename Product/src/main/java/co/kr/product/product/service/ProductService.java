@@ -30,6 +30,7 @@ public class ProductService {
 
     /**
      * 상품 목록 조회 (비회원/회원 모두)
+     * 지금은 사용 안함. > Elastic에서 처리
      */
     @Transactional(readOnly = true)
     public ProductListResponse getProducts(Pageable pageable) {
@@ -69,9 +70,11 @@ public class ProductService {
         // 여기서는 안전하게 update 쿼리로 처리하도록 아래 방식 추천:
         // -> 아래 5번에서 개선안 제공
 
-        // 해당 경우 return 한 productEntity에서는 증가된 조회수가 적용 안 됨.
-        // 하지만 이를위해 select를 한 번 더 쓰는것 보단 이게 좋다고 봅니다.
+
+        // 아래 코드의 경우 return 한 productEntity에서는 증가된 조회수가 적용 안 됨.
+        // 하지만 이를위해 select를 한 번 더 쓰는것 보단 이게 좋다고 봅니다
         productEntity.increaseViewCount();
+
 
         // 이미지/옵션 조회
         List<ProductImageEntity> images = productImageRepository
@@ -88,10 +91,16 @@ public class ProductService {
         );
     }
 
+    /**
+     *  상품 재고 체크
+     * @param productsCode
+     * @return resultCode, isInStock
+     * 지금은 boolean을 통해 재고 여부를 알려주지만, 이후 상의해봐야함
+     */
     public ProductCheckStockResponse getCheckStock(String productsCode) {
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
-        if (product.getStock() <= 0 && product.getStatus().equals(ProductStatus.SOLD_OUT.name())) {
+        if (product.getStock() <= 0 || product.getStatus().equals(ProductStatus.SOLD_OUT)) {
             return new ProductCheckStockResponse(
                     "Success",
                     false

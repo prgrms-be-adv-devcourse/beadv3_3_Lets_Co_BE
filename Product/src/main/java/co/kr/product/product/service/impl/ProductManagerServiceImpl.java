@@ -1,21 +1,25 @@
 package co.kr.product.product.service.impl;
 
 
+import co.kr.product.product.document.ProductDocument;
 import co.kr.product.product.dto.request.ProductImagesRequest;
 import co.kr.product.product.dto.request.ProductListRequest;
 import co.kr.product.product.dto.request.ProductOptionsRequest;
 import co.kr.product.product.dto.request.UpsertProductRequest;
 import co.kr.product.product.dto.response.ProductDetailResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.dto.response.ProductResponse;
 import co.kr.product.product.entity.ProductEntity;
 import co.kr.product.product.entity.ProductImageEntity;
 import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.repository.ProductEsRepository;
 import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductManagerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,20 +41,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private final ProductRepository productRepository;
     private final ProductOptionRepository optionRepository;
     private final ProductImageRepository imageRepository;
+    private final ProductEsRepository productEsRepository;
 
-    @Override
-    @Transactional
-    public ProductListResponse getLists(Pageable pageable, ProductListRequest request) {
-
-
-
-        //elastic 접속
-
-
-        ProductListResponse result = null;
-
-        return result;
-    }
 
     @Override
     @Transactional
@@ -70,6 +62,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 .price(request.price())
                 .salePrice(request.salePrice())
                 .stock(request.stock())
+                .status(request.status())
                 .build();
 
         ProductEntity savedItem = productRepository.save(item);
@@ -85,6 +78,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                                 .optionPrice(requestOpt.price())
                                 .optionSalePrice(requestOpt.salePrice())
                                 .stock(requestOpt.stock())
+                                .status(requestOpt.status())
                                 .build()
 
                         ).toList();
@@ -118,9 +112,10 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductDetailResponse getManagerProductDetail(String accountCode, String code){
         // !!!!!!!!!!본인 확인 필요!!!!!!!!!
 
-
+        // 상품 조회
         ProductEntity product =  productRepository.findByProductsCodeAndDelFalse(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+        
         // 이미지/옵션 조회
         List<ProductImageEntity> images = imageRepository
                 .findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(product);
@@ -128,6 +123,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         List<ProductOptionEntity> options = optionRepository
                 .findByProductAndDelFalseOrderBySortOrdersAsc(product);
 
+        // mapper 사용
         return toProductDetail(
                 "success",
                 product,
@@ -136,6 +132,13 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         );
     }
 
+    /**
+     * 상품 정보 업데이트
+     * @param accountCode
+     * @param code
+     * @param request
+     * @return
+     */
     @Override
     @Transactional
     public ProductDetailResponse updateProduct(
@@ -144,16 +147,17 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             UpsertProductRequest request){
         // !!!!!!!!!!본인 확인 필요!!!!!!!!!
 
+
         // Entity 가져오기
-        ProductEntity product = productRepository.findByProductsIdxAndDelFalse(request.productsIdx())
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));// 예외처리 필요
+        ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
+                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
 
         List<ProductOptionEntity> options = optionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product);
 
         Map<String, ProductOptionEntity> optionMap = options.stream()
                 .collect(Collectors.toMap(ProductOptionEntity::getOptionCode, Function.identity()));
 
-        // 빈 리스트 생성
+        // 빈 리스트 생성 (추가 옵션,이미지를 담기 위함)
         List<ProductOptionEntity> newOptions = new ArrayList<>();
         List<ProductImageEntity> newImages = new ArrayList<>();
 
@@ -163,6 +167,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
 
         // 옵션 update 진행
+        // 추가 된 옵션, 삭제 된 옵션, 수정 된 옵션 전부 처리
         for(ProductOptionsRequest dto : request.options()){
             // 추가 된 옵션
             if(dto.code() == null){
@@ -174,6 +179,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                                 .optionPrice(dto.price())
                                 .optionSalePrice(dto.salePrice())
                                 .stock(dto.stock())
+                                .status(dto.status())
                                 .build()
 
                         );
@@ -196,11 +202,17 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         for (ProductOptionEntity remain : optionMap.values()){
             remain.delete();
         }
+        // 반환 데이터 생성을 위해 리스트에서도 제거
+        options.removeAll(optionMap.values());
 
         // 위에서 찾은 추가 옵션 저장
         if(!newOptions.isEmpty()){
-            optionRepository.saveAll(newOptions);
+            List<ProductOptionEntity> newOptionsList = optionRepository.saveAll(newOptions);
+            // 반환 데이터 생성을 위해 리스트 연결
+            options.addAll(newOptionsList);
         }
+
+
 
         // 이미지 수정
         // 이미지는 옵션과 달리 product 에만 이어져 있기에 삭제 후 다시 생성해도 큰 문제가 없을것이라 생각.
@@ -222,6 +234,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         }
         List<ProductImageEntity> images = imageRepository.saveAll(newImages);
 
+        // mapper 사용
         return toProductDetail(
                 "success",
                 product,
@@ -237,7 +250,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 본인 확인 필수 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        // 존재 확인
+        // 엔티티 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
         List<ProductOptionEntity> options = optionRepository.findByProductAndDelFalse(product);
@@ -261,8 +274,37 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         try{
             images.forEach(ProductImageEntity::delete);
         } catch (Exception e) {
-            throw new IllegalArgumentException("옵션 삭제 실패.");
+            throw new IllegalArgumentException("이미지 삭제 실패.");
         }
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductListResponse getListsBySeller(String accountCode, Pageable pageable, ProductListRequest requests){
+        // 본인 확인 필수!!!!!!!!!
+        // 임시
+        Long sellerIdx = 2L;
+
+        // 검색어 존재 시 검색 진행
+        Page<ProductDocument> pageResult = (requests.search() == null || requests.search().isBlank())
+                ? productEsRepository.findAll(pageable)
+                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(sellerIdx,requests.search() ,pageable);
+        
+        // 2. Document -> Response DTO 변환
+        List<ProductResponse> items = pageResult.stream()
+                .map(doc -> new ProductResponse(
+                        doc.getProductsIdx(),
+                        doc.getProductsCode(),
+                        doc.getProductsName(),
+                        doc.getPrice(),     // Double -> BigDecimal 변환
+                        doc.getSalePrice(), // Double -> BigDecimal 변환
+                        doc.getViewCount()
+                ))
+                .toList();
+        return new ProductListResponse(
+                "success",items
+
+        );
     }
 }

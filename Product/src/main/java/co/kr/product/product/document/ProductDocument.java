@@ -10,12 +10,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Document(indexName = "products-index", createIndex = false) // 생성한 인덱스 이름과 일치해야 함
+// Elastic 내 products-index 인덱스
+@Document(indexName = "products-index", createIndex = false)
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductDocument {
 
-    @Id // ES 내부 ID (String)
+    @Id // ES 내부 ID, 실제로 우리가 사용하지는 않음
     private String id;
 
     @Field(name = "products_idx", type = FieldType.Long)
@@ -48,5 +49,6 @@ public class ProductDocument {
     @Field(name = "updated_at", type = FieldType.Date,format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSX")
     private LocalDateTime updatedAt;
 
-
+    @Field(name = "del", type = FieldType.Boolean)
+    private boolean del;
 }

@@ -25,49 +25,85 @@ public class AdminController {
 
     private final ProductManagerService productManagerService;
     private final ProductSearchService productSearchService;
-    @GetMapping("/test")
+
+    // Elastic 연결 테스트용 메서드
+/*    @GetMapping("/test")
     public ResponseEntity<List<ProductDocument>> testElastic(){
         List<ProductDocument> test =  productSearchService.search();
         return ResponseEntity.ok(test);
-    }
+    }*/
 
+    /**
+     * 상품 목록 조회 (관리자용)
+     * @param pageable  page,size,sort
+     * @param requests  search
+     * @return 상품 리스트
+     */
     @GetMapping("/products")
     public ResponseEntity<ProductListResponse> getProductList(
             @PageableDefault Pageable pageable,
             @ModelAttribute ProductListRequest requests
             ){
 
-        return ResponseEntity.ok(null);
+
+        return ResponseEntity.ok(productSearchService.getProductsList(pageable,requests.search()));
 
     }
 
+    /**
+     * 상품 상세 조회(관리자용)
+     * // @param accountCode
+     * @param productCode
+     * @return 상품 상세 정보
+     */
     @GetMapping("/products/{code}")
     public ResponseEntity<ProductDetailResponse> getProductDetail(
             //`@AuthenticationPrincipal(expression = "accountCode")`
-            String accountCode,
-            @PathVariable("code") String productCode){
 
+            @PathVariable("code") String productCode){
+    
+        // 임시
+        String accountCode = "test";
+        
         ProductDetailResponse result = productManagerService.getManagerProductDetail(accountCode, productCode);
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * 상품 code를 통한 상품 정보 수정(관리자)
+     * // @param accountCode
+     * @param request
+     * @param productCode
+     * @return 상품 상세 정보
+     */
+
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailResponse> updateProduct(
             //`@AuthenticationPrincipal(expression = "accountCode")`
-            String accountCode,
+
             @RequestBody UpsertProductRequest request,
             @PathVariable("code") String productCode){
 
+        String accountCode = "test";
         ProductDetailResponse result = productManagerService.updateProduct(accountCode, productCode, request);
 
         return ResponseEntity.ok(result);
 
     }
 
+    /**
+     * 상품 코드를 통한 상품 삭제 (관리자)
+     * // @param accountCode
+     * @param productCode
+     * @return resultCode
+     */
     @DeleteMapping("/products/{code}")
     public ResponseEntity<ResultResponse> deleteProduct(
-            String accountCode,
+
             @PathVariable("code") String productCode){
+        
+        String accountCode = "test";
+
         productManagerService.deleteProduct(accountCode, productCode);
 
         return ResponseEntity.ok(new ResultResponse("Success"));

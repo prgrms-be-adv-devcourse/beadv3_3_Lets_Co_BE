@@ -64,10 +64,6 @@ public class ProductMapper {
         );
     }
 
-    public static ProductResponse toProductEach(){
-        
-        return null;
-    }
 
 
 }

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,14 +21,15 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
     private final ProductEsRepository productEsRepository;
 
-    public List<ProductDocument> search(){
-        return productEsRepository.findAll();
-    }
 
+    // 상품 리스트 전체/검색
+    @Transactional(readOnly = true)
     public ProductListResponse getProductsList(Pageable pageable, String search){
+        
+        // 1. 검색 (search 없을 시 전체 리스트 반환)
         Page<ProductDocument> pageResult = (search == null || search.isBlank())
                 ? productEsRepository.findAll(pageable)
-                : productEsRepository.findByProductsName(search, pageable);
+                : productEsRepository.findByProductsNameAndDelFalse(search, pageable);
 
         // 2. Document -> Response DTO 변환
         List<ProductResponse> items = pageResult.stream()
@@ -35,11 +37,12 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                         doc.getProductsIdx(),
                         doc.getProductsCode(),
                         doc.getProductsName(),
-                        doc.getPrice(),     // Double -> BigDecimal 변환
-                        doc.getSalePrice(), // Double -> BigDecimal 변환
+                        doc.getPrice(),
+                        doc.getSalePrice(),
                         doc.getViewCount()
                 ))
                 .toList();
+
         return new ProductListResponse(
                 "success",items
 

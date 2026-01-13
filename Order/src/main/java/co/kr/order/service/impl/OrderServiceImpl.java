@@ -38,12 +38,13 @@ public class OrderServiceImpl implements OrderService {
     private final ProductClient productClient;
     private final UserClient userClient;
 
-    /**
+    /*
      * Todo
-     * - 재고가 없을때 처리
-     * - N+1 문제
-     * - 카트/단일 주문의 중복 로직을 통합
+     * 재고가 없을때 처리
+     * N+1 문제
+     * 카트/단일 주문의 중복 로직을 통합
      */
+
 
     @Transactional
     @Override
@@ -55,8 +56,10 @@ public class OrderServiceImpl implements OrderService {
         ProductInfo productInfo = productClient.getProduct(orderRequest.productIdx(), orderRequest.optionIdx());
         BigDecimal itemAmount = productInfo.price().multiply(BigDecimal.valueOf(orderRequest.quantity()));
 
-        // Member 서비스에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져옴
+        // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져옴
         UserData userData = userClient.getOrderData(token);
+
+        // userData에 주소/카드 정보 재대로 있는지 검증
         validateOrderData(userData);
 
         // Order Table 세팅
@@ -95,6 +98,7 @@ public class OrderServiceImpl implements OrderService {
                 orderRequest.quantity()
         );
 
+        // 응답 dto 생성
         return new OrderDirectResponse(
                 itemInfo,
                 itemAmount
@@ -109,10 +113,14 @@ public class OrderServiceImpl implements OrderService {
     public OrderCartResponse cartOrder(String token, CartOrderRequest cartOrderRequest) {
 
         // todo: 유저가 카드/주소 데이터(DTO)를 body에 넣었을 때 Member-service에 데이터 전송
+
+        // 초반 로직 directOrder와 동일
         UserData userData = userClient.getOrderData(token);
         validateOrderData(userData);
 
+        // response에 담길 리스트
         List<OrderItemResponse> itemList = new ArrayList<>();
+        // itemAmount가 notnull 이기 때문에 0으로 초기화 할 값
         BigDecimal itemAmount = BigDecimal.ZERO;
 
         // Order Table 세팅
@@ -171,6 +179,7 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
+    // userData에 주소/카드 정보 재대로 있는지 확인 없으면 예외
     private void validateOrderData(UserData userData) {
         if (userData.addressIdx() == null && userData.cardIdx() == null) {
             throw new NoInputOrderDataException(ErrorCode.NO_INPUT_ORDER_DATA);

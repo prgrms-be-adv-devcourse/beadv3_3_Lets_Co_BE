@@ -6,7 +6,7 @@ import co.kr.order.exception.CartNotFoundException;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.mapper.CartMapper;
 import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.request.CartRequest;
+import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.response.CartItemResponse;
 import co.kr.order.model.dto.response.CartResponse;
 import co.kr.order.model.entity.CartEntity;
@@ -31,11 +31,11 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartItemResponse addCartItem(String token, CartRequest cartRequest) {
+    public CartItemResponse addCartItem(String token, ProductRequest productRequest) {
         Long userIdx = userClient.getUserIdx(token);
 
-        ProductInfo productInfo = productClient.getProduct(cartRequest.productIdx(), cartRequest.optionIdx());
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, cartRequest.productIdx(), cartRequest.optionIdx());
+        ProductInfo productInfo = productClient.getProduct(productRequest.productIdx(), productRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, productRequest.productIdx(), productRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             // 장바구니에서 상품을 + 했을 경우
@@ -50,8 +50,8 @@ public class CartServiceImpl implements CartService {
             CartEntity newCart = new CartEntity();
 
             newCart.setUserIdx(userIdx);
-            newCart.setProductIdx(cartRequest.productIdx());
-            newCart.setOptionIdx(cartRequest.optionIdx());
+            newCart.setProductIdx(productRequest.productIdx());
+            newCart.setOptionIdx(productRequest.optionIdx());
             newCart.setQuantity(1);
             newCart.setPrice(productInfo.price());
             newCart.setDel(false);
@@ -59,16 +59,16 @@ public class CartServiceImpl implements CartService {
             cartRepository.save(newCart);
         }
 
-        return getCartItem(token, cartRequest);
+        return getCartItem(token, productRequest);
     }
 
     @Override
     @Transactional
-    public CartItemResponse subtractCartItem(String token, CartRequest cartRequest) {
+    public CartItemResponse subtractCartItem(String token, ProductRequest productRequest) {
         Long userId = userClient.getUserIdx(token);
 
-        ProductInfo productInfo = productClient.getProduct(cartRequest.productIdx(), cartRequest.optionIdx());
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, cartRequest.productIdx(), cartRequest.optionIdx());
+        ProductInfo productInfo = productClient.getProduct(productRequest.productIdx(), productRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productRequest.productIdx(), productRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             CartEntity entity = existingCart.get();
@@ -87,12 +87,13 @@ public class CartServiceImpl implements CartService {
             throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
         }
 
-        return getCartItem(token, cartRequest);
+        return getCartItem(token, productRequest);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CartResponse getCartList(String token) {
+
         Long userIdx = userClient.getUserIdx(token);
         List<CartEntity> entities = cartRepository.findAllByUserIdx(userIdx);
         List<CartItemResponse> cartList = new ArrayList<>();
@@ -117,7 +118,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartItemResponse getCartItem(String token, CartRequest request) {
+    public CartItemResponse getCartItem(String token, ProductRequest request) {
 
         Long userIdx = userClient.getUserIdx(token);
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx()).orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
@@ -137,10 +138,10 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void deleteCartItem(String token, CartRequest cartRequest) {
+    public void deleteCartItem(String token, ProductRequest productRequest) {
         Long userId = userClient.getUserIdx(token);
 
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, cartRequest.productIdx(), cartRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productRequest.productIdx(), productRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             CartEntity entity = existingCart.get();

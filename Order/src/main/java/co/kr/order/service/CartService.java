@@ -1,14 +1,14 @@
 package co.kr.order.service;
 
-import co.kr.order.model.dto.request.CartRequest;
+import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.response.CartItemResponse;
 import co.kr.order.model.dto.response.CartResponse;
 
 public interface CartService {
 
-    CartItemResponse addCartItem(String token, CartRequest cartRequest);
-    CartItemResponse subtractCartItem(String token, CartRequest cartRequest);
+    CartItemResponse addCartItem(String token, ProductRequest productRequest);
+    CartItemResponse subtractCartItem(String token, ProductRequest productRequest);
     CartResponse getCartList(String token);
-    CartItemResponse getCartItem(String token, CartRequest cartRequest);
-    void deleteCartItem(String token, CartRequest cartRequest);
+    CartItemResponse getCartItem(String token, ProductRequest productRequest);
+    void deleteCartItem(String token, ProductRequest productRequest);
 }

@@ -8,6 +8,7 @@ import java.util.List;
 
 public class CartMapper {
 
+    // List<CartItemRespons> -> CartResponse
     public static CartResponse toCartInfo(List<CartItemResponse> products) {
         return new CartResponse(products);
     }

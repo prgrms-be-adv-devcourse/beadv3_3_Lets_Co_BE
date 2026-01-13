@@ -2,7 +2,7 @@ package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
-import co.kr.order.model.dto.request.CartRequest;
+import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.repository.CartJpaRepository;
@@ -117,7 +117,7 @@ class CartControllerTest {
     @DisplayName("장바구니 제품 추가 - 정상(상품 목록에서 장바구니 추가를 눌렀을 경우)")
     void 장바구니_추가_1() throws Exception {
 
-        CartRequest request = new CartRequest(102L, 12L);
+        ProductRequest request = new ProductRequest(102L, 12L);
 
         ProductInfo mockProduct3 = new ProductInfo(102L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"));
         given(productClient.getProduct(102L, 12L)).willReturn(mockProduct3);
@@ -151,7 +151,7 @@ class CartControllerTest {
     @DisplayName("장바구니 제품 추가 - 정상(장바구니에서 상품에 +를 눌렀을 경우)")
     void 장바구니_추가_2() throws Exception {
 
-        CartRequest request = new CartRequest(100L, 10L);
+        ProductRequest request = new ProductRequest(100L, 10L);
 
         // when
         ResultActions resultActions = mvc
@@ -180,7 +180,7 @@ class CartControllerTest {
     @DisplayName("장바구니 제품 빼기 - 정상(장바구니에서 상품에 -를 눌렀을 경우)")
     void 장바구니_빼기() throws Exception {
 
-        CartRequest request = new CartRequest(100L, 10L);
+        ProductRequest request = new ProductRequest(100L, 10L);
 
         // when
         ResultActions resultActions = mvc
@@ -209,7 +209,7 @@ class CartControllerTest {
     @DisplayName("장바구니 제품 삭제 - 정상(장바구니에서 상품에 x를 눌렀을 경우)")
     void 장바구니_삭제() throws Exception {
 
-        CartRequest request = new CartRequest(100L, 10L);
+        ProductRequest request = new ProductRequest(100L, 10L);
 
         // when
         ResultActions resultActions = mvc

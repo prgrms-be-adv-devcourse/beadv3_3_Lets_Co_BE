@@ -38,11 +38,10 @@ public class OrderServiceImpl implements OrderService {
     private final ProductClient productClient;
     private final UserClient userClient;
 
-
     /**
      * Todo
      * - 재고가 없을때 처리
-     * - N+1 문제 해결\
+     * - N+1 문제
      * - 카트/단일 주문의 중복 로직을 통합
      */
 
@@ -130,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
         orderEntity.setDel(false);
         orderRepository.save(orderEntity);
 
-        List<OrderRequest> items = cartOrderRequest.list();
+        List<OrderRequest> items = cartOrderRequest.orderList();
         for(OrderRequest item : items) {
             ProductInfo productInfo = productClient.getProduct(item.productIdx(), item.optionIdx());
             BigDecimal unitAmount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));

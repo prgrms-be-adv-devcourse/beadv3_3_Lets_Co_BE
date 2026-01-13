@@ -1,14 +1,14 @@
 package co.kr.order.mapper;
 
 
-import co.kr.order.model.dto.CartInfo;
-import co.kr.order.model.dto.CartItemInfo;
+import co.kr.order.model.dto.response.CartResponse;
+import co.kr.order.model.dto.response.CartItemResponse;
 
 import java.util.List;
 
 public class CartMapper {
 
-    public static CartInfo toCartInfo(List<CartItemInfo> products) {
-        return new CartInfo(products);
+    public static CartResponse toCartResponse(List<CartItemResponse> products) {
+        return new CartResponse(products);
     }
 }

@@ -1,8 +1,9 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.CartRequest;
-import co.kr.order.model.dto.BaseResponse;
-import co.kr.order.model.dto.CartInfo;
+import co.kr.order.model.dto.request.CartRequest;
+import co.kr.order.model.dto.response.BaseResponse;
+import co.kr.order.model.dto.response.CartItemResponse;
+import co.kr.order.model.dto.response.CartResponse;
 import co.kr.order.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,36 +17,50 @@ public class CartController {
     private final CartService cartService;
 
     @PostMapping("/add")
-    public ResponseEntity<BaseResponse<CartInfo>> addCartItem(
+    public ResponseEntity<BaseResponse<CartItemResponse>> addCartItem(
             @RequestHeader("Authorization") String token,
             @RequestBody CartRequest request
     ) {
 
-        CartInfo info = cartService.addCartItem(token, request.productIdx(), request.optionIdx());
-        BaseResponse<CartInfo> res = new BaseResponse<>("ok", info);
+        CartItemResponse info = cartService.addCartItem(token, request);
+        BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
 
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/subtract")
-    public ResponseEntity<BaseResponse<CartInfo>> subtractCartItem(
+    public ResponseEntity<BaseResponse<CartItemResponse>> subtractCartItem(
             @RequestHeader("Authorization") String token,
             @RequestBody CartRequest request
     ) {
 
-        CartInfo info = cartService.subtractCartItem(token, request.productIdx(), request.optionIdx());
-        BaseResponse<CartInfo> res = new BaseResponse<>("ok", info);
+        CartItemResponse info = cartService.subtractCartItem(token, request);
+        BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
 
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<CartInfo>> getCart(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<BaseResponse<CartResponse>> getCartList(
+            @RequestHeader("Authorization") String token
+    ) {
 
-        CartInfo info = cartService.getCart(token);
-        BaseResponse<CartInfo> res = new BaseResponse<>("ok", info);
+        CartResponse info = cartService.getCartList(token);
+        BaseResponse<CartResponse> body = new BaseResponse<>("ok", info);
 
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(body);
+    }
+
+    @GetMapping
+    public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
+            @RequestHeader("Authorization") String token,
+            @RequestBody CartRequest request
+    ) {
+
+        CartItemResponse info = cartService.getCartItem(token, request);
+        BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
+
+        return ResponseEntity.ok(body);
     }
 
     @DeleteMapping
@@ -54,9 +69,9 @@ public class CartController {
             @RequestBody CartRequest request
     ) {
 
-        cartService.deleteCartItem(token, request.productIdx(), request.optionIdx());
-        BaseResponse<Void> res = new BaseResponse<>("ok", null);
+        cartService.deleteCartItem(token, request);
+        BaseResponse<Void> body = new BaseResponse<>("ok", null);
 
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(body);
     }
 }

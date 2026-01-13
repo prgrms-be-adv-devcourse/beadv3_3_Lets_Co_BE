@@ -2,15 +2,17 @@ package co.kr.order.service.impl;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
+import co.kr.order.exception.CartNotFoundException;
+import co.kr.order.exception.ErrorCode;
+import co.kr.order.exception.UserNotFoundException;
 import co.kr.order.mapper.CartMapper;
-import co.kr.order.model.dto.CartInfo;
-import co.kr.order.model.dto.CartItemInfo;
 import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.request.CartRequest;
+import co.kr.order.model.dto.response.CartItemResponse;
+import co.kr.order.model.dto.response.CartResponse;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.service.CartService;
-import co.kr.order.exception.CartNotFoundException;
-import co.kr.order.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +26,17 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
-    private final CartJpaRepository cartJpaRepository;
+    private final CartJpaRepository cartRepository;
     private final ProductClient productClient;
     private final UserClient userClient;
 
     @Override
     @Transactional
-    public CartInfo addCartItem(String token, Long productIdx, Long optionIdx) {
+    public CartItemResponse addCartItem(String token, CartRequest cartRequest) {
         Long userIdx = userClient.getUserIdx(token);
 
-        ProductInfo productInfo = productClient.getProduct(productIdx, optionIdx);
-        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, productIdx, optionIdx);
-
+        ProductInfo productInfo = productClient.getProduct(cartRequest.productIdx(), cartRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, cartRequest.productIdx(), cartRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             // 장바구니에서 상품을 + 했을 경우
@@ -43,32 +44,32 @@ public class CartServiceImpl implements CartService {
             entity.plusQuantity();
             entity.addPrice(productInfo.price());
 
-            cartJpaRepository.save(entity);
+            cartRepository.save(entity);
         }
         else {
             // 상품에서 직접 카트 담기 눌렀을 경우
             CartEntity newCart = new CartEntity();
 
             newCart.setUserIdx(userIdx);
-            newCart.setProductIdx(productIdx);
-            newCart.setOptionIdx(optionIdx);
+            newCart.setProductIdx(cartRequest.productIdx());
+            newCart.setOptionIdx(cartRequest.optionIdx());
             newCart.setQuantity(1);
             newCart.setPrice(productInfo.price());
             newCart.setDel(false);
 
-            cartJpaRepository.save(newCart);
+            cartRepository.save(newCart);
         }
 
-        return getCart(token);
+        return getCartItem(token, cartRequest);
     }
 
     @Override
     @Transactional
-    public CartInfo subtractCartItem(String token, Long productIdx, Long optionIdx) {
+    public CartItemResponse subtractCartItem(String token, CartRequest cartRequest) {
         Long userId = userClient.getUserIdx(token);
 
-        ProductInfo productInfo = productClient.getProduct(productIdx, optionIdx);
-        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
+        ProductInfo productInfo = productClient.getProduct(cartRequest.productIdx(), cartRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, cartRequest.productIdx(), cartRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             CartEntity entity = existingCart.get();
@@ -76,60 +77,77 @@ public class CartServiceImpl implements CartService {
             if(entity.getQuantity() > 1) {
                 entity.minusQuantity();
                 entity.subtractPrice(productInfo.price());
-                cartJpaRepository.save(entity);
+                cartRepository.save(entity);
             }
             else {
                 // 어차피 front에서 1 이하로 안내려가게 처리할거지만 혹시모르니 삭제 처리
-                cartJpaRepository.delete(entity);
+                cartRepository.delete(entity);
             }
         }
         else {
             throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
         }
 
-        return getCart(token);
+        return getCartItem(token, cartRequest);
     }
 
+    // todo price 잘못 생각한거 같음
     @Override
     @Transactional(readOnly = true)
-    public CartInfo getCart(String token) {
+    public CartResponse getCartList(String token) {
         Long userIdx = userClient.getUserIdx(token);
-        List<CartEntity> cartList = cartJpaRepository.findAllByUserIdx(userIdx);
+        List<CartEntity> entities = cartRepository.findAllByUserIdx(userIdx);
 
-        List<CartItemInfo> cartItemInfos = new ArrayList<>();
+        List<CartItemResponse> cartList = new ArrayList<>();
 
         // todo N+1 문제 발생. 이거 나중에 안되도록 코드 수정해야함 (Order 기능 개발하고)
-        for (CartEntity cart : cartList) {
-            ProductInfo getInfo = productClient.getProduct(cart.getProductIdx(), cart.getOptionIdx());
+        for (CartEntity entity : entities) {
+            ProductInfo productInfo = productClient.getProduct(entity.getProductIdx(), entity.getOptionIdx());
 
             // 상품 가격 = 단가 * 수량
-            int quantity = cart.getQuantity();
-            BigDecimal totalPrice = getInfo.price().multiply(BigDecimal.valueOf(quantity));
+            int quantity = entity.getQuantity();
+            BigDecimal totalPrice = productInfo.price().multiply(BigDecimal.valueOf(quantity));
 
-            CartItemInfo cartItemInfo = new CartItemInfo(
-                    getInfo.productIdx(),
-                    getInfo.productName(),
-                    getInfo.optionContent(),
-                    getInfo.price(),
+            CartItemResponse cartItem = new CartItemResponse(
+                    productInfo,
                     quantity,
                     totalPrice
             );
-            cartItemInfos.add(cartItemInfo);
+            cartList.add(cartItem);
         }
 
-        return CartMapper.toCartInfo(cartItemInfos);
+        return CartMapper.toCartResponse(cartList);
+    }
+
+    @Override
+    public CartItemResponse getCartItem(String token, CartRequest request) {
+
+        Long userIdx = userClient.getUserIdx(token);
+        CartEntity entity = cartRepository.findByUserIdx(userIdx).orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        ProductInfo productInfo = productClient.getProduct(entity.getProductIdx(), entity.getOptionIdx());
+
+        // 상품 가격 = 단가 * 수량
+        int quantity = entity.getQuantity();
+        BigDecimal totalPrice = productInfo.price().multiply(BigDecimal.valueOf(quantity));
+
+        return new CartItemResponse(
+                productInfo,
+                quantity,
+                totalPrice
+        );
     }
 
     @Override
     @Transactional
-    public void deleteCartItem(String token, Long productIdx, Long optionIdx) {
+    public void deleteCartItem(String token, CartRequest cartRequest) {
         Long userId = userClient.getUserIdx(token);
 
-        Optional<CartEntity> existingCart = cartJpaRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productIdx, optionIdx);
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, cartRequest.productIdx(), cartRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             CartEntity entity = existingCart.get();
-            cartJpaRepository.deleteById(entity.getId());
+            cartRepository.deleteById(entity.getId());
         }
         else {
             throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);

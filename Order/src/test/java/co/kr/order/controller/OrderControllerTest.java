@@ -2,10 +2,10 @@ package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
-import co.kr.order.model.dto.CartOrderRequest;
-import co.kr.order.model.dto.GetOrderData;
-import co.kr.order.model.dto.OrderRequest;
+import co.kr.order.model.dto.UserData;
 import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.request.CartOrderRequest;
+import co.kr.order.model.dto.request.OrderRequest;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.vo.OrderStatus;
@@ -50,15 +50,17 @@ class OrderControllerTest {
     @Autowired OrderJpaRepository orderRepository;
     @Autowired OrderItemJpaRepository orderItemRepository;
 
-
     @BeforeEach
     void init() {
         // given
-        GetOrderData orderData = new GetOrderData(1L, 2L, 3L);
-        given(userClient.getOrderData(anyString())).willReturn(orderData);
+        UserData userData = new UserData(1L, 2L, 3L);
+        given(userClient.getOrderData(anyString())).willReturn(userData);
 
         ProductInfo productInfo1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"));
+        ProductInfo productInfo2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("15000.00"));
+
         given(productClient.getProduct(100L, 10L)).willReturn(productInfo1);
+        given(productClient.getProduct(101L, 11L)).willReturn(productInfo2);
     }
 
     @Test
@@ -80,11 +82,12 @@ class OrderControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(OrderController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data.productIdx").value(100L))
-                .andExpect(jsonPath("$.data.productName").value("테스트 상품1"))
-                .andExpect(jsonPath("$.data.optionContent").value("옵션A"))
-                .andExpect(jsonPath("$.data.price").value("10000.0"))
-                .andExpect(jsonPath("$.data.quantity").value(3));
+                .andExpect(jsonPath("$.data.item.productIdx").value(100L))
+                .andExpect(jsonPath("$.data.item.productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.item.optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.item.price").value("10000.0"))
+                .andExpect(jsonPath("$.data.item.quantity").value(3))
+                .andExpect(jsonPath("$.data.itemsAmount").value("30000.0"));
 
         // Order 테이블
         OrderEntity orderEntity = orderRepository.findById(1L).get();
@@ -94,7 +97,6 @@ class OrderControllerTest {
         Assertions.assertThat(orderEntity.getOrderCode()).isNotNull();
         Assertions.assertThat(orderEntity.getStatus()).isEqualTo(OrderStatus.CREATED.name());
         Assertions.assertThat(orderEntity.getItemsAmount()).isEqualByComparingTo("30000.00");
-        Assertions.assertThat(orderEntity.getTotalAmount()).isEqualByComparingTo("30000.00");
 
         // OrderItem 테이블
         OrderItemEntity itemEntity = orderItemRepository.findById(1L).get();
@@ -118,42 +120,56 @@ class OrderControllerTest {
 
         CartOrderRequest cart = new CartOrderRequest(items);
 
-//        ResultActions resultActions = mvc
-//                .perform(
-//                        post("/order")
-//                                .contentType(MediaType.APPLICATION_JSON)
-//                                .accept(MediaType.APPLICATION_JSON)
-//                                .header("Authorization", "Bearer Temp")
-//                                .content(objectMapper.writeValueAsString(cart))
-//                )
-//                .andDo(print());
-//
-//        resultActions.andExpect(status().isOk())
-//                .andExpect(handler().handlerType(OrderController.class))
-//                .andExpect(jsonPath("$.resultCode").value("ok"))
-//                .andExpect(jsonPath("$.data.productIdx").value(100L))
-//                .andExpect(jsonPath("$.data.productName").value("테스트 상품1"))
-//                .andExpect(jsonPath("$.data.optionContent").value("옵션A"))
-//                .andExpect(jsonPath("$.data.price").value("10000.0"))
-//                .andExpect(jsonPath("$.data.quantity").value(3));
-//
-//        // Order 테이블
-//        OrderEntity orderEntity = orderRepository.findById(1L).get();
-//        Assertions.assertThat(orderEntity.getUserIdx()).isEqualTo(1L);
-//        Assertions.assertThat(orderEntity.getAddressIdx()).isEqualTo(2L);
-//        Assertions.assertThat(orderEntity.getCardIdx()).isEqualTo(3L);
-//        Assertions.assertThat(orderEntity.getOrderCode()).isNotNull();
-//        Assertions.assertThat(orderEntity.getStatus()).isEqualTo(OrderStatus.CREATED.name());
-//        Assertions.assertThat(orderEntity.getItemsAmount()).isEqualByComparingTo("30000.00");
-//        Assertions.assertThat(orderEntity.getTotalAmount()).isEqualByComparingTo("30000.00");
-//
-//        // OrderItem 테이블
-//        OrderItemEntity itemEntity = orderItemRepository.findById(1L).get();
-//        Assertions.assertThat(itemEntity.getProductIdx()).isEqualTo(100L);
-//        Assertions.assertThat(itemEntity.getOptionIdx()).isEqualTo(10L);
-//        Assertions.assertThat(itemEntity.getProductName()).isEqualTo("테스트 상품1");
-//        Assertions.assertThat(itemEntity.getOptionName()).isEqualTo("옵션A");
-//        Assertions.assertThat(itemEntity.getPrice()).isEqualByComparingTo("10000.00");
-//        Assertions.assertThat(itemEntity.getQuantity()).isEqualTo(3);
+        // todo
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/order/cart")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer Temp")
+                                .content(objectMapper.writeValueAsString(cart))
+                )
+                .andDo(print());
+
+        resultActions.andExpect(status().isOk())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("ok"))
+                .andExpect(jsonPath("$.data.itemList[0].productIdx").value(100L))
+                .andExpect(jsonPath("$.data.itemList[0].productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.itemList[0].optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.itemList[0].price").value("10000.0"))
+                .andExpect(jsonPath("$.data.itemList[0].quantity").value(3))
+                .andExpect(jsonPath("$.data.itemList[1].productIdx").value(101L))
+                .andExpect(jsonPath("$.data.itemList[1].productName").value("테스트 상품2"))
+                .andExpect(jsonPath("$.data.itemList[1].optionContent").value("옵션B"))
+                .andExpect(jsonPath("$.data.itemList[1].price").value("15000.0"))
+                .andExpect(jsonPath("$.data.itemList[1].quantity").value(2))
+                .andExpect(jsonPath("$.data.itemsAmount").value("60000.0"));
+
+        // Order 테이블
+        OrderEntity orderEntity = orderRepository.findById(1L).get();
+        Assertions.assertThat(orderEntity.getUserIdx()).isEqualTo(1L);
+        Assertions.assertThat(orderEntity.getAddressIdx()).isEqualTo(2L);
+        Assertions.assertThat(orderEntity.getCardIdx()).isEqualTo(3L);
+        Assertions.assertThat(orderEntity.getOrderCode()).isNotNull();
+        Assertions.assertThat(orderEntity.getStatus()).isEqualTo(OrderStatus.CREATED.name());
+        Assertions.assertThat(orderEntity.getItemsAmount()).isEqualByComparingTo("60000.00");
+
+        // OrderItem 테이블
+        OrderItemEntity itemEntity1 = orderItemRepository.findById(1L).get();
+        Assertions.assertThat(itemEntity1.getProductIdx()).isEqualTo(100L);
+        Assertions.assertThat(itemEntity1.getOptionIdx()).isEqualTo(10L);
+        Assertions.assertThat(itemEntity1.getProductName()).isEqualTo("테스트 상품1");
+        Assertions.assertThat(itemEntity1.getOptionName()).isEqualTo("옵션A");
+        Assertions.assertThat(itemEntity1.getPrice()).isEqualByComparingTo("10000.00");
+        Assertions.assertThat(itemEntity1.getQuantity()).isEqualTo(3);
+
+        OrderItemEntity itemEntity2 = orderItemRepository.findById(2L).get();
+        Assertions.assertThat(itemEntity2.getProductIdx()).isEqualTo(101L);
+        Assertions.assertThat(itemEntity2.getOptionIdx()).isEqualTo(11L);
+        Assertions.assertThat(itemEntity2.getProductName()).isEqualTo("테스트 상품2");
+        Assertions.assertThat(itemEntity2.getOptionName()).isEqualTo("옵션B");
+        Assertions.assertThat(itemEntity2.getPrice()).isEqualByComparingTo("15000.00");
+        Assertions.assertThat(itemEntity2.getQuantity()).isEqualTo(2);
     }
 }

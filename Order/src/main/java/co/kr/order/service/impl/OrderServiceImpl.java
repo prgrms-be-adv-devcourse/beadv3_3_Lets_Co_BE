@@ -6,7 +6,13 @@ import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.NoInputAddressDataException;
 import co.kr.order.exception.NoInputCardDataException;
 import co.kr.order.exception.NoInputOrderDataException;
-import co.kr.order.model.dto.*;
+import co.kr.order.model.dto.UserData;
+import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.request.CartOrderRequest;
+import co.kr.order.model.dto.request.OrderRequest;
+import co.kr.order.model.dto.response.OrderCartResponse;
+import co.kr.order.model.dto.response.OrderDirectResponse;
+import co.kr.order.model.dto.response.OrderItemResponse;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.vo.OrderStatus;
@@ -42,7 +48,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderItemInfo directOrder(String token, OrderRequest orderRequest) {
+    public OrderDirectResponse directOrder(String token, OrderRequest orderRequest) {
 
         // todo: 유저가 카드/주소 데이터(DTO)를 body에 넣었을 때 Member-service에 데이터 전송
 
@@ -51,17 +57,19 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal itemAmount = productInfo.price().multiply(BigDecimal.valueOf(orderRequest.quantity()));
 
         // Member 서비스에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져옴
-        GetOrderData orderData = userClient.getOrderData(token);
-        validateOrderData(orderData);
+        UserData userData = userClient.getOrderData(token);
+        validateOrderData(userData);
 
         // Order Table 세팅
         OrderEntity orderEntity = new OrderEntity();
-        orderEntity.setUserIdx(orderData.usersIdx());
-        orderEntity.setAddressIdx(orderData.addressIdx());
-        orderEntity.setCardIdx(orderData.cardIdx());
+        orderEntity.setUserIdx(userData.usersIdx());
+        orderEntity.setAddressIdx(userData.addressIdx());
+        orderEntity.setCardIdx(userData.cardIdx());
         orderEntity.setOrderCode(UUID.randomUUID().toString());
         orderEntity.setStatus(OrderStatus.CREATED.name());
         orderEntity.setItemsAmount(itemAmount);
+//        itemEntity.setSalePrice();
+//        itemEntity.setShippingFee();
         orderEntity.setTotalAmount(itemAmount);  // 일단 할인/배송비 고려 x
         orderEntity.setDel(false);
         orderRepository.save(orderEntity);
@@ -74,52 +82,58 @@ public class OrderServiceImpl implements OrderService {
         itemEntity.setProductName(productInfo.productName());
         itemEntity.setOptionName(productInfo.optionContent());
         itemEntity.setPrice(productInfo.price());
-//        itemEntity.setSalePrice(productInfo.salePrice());
-//        itemEntity.setShippingFee(productInfo.shippingFee());
         itemEntity.setQuantity(orderRequest.quantity());
         itemEntity.setDel(false);
         orderItemRepository.save(itemEntity);
 
-        // productInfo 받은 데이터 기반으로 response dto 생성
-        return new OrderItemInfo(
+        // 상품을 상세 내용
+        OrderItemResponse itemInfo = new OrderItemResponse(
                 productInfo.productIdx(),
                 productInfo.productName(),
-//                productInfo.imageUrl(),
+//                        productInfo.imageUrl(),
                 productInfo.optionContent(),
                 productInfo.price(),
                 orderRequest.quantity()
+        );
+
+        return new OrderDirectResponse(
+                itemInfo,
+                itemAmount
+//                salePrice,
+//                shippingFee,
+//                totalAmount
         );
     }
 
     @Transactional
     @Override
-    public List<OrderItemInfo> cartOrder(String token, CartOrderRequest cartOrderRequest) {
-
-        List<OrderItemInfo> result = new ArrayList<>();
+    public OrderCartResponse cartOrder(String token, CartOrderRequest cartOrderRequest) {
 
         // todo: 유저가 카드/주소 데이터(DTO)를 body에 넣었을 때 Member-service에 데이터 전송
-        GetOrderData orderData = userClient.getOrderData(token);
-        validateOrderData(orderData);
+        UserData userData = userClient.getOrderData(token);
+        validateOrderData(userData);
+
+        List<OrderItemResponse> itemList = new ArrayList<>();
+        BigDecimal itemAmount = BigDecimal.ZERO;
 
         // Order Table 세팅
         OrderEntity orderEntity = new OrderEntity();
-        orderEntity.setUserIdx(orderData.usersIdx());
-        orderEntity.setAddressIdx(orderData.addressIdx());
-        orderEntity.setCardIdx(orderData.cardIdx());
+        orderEntity.setUserIdx(userData.usersIdx());
+        orderEntity.setAddressIdx(userData.addressIdx());
+        orderEntity.setCardIdx(userData.cardIdx());
         orderEntity.setOrderCode(UUID.randomUUID().toString());
         orderEntity.setStatus(OrderStatus.CREATED.name());
+        orderEntity.setItemsAmount(itemAmount);
+//        orderEntity.setSalePrice();
+//        orderEntity.setShippingFee();
+        orderEntity.setTotalAmount(itemAmount);
         orderEntity.setDel(false);
         orderRepository.save(orderEntity);
 
         List<OrderRequest> items = cartOrderRequest.list();
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
         for(OrderRequest item : items) {
             ProductInfo productInfo = productClient.getProduct(item.productIdx(), item.optionIdx());
-            BigDecimal itemAmount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));
-
-            // Order Table 가격
-            totalAmount = totalAmount.add(itemAmount);
+            BigDecimal unitAmount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));
 
             // OrderItem Table 세팅
             OrderItemEntity itemEntity = new OrderItemEntity();
@@ -134,31 +148,38 @@ public class OrderServiceImpl implements OrderService {
             itemEntity.setDel(false);
             orderItemRepository.save(itemEntity);
 
-            result.add(
-                    new OrderItemInfo(
-                            productInfo.productIdx(),
-                            productInfo.productName(),
-//                            productInfo.imageUrl(),
-                            productInfo.optionContent(),
-                            productInfo.price(),
-                            item.quantity()
-                    )
-            );
-        }
-        orderEntity.setItemsAmount(totalAmount);
-        orderEntity.setTotalAmount(totalAmount); // 할인/배송비 고려 x
+            itemAmount = itemAmount.add(unitAmount);
 
-        return result;
+            OrderItemResponse itemInfo = new OrderItemResponse(
+                    productInfo.productIdx(),
+                    productInfo.productName(),
+//                        productInfo.imageUrl(),
+                    productInfo.optionContent(),
+                    productInfo.price(),
+                    item.quantity()
+            );
+            itemList.add(itemInfo);
+        }
+        orderEntity.setItemsAmount(itemAmount);
+//        orderEntity.setTotalAmount(tempAmount);
+
+        return new OrderCartResponse(
+                itemList,
+                itemAmount
+//                salePrice,
+//                shippingFee,
+//                totalAmount
+        );
     }
 
-    private void validateOrderData(GetOrderData orderData) {
-        if (orderData.addressIdx() == null && orderData.cardIdx() == null) {
+    private void validateOrderData(UserData userData) {
+        if (userData.addressIdx() == null && userData.cardIdx() == null) {
             throw new NoInputOrderDataException(ErrorCode.NO_INPUT_ORDER_DATA);
         }
-        else if (orderData.addressIdx() == null) {
+        else if (userData.addressIdx() == null) {
             throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
         }
-        else if (orderData.cardIdx() == null) {
+        else if (userData.cardIdx() == null) {
             throw new NoInputCardDataException(ErrorCode.NO_INPUT_CARD_DATA);
         }
     }

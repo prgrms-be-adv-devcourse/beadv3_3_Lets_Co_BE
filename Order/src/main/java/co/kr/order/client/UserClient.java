@@ -1,6 +1,6 @@
 package co.kr.order.client;
 
-import co.kr.order.model.dto.GetOrderData;
+import co.kr.order.model.dto.UserData;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -12,5 +12,5 @@ public interface UserClient {
     Long getUserIdx(@RequestHeader("Authorization") String token);
 
     @GetMapping("/order")
-    GetOrderData getOrderData(@RequestHeader("Authorization") String token);
+    UserData getOrderData(@RequestHeader("Authorization") String token);
 }

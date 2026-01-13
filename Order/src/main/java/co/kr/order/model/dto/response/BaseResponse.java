@@ -1,4 +1,4 @@
-package co.kr.order.model.dto;
+package co.kr.order.model.dto.response;
 
 public record BaseResponse<T>(
         String resultCode,

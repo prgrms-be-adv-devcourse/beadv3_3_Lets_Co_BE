@@ -12,4 +12,6 @@ public interface CartJpaRepository extends JpaRepository<CartEntity, Long> {
 
     List<CartEntity> findAllByUserIdx(Long userIdx);
     Optional<CartEntity> findByUserIdxAndProductIdxAndOptionIdx(Long userIdx, Long productIdx, Long optionIdx);
+
+    Optional<CartEntity> findByUserIdx(Long userIdx);
 }

@@ -1,13 +1,12 @@
-package co.kr.order.model.dto;
+package co.kr.order.model.dto.response;
 
 import java.math.BigDecimal;
 
-public record CartItemInfo(
+public record OrderItemResponse(
         Long productIdx,
         String productName,
 //        String imageUrl,
         String optionContent,
         BigDecimal price,
-        Integer quantity,
-        BigDecimal totalPrice
+        Integer quantity
 ) {}

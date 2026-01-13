@@ -19,6 +19,11 @@ public class AdminNoticeController {
 
     private final AdminNoticeService adminNoticeService;
 
+    /**
+     * 공지 추가
+     * @param request
+     * @return 공지 상세 정보
+     */
     @PostMapping
     public ResponseEntity<AdminNoticeDetailResponse> addNotice(
 
@@ -31,6 +36,12 @@ public class AdminNoticeController {
         );
     }
 
+    /**
+     * 공지 리스트 조회
+     * @param userId
+     * @param pageable
+     * @return 공지 리스트
+     */
     @GetMapping
     public ResponseEntity<NoticeListResponse> getNoticeList(
             // 임시. 확인용
@@ -42,6 +53,12 @@ public class AdminNoticeController {
         );
     }
 
+    /**
+     * 공지 상세 조회
+     * @param userId
+     * @param noticeCode
+     * @return 공지 상세 정보
+     */
     @GetMapping("/{noticeCode}")
     public ResponseEntity<AdminNoticeDetailResponse> getNoticeDetail(
             // 임시. 확인용
@@ -54,6 +71,13 @@ public class AdminNoticeController {
         );
     }
 
+    /**
+     * 공지 수정
+     * @param userId
+     * @param noticeCode
+     * @param request
+     * @return 공지 상세 정보
+     */
     @PutMapping("/{noticeCode}")
     public ResponseEntity<AdminNoticeDetailResponse> updateNotice(
             // 임시. 확인용
@@ -67,6 +91,12 @@ public class AdminNoticeController {
         );
     }
 
+    /**
+     * 공지 삭제
+     * @param userId
+     * @param noticeCode
+     * @return resultCode
+     */
     @DeleteMapping("/{noticeCode}")
     public ResponseEntity<ResultResponse> deleteNotice(
             // 임시. 확인용

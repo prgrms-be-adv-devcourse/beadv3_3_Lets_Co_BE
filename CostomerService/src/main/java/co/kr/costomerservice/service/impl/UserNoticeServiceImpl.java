@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,10 +26,13 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public NoticeListResponse getNoticeList(Pageable pageable){
 
+        // 1. NOTICE 타입 데이터 검색
         Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
 
+        // 2. Page > List
         List<NoticeResponse> result = noticeEntityPage.stream()
                 .map(doc -> new NoticeResponse(
 
@@ -53,8 +57,10 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public NoticeDetailResponse getNoticeDetail(String noticeCode){
 
+        // entity 조회 및 유효성 검사
         CustomerServiceEntity noticeEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
 
@@ -64,7 +70,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
         CustomerServiceDetailEntity result = customerServiceDetailRepository.findByCustomerServiceAndDelFalse(noticeEntity)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
 
-
+        // 반환, 한 번 밖에 안 쓰일거 같아서 mapper처리 x
         return new NoticeDetailResponse(
                 "success",
                 noticeEntity.getCategory(),

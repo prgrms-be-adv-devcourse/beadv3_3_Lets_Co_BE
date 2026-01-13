@@ -6,6 +6,13 @@ import co.kr.costomerservice.model.dto.response.AdminNoticeDetailResponse;
 
 public class NoticeMapper {
 
+    /**
+     * 3개의 입력으로 공지 상세 정보를 반환해주는 ResponseDTO 생성
+     * @param resultCode
+     * @param csEntity
+     * @param csDetailEntity
+     * @return AdminNoticeDetailResponse
+     */
     public static AdminNoticeDetailResponse toDetailMapper(
             String resultCode,
             CustomerServiceEntity csEntity,

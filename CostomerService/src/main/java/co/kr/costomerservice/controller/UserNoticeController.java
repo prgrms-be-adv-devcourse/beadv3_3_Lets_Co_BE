@@ -20,6 +20,11 @@ public class UserNoticeController {
 
     private final UserNoticeService userNoticeService;
 
+    /**
+     * 공지 목록 조회
+     * @param pageable
+     * @return 공지 목록 리스트
+     */
     @GetMapping
     public ResponseEntity<NoticeListResponse> getNoticeList(
             @PageableDefault Pageable pageable
@@ -27,6 +32,11 @@ public class UserNoticeController {
         return ResponseEntity.ok(userNoticeService.getNoticeList(pageable));
     }
 
+    /**
+     * 공지 상세 조회
+     * @param noticeCode
+     * @return 공지 상세 정보
+     */
     @GetMapping("/{noticeCode}")
     public ResponseEntity<NoticeDetailResponse> getNoticeDetail(
         @PathVariable("noticeCode") String noticeCode

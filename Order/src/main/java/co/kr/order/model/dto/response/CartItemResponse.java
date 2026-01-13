@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 public record CartItemResponse(
         ProductInfo product,
         Integer quantity,
-        BigDecimal totalPrice
+        BigDecimal amount
 ) {}

@@ -51,7 +51,7 @@ public class CartController {
         return ResponseEntity.ok(body);
     }
 
-    @GetMapping
+    @GetMapping("/item")
     public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
             @RequestHeader("Authorization") String token,
             @RequestBody CartRequest request

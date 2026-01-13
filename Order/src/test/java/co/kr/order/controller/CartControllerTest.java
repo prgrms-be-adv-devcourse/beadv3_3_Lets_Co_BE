@@ -78,7 +78,7 @@ class CartControllerTest {
     @Test
     @Transactional
     @DisplayName("장바구니 조회 - 정상")
-    void 장바구니_조회() throws Exception {
+    void 장바구니_리스트_조회() throws Exception {
 
         // when:
         ResultActions resultActions = mvc
@@ -89,23 +89,23 @@ class CartControllerTest {
                                 .header("Authorization", "Bearer test-token")
                 )
                 .andDo(print());
-
+//
         // then:
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(handler().handlerType(CartController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data.cartItemList[0].productInfo.productName").value("테스트 상품1"))
-                .andExpect(jsonPath("$.data.cartItemList[0].productInfo.optionContent").value("옵션A"))
-                .andExpect(jsonPath("$.data.cartItemList[0].productInfo.price").value("10000.0"))
+                .andExpect(jsonPath("$.data.cartItemList[0].product.productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.cartItemList[0].product.optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.cartItemList[0].product.price").value("10000.0"))
                 .andExpect(jsonPath("$.data.cartItemList[0].quantity").value(2))
-                .andExpect(jsonPath("$.data.cartItemList[0].totalPrice").value("20000.0"))
+                .andExpect(jsonPath("$.data.cartItemList[0].amount").value("20000.0"))
 
-                .andExpect(jsonPath("$.data.cartItemList[1].productInfo.productName").value("테스트 상품2"))
-                .andExpect(jsonPath("$.data.cartItemList[1].productInfo.optionContent").value("옵션B"))
-                .andExpect(jsonPath("$.data.cartItemList[1].productInfo.price").value("12000.0"))
+                .andExpect(jsonPath("$.data.cartItemList[1].product.productName").value("테스트 상품2"))
+                .andExpect(jsonPath("$.data.cartItemList[1].product.optionContent").value("옵션B"))
+                .andExpect(jsonPath("$.data.cartItemList[1].product.price").value("12000.0"))
                 .andExpect(jsonPath("$.data.cartItemList[1].quantity").value(3))
-                .andExpect(jsonPath("$.data.cartItemList[1].totalPrice").value("36000.0"));
+                .andExpect(jsonPath("$.data.cartItemList[1].amount").value("36000.0"));
 
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(2);
@@ -133,11 +133,13 @@ class CartControllerTest {
                 )
                 .andDo(print());
 
-                resultActions
+        resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                // itemList[]의 1번 2번은 데이터가 있으니 3번으로 비교 (개수가 1개인지)
-                .andExpect(jsonPath("$.data.cartItemList[2].quantity").value(1));
+                .andExpect(jsonPath("$.data.product.productName").value("테스트 상품3"))
+                .andExpect(jsonPath("$.data.product.price").value("13000.0"))
+                .andExpect(jsonPath("$.data.quantity").value(1))
+                .andExpect(jsonPath("$.data.amount").value("13000.0"));
 
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 102L, 12L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(1);
@@ -165,7 +167,9 @@ class CartControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data.cartItemList[0].quantity").value(3));
+                .andExpect(jsonPath("$.data.product.productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.quantity").value(3))
+                .andExpect(jsonPath("$.data.amount").value("30000.0"));
 
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(3);
@@ -192,7 +196,9 @@ class CartControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data.cartItemList[0].quantity").value(1));
+                .andExpect(jsonPath("$.data.product.productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.quantity").value(1))
+                .andExpect(jsonPath("$.data.amount").value("10000.0"));
 
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(1);

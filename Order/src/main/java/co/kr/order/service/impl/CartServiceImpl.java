@@ -4,7 +4,6 @@ import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.CartNotFoundException;
 import co.kr.order.exception.ErrorCode;
-import co.kr.order.exception.UserNotFoundException;
 import co.kr.order.mapper.CartMapper;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.CartRequest;
@@ -91,13 +90,11 @@ public class CartServiceImpl implements CartService {
         return getCartItem(token, cartRequest);
     }
 
-    // todo price 잘못 생각한거 같음
     @Override
     @Transactional(readOnly = true)
     public CartResponse getCartList(String token) {
         Long userIdx = userClient.getUserIdx(token);
         List<CartEntity> entities = cartRepository.findAllByUserIdx(userIdx);
-
         List<CartItemResponse> cartList = new ArrayList<>();
 
         // todo N+1 문제 발생. 이거 나중에 안되도록 코드 수정해야함 (Order 기능 개발하고)
@@ -116,14 +113,14 @@ public class CartServiceImpl implements CartService {
             cartList.add(cartItem);
         }
 
-        return CartMapper.toCartResponse(cartList);
+        return CartMapper.toCartInfo(cartList);
     }
 
     @Override
     public CartItemResponse getCartItem(String token, CartRequest request) {
 
         Long userIdx = userClient.getUserIdx(token);
-        CartEntity entity = cartRepository.findByUserIdx(userIdx).orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
+        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx()).orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
 
         ProductInfo productInfo = productClient.getProduct(entity.getProductIdx(), entity.getOptionIdx());
 

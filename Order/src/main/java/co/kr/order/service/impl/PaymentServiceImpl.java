@@ -4,8 +4,8 @@ package co.kr.order.service.impl;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.PaymentFailedException;
-import co.kr.order.model.dto.PaymentDescription;
-import co.kr.order.model.dto.PaymentRequest;
+import co.kr.order.model.dto.response.PaymentResponse;
+import co.kr.order.model.dto.request.PaymentRequest;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.PaymentEntity;
 import co.kr.order.model.vo.PaymentStatus;
@@ -24,13 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private final PaymentJpaRepository paymentJpaRepository;
+    private final PaymentJpaRepository paymentRepository;
+    private final OrderJpaRepository orderRepository;
     private final OrderService orderService;
     private final UserClient userClient;
 
     @Override
     @Transactional
-    public PaymentDescription process(String token, PaymentRequest request) {
+    public PaymentResponse process(String token, PaymentRequest request) {
         if (request == null || request.paymentType() == null) {
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
         }
@@ -41,10 +42,10 @@ public class PaymentServiceImpl implements PaymentService {
         };
     }
 
-    private PaymentDescription processCardPayment(String token, String orderCode) {
+    private PaymentResponse processCardPayment(String token, String orderCode) {
         Long userIdx = userClient.getUserIdx(token);
-        // 이 부분 orderService 쪽 개발되면 수정해야함
-        OrderEntity order = orderService.findByOrderCode(orderCode)
+
+        OrderEntity order = orderRepository.findByOrderCode(orderCode)
                 .orElseThrow(() -> new PaymentFailedException(ErrorCode.PAYMENT_FAILED));
 
         // 실제사용자 확인
@@ -66,9 +67,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .cardIdx(cardIdx)
                 .build();
 
-        PaymentEntity saved = paymentJpaRepository.save(payment);
+        PaymentEntity saved = paymentRepository.save(payment);
 
-        return new PaymentDescription(
+        return new PaymentResponse(
                 saved.getPaymentIdx(),
                 saved.getStatus(),
                 saved.getType(),

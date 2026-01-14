@@ -1,4 +1,4 @@
-package co.kr.order.model.dto;
+package co.kr.order.model.dto.request;
 
 import co.kr.order.model.vo.PaymentType;
 

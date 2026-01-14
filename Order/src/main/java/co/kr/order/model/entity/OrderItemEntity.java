@@ -14,6 +14,7 @@ public class OrderItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "Orders_Item_IDX")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

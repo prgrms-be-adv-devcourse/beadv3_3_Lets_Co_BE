@@ -82,12 +82,12 @@ class OrderControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(OrderController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data.item.productIdx").value(100L))
-                .andExpect(jsonPath("$.data.item.productName").value("테스트 상품1"))
-                .andExpect(jsonPath("$.data.item.optionContent").value("옵션A"))
-                .andExpect(jsonPath("$.data.item.price").value("10000.0"))
+                .andExpect(jsonPath("$.data.item.product.productIdx").value(100L))
+                .andExpect(jsonPath("$.data.item.product.productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.item.product.optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.item.product.price").value("10000.0"))
                 .andExpect(jsonPath("$.data.item.quantity").value(3))
-                .andExpect(jsonPath("$.data.itemsAmount").value("30000.0"));
+                .andExpect(jsonPath("$.data.item.amount").value("30000.0"));
 
         // Order 테이블
         OrderEntity orderEntity = orderRepository.findById(1L).get();
@@ -134,16 +134,18 @@ class OrderControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(OrderController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data.itemList[0].productIdx").value(100L))
-                .andExpect(jsonPath("$.data.itemList[0].productName").value("테스트 상품1"))
-                .andExpect(jsonPath("$.data.itemList[0].optionContent").value("옵션A"))
-                .andExpect(jsonPath("$.data.itemList[0].price").value("10000.0"))
+                .andExpect(jsonPath("$.data.itemList[0].product.productIdx").value(100L))
+                .andExpect(jsonPath("$.data.itemList[0].product.productName").value("테스트 상품1"))
+                .andExpect(jsonPath("$.data.itemList[0].product.optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.itemList[0].product.price").value("10000.0"))
                 .andExpect(jsonPath("$.data.itemList[0].quantity").value(3))
-                .andExpect(jsonPath("$.data.itemList[1].productIdx").value(101L))
-                .andExpect(jsonPath("$.data.itemList[1].productName").value("테스트 상품2"))
-                .andExpect(jsonPath("$.data.itemList[1].optionContent").value("옵션B"))
-                .andExpect(jsonPath("$.data.itemList[1].price").value("15000.0"))
+                .andExpect(jsonPath("$.data.itemList[0].amount").value("30000.0"))
+                .andExpect(jsonPath("$.data.itemList[1].product.productIdx").value(101L))
+                .andExpect(jsonPath("$.data.itemList[1].product.productName").value("테스트 상품2"))
+                .andExpect(jsonPath("$.data.itemList[1].product.optionContent").value("옵션B"))
+                .andExpect(jsonPath("$.data.itemList[1].product.price").value("15000.0"))
                 .andExpect(jsonPath("$.data.itemList[1].quantity").value(2))
+                .andExpect(jsonPath("$.data.itemList[1].amount").value("30000.0"))
                 .andExpect(jsonPath("$.data.itemsAmount").value("60000.0"));
 
         // Order 테이블

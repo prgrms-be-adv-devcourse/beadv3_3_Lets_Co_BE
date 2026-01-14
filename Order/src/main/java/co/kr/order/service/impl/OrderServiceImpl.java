@@ -54,7 +54,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져오고, 가격*수량 해서 총 가격 측정
         ProductInfo productInfo = productClient.getProduct(orderRequest.productIdx(), orderRequest.optionIdx());
-        BigDecimal itemAmount = productInfo.price().multiply(BigDecimal.valueOf(orderRequest.quantity()));
+        BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(orderRequest.quantity()));
 
         // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져옴
         UserData userData = userClient.getOrderData(token);
@@ -69,10 +69,10 @@ public class OrderServiceImpl implements OrderService {
         orderEntity.setCardIdx(userData.cardIdx());
         orderEntity.setOrderCode(UUID.randomUUID().toString());
         orderEntity.setStatus(OrderStatus.CREATED.name());
-        orderEntity.setItemsAmount(itemAmount);
+        orderEntity.setItemsAmount(amount);
 //        itemEntity.setSalePrice();
 //        itemEntity.setShippingFee();
-        orderEntity.setTotalAmount(itemAmount);  // 일단 할인/배송비 고려 x
+        orderEntity.setTotalAmount(amount);  // 일단 할인/배송비 고려 x
         orderEntity.setDel(false);
         orderRepository.save(orderEntity);
 
@@ -90,18 +90,14 @@ public class OrderServiceImpl implements OrderService {
 
         // 상품을 상세 내용
         OrderItemResponse itemInfo = new OrderItemResponse(
-                productInfo.productIdx(),
-                productInfo.productName(),
-//                        productInfo.imageUrl(),
-                productInfo.optionContent(),
-                productInfo.price(),
-                orderRequest.quantity()
+                productInfo,
+                orderRequest.quantity(),
+                amount
         );
 
         // 응답 dto 생성
         return new OrderDirectResponse(
-                itemInfo,
-                itemAmount
+                itemInfo
 //                salePrice,
 //                shippingFee,
 //                totalAmount
@@ -121,7 +117,7 @@ public class OrderServiceImpl implements OrderService {
         // response에 담길 리스트
         List<OrderItemResponse> itemList = new ArrayList<>();
         // itemAmount가 notnull 이기 때문에 0으로 초기화 할 값
-        BigDecimal itemAmount = BigDecimal.ZERO;
+        BigDecimal itemsAmount = BigDecimal.ZERO;
 
         // Order Table 세팅
         OrderEntity orderEntity = new OrderEntity();
@@ -130,17 +126,17 @@ public class OrderServiceImpl implements OrderService {
         orderEntity.setCardIdx(userData.cardIdx());
         orderEntity.setOrderCode(UUID.randomUUID().toString());
         orderEntity.setStatus(OrderStatus.CREATED.name());
-        orderEntity.setItemsAmount(itemAmount);
+        orderEntity.setItemsAmount(itemsAmount);
 //        orderEntity.setSalePrice();
 //        orderEntity.setShippingFee();
-        orderEntity.setTotalAmount(itemAmount);
+        orderEntity.setTotalAmount(itemsAmount);
         orderEntity.setDel(false);
         orderRepository.save(orderEntity);
 
         List<OrderRequest> items = cartOrderRequest.orderList();
         for(OrderRequest item : items) {
             ProductInfo productInfo = productClient.getProduct(item.productIdx(), item.optionIdx());
-            BigDecimal unitAmount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));
+            BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));
 
             // OrderItem Table 세팅
             OrderItemEntity itemEntity = new OrderItemEntity();
@@ -155,24 +151,21 @@ public class OrderServiceImpl implements OrderService {
             itemEntity.setDel(false);
             orderItemRepository.save(itemEntity);
 
-            itemAmount = itemAmount.add(unitAmount);
+            itemsAmount = itemsAmount.add(amount);
 
             OrderItemResponse itemInfo = new OrderItemResponse(
-                    productInfo.productIdx(),
-                    productInfo.productName(),
-//                        productInfo.imageUrl(),
-                    productInfo.optionContent(),
-                    productInfo.price(),
-                    item.quantity()
+                    productInfo,
+                    item.quantity(),
+                    amount
             );
             itemList.add(itemInfo);
         }
-        orderEntity.setItemsAmount(itemAmount);
+        orderEntity.setItemsAmount(itemsAmount);
 //        orderEntity.setTotalAmount(tempAmount);
 
         return new OrderCartResponse(
                 itemList,
-                itemAmount
+                itemsAmount
 //                salePrice,
 //                shippingFee,
 //                totalAmount

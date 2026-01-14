@@ -7,9 +7,7 @@ import co.kr.order.exception.OutOfStockException;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.request.OrderCartRequest;
-import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.request.OrderRequest;
+import co.kr.order.model.dto.request.*;
 import co.kr.order.model.dto.response.OrderCartResponse;
 import co.kr.order.model.dto.response.OrderDirectResponse;
 import co.kr.order.model.dto.response.OrderItemResponse;
@@ -25,9 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,13 +35,6 @@ public class OrderServiceImpl implements OrderService {
     private final ProductClient productClient;
     private final UserClient userClient;
 
-    /*
-     * Todo
-     * N+1 문제
-     * 카트/단일 주문의 중복 로직을 통합
-     */
-
-
     @Transactional
     @Override
     public OrderDirectResponse directOrder(String token, OrderDirectRequest request) {
@@ -53,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
         try {
-            productInfo = productClient.getProduct(request.orderRequest().productIdx(), request.orderRequest().optionIdx());
+            productInfo = productClient.getProduct(new ProductRequest(request.orderRequest().productIdx(), request.orderRequest().optionIdx()));
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -97,6 +86,14 @@ public class OrderServiceImpl implements OrderService {
 
         orderItemRepository.save(itemEntity);
 
+        // 재고 관리를 위한 상품에게 몇개 샀는지 정보 전송
+        CheckStockRequest stockRequest = new CheckStockRequest(
+                request.orderRequest().productIdx(),
+                request.orderRequest().optionIdx(),
+                request.orderRequest().quantity()
+        );
+        productClient.checkStock(stockRequest);
+
         // 상품을 상세 내용
         OrderItemResponse itemInfo = new OrderItemResponse(
                 productInfo,
@@ -117,11 +114,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderCartResponse cartOrder(String token, OrderCartRequest request) {
 
-        // 초반 로직 directOrder와 동일
+        // usersIdx, addressIdx, cardIdx
         UserData userData = userClient.getUserData(token, request.userdata());
 
-        // response에 담길 리스트
-        List<OrderItemResponse> itemList = new ArrayList<>();
         // itemAmount가 notnull 이기 때문에 0으로 초기화 할 값
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
@@ -139,52 +134,95 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(orderEntity);
 
-        List<OrderRequest> items = request.orderList();
-        for(OrderRequest item : items) {
+        // Product-Service에 보낼 데이터 묶기
+        List<ProductRequest> productList = new ArrayList<>();
+        for (OrderRequest order : request.orderList()) {
+            ProductRequest productRequest = new ProductRequest(order.productIdx(), order.optionIdx());
+            productList.add(productRequest);
+        }
 
-            ProductInfo productInfo;
-            try {
-                productInfo = productClient.getProduct(item.productIdx(), item.optionIdx());
-            } catch (FeignException.NotFound e) {
+        // dto로 한번에 전송 (bulk)
+        List<ProductInfo> productInfos;
+        try {
+            productInfos = productClient.getProductList(productList);
+        } catch (FeignException.NotFound e) {
+            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        // 받아온 ProductInfo 리스트를 Map으로 변환
+        // Key: productIdx-optionIdx, Value: ProductInfo 객체
+        Map<String, ProductInfo> productMap = new HashMap<>();
+        for (ProductInfo info : productInfos) {
+            // 예시 100-10
+            String key = info.productIdx() + "-" + info.optionIdx();
+            productMap.put(key, info);
+        }
+
+        // 반복문 마다 save() 하는걸 방지하기 위해
+        // DB에 저장할 엔티티들을 모아둘 리스트 & 클라이언트에게 줄 응답 리스트
+        List<OrderItemEntity> orderItemsToSave = new ArrayList<>();
+        List<OrderItemResponse> responseList = new ArrayList<>();
+
+        // 몇개 샀는지 product-service에게 보낼 list
+        List<CheckStockRequest> stockRequests = new ArrayList<>();
+
+        for(OrderRequest order : request.orderList()) {
+
+            // Map에서 상품 정보 꺼내기
+            String key = order.productIdx() + "-" + order.optionIdx();
+            ProductInfo info = productMap.get(key);
+
+            if (info == null) {
                 throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
             }
 
-            if(productInfo.stock() < item.quantity()) {
+            // 재고 없으면 Error 던짐
+            if (info.stock() < order.quantity()) {
                 throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
             }
 
-            BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));
+            // 주문 값 계산
+            BigDecimal amount = info.price().multiply(BigDecimal.valueOf(order.quantity()));
+            itemsAmount = itemsAmount.add(amount);
 
             // OrderItem Table 세팅
             OrderItemEntity itemEntity = OrderItemEntity.builder()
                     .order(orderEntity)
-                    .productIdx(productInfo.productIdx())
-                    .optionIdx(item.optionIdx())
-                    .productName(productInfo.productName())
-                    .optionName(productInfo.optionContent())
-                    .price(productInfo.price())
-                    .quantity(item.quantity())
+                    .productIdx(info.productIdx())
+                    .optionIdx(order.optionIdx())
+                    .productName(info.productName())
+                    .optionName(info.optionContent())
+                    .price(info.price())
+                    .quantity(order.quantity())
                     .del(false)
                     .build();
 
-            orderItemRepository.save(itemEntity);
+            orderItemsToSave.add(itemEntity);
 
-            itemsAmount = itemsAmount.add(amount);
+            responseList.add(new OrderItemResponse(info, order.quantity(), amount));
 
-            OrderItemResponse itemInfo = new OrderItemResponse(
-                    productInfo,
-                    item.quantity(),
-                    amount
+            // 재고 객체 생성해서 리스트에 추가
+            stockRequests.add(
+                    new CheckStockRequest(
+                        order.productIdx(),
+                        order.optionIdx(),
+                        order.quantity()
+                    )
             );
-            itemList.add(itemInfo);
         }
 
-        // 최종 금액 업데이트 (이미 영속화된 엔티티이므로 setter 사용하여 변경 감지)
+        // product-service에게 얼마나 구매했는지 전송
+        productClient.checkStocks(stockRequests);
+
+        // 모아둔 엔티티를 한 번에 저장 (DB Insert 1회)
+        orderItemRepository.saveAll(orderItemsToSave);
+
         orderEntity.setItemsAmount(itemsAmount);
 //        orderEntity.setTotalAmount(tempAmount);
+        orderRepository.save(orderEntity);
 
         return new OrderCartResponse(
-                itemList,
+                responseList,
                 itemsAmount
 //                salePrice,
 //                shippingFee,

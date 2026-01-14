@@ -6,10 +6,7 @@ import co.kr.order.model.dto.AddressInfo;
 import co.kr.order.model.dto.CardInfo;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.request.OrderCartRequest;
-import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.request.OrderRequest;
-import co.kr.order.model.dto.request.UserDataRequest;
+import co.kr.order.model.dto.request.*;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.vo.OrderStatus;
@@ -59,14 +56,18 @@ class OrderControllerTest {
     void init() {
         // given
         UserData userData = new UserData(1L, 2L, 3L);
-
         given(userClient.getUserData(anyString(), any())).willReturn(userData);
 
-        ProductInfo productInfo1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 100);
-        ProductInfo productInfo2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("15000.00"), 100);
+        ProductInfo productInfo1 = new ProductInfo(100L, 10L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 100);
+        ProductInfo productInfo2 = new ProductInfo(101L, 11L, "테스트 상품2", "옵션B", new BigDecimal("15000.00"), 100);
 
-        given(productClient.getProduct(100L, 10L)).willReturn(productInfo1);
-        given(productClient.getProduct(101L, 11L)).willReturn(productInfo2);
+        // 직접 주문
+        given(productClient.getProduct(new ProductRequest(100L, 10L))).willReturn(productInfo1);
+        given(productClient.getProduct(new ProductRequest(101L, 11L))).willReturn(productInfo2);
+
+        // 카트 주문
+        List<ProductInfo> productList = List.of(productInfo1, productInfo2);
+        given(productClient.getProductList(any())).willReturn(productList);
     }
 
     @Test

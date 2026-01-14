@@ -12,6 +12,7 @@ import java.math.BigDecimal;
  */
 public record ProductInfo(
         Long productIdx,
+        Long optionIdx,
         String productName,
 //        String imageUrl,
         String optionContent,

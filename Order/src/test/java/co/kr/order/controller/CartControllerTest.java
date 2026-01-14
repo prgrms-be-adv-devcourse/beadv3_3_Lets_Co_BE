@@ -2,8 +2,8 @@ package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
-import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.repository.CartJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,8 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -50,28 +52,32 @@ class CartControllerTest {
         // given:
         given(userClient.getUserIdx(anyString())).willReturn(1L);
 
-        ProductInfo mockProduct1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 10);
-        ProductInfo mockProduct2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("12000.00"), 10);
+        ProductInfo mockProduct1 = new ProductInfo(100L, 10L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 10);
+        ProductInfo mockProduct2 = new ProductInfo(101L, 11L, "테스트 상품2", "옵션B", new BigDecimal("12000.00"), 10);
 
-        given(productClient.getProduct(100L, 10L)).willReturn(mockProduct1);
-        given(productClient.getProduct(101L, 11L)).willReturn(mockProduct2);
+        given(productClient.getProduct(new ProductRequest(100L, 10L))).willReturn(mockProduct1);
+        given(productClient.getProduct(new ProductRequest(101L, 11L))).willReturn(mockProduct2);
 
-        CartEntity cartItem1 = new CartEntity();
-        cartItem1.setUserIdx(1L);
-        cartItem1.setProductIdx(100L);
-        cartItem1.setOptionIdx(10L);
-        cartItem1.setQuantity(2);
-        cartItem1.setPrice(new BigDecimal("20000.00"));
-        cartItem1.setDel(false);
+        given(productClient.getProductList(any())).willReturn(List.of(mockProduct1, mockProduct2));
+
+        CartEntity cartItem1 = CartEntity.builder()
+                .userIdx(1L)
+                .productIdx(100L)
+                .optionIdx(10L)
+                .quantity(2)
+                .price(new BigDecimal("20000.00"))
+                .del(false)
+                .build();
         cartRepository.save(cartItem1);
 
-        CartEntity cartItem2 = new CartEntity();
-        cartItem2.setUserIdx(1L);
-        cartItem2.setProductIdx(101L);
-        cartItem2.setOptionIdx(11L);
-        cartItem2.setQuantity(3);
-        cartItem2.setPrice(new BigDecimal("36000.00"));
-        cartItem2.setDel(false);
+        CartEntity cartItem2 = CartEntity.builder()
+                .userIdx(1L)
+                .productIdx(101L)
+                .optionIdx(11L)
+                .quantity(3)
+                .price(new BigDecimal("36000.00"))
+                .del(false)
+                .build();
         cartRepository.save(cartItem2);
     }
 
@@ -119,8 +125,8 @@ class CartControllerTest {
 
         ProductRequest request = new ProductRequest(102L, 12L);
 
-        ProductInfo mockProduct3 = new ProductInfo(102L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"), 10);
-        given(productClient.getProduct(102L, 12L)).willReturn(mockProduct3);
+        ProductInfo mockProduct3 = new ProductInfo(102L, 12L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"), 10);
+        given(productClient.getProduct(new ProductRequest(102L, 12L))).willReturn(mockProduct3);
 
         // when
         ResultActions resultActions = mvc

@@ -12,19 +12,19 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/products")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     // 리뷰 목록 조회 (비회원/회원)
-    @GetMapping("/products/{productsIdx}/reviews")
+    @GetMapping("/{productsIdx}/reviews")
     public ReviewListResponse getReviews(@PathVariable Long productsIdx) {
         return reviewService.getReviews(productsIdx);
     }
 
     // 리뷰 작성 (회원)
-    @PostMapping("/products/{productsIdx}/reviews")
+    @PostMapping("/{productsIdx}/reviews")
     public ReviewResponse createReview(@PathVariable Long productsIdx,
                                        @RequestBody ReviewUpsertRequest req) {
         return reviewService.createReview(productsIdx, req);

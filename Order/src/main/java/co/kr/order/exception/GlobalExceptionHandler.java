@@ -50,4 +50,18 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<BaseResponse<String>> productNotFoundException(ProductNotFoundException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(OutOfStockException.class)
+    public ResponseEntity<BaseResponse<String>> outOfStockException(OutOfStockException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 }

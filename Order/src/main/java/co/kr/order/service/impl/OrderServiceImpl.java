@@ -3,12 +3,12 @@ package co.kr.order.service.impl;
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
-import co.kr.order.exception.NoInputAddressDataException;
-import co.kr.order.exception.NoInputCardDataException;
-import co.kr.order.exception.NoInputOrderDataException;
-import co.kr.order.model.dto.UserData;
+import co.kr.order.exception.OutOfStockException;
+import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.request.CartOrderRequest;
+import co.kr.order.model.dto.UserData;
+import co.kr.order.model.dto.request.OrderCartRequest;
+import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.request.OrderRequest;
 import co.kr.order.model.dto.response.OrderCartResponse;
 import co.kr.order.model.dto.response.OrderDirectResponse;
@@ -19,6 +19,7 @@ import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.service.OrderService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,58 +41,67 @@ public class OrderServiceImpl implements OrderService {
 
     /*
      * Todo
-     * 재고가 없을때 처리
      * N+1 문제
      * 카트/단일 주문의 중복 로직을 통합
+     * setter 를 builder 로 변경 -> 완료
      */
 
 
     @Transactional
     @Override
-    public OrderDirectResponse directOrder(String token, OrderRequest orderRequest) {
+    public OrderDirectResponse directOrder(String token, OrderDirectRequest request) {
 
-        // todo: 유저가 카드/주소 데이터(DTO)를 body에 넣었을 때 Member-service에 데이터 전송
+        // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
+        ProductInfo productInfo;
+        try {
+            productInfo = productClient.getProduct(request.orderRequest().productIdx(), request.orderRequest().optionIdx());
+        } catch (FeignException.NotFound e) {
+            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
 
-        // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져오고, 가격*수량 해서 총 가격 측정
-        ProductInfo productInfo = productClient.getProduct(orderRequest.productIdx(), orderRequest.optionIdx());
-        BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(orderRequest.quantity()));
+        // 재고 없으면 Error 던짐
+        if(productInfo.stock() < request.orderRequest().quantity()) {
+            throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
+        }
+
+        // 가격*수량 해서 총 가격 측정
+        BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(request.orderRequest().quantity()));
 
         // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져옴
-        UserData userData = userClient.getOrderData(token);
-
-        // userData에 주소/카드 정보 재대로 있는지 검증
-        validateOrderData(userData);
+        UserData userData = userClient.getUserData(token, request.userData());
 
         // Order Table 세팅
-        OrderEntity orderEntity = new OrderEntity();
-        orderEntity.setUserIdx(userData.usersIdx());
-        orderEntity.setAddressIdx(userData.addressIdx());
-        orderEntity.setCardIdx(userData.cardIdx());
-        orderEntity.setOrderCode(UUID.randomUUID().toString());
-        orderEntity.setStatus(OrderStatus.CREATED.name());
-        orderEntity.setItemsAmount(amount);
-//        itemEntity.setSalePrice();
-//        itemEntity.setShippingFee();
-        orderEntity.setTotalAmount(amount);  // 일단 할인/배송비 고려 x
-        orderEntity.setDel(false);
+        OrderEntity orderEntity = OrderEntity.builder()
+                .userIdx(userData.usersIdx())
+                .addressIdx(userData.addressIdx())
+                .cardIdx(userData.cardIdx())
+                .orderCode(UUID.randomUUID().toString())
+                .status(OrderStatus.CREATED.name())
+                .itemsAmount(amount)
+                .totalAmount(amount) // 일단 할인/배송비 고려 x
+                .del(false)
+                .build();
+
         orderRepository.save(orderEntity);
 
         // OrderItem Table 세팅
-        OrderItemEntity itemEntity = new OrderItemEntity();
-        itemEntity.setOrder(orderEntity);
-        itemEntity.setProductIdx(productInfo.productIdx());
-        itemEntity.setOptionIdx(orderRequest.optionIdx());
-        itemEntity.setProductName(productInfo.productName());
-        itemEntity.setOptionName(productInfo.optionContent());
-        itemEntity.setPrice(productInfo.price());
-        itemEntity.setQuantity(orderRequest.quantity());
-        itemEntity.setDel(false);
+        OrderItemEntity itemEntity = OrderItemEntity.builder()
+                .order(orderEntity)
+                .productIdx(productInfo.productIdx())
+                .optionIdx(request.orderRequest().optionIdx())
+                .productName(productInfo.productName())
+                .optionName(productInfo.optionContent())
+                .price(productInfo.price())
+                .quantity(request.orderRequest().quantity())
+                .del(false)
+                .build();
+
         orderItemRepository.save(itemEntity);
 
         // 상품을 상세 내용
         OrderItemResponse itemInfo = new OrderItemResponse(
                 productInfo,
-                orderRequest.quantity(),
+                request.orderRequest().quantity(),
                 amount
         );
 
@@ -106,13 +116,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderCartResponse cartOrder(String token, CartOrderRequest cartOrderRequest) {
+    public OrderCartResponse cartOrder(String token, OrderCartRequest request) {
 
         // todo: 유저가 카드/주소 데이터(DTO)를 body에 넣었을 때 Member-service에 데이터 전송
 
         // 초반 로직 directOrder와 동일
-        UserData userData = userClient.getOrderData(token);
-        validateOrderData(userData);
+        UserData userData = userClient.getUserData(token, request.userdata());
 
         // response에 담길 리스트
         List<OrderItemResponse> itemList = new ArrayList<>();
@@ -120,35 +129,47 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
         // Order Table 세팅
-        OrderEntity orderEntity = new OrderEntity();
-        orderEntity.setUserIdx(userData.usersIdx());
-        orderEntity.setAddressIdx(userData.addressIdx());
-        orderEntity.setCardIdx(userData.cardIdx());
-        orderEntity.setOrderCode(UUID.randomUUID().toString());
-        orderEntity.setStatus(OrderStatus.CREATED.name());
-        orderEntity.setItemsAmount(itemsAmount);
-//        orderEntity.setSalePrice();
-//        orderEntity.setShippingFee();
-        orderEntity.setTotalAmount(itemsAmount);
-        orderEntity.setDel(false);
+        OrderEntity orderEntity = OrderEntity.builder()
+                .userIdx(userData.usersIdx())
+                .addressIdx(userData.addressIdx())
+                .cardIdx(userData.cardIdx())
+                .orderCode(UUID.randomUUID().toString())
+                .status(OrderStatus.CREATED.name())
+                .itemsAmount(itemsAmount)
+                .totalAmount(itemsAmount)
+                .del(false)
+                .build();
+
         orderRepository.save(orderEntity);
 
-        List<OrderRequest> items = cartOrderRequest.orderList();
+        List<OrderRequest> items = request.orderList();
         for(OrderRequest item : items) {
-            ProductInfo productInfo = productClient.getProduct(item.productIdx(), item.optionIdx());
+
+            ProductInfo productInfo;
+            try {
+                productInfo = productClient.getProduct(item.productIdx(), item.optionIdx());
+            } catch (FeignException.NotFound e) {
+                throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+            }
+
+            if(productInfo.stock() < item.quantity()) {
+                throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
+            }
+
             BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(item.quantity()));
 
             // OrderItem Table 세팅
-            OrderItemEntity itemEntity = new OrderItemEntity();
-            itemEntity.setOrder(orderEntity);
-            itemEntity.setProductIdx(productInfo.productIdx());
-            itemEntity.setOptionIdx(item.optionIdx());
-            itemEntity.setProductName(productInfo.productName());
-            itemEntity.setOptionName(productInfo.optionContent());
-            itemEntity.setPrice(productInfo.price());
-//        itemEntity.setSalePrice(productInfo.salePrice());
-            itemEntity.setQuantity(item.quantity());
-            itemEntity.setDel(false);
+            OrderItemEntity itemEntity = OrderItemEntity.builder()
+                    .order(orderEntity)
+                    .productIdx(productInfo.productIdx())
+                    .optionIdx(item.optionIdx())
+                    .productName(productInfo.productName())
+                    .optionName(productInfo.optionContent())
+                    .price(productInfo.price())
+                    .quantity(item.quantity())
+                    .del(false)
+                    .build();
+
             orderItemRepository.save(itemEntity);
 
             itemsAmount = itemsAmount.add(amount);
@@ -160,6 +181,8 @@ public class OrderServiceImpl implements OrderService {
             );
             itemList.add(itemInfo);
         }
+
+        // 최종 금액 업데이트 (이미 영속화된 엔티티이므로 setter 사용하여 변경 감지)
         orderEntity.setItemsAmount(itemsAmount);
 //        orderEntity.setTotalAmount(tempAmount);
 
@@ -170,18 +193,5 @@ public class OrderServiceImpl implements OrderService {
 //                shippingFee,
 //                totalAmount
         );
-    }
-
-    // userData에 주소/카드 정보 재대로 있는지 확인 없으면 예외
-    private void validateOrderData(UserData userData) {
-        if (userData.addressIdx() == null && userData.cardIdx() == null) {
-            throw new NoInputOrderDataException(ErrorCode.NO_INPUT_ORDER_DATA);
-        }
-        else if (userData.addressIdx() == null) {
-            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
-        }
-        else if (userData.cardIdx() == null) {
-            throw new NoInputCardDataException(ErrorCode.NO_INPUT_CARD_DATA);
-        }
     }
 }

@@ -1,7 +1,7 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.CartOrderRequest;
-import co.kr.order.model.dto.request.OrderRequest;
+import co.kr.order.model.dto.request.OrderCartRequest;
+import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderCartResponse;
 import co.kr.order.model.dto.response.OrderDirectResponse;
@@ -19,15 +19,15 @@ public class OrderController {
 
     /**
      * @param token : jwt Access 토큰
-     * @param orderRequest : productIdx, optionIdx, quantity
+     * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping
     public ResponseEntity<BaseResponse<OrderDirectResponse>> directOrder(
             @RequestHeader("Authorization") String token,
-            @RequestBody OrderRequest orderRequest
+            @RequestBody OrderDirectRequest request
             ) {
 
-        OrderDirectResponse info = orderService.directOrder(token, orderRequest);
+        OrderDirectResponse info = orderService.directOrder(token, request);
         BaseResponse<OrderDirectResponse> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
@@ -35,15 +35,15 @@ public class OrderController {
 
     /**
      * @param token : jwt Access 토큰
-     * @param cartOrderRequest : productIdx, optionIdx, quantity
+     * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderCartResponse>> cartOrder(
             @RequestHeader("Authorization") String token,
-            @RequestBody CartOrderRequest cartOrderRequest
+            @RequestBody OrderCartRequest request
     ) {
 
-        OrderCartResponse info = orderService.cartOrder(token, cartOrderRequest);
+        OrderCartResponse info = orderService.cartOrder(token, request);
         BaseResponse<OrderCartResponse> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }

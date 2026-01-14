@@ -60,14 +60,14 @@ public class CartServiceImpl implements CartService {
         else {
             // 상품에서 직접 카트 담기 눌렀을 경우 (existCart가 없을 경우)
             // 새로운 entity 생성 후 데이터 추가
-            CartEntity newCart = new CartEntity();
-
-            newCart.setUserIdx(userIdx);
-            newCart.setProductIdx(request.productIdx());
-            newCart.setOptionIdx(request.optionIdx());
-            newCart.setQuantity(1);
-            newCart.setPrice(productInfo.price());
-            newCart.setDel(false);
+            CartEntity newCart = CartEntity.builder()
+                    .userIdx(userIdx)
+                    .productIdx(request.productIdx())
+                    .optionIdx(request.optionIdx())
+                    .quantity(1)
+                    .price(productInfo.price())
+                    .del(false)
+                    .build();
 
             cartRepository.save(newCart);
         }

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
  * @param productName : 제품 이름
  * @param optionContent : 제품 옵션 내용
  * @param price : 제품 가격
+ * @param stock : 제품 개수
  * Product-service에 동기통신 후 받는 제품 정보
  */
 public record ProductInfo(
@@ -14,5 +15,6 @@ public record ProductInfo(
         String productName,
 //        String imageUrl,
         String optionContent,
-        BigDecimal price
+        BigDecimal price,
+        Integer stock
 ) {}

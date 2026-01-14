@@ -2,10 +2,14 @@ package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
-import co.kr.order.model.dto.UserData;
+import co.kr.order.model.dto.AddressInfo;
+import co.kr.order.model.dto.CardInfo;
 import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.request.CartOrderRequest;
+import co.kr.order.model.dto.UserData;
+import co.kr.order.model.dto.request.OrderCartRequest;
+import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.request.OrderRequest;
+import co.kr.order.model.dto.request.UserDataRequest;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.vo.OrderStatus;
@@ -29,6 +33,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,10 +59,11 @@ class OrderControllerTest {
     void init() {
         // given
         UserData userData = new UserData(1L, 2L, 3L);
-        given(userClient.getOrderData(anyString())).willReturn(userData);
 
-        ProductInfo productInfo1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"));
-        ProductInfo productInfo2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("15000.00"));
+        given(userClient.getUserData(anyString(), any())).willReturn(userData);
+
+        ProductInfo productInfo1 = new ProductInfo(100L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 100);
+        ProductInfo productInfo2 = new ProductInfo(101L, "테스트 상품2", "옵션B", new BigDecimal("15000.00"), 100);
 
         given(productClient.getProduct(100L, 10L)).willReturn(productInfo1);
         given(productClient.getProduct(101L, 11L)).willReturn(productInfo2);
@@ -67,7 +73,12 @@ class OrderControllerTest {
     @Transactional
     void 단일상품_주문 () throws Exception {
 
-        OrderRequest request = new OrderRequest(100L, 10L, 3);
+        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        AddressInfo addressInfo = new AddressInfo("홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo("브랜드", "카드이름", "card token", 12, 2029);
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+
+        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -111,6 +122,11 @@ class OrderControllerTest {
     @Test
     @Transactional
     void 카트로_주문() throws Exception {
+
+        AddressInfo addressInfo = new AddressInfo("홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo("브랜드", "카드이름", "card token", 12, 2029);
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+
         OrderRequest item1 = new OrderRequest(100L, 10L, 3);
         OrderRequest item2 = new OrderRequest(101L, 11L, 2);
 
@@ -118,7 +134,7 @@ class OrderControllerTest {
         items.add(item1);
         items.add(item2);
 
-        CartOrderRequest cart = new CartOrderRequest(items);
+        OrderCartRequest cart = new OrderCartRequest(items, userData);
 
         // todo
         ResultActions resultActions = mvc

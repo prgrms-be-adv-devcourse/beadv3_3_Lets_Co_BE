@@ -1,6 +1,6 @@
-package co.kr.user.dto.response;
+package co.kr.user.model.DTO.myPage;
 
-import co.kr.user.model.entity.User;
+import co.kr.user.model.entity.Users;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,10 +31,10 @@ public class UserResponse {
      * User 엔티티(DB 원본 데이터)를 받아서 응답용 DTO(UserResponse)로 변환
      * 정적 팩토리 메서드 패턴(from)을 사용하여 객체 생성 로직을 캡슐화
      */
-    public static UserResponse from(User user) {
+    public static UserResponse from(Users user) {
         return UserResponse.builder()
                 .userId(user.getUsersIdx())
-                .loginId(user.getLoginId())
+                .loginId(user.getID())
                 .role(user.getRole().name()) // Enum 타입을 문자열로 변환
                 .balance(user.getBalance())
                 .createdAt(user.getCreatedAt())

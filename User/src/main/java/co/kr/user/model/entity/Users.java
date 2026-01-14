@@ -1,6 +1,7 @@
 package co.kr.user.model.entity;
 
-import co.kr.user.model.vo.UserRole;
+import co.kr.user.model.vo.UsersRole;
+import co.kr.user.model.vo.UsersVerificationsStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,8 +21,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 @DynamicInsert
-@Table(name = "Users_Login")
-public class User {
+@Table(name = "Users")
+public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,10 +30,10 @@ public class User {
     private Long usersIdx;
 
     @Column(name = "ID", nullable = false, length = 254)
-    private String loginId;
+    private String ID;
 
     @Column(name = "PW", nullable = false)
-    private String password;
+    private String PW;
 
     @Column(name = "Failed_Login_Attempts", nullable = false)
     @ColumnDefault("0")
@@ -44,7 +45,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "Role", nullable = false, length = 20)
     @ColumnDefault("'Users'")
-    private UserRole role = UserRole.USERS;
+    private UsersRole role = UsersRole.USERS;
 
     @Column(name = "Balance", nullable = false, precision = 19, scale = 2)
     @ColumnDefault("0")
@@ -70,13 +71,19 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Column(name = "Del", nullable = false)
-    @ColumnDefault("0")
-    private Boolean del = false;
+    @ColumnDefault("2")
+    private int del = 2;
 
     @Builder
-    public User(String loginId, String password, LocalDateTime agreeMarketingAt) {
-        this.loginId = loginId;
-        this.password = password;
+    public Users(String ID, String PW, LocalDateTime agreeTermsAt, LocalDateTime agreePrivacyAt,LocalDateTime agreeMarketingAt) {
+        this.ID = ID;
+        this.PW = PW;
+        this.agreeTermsAt = agreeTermsAt;
+        this.agreePrivacyAt = agreePrivacyAt;
         this.agreeMarketingAt = agreeMarketingAt;
+    }
+
+    public void confirmVerification() {
+        this.del = 0;
     }
 }

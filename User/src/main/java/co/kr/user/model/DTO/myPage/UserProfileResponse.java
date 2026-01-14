@@ -1,7 +1,7 @@
-package co.kr.user.dto.response;
+package co.kr.user.model.DTO.myPage;
 
-import co.kr.user.model.entity.User;
-import co.kr.user.model.entity.UserInformation;
+import co.kr.user.model.entity.Users;
+import co.kr.user.model.entity.Users_Information;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class UserProfileResponse {
      * 여러 소스(User 엔티티, UserInformation 엔티티, 추후 카드 정보 등)를 조합하여 하나의 응답을 만듭니다.
      */
     public static UserProfileResponse of(
-            User user, UserInformation userInfo /*, List<CardDto> cards */
+            Users user, Users_Information userInfo /*, List<CardDto> cards */
     ) {
         return UserProfileResponse.builder()
                 .userId(user.getUsersIdx())

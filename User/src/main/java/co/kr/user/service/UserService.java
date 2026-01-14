@@ -1,11 +1,11 @@
 package co.kr.user.service;
 
-import co.kr.user.dto.response.UserProfileResponse;
-import co.kr.user.dto.response.UserResponse;
-import co.kr.user.model.entity.User;
-import co.kr.user.model.entity.UserInformation;
-import co.kr.user.repository.UserInformationRepository;
-import co.kr.user.repository.UserRepository;
+import co.kr.user.DAO.UserInformationRepository;
+import co.kr.user.DAO.UserRepository;
+import co.kr.user.model.DTO.myPage.UserProfileResponse;
+import co.kr.user.model.DTO.myPage.UserResponse;
+import co.kr.user.model.entity.Users;
+import co.kr.user.model.entity.Users_Information;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +30,7 @@ public class UserService {
      */
     public UserResponse getMyPageInfo(Long userId) {
         // DB에서 사용자 조회 (없으면 예외 발생)
-        User user = findUserByIdOrThrow(userId);
+        Users user = findUserByIdOrThrow(userId);
 
         // Entity를 DTO로 변환하여 반환
         return UserResponse.from(user);
@@ -43,11 +43,11 @@ public class UserService {
      */
     public UserProfileResponse getMyPageDetails(Long userId) {
         // 기본 유저 정보 조회 (로그인 ID, 역할 등 확인용)
-        User user = findUserByIdOrThrow(userId);
+        Users user = findUserByIdOrThrow(userId);
 
         // 상세 유저 정보 조회 (이름, 전화번호 등)
         // UserInformation 테이블에서 해당 유저와 매핑된 정보를 찾음
-        UserInformation userInfo = userInformationRepository.findByUserUsersIdx(userId)
+        Users_Information userInfo = userInformationRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + userId));
 
         /*
@@ -64,7 +64,7 @@ public class UserService {
      * [내부 헬퍼 메서드]
      * ID로 User를 찾고, 없으면 예외를 던지는 반복 로직을 추출
      */
-    private User findUserByIdOrThrow(Long userId) {
+    private Users findUserByIdOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. UserID: " + userId));
     }

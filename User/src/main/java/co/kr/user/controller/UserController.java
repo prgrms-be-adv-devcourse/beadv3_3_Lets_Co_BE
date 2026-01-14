@@ -1,7 +1,7 @@
 package co.kr.user.controller;
 
-import co.kr.user.dto.response.UserProfileResponse;
-import co.kr.user.dto.response.UserResponse;
+import co.kr.user.model.DTO.myPage.UserProfileResponse;
+import co.kr.user.model.DTO.myPage.UserResponse;
 import co.kr.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,0 +1,18 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: Gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+
+custom:
+  jwt:
+    secrets:
+      : A5A10BC17B4E653C78BDD55FFFD9DEE3BE5790CD6F3F64DC1E82E791F9821C17

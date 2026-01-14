@@ -34,3 +34,8 @@ Order/src/main/resources/application-local.yml
 Order/src/test/java/co/kr/order/service/impl/PaymentServiceImplTest.java
 Order/src/main/resources/application-test.yml
 *.yml
+
+**/build/
+**/.gradle/
+**/.idea/
+*.iml

@@ -4,14 +4,12 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor
 @Table(name = "Orders")
@@ -66,5 +64,13 @@ public class OrderEntity {
         this.itemsAmount = itemsAmount != null ? itemsAmount : BigDecimal.ZERO;
         this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
         this.del = del != null ? del : false;
+    }
+
+    public void setItemsAmount(BigDecimal itemsAmount) {
+        this.itemsAmount = itemsAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 }

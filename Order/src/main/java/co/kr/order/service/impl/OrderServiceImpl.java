@@ -43,7 +43,6 @@ public class OrderServiceImpl implements OrderService {
      * Todo
      * N+1 문제
      * 카트/단일 주문의 중복 로직을 통합
-     * setter 를 builder 로 변경 -> 완료
      */
 
 
@@ -117,8 +116,6 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public OrderCartResponse cartOrder(String token, OrderCartRequest request) {
-
-        // todo: 유저가 카드/주소 데이터(DTO)를 body에 넣었을 때 Member-service에 데이터 전송
 
         // 초반 로직 directOrder와 동일
         UserData userData = userClient.getUserData(token, request.userdata());

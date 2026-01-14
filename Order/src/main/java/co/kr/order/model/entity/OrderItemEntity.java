@@ -13,12 +13,12 @@ import java.math.BigDecimal;
 public class OrderItemEntity {
 
     @Id
-    @Column(name = "Orders_Item_IDX")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Orders_IDX", nullable = false)
-    private OrderEntity orderIdx;
+    private OrderEntity order;
 
     @Column(name = "Products_IDX", nullable = false)
     private Long productIdx;

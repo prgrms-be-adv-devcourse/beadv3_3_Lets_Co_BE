@@ -18,7 +18,7 @@ public class OrderEntity {
     @Column(name = "Orders_IDX")
     private Long id;
 
-    @OneToMany(mappedBy = "orderIdx")
+    @OneToMany(mappedBy = "order")
     private List<OrderItemEntity> orderItems;
 
     @Column(name = "Users_IDX", nullable = false)
@@ -29,7 +29,6 @@ public class OrderEntity {
 
     @Column(name = "Card_IDX", nullable = true)
     private Long cardIdx;
-
 
     @Column(name = "Orders_Code", nullable = false)
     private String orderCode;

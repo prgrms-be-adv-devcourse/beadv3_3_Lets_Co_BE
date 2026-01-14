@@ -9,8 +9,36 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<BaseResponse<String>> userNotFoundException(UserNotFoundException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(CartNotFoundException.class)
     public ResponseEntity<BaseResponse<String>> cartNotFoundException(CartNotFoundException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoInputOrderDataException.class)
+    public ResponseEntity<BaseResponse<String>> cartNotFoundException(NoInputOrderDataException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoInputAddressDataException.class)
+    public ResponseEntity<BaseResponse<String>> cartNotFoundException(NoInputAddressDataException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoInputCardDataException.class)
+    public ResponseEntity<BaseResponse<String>> cartNotFoundException(NoInputCardDataException e) {
         BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

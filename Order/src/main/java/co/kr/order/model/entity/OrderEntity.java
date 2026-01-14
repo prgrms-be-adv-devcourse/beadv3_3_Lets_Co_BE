@@ -27,7 +27,7 @@ public class OrderEntity {
     @Column(name = "Address_IDX", nullable = false)
     private Long addressIdx;
 
-    @Column(name = "Card_IDX", nullable = false)
+    @Column(name = "Card_IDX", nullable = true)
     private Long cardIdx;
 
 

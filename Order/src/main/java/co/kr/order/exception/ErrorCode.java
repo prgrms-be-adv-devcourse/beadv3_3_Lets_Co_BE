@@ -1,7 +1,8 @@
 package co.kr.order.exception;
 
 public enum ErrorCode {
-    CART_NOT_FOUND("CART_NOT_FOUND", "장바구니 정보를 찾을 수 없습니다.");
+    CART_NOT_FOUND("CART_NOT_FOUND", "장바구니 정보를 찾을 수 없습니다."),
+    PAYMENT_FAILED("PAYMENT_FAILED", "Payment failed.");
 
     private final String code;
     private final String msg;

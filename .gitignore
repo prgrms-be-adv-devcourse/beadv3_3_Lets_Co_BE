@@ -28,5 +28,9 @@ replay_pid*
 # Spring Boot local properties
 application-local.yml
 Order/src/main/resources/application-local.yml
-Order/src/main/resources/application-local.yml
-Order/src/main/resources/application-local.yml
+.idea/workspace.xml
+.idea/vcs.xml
+*.png
+Order/src/test/java/co/kr/order/service/impl/PaymentServiceImplTest.java
+Order/src/main/resources/application-test.yml
+*.yml

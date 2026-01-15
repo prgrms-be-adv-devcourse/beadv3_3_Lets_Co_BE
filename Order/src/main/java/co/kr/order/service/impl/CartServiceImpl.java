@@ -1,7 +1,6 @@
 package co.kr.order.service.impl;
 
 import co.kr.order.client.ProductClient;
-import co.kr.order.client.UserClient;
 import co.kr.order.exception.CartNotFoundException;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
@@ -27,19 +26,14 @@ public class CartServiceImpl implements CartService {
 
     private final CartJpaRepository cartRepository;
     private final ProductClient productClient;
-    private final UserClient userClient;
 
     /*
-     * @param token : jwt 토큰
      * @param request : productIdx와 optionIdx
      * 장바구니에 단일상품 추가 (장바구니 페이지에서 상품 + 클릭)
      */
     @Override
     @Transactional
-    public CartItemResponse addCartItem(String token, ProductRequest request) {
-
-        // token으로 userIdx를 가져오기 User-Service 간의 동기통신
-        Long userIdx = userClient.getUserIdx(token);
+    public CartItemResponse addCartItem(Long userIdx, ProductRequest request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
@@ -77,20 +71,16 @@ public class CartServiceImpl implements CartService {
         }
 
         // 단일상품 조회
-        return getCartItem(token, request);
+        return getCartItem(userIdx, request);
     }
 
     /*
-     * @param token : jwt 토큰
      * @param request : productIdx와 optionIdx
      * 장바구니 페이지에서 상품 - 클릭
      */
     @Override
     @Transactional
-    public CartItemResponse subtractCartItem(String token, ProductRequest request) {
-
-        // addCartItem와 로직 동일
-        Long userId = userClient.getUserIdx(token);
+    public CartItemResponse subtractCartItem(Long userIdx, ProductRequest request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
@@ -100,7 +90,7 @@ public class CartServiceImpl implements CartService {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, request.productIdx(), request.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx());
 
         if (existingCart.isPresent()) {
             // 장바구니에서 상품을 - 했을 경우 (existCart가 존재할 경우)
@@ -125,27 +115,15 @@ public class CartServiceImpl implements CartService {
         }
 
         // 단일상품 조회
-        return getCartItem(token, request);
+        return getCartItem(userIdx, request);
     }
 
     /*
-     * @param token : jwt 토큰
      * 카트 전체 리스트 조회
      */
     @Override
     @Transactional(readOnly = true)
-    public CartResponse getCartList(String token) {
-        
-        /*
-         * 위의 로직들처럼 ProductRequest를 받아서 productIdx, optionIdx를 가져올지
-         * token만 받아서 userIdx를 가져오고 findByIdx로 productIdx, optionIdx 찾을지 
-         * 위 두 방법중 하나 선택
-         */
-
-        // 일단 token만 받아서 findByIdx로 productIdx, optionIdx 데이터를 가져오는 걸로
-
-        // token으로 userIdx를 가져오기 User-Service 간의 동기통신
-        Long userIdx = userClient.getUserIdx(token);
+    public CartResponse getCartList(Long userIdx) {
 
         // useridx가 같은 entity 가져오기
         List<CartEntity> entities = cartRepository.findAllByUserIdx(userIdx);
@@ -207,16 +185,12 @@ public class CartServiceImpl implements CartService {
     }
 
     /*
-     * @param token : jwt 토큰
      * @param request : 조회할 상품의 productIdx와 optionIdx
      * 장바구니에 담긴 단일 상품 상세 조회 (수량 변경 후 응답값 반환용)
      */
     @Override
     @Transactional(readOnly = true)
-    public CartItemResponse getCartItem(String token, ProductRequest request) {
-
-        // token으로 userIdx를 가져오기 User-Service 간의 동기통신
-        Long userIdx = userClient.getUserIdx(token);
+    public CartItemResponse getCartItem(Long userIdx, ProductRequest request) {
 
         // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx()).orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
@@ -242,19 +216,15 @@ public class CartServiceImpl implements CartService {
     }
 
     /*
-     * @param token : jwt 토큰
      * @param productRequest : 삭제할 상품의 productIdx와 optionIdx
      * 장바구니 상품 아예 삭제 (X 클릭 또는 수량 0 미만 처리)
      */
     @Override
     @Transactional
-    public void deleteCartItem(String token, ProductRequest productRequest) {
-
-        // token으로 userIdx를 가져오기 User-Service 간의 동기통신
-        Long userId = userClient.getUserIdx(token);
+    public void deleteCartItem(Long userIdx, ProductRequest productRequest) {
 
         // 삭제할 장바구니 아이템 조회
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userId, productRequest.productIdx(), productRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, productRequest.productIdx(), productRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             // 상품이 존재하면 DB 데이터 삭제

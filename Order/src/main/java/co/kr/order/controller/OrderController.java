@@ -6,6 +6,7 @@ import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderCartResponse;
 import co.kr.order.model.dto.response.OrderDirectResponse;
 import co.kr.order.service.OrderService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,33 +18,39 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    /**
-     * @param token : jwt Access 토큰
+    /*
+     * @param servletRequest : userIdx
      * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping
     public ResponseEntity<BaseResponse<OrderDirectResponse>> directOrder(
-            @RequestHeader("Authorization") String token,
+            HttpServletRequest servletRequest,
             @RequestBody OrderDirectRequest request
             ) {
 
-        OrderDirectResponse info = orderService.directOrder(token, request);
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        OrderDirectResponse info = orderService.directOrder(userIdx, request);
         BaseResponse<OrderDirectResponse> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
     }
 
-    /**
-     * @param token : jwt Access 토큰
+    /*
+     * @param servletRequest : userIdx
      * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderCartResponse>> cartOrder(
-            @RequestHeader("Authorization") String token,
+            HttpServletRequest servletRequest,
             @RequestBody UserDataRequest request
     ) {
 
-        OrderCartResponse info = orderService.cartOrder(token, request);
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        OrderCartResponse info = orderService.cartOrder(userIdx, request);
         BaseResponse<OrderCartResponse> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }

@@ -2,9 +2,7 @@ package co.kr.order.service.impl;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
-import co.kr.order.exception.ErrorCode;
-import co.kr.order.exception.OutOfStockException;
-import co.kr.order.exception.ProductNotFoundException;
+import co.kr.order.exception.*;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.UserData;
 import co.kr.order.model.dto.request.CheckStockRequest;
@@ -44,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderDirectResponse directOrder(String token, OrderDirectRequest request) {
+    public OrderDirectResponse directOrder(Long userIdx, OrderDirectRequest request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
@@ -62,8 +60,9 @@ public class OrderServiceImpl implements OrderService {
         // 가격*수량 해서 총 가격 측정
         BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(request.orderRequest().quantity()));
 
-        // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져옴
-        UserData userData = userClient.getUserData(token, request.userData());
+        // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인
+        UserData userData = userClient.getUserData(userIdx, request.userData());
+        validateOrderData(userData);
 
         // Order Table 세팅
         OrderEntity orderEntity = OrderEntity.builder()
@@ -119,9 +118,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderCartResponse cartOrder(String token, UserDataRequest request) {
+    public OrderCartResponse cartOrder(Long userIdx, UserDataRequest request) {
 
-        UserData userData = userClient.getUserData(token, request);
+        UserData userData = userClient.getUserData(userIdx, request);
+        validateOrderData(userData);
 
         // 주문(Order) 엔티티 생성 및 저장
         BigDecimal itemsAmount = BigDecimal.ZERO;
@@ -239,5 +239,18 @@ public class OrderServiceImpl implements OrderService {
 //                shippingFee,
 //                totalAmount
         );
+    }
+
+    // 주소/카드 정보 비어있는지 확인
+    private void validateOrderData(UserData userData) {
+        if (userData.addressIdx() == null && userData.cardIdx() == null) {
+            throw new NoInputOrderDataException(ErrorCode.NO_INPUT_ORDER_DATA);
+        }
+        else if (userData.addressIdx() == null) {
+            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
+        }
+        else if (userData.cardIdx() == null) {
+            throw new NoInputCardDataException(ErrorCode.NO_INPUT_CARD_DATA);
+        }
     }
 }

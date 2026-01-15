@@ -18,6 +18,8 @@ import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
+import feign.Request;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,10 +34,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -61,7 +64,7 @@ class OrderControllerTest {
     void init() {
         // given
         UserData userData = new UserData(1L, 2L, 3L);
-        given(userClient.getUserData(anyString(), any())).willReturn(userData);
+        given(userClient.getUserData(eq(1L), any())).willReturn(userData);
 
         ProductInfo productInfo1 = new ProductInfo(100L, 10L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 100);
         ProductInfo productInfo2 = new ProductInfo(101L, 11L, "테스트 상품2", "옵션B", new BigDecimal("15000.00"), 100);
@@ -77,7 +80,7 @@ class OrderControllerTest {
 
     @Test
     @Transactional
-    void 단일상품_주문 () throws Exception {
+    void 단일상품_주문_정상 () throws Exception {
 
         OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
         AddressInfo addressInfo = new AddressInfo("홍길동", "주소1", "상세1", "01012345678");
@@ -91,7 +94,7 @@ class OrderControllerTest {
                         post("/order")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer Temp")
+                                .header("X-USERS-IDX", "1")
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andDo(print());
@@ -127,7 +130,7 @@ class OrderControllerTest {
 
     @Test
     @Transactional
-    void 카트로_주문() throws Exception {
+    void 카트로_주문_정상() throws Exception {
 
         CartEntity cart1 = CartEntity.builder()
                 .userIdx(1L)
@@ -158,7 +161,7 @@ class OrderControllerTest {
                         post("/order/cart")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer Temp")
+                                .header("X-USERS-IDX", "1")
                                 .content(objectMapper.writeValueAsString(userData))
                 )
                 .andDo(print());
@@ -208,5 +211,188 @@ class OrderControllerTest {
 
         List<CartEntity> cartEntity = cartRepository.findAll();
         Assertions.assertThat(cartEntity).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    void 단일상품_주문_실패_재고없음 () throws Exception {
+
+        // 200개 주문했을 때 (재고는 100개)
+        OrderRequest orderRequest = new OrderRequest(100L, 10L, 200);
+        AddressInfo addressInfo = new AddressInfo("홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo("브랜드", "카드이름", "card token", 12, 2029);
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+
+        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/order")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("X-USERS-IDX", "1")
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print());
+
+        resultActions.andExpect(status().is4xxClientError())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("OUT_OF_STOCK"))
+                .andExpect(jsonPath("$.data").value("재고가 부족합니다."));
+
+        // Order 테이블
+        List<OrderEntity> orderEntity = orderRepository.findAll();
+        Assertions.assertThat(orderEntity).hasSize(0);
+
+        // OrderItem 테이블
+        List<OrderItemEntity> itemEntity = orderItemRepository.findAll();
+        Assertions.assertThat(orderEntity).hasSize(0);
+    }
+
+    @Test
+    @Transactional
+    void 단일상품_주문_실패_상품없음 () throws Exception {
+
+        // 103L/10L 으로 찾았을 때 Product Not Found request 할 가짜 응답
+        Request rq = Request.create(Request.HttpMethod.GET, "url", Collections.emptyMap(), null, null, null);
+        given(productClient.getProduct(new ProductRequest(103L, 10L)))
+                .willThrow(new FeignException.NotFound("Product Not Found", rq, null, null));
+
+        OrderRequest orderRequest = new OrderRequest(103L, 10L, 3);
+        AddressInfo addressInfo = new AddressInfo("홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo("브랜드", "카드이름", "card token", 12, 2029);
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+
+        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/order")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("X-USERS-IDX", "1")
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print());
+
+        resultActions.andExpect(status().is4xxClientError())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("PRODUCT_NOT_FOUND"));
+
+        // Order 테이블
+        List<OrderEntity> orderEntity = orderRepository.findAll();
+        Assertions.assertThat(orderEntity).hasSize(0);
+
+        // OrderItem 테이블
+        List<OrderItemEntity> itemEntity = orderItemRepository.findAll();
+        Assertions.assertThat(itemEntity).hasSize(0);
+    }
+
+    @Test
+    @Transactional
+    void 단일상품_주문_실패_주소정보_없음 () throws Exception {
+
+        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        AddressInfo addressInfo = null;
+        CardInfo cardInfo = new CardInfo("브랜드", "카드이름", "card token", 12, 2029);
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+
+        UserData noAddress = new UserData(1L, null, 3L);
+        given(userClient.getUserData(eq(1L), any())).willReturn(noAddress);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/order")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("X-USERS-IDX", "1")
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print());
+//
+        resultActions.andExpect(status().is4xxClientError())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("NO_INPUT_ADDRESS_DATA"));
+
+        // Order 테이블
+        List<OrderEntity> orderEntity = orderRepository.findAll();
+        Assertions.assertThat(orderEntity).hasSize(0);
+
+        // OrderItem 테이블
+        List<OrderItemEntity> itemEntity = orderItemRepository.findAll();
+        Assertions.assertThat(itemEntity).hasSize(0);
+    }
+
+    @Test
+    @Transactional
+    void 단일상품_주문_실패_카드정보_없음 () throws Exception {
+
+        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        AddressInfo addressInfo = new AddressInfo("홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = null;
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+
+        UserData noAddress = new UserData(1L, 2L, null);
+        given(userClient.getUserData(eq(1L), any())).willReturn(noAddress);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/order")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("X-USERS-IDX", "1")
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print());
+//
+        resultActions.andExpect(status().is4xxClientError())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("NO_INPUT_CARD_DATA"));
+
+        // Order 테이블
+        List<OrderEntity> orderEntity = orderRepository.findAll();
+        Assertions.assertThat(orderEntity).hasSize(0);
+
+        // OrderItem 테이블
+        List<OrderItemEntity> itemEntity = orderItemRepository.findAll();
+        Assertions.assertThat(itemEntity).hasSize(0);
+    }
+
+    @Test
+    @Transactional
+    void 단일상품_주문_실패_결제정보_없음 () throws Exception {
+
+        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        AddressInfo addressInfo = null;
+        CardInfo cardInfo = null;
+        UserDataRequest userData = new UserDataRequest(addressInfo, cardInfo);
+        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+
+        UserData noAddress = new UserData(1L, null, null);
+        given(userClient.getUserData(eq(1L), any())).willReturn(noAddress);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/order")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("X-USERS-IDX", "1")
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print());
+//
+        resultActions.andExpect(status().is4xxClientError())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("NO_INPUT_ORDER_DATA"));
+
+        // Order 테이블
+        List<OrderEntity> orderEntity = orderRepository.findAll();
+        Assertions.assertThat(orderEntity).hasSize(0);
+
+        // OrderItem 테이블
+        List<OrderItemEntity> itemEntity = orderItemRepository.findAll();
+        Assertions.assertThat(itemEntity).hasSize(0);
     }
 }

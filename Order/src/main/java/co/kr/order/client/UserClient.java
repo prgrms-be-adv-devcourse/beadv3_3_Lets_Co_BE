@@ -11,16 +11,17 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @FeignClient(name="User")
 public interface UserClient {
 
-    /*
-     * @param token : jwt Access 토큰 값
-     * userIdx를 가져오기 User-Service 간의 동기통신
-     */
+    // 이거 삭제합니다. (header로 userIdx 를 주기 때문에)
     @GetMapping("/userIdx")
     Long getUserIdx(@RequestHeader("Authorization") String token);
 
+    /*
+     * @param userIdx
+     * @param request : AddressInfo (주소 정보), CardInfo (카드 정보)
+     */
     @PostMapping("/order")
     UserData getUserData(
-            @RequestHeader("Authorization") String token,
+            Long userIdx,
             @RequestBody UserDataRequest request
     );
 }

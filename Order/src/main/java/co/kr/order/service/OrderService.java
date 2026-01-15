@@ -7,6 +7,6 @@ import co.kr.order.model.dto.response.OrderDirectResponse;
 
 public interface OrderService {
 
-    OrderDirectResponse directOrder(String token, OrderDirectRequest request);
-    OrderCartResponse cartOrder(String token, UserDataRequest request);
+    OrderDirectResponse directOrder(Long userIdx, OrderDirectRequest request);
+    OrderCartResponse cartOrder(Long userIdx, UserDataRequest request);
 }

@@ -1,6 +1,10 @@
 package co.kr.order.model.dto.request;
 
-// 주문할 때 필요한 제품id, 옵션id, 주문할 제품 수량
+/*
+ * @param productIdx
+ * @param optionIdx
+ * @param quantity
+ */
 public record OrderRequest(
         Long productIdx,
         Long optionIdx,

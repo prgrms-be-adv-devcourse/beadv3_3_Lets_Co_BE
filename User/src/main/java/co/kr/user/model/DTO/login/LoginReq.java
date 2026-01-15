@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 public class LoginReq {
@@ -28,6 +29,7 @@ public class LoginReq {
      * * @Size: 최소 8자 이상, 최대 16자 이하이어야 합니다.
      * @Pattern: 정규식을 통해 '영문 대소문자 중 1개 이상', '숫자 1개 이상', '특수문자 1개 이상'이 반드시 포함되도록 검사합니다.
      */
+    @ToString.Exclude // [핵심] 로그 제외 설정
     @NotBlank(message = "Password cannot be empty.")
     @Size(min = 8, max = 16, message = "Password must be between 8 and 30 characters.")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",

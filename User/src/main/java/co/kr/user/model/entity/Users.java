@@ -86,4 +86,14 @@ public class Users {
     public void confirmVerification() {
         this.del = 0;
     }
+
+    public void resetPW() {
+        this.PW = "expire";
+        this.failedLoginAttempts = 0;
+    }
+
+    public void setPW(String PW) {
+        this.PW = PW;
+        this.failedLoginAttempts = 0;
+    }
 }

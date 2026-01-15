@@ -4,6 +4,7 @@ import co.kr.user.DAO.UserInformationRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UserVerificationsRepository;
 import co.kr.user.model.DTO.mail.EmailMessage;
+import co.kr.user.model.DTO.register.AuthenticationReq;
 import co.kr.user.model.DTO.register.RegisterDTO;
 import co.kr.user.model.DTO.register.RegisterReq;
 import co.kr.user.model.entity.Users;
@@ -16,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Member;
-import java.time.LocalDateTime;
+import java.time.LocalDateTime;import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * [회원가입 서비스 구현체]
@@ -78,7 +79,7 @@ public class RegisterService implements RegisterServiceImpl{
         // 1. [유효성 재확인] 컨트롤러에서 검증했지만, 비즈니스 로직상 안전을 위해 한 번 더 체크
         boolean isDuplicate = userRepository.existsByID(registerReq.getID());
         if (isDuplicate) {
-            throw new IllegalStateException("이미 존재하는 이메일입니다.");
+            throw new IllegalStateException("이미 가입된 이메일입니다.");
         }
 
         // 약관 동의 여부 체크 (필수 항목 누락 시 예외 발생)
@@ -98,7 +99,7 @@ public class RegisterService implements RegisterServiceImpl{
         registerReq.setPhoneNumber(aesUtil.encrypt(registerReq.getPhoneNumber()));
         registerReq.setBirth(aesUtil.encrypt(registerReq.getBirth().toString()));
 
-        log.info("RegisterReq : {}", registerReq); // (운영 시 암호화된 값이라도 로그 주의 필요)
+        log.info("RegisterReq : {}", registerReq.toString()); // (운영 시 암호화된 값이라도 로그 주의 필요)
 
         // 3-1. [Users 엔티티 생성 및 저장] (기본 회원 정보)
         Users user = Users.builder()
@@ -110,7 +111,7 @@ public class RegisterService implements RegisterServiceImpl{
                 .build();
 
         Users savedUser = userRepository.save(user); // DB Insert 실행
-        log.info("Saved User : {}", savedUser);
+        log.info("Saved User : {}", savedUser.toString());
 
         // 3-2. [Users_Information 엔티티 생성 및 저장] (부가 개인 정보)
         // Users 테이블과 1:1 관계이며, Users의 PK(usersIdx)를 외래키로 사용
@@ -122,7 +123,7 @@ public class RegisterService implements RegisterServiceImpl{
                 .build();
 
         Users_Information savedUserInformation = userInformationRepository.save(usersInformation);
-        log.info("Saved User Information : {}", savedUserInformation);
+        log.info("Saved User Information : {}", savedUserInformation.toString());
 
         // 3-3. [인증 정보 생성 및 저장]
         // 이메일 인증을 위한 랜덤 코드를 생성하여 DB에 저장
@@ -135,7 +136,7 @@ public class RegisterService implements RegisterServiceImpl{
                 .build();
 
         Users_Verifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
-        log.info("Saved User Verifications : {}", savedUserVerifications);
+        log.info("Saved User Verifications : {}", savedUserVerifications.toString());
 
         // 4. [이메일 발송]
         // HTML 템플릿에 생성된 인증 코드를 삽입하여 메일 객체 생성
@@ -185,8 +186,14 @@ public class RegisterService implements RegisterServiceImpl{
                 .message(finalContent)
                 .build();
 
-        // 비동기(@Async)로 메일 발송 (사용자는 메일 발송 완료를 기다리지 않고 바로 응답을 받음)
-        eMailUtil.sendEmail(emailMessage, true);
+        // [핵심 변경] 트랜잭션 커밋 후 실행 (After Commit)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                log.info("Transaction Committed. Sending Email to {}", savedUser.getID());
+                eMailUtil.sendEmail(emailMessage, true);
+            }
+        });
 
         // 5. [결과 반환]
         // 클라이언트에게 가입된 ID와 인증 만료 시간을 알려줌
@@ -194,7 +201,7 @@ public class RegisterService implements RegisterServiceImpl{
         registerDTO.setID(savedUser.getID());
         registerDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
-        log.info("RegisterDTO : {}", registerDTO);
+        log.info("RegisterDTO : {}", registerDTO.toString());
 
         return registerDTO;
     }
@@ -215,10 +222,17 @@ public class RegisterService implements RegisterServiceImpl{
             return "인증 시간이 만료되었습니다.";
         }
 
+        // [추가해야 할 부분] 목적(Purpose) 검사
+        if (usersVerifications.getPurPose() != UsersVerificationsPurPose.SIGNUP) {
+            throw new IllegalArgumentException("회원가입 인증 코드가 아닙니다.");
+        }
+
         // 3. [중복 인증 방지] 이미 인증된 코드인지 확인
         if (usersVerifications.getStatus() == UsersVerificationsStatus.VERIFIED) {
             return "이미 인증 완료된 코드입니다.";
         }
+
+        log.info("signupAuthentication : {}", usersVerifications.toString());
 
         // 4. [인증 완료 처리] (핵심!)
         // 별도의 save() 호출 없이, 엔티티의 상태 값을 변경하면
@@ -232,6 +246,8 @@ public class RegisterService implements RegisterServiceImpl{
         // 5-1. 인증 정보에 있는 userIdx를 통해 Users 엔티티 조회
         Users user = userRepository.findById(usersVerifications.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("가입된 회원 정보를 찾을 수 없습니다."));
+
+        log.info("user : {}", user.toString());
 
         // 5-2. Users 엔티티의 상태 변경 메서드 호출 (del = 0)
         // (@Transactional 안에서 엔티티의 값을 바꾸면 DB Update 쿼리가 자동 실행됩니다)

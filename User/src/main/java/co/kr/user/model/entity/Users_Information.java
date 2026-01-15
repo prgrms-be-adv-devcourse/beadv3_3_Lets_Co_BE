@@ -9,8 +9,6 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,6 +20,9 @@ public class Users_Information {
     @Id
     @Column(name = "Users_IDX")
     private Long usersIdx;
+
+    @Column(name = "Pre_PW", nullable = true)
+    private String prePW;
 
     @Column(name = "Name", nullable = false)
     private String name;
@@ -42,6 +43,10 @@ public class Users_Information {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.birth = birth;
+    }
+
+    public void last_Password(String PW) {
+        this.prePW = PW;
     }
 
 }

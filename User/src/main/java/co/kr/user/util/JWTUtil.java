@@ -43,7 +43,7 @@ public class JWTUtil {
      * 2. createdAt, updatedAt -> 유효성 검증용
      */
     public String createAccessToken(
-            String email,           // ID
+            Long userIDX,           // ID
             LocalDateTime userCreatedAt,     // 가입일
             LocalDateTime userUpdatedAt      // 수정일
     ) {
@@ -60,7 +60,7 @@ public class JWTUtil {
                 : new Date();
 
         return Jwts.builder()
-                .subject(email)                         // ID (Email)
+                .subject(String.valueOf(userIDX))                         // ID (Email)
 
                 .claim("createdAt", createdAtDate)      // 유효성 검증용
                 .claim("updatedAt", updatedAtDate)      // 유효성 검증용
@@ -75,11 +75,11 @@ public class JWTUtil {
      * 2. Refresh Token 생성 (변경 없음)
      * Payload: ID(Email) (최소 정보)
      */
-    public String createRefreshToken(String email) {
+    public String createRefreshToken(Long userIDX) {
         Date now = new Date();
 
         return Jwts.builder()
-                .subject(email)
+                .subject(String.valueOf(userIDX))
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + refreshTokenExp)) // 만료: 7일
                 .signWith(refreshKey, Jwts.SIG.HS256)   // Refresh Key 사용

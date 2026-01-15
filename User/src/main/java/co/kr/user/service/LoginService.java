@@ -55,8 +55,8 @@ public class LoginService implements LoginServiceImpl{
 
 
         LoginDTO loginDTO = new LoginDTO();
-        String accessToken = jwtUtil.createAccessToken(users.getID(), users.getCreatedAt(), users.getUpdatedAt());
-        String refreshToken = jwtUtil.createRefreshToken(users.getID());
+        String accessToken = jwtUtil.createAccessToken(users.getUsersIdx(), users.getCreatedAt(), users.getUpdatedAt());
+        String refreshToken = jwtUtil.createRefreshToken(users.getUsersIdx());
 
         loginDTO.setAccessToken(accessToken);
         loginDTO.setRefreshToken(refreshToken);

@@ -46,4 +46,9 @@ public class Users_Login {
         this.revokedAt = LocalDateTime.now(); // 현재 시간으로 만료 처리
         this.revokeReason = "LOGOUT";         // 사유: LOGOUT
     }
+
+    // Users_Login 클래스 안에 추가하세요
+    public void updateLastUsedAt() {
+        this.lastUsedAt = LocalDateTime.now();
+    }
 }

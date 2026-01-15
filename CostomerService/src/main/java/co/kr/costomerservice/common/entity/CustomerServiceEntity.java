@@ -69,6 +69,9 @@ public class CustomerServiceEntity {
     @Column(name = "Users_IDX", nullable = false)
     private Long usersIdx;
 
+    @Column(name = "User_Name", nullable = false)
+    private String userName;
+
     @Column(name = "Products_IDX")
     private Long productsIdx;
 
@@ -91,6 +94,7 @@ public class CustomerServiceEntity {
                                  LocalDateTime publishedAt,
                                  Boolean isPinned,
                                  Long usersIdx,
+                                 String username,
                                  Long productsIdx) {
 
         this.code = code;
@@ -104,6 +108,7 @@ public class CustomerServiceEntity {
         this.isPinned = isPinned;
 
         this.usersIdx = usersIdx;
+        this.userName = username;
         this.productsIdx = productsIdx;
 
         this.viewCount = 0L;

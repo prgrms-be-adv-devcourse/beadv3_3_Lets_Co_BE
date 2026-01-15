@@ -49,6 +49,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
                 .publishedAt(request.publishedAt())
                 .isPinned(request.isPinned())
                 .usersIdx(userId)
+                .username("관리자")
                 .build();
 
         // 2. 생성한 Entity를 DB에 저장
@@ -62,6 +63,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
         CustomerServiceDetailEntity detailEntity = CustomerServiceDetailEntity.builder()
                 .detailCode(UUID.randomUUID().toString())
                 .usersIdx(userId)
+                .userName("관리자")
                 .customerService(requestEntity)
                 .content(request.content())
                 .build();

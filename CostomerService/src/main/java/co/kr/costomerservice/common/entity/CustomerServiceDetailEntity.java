@@ -31,6 +31,9 @@ public class CustomerServiceDetailEntity {
     @Column(name = "Users_IDX", nullable = false)
     private Long usersIdx;
 
+    @Column(name = "User_Name", nullable = false)
+    private String userName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Customer_Service_IDX", nullable = false)
     private CustomerServiceEntity customerService;
@@ -49,11 +52,15 @@ public class CustomerServiceDetailEntity {
     private LocalDateTime updatedAt;
 
 
+
+
     @Builder
-    public CustomerServiceDetailEntity(String detailCode, Long parentIdx, Long usersIdx, CustomerServiceEntity customerService, String content) {
+    public CustomerServiceDetailEntity(String detailCode, Long parentIdx, Long usersIdx,
+                                       String userName , CustomerServiceEntity customerService, String content) {
         this.detailCode = detailCode;
         this.parentIdx = parentIdx;
         this.usersIdx = usersIdx;
+        this.userName = userName;
         this.customerService = customerService;
         this.content = content;
         this.del = false;

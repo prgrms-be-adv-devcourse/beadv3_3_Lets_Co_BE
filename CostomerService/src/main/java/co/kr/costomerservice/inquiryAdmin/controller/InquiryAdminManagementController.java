@@ -34,9 +34,10 @@ public class InquiryAdminManagementController {
      */
     @GetMapping
     public ResponseEntity<InquiryListResponse> getInquiryList(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){
-        return ResponseEntity.ok(inquiryAdminManagementService.getInquiryList(pageable));
+        return ResponseEntity.ok(inquiryAdminManagementService.getInquiryList(pageable,usersIdx));
     }
 
     /**
@@ -47,13 +48,12 @@ public class InquiryAdminManagementController {
      */
     @PostMapping("/{inquiryCode}")
     public ResponseEntity<InquiryDetailResponse> addInquiryAnswer(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
             @RequestBody  InquiryAnswerUpsertRequest request
     ){
-        // 임시
-        Long userId = 2L;
 
-        return ResponseEntity.ok(inquiryAdminManagementService.addInquiryAnswer(userId, inquiryCode , request));
+        return ResponseEntity.ok(inquiryAdminManagementService.addInquiryAnswer(usersIdx, inquiryCode , request));
 
     }
 
@@ -66,11 +66,12 @@ public class InquiryAdminManagementController {
      */
     @DeleteMapping("/answer/{inquiryCode}")
     public ResponseEntity<ResultResponse> deleteInquiryAnswer(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
             @RequestBody InquiryAnswerDeleteRequest request
             ){
 
-        return ResponseEntity.ok(inquiryAdminManagementService.deleteInquiryAnswer(inquiryCode, request));
+        return ResponseEntity.ok(inquiryAdminManagementService.deleteInquiryAnswer(inquiryCode, request, usersIdx));
     }
     /**
      * 문의 수정 (실제로 관리자가 사용 할 일이 있을지는 모르겠지만 권한은 필요하다 판단)
@@ -81,11 +82,12 @@ public class InquiryAdminManagementController {
      */
     @PutMapping("/{inquiryCode}")
     public ResponseEntity<InquiryDetailResponse> updateInquiry(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
             @RequestBody  InquiryUpsertRequest request
     ){
 
-        return ResponseEntity.ok(inquiryAdminManagementService.updateInquiry(inquiryCode ,request));
+        return ResponseEntity.ok(inquiryAdminManagementService.updateInquiry(inquiryCode ,request, usersIdx));
     }
 
     /**
@@ -95,9 +97,10 @@ public class InquiryAdminManagementController {
      */
     @DeleteMapping("/{inquiryCode}")
     public ResponseEntity<ResultResponse> deleteInquiry(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode
     ){
 
-        return ResponseEntity.ok(inquiryAdminManagementService.deleteInquiry(inquiryCode));
+        return ResponseEntity.ok(inquiryAdminManagementService.deleteInquiry(inquiryCode, usersIdx));
     }
 }

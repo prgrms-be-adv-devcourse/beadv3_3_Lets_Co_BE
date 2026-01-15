@@ -1,6 +1,7 @@
 package co.kr.costomerservice.qnaProduct.service.impl;
 
 
+import co.kr.costomerservice.client.AuthServiceClient;
 import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
 import co.kr.costomerservice.common.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
@@ -27,6 +28,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
+    private final AuthServiceClient authServiceClient;
 
 
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
@@ -36,7 +38,10 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
 
         // 1. 유저 확인
-        // TODO userIdx가 Seller, 혹은 ADMIN인지?
+        String role = authServiceClient.getUserRole(userIdx);
+        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
 
         // 2. 엔티티 조회
         Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType.QNA_PRODUCT, userIdx, pageable);

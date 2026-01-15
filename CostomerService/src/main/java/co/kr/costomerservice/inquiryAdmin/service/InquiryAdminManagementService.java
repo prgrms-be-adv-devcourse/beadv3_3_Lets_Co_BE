@@ -9,13 +9,13 @@ import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryListResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface InquiryAdminManagementService {
-    InquiryListResponse getInquiryList(Pageable pageable);
+    InquiryListResponse getInquiryList(Pageable pageable, Long usersIdx);
 
-    InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request);
+    InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request, Long usersIdx);
 
-    ResultResponse deleteInquiry(String inquiryCode);
+    ResultResponse deleteInquiry(String inquiryCode, Long usersIdx);
 
     InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request);
 
-    ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request);
+    ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request, Long usersIdx);
 }

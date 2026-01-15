@@ -1,6 +1,7 @@
 package co.kr.costomerservice.notice.service.impl;
 
 
+import co.kr.costomerservice.client.AuthServiceClient;
 import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
 import co.kr.costomerservice.common.entity.CustomerServiceEntity;
 import co.kr.costomerservice.notice.model.dto.request.NoticeUpsertRequest;
@@ -32,12 +33,18 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
 
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
 
+    private final AuthServiceClient authServiceClient;
+
 
     // 공지 추가
     @Override
     @Transactional
     public AdminNoticeDetailResponse addNotice(Long userId, NoticeUpsertRequest request){
 
+        String role = authServiceClient.getUserRole(userId);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
         // 1. 받은 request 기반 새로운 CustomerServiceEntity 생성
         CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
                 .code(UUID.randomUUID().toString())
@@ -81,8 +88,12 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Override
     @Transactional(readOnly = true)
     public NoticeListResponse getNoticeList(Long userId, Pageable pageable){
-        // TODO: 관리자 권한 확인!!!!!!!!!!!!!!!!!@!@!@
 
+        // 1. 관리자 권한 확인
+        String role = authServiceClient.getUserRole(userId);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
         // 2. 목록 조회(Page)
         Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
 
@@ -115,6 +126,13 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Override
     @Transactional(readOnly = true)
     public AdminNoticeDetailResponse getNoticeDetail(Long userId, String noticeCode){
+
+        // 0. 관리자 권한 확인
+        String role = authServiceClient.getUserRole(userId);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
+
         // 1. CustomerServiceEntity 조회
         CustomerServiceEntity serviceEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
@@ -136,8 +154,11 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Override
     @Transactional
     public AdminNoticeDetailResponse updateNotice(Long userId, String noticeCode,NoticeUpsertRequest request){
-        // TODO: 관리자 권한 확인!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+        // 1. 관리자 권한 확인
+        String role = authServiceClient.getUserRole(userId);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
         // 2. 위와 똑같이 Entity 조회 및 유효성 검사
         CustomerServiceEntity serviceEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
@@ -168,7 +189,11 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Override
     @Transactional
     public ResultResponse deleteNotice(Long userId, String noticeCode){
-        // TODO: 관리자 권한 확인!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // 1. 관리자 권한 확인
+        String role = authServiceClient.getUserRole(userId);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
 
         // 2. Entity 조회 및 유효성 검사
 

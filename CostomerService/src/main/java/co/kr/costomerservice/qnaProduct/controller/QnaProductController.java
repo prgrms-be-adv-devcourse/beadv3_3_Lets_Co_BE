@@ -56,39 +56,39 @@ public class QnaProductController {
 
     @PostMapping("/{productsCode}")
     public ResponseEntity<QnaProductDetailResponse> addProductQna(
-        //@PathVariable("productsCode") String productsCode
-        @RequestBody QnaProductUpsertRequest request
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
+
+            //@PathVariable("productsCode") String productsCode
+            @RequestBody QnaProductUpsertRequest request
     ){
-        // 임시
-        Long userIdx = 2L;
-        return  ResponseEntity.ok(qnaProductService.addProductQna(request,userIdx ));
+        return  ResponseEntity.ok(qnaProductService.addProductQna(request,usersIdx));
     }
 
     @PutMapping("/{productsCode}/{qnaCode}")
     public ResponseEntity<QnaProductDetailResponse> updateQna(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             //@PathVariable("productsCode") String productsCode
             @PathVariable("qnaCode") String qnaCode,
             @RequestBody QnaProductUpsertRequest request
     ){
 
-        Long userIdx = 2L;
-        return  ResponseEntity.ok(qnaProductService.updateQna(qnaCode ,request,userIdx ));
+        return  ResponseEntity.ok(qnaProductService.updateQna(qnaCode ,request,usersIdx ));
     }
 
     @DeleteMapping("/{productsCode}/{qnaCode}")
     public ResponseEntity<ResultResponse> deleteQna(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("qnaCode") String qnaCode
     ){
-        Long userIdx = 2L;
-        return  ResponseEntity.ok(qnaProductService.deleteQna(qnaCode,userIdx ));
+        return  ResponseEntity.ok(qnaProductService.deleteQna(qnaCode,usersIdx ));
     }
 
     // 본인 문의 내역 조회
     @GetMapping("/me")
     public ResponseEntity<QnaProductListResponse> getMyProductQnaList(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){
-        Long userIdx = 2L;
-        return ResponseEntity.ok(qnaProductService.getMyProductQnaList(userIdx, pageable ));
+        return ResponseEntity.ok(qnaProductService.getMyProductQnaList(usersIdx, pageable ));
     }
 }

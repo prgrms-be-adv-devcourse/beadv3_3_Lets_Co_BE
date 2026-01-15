@@ -21,20 +21,20 @@ public class QnaSellerController {
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
     @GetMapping
     public ResponseEntity<QnaProductForSellerListResponse> getMyQnaList(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
             ){
-        Long userIdx = 2L;
-        return ResponseEntity.ok(qnaSellerService.getMyQnaList(userIdx, pageable));
+        return ResponseEntity.ok(qnaSellerService.getMyQnaList(usersIdx, pageable));
 
     }
 
     @PostMapping("/{qnaCode}")
     public ResponseEntity<QnaProductDetailResponse> addAnswer(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("qnaCode") String qnaCode,
             @RequestBody QnaAnswerUpsertRequest request
             ){
-        Long userIdx = 2L;
-        return ResponseEntity.ok(qnaSellerService.addAnswer(qnaCode,userIdx, request));
+        return ResponseEntity.ok(qnaSellerService.addAnswer(qnaCode,usersIdx, request));
     }
 
 }

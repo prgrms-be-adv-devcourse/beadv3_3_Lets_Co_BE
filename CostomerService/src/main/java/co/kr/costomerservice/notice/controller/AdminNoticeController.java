@@ -26,86 +26,80 @@ public class AdminNoticeController {
      */
     @PostMapping
     public ResponseEntity<AdminNoticeDetailResponse> addNotice(
-
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @RequestBody NoticeUpsertRequest request){
-        // 임시. 확인용
-        Long userId =1L;
         return ResponseEntity.ok(
 
-                adminNoticeService.addNotice(userId,request)
+                adminNoticeService.addNotice(usersIdx,request)
         );
     }
 
     /**
      * 공지 리스트 조회
-     * @param userId
+     * @param usersIdx
      * @param pageable
      * @return 공지 리스트
      */
     @GetMapping
     public ResponseEntity<NoticeListResponse> getNoticeList(
-            // 임시. 확인용
-            Long userId,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable){
 
         return ResponseEntity.ok(
-                adminNoticeService.getNoticeList(userId,pageable)
+                adminNoticeService.getNoticeList(usersIdx,pageable)
         );
     }
 
     /**
      * 공지 상세 조회
-     * @param userId
+     * @param usersIdx
      * @param noticeCode
      * @return 공지 상세 정보
      */
     @GetMapping("/{noticeCode}")
     public ResponseEntity<AdminNoticeDetailResponse> getNoticeDetail(
-            // 임시. 확인용
-            Long userId ,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("noticeCode") String noticeCode
     ){
 
         return ResponseEntity.ok(
-                adminNoticeService.getNoticeDetail(userId,noticeCode )
+                adminNoticeService.getNoticeDetail(usersIdx,noticeCode )
         );
     }
 
     /**
      * 공지 수정
-     * @param userId
+     * @param usersIdx
      * @param noticeCode
      * @param request
      * @return 공지 상세 정보
      */
     @PutMapping("/{noticeCode}")
     public ResponseEntity<AdminNoticeDetailResponse> updateNotice(
-            // 임시. 확인용
-            Long userId ,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("noticeCode") String noticeCode,
             @RequestBody NoticeUpsertRequest request
     ){
 
         return ResponseEntity.ok(
-                adminNoticeService.updateNotice(userId,noticeCode,request )
+                adminNoticeService.updateNotice(usersIdx,noticeCode,request )
         );
     }
 
     /**
      * 공지 삭제
-     * @param userId
+     * @param usersIdx
      * @param noticeCode
      * @return resultCode
      */
     @DeleteMapping("/{noticeCode}")
     public ResponseEntity<ResultResponse> deleteNotice(
-            // 임시. 확인용
-            Long userId ,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("noticeCode") String noticeCode
     )
     {
         return ResponseEntity.ok(
-                adminNoticeService.deleteNotice(userId,noticeCode)
+                adminNoticeService.deleteNotice(usersIdx,noticeCode)
         );
     }
 

@@ -40,12 +40,10 @@ public class InquiryAdminController {
      */
     @PostMapping
     public ResponseEntity<InquiryDetailResponse> addInquiry(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @RequestBody InquiryUpsertRequest request
     ){
-        //임시!!!!!!!!!!
-        Long userId = 2L;
-
-        return ResponseEntity.ok(inquiryAdminService.addInquiry(userId, request));
+        return ResponseEntity.ok(inquiryAdminService.addInquiry(usersIdx, request));
     }
 
     /**
@@ -55,12 +53,11 @@ public class InquiryAdminController {
      */
     @GetMapping("/{inquiryCode}")
     public ResponseEntity<InquiryDetailResponse> getInquiryDetail(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode
     ){
-        // 임시!!!!
-        Long userId = 2L;
 
-        return ResponseEntity.ok(inquiryAdminService.getInquiryDetail(userId, inquiryCode));
+        return ResponseEntity.ok(inquiryAdminService.getInquiryDetail(usersIdx, inquiryCode));
 
     }
 
@@ -72,12 +69,11 @@ public class InquiryAdminController {
      */
     @PutMapping("/{inquiryCode}")
     public ResponseEntity<InquiryDetailResponse> updateInquiry(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
             @RequestBody  InquiryUpsertRequest request
     ){
-        //임시!!!!!!!!!!
-        Long userId = 2L;
-        return ResponseEntity.ok(inquiryAdminService.updateInquiry(userId, inquiryCode ,request));
+        return ResponseEntity.ok(inquiryAdminService.updateInquiry(usersIdx, inquiryCode ,request));
     }
 
     /**
@@ -87,22 +83,26 @@ public class InquiryAdminController {
      */
     @DeleteMapping("/{inquiryCode}")
     public ResponseEntity<ResultResponse> deleteInquiry(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode
     ){
-        //임시!!!!!!!!!!
-        Long userId = 2L;
-        return ResponseEntity.ok(inquiryAdminService.deleteInquiry(userId,inquiryCode));
+        return ResponseEntity.ok(inquiryAdminService.deleteInquiry(usersIdx,inquiryCode));
     }
 
-    // 본인의 문의 목록 조회
+
+    /**
+     * 본인의 문의 목록 조회
+     * @param usersIdx
+     * @param pageable
+     * @return
+     */
     @GetMapping("/me")
     public ResponseEntity<InquiryListResponse> getMyInquiryList(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){
-        //임시!!!!!!!!!!
-        Long userId = 2L;
 
-        return ResponseEntity.ok(inquiryAdminService.getMyInquiryList(userId,pageable));
+        return ResponseEntity.ok(inquiryAdminService.getMyInquiryList(usersIdx,pageable));
 
     }
 

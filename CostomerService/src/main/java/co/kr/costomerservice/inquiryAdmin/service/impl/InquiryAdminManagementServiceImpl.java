@@ -1,5 +1,6 @@
 package co.kr.costomerservice.inquiryAdmin.service.impl;
 
+import co.kr.costomerservice.client.AuthServiceClient;
 import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
 import co.kr.costomerservice.common.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
@@ -22,8 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 
@@ -34,14 +33,23 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
 
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
+    private final AuthServiceClient authServiceClient;
 
     // 문의 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public InquiryListResponse getInquiryList(Pageable pageable){
+    public InquiryListResponse getInquiryList(Pageable pageable, Long usersIdx){
 
+        // 1. 관리자 권환 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("관리자 권한이 없습니다.");
+        }
+
+        // 2. 엔티티 조회
         Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.QNA_ADMIN, pageable);
 
+        // 3. page > List
         List<InquiryDTO> result = inquiryPage.stream()
                 .map(entity -> new InquiryDTO(
                         entity.getCode(),
@@ -53,6 +61,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
                 ) )
                 .toList();
 
+        // 4, 반환
         return new InquiryListResponse(
                 "success",
                 result
@@ -65,6 +74,11 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     @Transactional
     public InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request){
 
+        //1. 권한 확인
+        String role = authServiceClient.getUserRole(userId);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("관리자 권한이 없습니다.");
+        }
         // 2. entity 조회
         CustomerServiceEntity foundInquiry = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
@@ -108,7 +122,14 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 답변 삭제
     @Override
     @Transactional
-    public ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request){
+    public ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request, Long usersIdx){
+
+        // 1. 관리자 권환 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("관리자 권한이 없습니다.");
+        }
+
         // 엔티티 조회
         CustomerServiceDetailEntity byDetailCodeAndDelFalse = customerServiceDetailRepository.findByDetailCodeAndDelFalse(request.detailCode())
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 답변입니다."));
@@ -129,7 +150,13 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 내용 수정
     @Override
     @Transactional
-    public InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request){
+    public InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request, Long usersIdx){
+
+        // 1. 관리자 권환 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("관리자 권한이 없습니다.");
+        }
 
         // 2. 엔티티 조회'및 유효성 검사
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
@@ -171,7 +198,13 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 내용 삭제
     @Override
     @Transactional
-    public ResultResponse deleteInquiry(String inquiryCode){
+    public ResultResponse deleteInquiry(String inquiryCode, Long usersIdx){
+
+        // 1. 관리자 권환 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"ADMIN".equals(role)) {
+            throw new RuntimeException("관리자 권한이 없습니다.");
+        }
 
 
         // 2. 엔티티 조회'및 유효성 검사

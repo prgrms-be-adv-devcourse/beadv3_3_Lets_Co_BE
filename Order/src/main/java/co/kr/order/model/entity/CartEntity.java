@@ -1,14 +1,15 @@
 package co.kr.order.model.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Getter
-@Setter
 @Entity
+@NoArgsConstructor
 @Table(name = "Cart")
 public class CartEntity {
 
@@ -38,6 +39,18 @@ public class CartEntity {
     @Column(name = "Del", nullable = false)
     Boolean del;
 
+
+    @Builder
+    public CartEntity(Long userIdx, Long productIdx, Long optionIdx, BigDecimal price, Integer quantity, Boolean del) {
+        this.userIdx = userIdx;
+        this.productIdx = productIdx;
+        this.optionIdx = optionIdx;
+        this.price = price != null ? price : BigDecimal.ZERO; // null 방지 로직 추가 가능
+        this.quantity = quantity != null ? quantity : 0;      // null 방지 로직 추가 가능
+        this.del = del != null ? del : false;                 // 기본값 false 설정
+    }
+
+    // 비지니스 로직
     public void plusQuantity() {
         this.quantity++;
     }

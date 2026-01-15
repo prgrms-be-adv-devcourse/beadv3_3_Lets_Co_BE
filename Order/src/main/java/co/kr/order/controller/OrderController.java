@@ -1,11 +1,12 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.CartOrderRequest;
-import co.kr.order.model.dto.request.OrderRequest;
+import co.kr.order.model.dto.request.OrderDirectRequest;
+import co.kr.order.model.dto.request.UserDataRequest;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderCartResponse;
 import co.kr.order.model.dto.response.OrderDirectResponse;
 import co.kr.order.service.OrderService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,33 +18,39 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    /**
-     * @param token : jwt Access 토큰
-     * @param orderRequest : productIdx, optionIdx, quantity
+    /*
+     * @param servletRequest : userIdx
+     * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping
     public ResponseEntity<BaseResponse<OrderDirectResponse>> directOrder(
-            @RequestHeader("Authorization") String token,
-            @RequestBody OrderRequest orderRequest
+            HttpServletRequest servletRequest,
+            @RequestBody OrderDirectRequest request
             ) {
 
-        OrderDirectResponse info = orderService.directOrder(token, orderRequest);
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        OrderDirectResponse info = orderService.directOrder(userIdx, request);
         BaseResponse<OrderDirectResponse> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
     }
 
-    /**
-     * @param token : jwt Access 토큰
-     * @param cartOrderRequest : productIdx, optionIdx, quantity
+    /*
+     * @param servletRequest : userIdx
+     * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderCartResponse>> cartOrder(
-            @RequestHeader("Authorization") String token,
-            @RequestBody CartOrderRequest cartOrderRequest
+            HttpServletRequest servletRequest,
+            @RequestBody UserDataRequest request
     ) {
 
-        OrderCartResponse info = orderService.cartOrder(token, cartOrderRequest);
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        OrderCartResponse info = orderService.cartOrder(userIdx, request);
         BaseResponse<OrderCartResponse> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }

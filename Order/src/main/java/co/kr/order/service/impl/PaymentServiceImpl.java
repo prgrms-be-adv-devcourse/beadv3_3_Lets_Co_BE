@@ -4,15 +4,14 @@ package co.kr.order.service.impl;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.PaymentFailedException;
-import co.kr.order.model.dto.response.PaymentResponse;
 import co.kr.order.model.dto.request.PaymentRequest;
+import co.kr.order.model.dto.response.PaymentResponse;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.PaymentEntity;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.repository.PaymentJpaRepository;
-import co.kr.order.service.OrderService;
 import co.kr.order.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentJpaRepository paymentRepository;
     private final OrderJpaRepository orderRepository;
-    private final OrderService orderService;
     private final UserClient userClient;
 
     @Override

@@ -1,15 +1,17 @@
 package co.kr.order.model.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
 @Entity
+@NoArgsConstructor
 @Table(name = "Orders")
 public class OrderEntity {
 
@@ -19,7 +21,7 @@ public class OrderEntity {
     private Long id;
 
     @OneToMany(mappedBy = "order")
-    private List<OrderItemEntity> orderItems;
+    private List<OrderItemEntity> orderItems = new ArrayList<>(); // null 방지 초기화
 
     @Column(name = "Users_IDX", nullable = false)
     private Long userIdx;
@@ -50,4 +52,25 @@ public class OrderEntity {
 
     @Column(name = "Del", nullable = false)
     private Boolean del;
+
+    @Builder
+    public OrderEntity(Long userIdx, Long addressIdx, Long cardIdx, String orderCode,
+                       String status, BigDecimal itemsAmount, BigDecimal totalAmount, Boolean del) {
+        this.userIdx = userIdx;
+        this.addressIdx = addressIdx;
+        this.cardIdx = cardIdx;
+        this.orderCode = orderCode;
+        this.status = status;
+        this.itemsAmount = itemsAmount != null ? itemsAmount : BigDecimal.ZERO;
+        this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
+        this.del = del != null ? del : false;
+    }
+
+    public void setItemsAmount(BigDecimal itemsAmount) {
+        this.itemsAmount = itemsAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
 }

@@ -1,13 +1,16 @@
 package co.kr.order.model.dto.response;
 
+import co.kr.order.model.dto.ProductInfo;
+
 import java.math.BigDecimal;
 
-// 일단 이렇게 하는데 나중에 구조 바꿀 예정 (ProductInfo + price/quantity 로)
+/**
+ * @param product : 제품정보
+ * @param quantity : 제품 개수
+ * @param amount : 가격 * 개수
+ */
 public record OrderItemResponse(
-        Long productIdx,
-        String productName,
-//        String imageUrl,
-        String optionContent,
-        BigDecimal price,
-        Integer quantity
+        ProductInfo product,
+        Integer quantity,
+        BigDecimal amount
 ) {}

@@ -6,9 +6,9 @@ import co.kr.order.model.dto.response.CartResponse;
 
 public interface CartService {
 
-    CartItemResponse addCartItem(String token, ProductRequest productRequest);
-    CartItemResponse subtractCartItem(String token, ProductRequest productRequest);
-    CartResponse getCartList(String token);
-    CartItemResponse getCartItem(String token, ProductRequest productRequest);
-    void deleteCartItem(String token, ProductRequest productRequest);
+    CartItemResponse addCartItem(Long userIdx, ProductRequest productRequest);
+    CartItemResponse subtractCartItem(Long userIdx, ProductRequest productRequest);
+    CartResponse getCartList(Long userIdx);
+    CartItemResponse getCartItem(Long userIdx, ProductRequest productRequest);
+    void deleteCartItem(Long userIdx, ProductRequest productRequest);
 }

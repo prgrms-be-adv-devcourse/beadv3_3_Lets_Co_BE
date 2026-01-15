@@ -14,4 +14,6 @@ public interface CartJpaRepository extends JpaRepository<CartEntity, Long> {
 
     // userIdx, productIdx, optionIdx에 전부 해당하는 상품 찾기 (N+1 처리 아직 안함)
     Optional<CartEntity> findByUserIdxAndProductIdxAndOptionIdx(Long userIdx, Long productIdx, Long optionIdx);
+
+    void deleteByUserIdx(Long userIdx);
 }

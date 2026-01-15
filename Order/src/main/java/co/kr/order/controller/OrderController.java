@@ -1,7 +1,7 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
+import co.kr.order.model.dto.request.UserDataRequest;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderCartResponse;
 import co.kr.order.model.dto.response.OrderDirectResponse;
@@ -40,7 +40,7 @@ public class OrderController {
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderCartResponse>> cartOrder(
             @RequestHeader("Authorization") String token,
-            @RequestBody OrderCartRequest request
+            @RequestBody UserDataRequest request
     ) {
 
         OrderCartResponse info = orderService.cartOrder(token, request);

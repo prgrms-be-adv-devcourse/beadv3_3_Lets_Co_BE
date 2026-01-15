@@ -43,6 +43,11 @@ public class LoginService implements LoginServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
+        if ("expire".equals(users.getPW())) {
+            throw new IllegalArgumentException("비밀번호가 만료되었습니다. 재설정 해주세요.");
+
+        }
+
         // 3. 비밀번호 검증 (BCryptUtil 사용)
         // 사용자가 입력한 PW와 DB의 암호화된 PW 비교
         if (!bCryptUtil.checkPassword(loginReq.getPW(), users.getPW())) {
@@ -61,7 +66,7 @@ public class LoginService implements LoginServiceImpl{
         loginDTO.setAccessToken(accessToken);
         loginDTO.setRefreshToken(refreshToken);
 
-        log.info("loginDTO : {}", loginDTO);
+        log.info("loginDTO : {}", loginDTO.toString());
 
         // ============================================================
         // [추가된 코드] 6. Users_Login 테이블에 Refresh Token 저장

@@ -28,4 +28,7 @@ public interface UserVerificationsRepository extends JpaRepository<Users_Verific
      */
     Optional<Users_Verifications> findTopByCodeOrderByCreatedAtDesc(String Code);
 
+
+    Optional<Users_Verifications> findTopByUsersIdxOrderByCreatedAtDesc(Long usersIdx);
+
 }

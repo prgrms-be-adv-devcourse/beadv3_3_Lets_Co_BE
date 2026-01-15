@@ -1,5 +1,6 @@
 package co.kr.user.controller;
 
+import co.kr.user.model.DTO.register.AuthenticationReq;
 import co.kr.user.model.DTO.register.RegisterDTO;
 import co.kr.user.model.DTO.register.RegisterReq;
 import co.kr.user.service.RegisterService;
@@ -70,7 +71,7 @@ public class RegisterController {
         // [로그 기록] 회원가입 요청 데이터 확인 (운영 환경에서는 비밀번호 로그 노출 주의)
         log.info("=======================================================");
         log.info("signup - Register Request");
-        log.info("registerReq : {}", registerReq);
+        log.info("registerReq : {}", registerReq.toString());
         log.info("=======================================================");
 
         // Service의 signup 메서드를 호출하여 회원가입 로직(DB 저장, 이메일 발송 등)을 수행합니다.

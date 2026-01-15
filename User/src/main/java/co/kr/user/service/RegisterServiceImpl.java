@@ -1,5 +1,6 @@
 package co.kr.user.service;
 
+import co.kr.user.model.DTO.register.AuthenticationReq;
 import co.kr.user.model.DTO.register.RegisterDTO;
 import co.kr.user.model.DTO.register.RegisterReq;
 

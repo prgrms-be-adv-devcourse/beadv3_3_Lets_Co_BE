@@ -4,6 +4,7 @@ import co.kr.user.util.validator.ValiDate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
@@ -33,6 +34,7 @@ public class RegisterReq {
      * * @Size: 최소 8자 이상, 최대 16자 이하이어야 합니다.
      * @Pattern: 정규식을 통해 '영문 대소문자 중 1개 이상', '숫자 1개 이상', '특수문자 1개 이상'이 반드시 포함되도록 검사합니다.
      */
+    @ToString.Exclude // [핵심] 로그에서 비밀번호 제외
     @NotBlank(message = "Password cannot be empty.")
     @Size(min = 8, max = 16, message = "Password must be between 8 and 30 characters.")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",
@@ -66,6 +68,7 @@ public class RegisterReq {
      * * @Pattern: 한글, 영문 대소문자, 공백만 허용합니다. (특수문자, 숫자 불가)
      * @Size: DB 컬럼 길이에 맞춰 최대 50자까지만 허용합니다.
      */
+    @ToString.Exclude // [권장] 개인정보 제외 (필요시 암호화된 값만 찍히게 하거나 아예 제외)
     @NotBlank(message = "Name cannot be empty.")
     @Pattern(regexp = "^[가-힣a-zA-Z ]+$", message = "Name must contain only letters and spaces.")
     @Size(max = 50, message = "Name must not exceed 50 characters.")
@@ -77,6 +80,7 @@ public class RegisterReq {
      * * @Pattern: '010-1234-5678'과 같은 형식을 정확히 지켜야 합니다.
      * (010, 011 등으로 시작하고 중간 3~4자리, 끝 4자리 숫자)
      */
+    @ToString.Exclude // [권장] 전화번호 제외
     @NotBlank(message = "휴대폰 번호를 입력해주세요.")
     @Pattern(regexp = "^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$",
             message = "휴대폰 번호 형식이 올바르지 않습니다. (예: 010-1234-5678)")
@@ -90,9 +94,10 @@ public class RegisterReq {
      * @ValiDate: 개발자가 직접 만든 커스텀 어노테이션입니다.
      * 단순 형식뿐만 아니라 '미래 날짜 불가', '존재하지 않는 날짜(2월 30일 등) 불가' 등 논리적 검증을 수행합니다.
      */
+    @ToString.Exclude // [권장] 생년월일 제외
     @NotBlank(message = "생년월일을 입력해주세요.")
     @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$",
             message = "생년월일 형식이 올바르지 않습니다. (예: 1990-01-01)")
-    @ValiDate // 사용자 정의 검증 로직 실행 (DateValidator 클래스 참조)
+    @ValiDate
     private String birth;
 }

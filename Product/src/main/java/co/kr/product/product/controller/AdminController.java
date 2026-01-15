@@ -58,14 +58,11 @@ public class AdminController {
      */
     @GetMapping("/products/{code}")
     public ResponseEntity<ProductDetailResponse> getProductDetail(
-            //`@AuthenticationPrincipal(expression = "accountCode")`
-
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode){
-    
-        // 임시
-        String accountCode = "test";
+
         
-        ProductDetailResponse result = productManagerService.getManagerProductDetail(accountCode, productCode);
+        ProductDetailResponse result = productManagerService.getManagerProductDetail(usersIdx, productCode);
         return ResponseEntity.ok(result);
     }
 
@@ -79,13 +76,12 @@ public class AdminController {
 
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailResponse> updateProduct(
-            //`@AuthenticationPrincipal(expression = "accountCode")`
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
 
             @RequestBody UpsertProductRequest request,
             @PathVariable("code") String productCode){
 
-        String accountCode = "test";
-        ProductDetailResponse result = productManagerService.updateProduct(accountCode, productCode, request);
+        ProductDetailResponse result = productManagerService.updateProduct(usersIdx, productCode, request);
 
         return ResponseEntity.ok(result);
 
@@ -100,11 +96,12 @@ public class AdminController {
     @DeleteMapping("/products/{code}")
     public ResponseEntity<ResultResponse> deleteProduct(
 
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode){
         
-        String accountCode = "test";
 
-        productManagerService.deleteProduct(accountCode, productCode);
+
+        productManagerService.deleteProduct(usersIdx, productCode);
 
         return ResponseEntity.ok(new ResultResponse("Success"));
 

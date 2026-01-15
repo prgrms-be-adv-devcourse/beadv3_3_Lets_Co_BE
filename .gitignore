@@ -28,3 +28,4 @@ Product/src/main/resources/application-local.yml
 elk/docker-compose.yml
 /elk/volumes
 Product/src/main/resources/application.yml
+/CostomerService/.idea

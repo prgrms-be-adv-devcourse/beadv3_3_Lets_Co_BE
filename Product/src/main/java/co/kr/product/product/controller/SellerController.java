@@ -29,11 +29,11 @@ public class SellerController {
      */
     @GetMapping("/products")
     public ResponseEntity<ProductListResponse> getLists(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable,
             @ModelAttribute ProductListRequest requests
             ){
-        String accountCode="test";
-        ProductListResponse result = productManagerService.getListsBySeller(accountCode, pageable, requests);
+        ProductListResponse result = productManagerService.getListsBySeller(usersIdx, pageable, requests);
 
         return ResponseEntity.ok(result);
     }
@@ -41,67 +41,66 @@ public class SellerController {
 
     /**
      * 상품 등록(판매자)
-     * @param accountCode
+     * @param usersIdx
      * @param request
      * @return 등록 된 상품의 상세 정보
      */
     @PostMapping("/products")
     public  ResponseEntity<ProductDetailResponse> addProduct(
-            //`@AuthenticationPrincipal(expression = "accountCode")`
-            String accountCode, // 임시
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @RequestBody UpsertProductRequest request
 
             ){
-        ProductDetailResponse result = productManagerService.addProduct(accountCode,request);
+        ProductDetailResponse result = productManagerService.addProduct(usersIdx,request);
 
         return ResponseEntity.ok(result);
     }
 
     /**
      * 상품 상세 정보(판매자)
-     * @param accountCode
+     * @param usersIdx
      * @param productCode
      * @return 상품 상세 정보
      */
     @GetMapping("/products/{code}")
     public ResponseEntity<ProductDetailResponse> getProductDetail(
-            String accountCode,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode
     ){
-        ProductDetailResponse result = productManagerService.getManagerProductDetail(accountCode,productCode);
+        ProductDetailResponse result = productManagerService.getManagerProductDetail(usersIdx,productCode);
 
         return ResponseEntity.ok(result);
     }
 
     /**
      * 상품 정보 수정(판매자)
-     * @param accountCode
+     * @param usersIdx
      * @param productCode
      * @param request
      * @return 상품 상세 정보
      */
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailResponse> updateProduct(
-            String accountCode,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode,
             @RequestBody UpsertProductRequest request
     ){
-        ProductDetailResponse result = productManagerService.updateProduct(accountCode,productCode, request);
+        ProductDetailResponse result = productManagerService.updateProduct(usersIdx,productCode, request);
         return ResponseEntity.ok(result);
     }
 
     /**
      * 상품 제거(판매자)
-     * @param accountCode
+     * @param usersIdx
      * @param productCode
      * @return resultCode
      */
     @DeleteMapping("/products/{code}")
     public ResponseEntity<ResultResponse> deleteProduct(
-            String accountCode,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode
     ){
-        productManagerService.deleteProduct(accountCode,productCode);
+        productManagerService.deleteProduct(usersIdx,productCode);
         return ResponseEntity.ok(new ResultResponse("Success"));
     }
 }

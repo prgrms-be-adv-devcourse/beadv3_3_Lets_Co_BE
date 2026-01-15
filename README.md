@@ -62,15 +62,15 @@ git branch Update/InsertMember
 - When the source is modified, use the add command to stage the modified list.
 - Files not targeted by ADD cannot be saved to the GIT SERVER.
 
-## 🗣️ 사용 방법
+## 🗣️ Usage
 
 ```html
-git add [File Path/File Name] // Used when targeting only one specific file to
-add. git add [File Path] // Used to add everything under that file path. git add
-. // Used when targeting everything modified, without distinction.
+git add [File Path/File Name] // Used when targeting only one specific file to add.
+git add [File Path] // Used to add everything under that file path.
+git add . // Used when targeting everything modified, without distinction.
 ```
 
-### 💣 git add \* 사용하지 말 것
+### 💣 Do not use git add *
 
 - \* means everything (all files), and . means the current path.
 - Since - includes everything without distinction (including ignored files sometimes), it should be avoided if possible.

@@ -1,49 +1,182 @@
 server:
-  port: 8000
+  port: 8000 # Gateway 서버 포트 설정
 
 spring:
   application:
-    name: Gateway
+    name: Gateway # Eureka 등에서 식별될 애플리케이션 이름
 
   cloud:
     gateway:
-      routes:
-        - id: User
-          uri: lb://USER
-          predicates:
-            - Path=/users/**
+      server:
+        webflux: # Spring WebFlux 기반 설정
+          routes:
+            # ==========================================
+            # [판매자(Seller) 전용 라우트]
+            # 판매자 권한이 필요한 상품 및 유저 관리
+            # ==========================================
+            - id: seller-PRODUCT
+              uri: lb://PRODUCT # Eureka에 등록된 PRODUCT 서비스로 로드밸런싱
+              predicates:
+                - Path=/seller/products/**
+              filters:
+                - TokenAuthenticationFilter # JWT 인증 필터 적용
 
-        - id: Auth
-          uri: lb://AUTH
-          predicates:
-            - Path=/auth/**
+            - id: seller-User
+              uri: lb://USER
+              predicates:
+                - Path=/seller/users/**
+              filters:
+                - TokenAuthenticationFilter
 
-        - id: Admin
-          uri: lb://ADMIN
-          predicates:
-            - Path=/admin/**
+            # ==========================================
+            # [관리자(Admin) 전용 라우트]
+            # 관리자 권한이 필요한 유저, 상품, 고객센터 관리
+            # ==========================================
+            - id: admin-User
+              uri: lb://USER
+              predicates:
+                - Path=/admin/users/**
+              filters:
+                - TokenAuthenticationFilter
 
-        - id: Seller
-          uri: lb://SELLER
-          predicates:
-            - Path=/seller/**
+            - id: admin-PRODUCT
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/admin/products/**
+              filters:
+                - TokenAuthenticationFilter
 
-        - id: Products
-          uri: lb://PRODUCTS
-          predicates:
-            - Path=/products/**
+            - id: admin-inquiries
+              uri: lb://COSTOMERSERVICE # 고객센터 서비스 (오타 주의: COSTOMER -> CUSTOMER 권장되나 코드 유지)
+              predicates:
+                - Path=/admin/inquiries/**
+              filters:
+                - TokenAuthenticationFilter
 
-        - id: Cart
-          uri: lb://CART
-          predicates:
-            - Path=/cart/**
+            - id: admin-notice
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/admin/notice/**
+              filters:
+                - TokenAuthenticationFilter
 
-        - id: Payment
-          uri: lb://PAYMENT
-          predicates:
-            - Path=/payment/**
+            - id: admin-block
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/admin/block
+              filters:
+                - TokenAuthenticationFilter
 
-        - id: Orders
-          uri: lb://ORDERS
-          predicates:
-            - Path=/orders/**
+            # ==========================================
+            # [인증(Auth) 관련 라우트]
+            # 로그인/회원가입은 공개, 로그아웃은 인증 필요
+            # ==========================================
+            - id: auth-logout
+              uri: lb://USER
+              predicates:
+                - Path=/auth/logout
+              filters:
+                - TokenAuthenticationFilter # 로그아웃은 토큰 유효성 검사가 필요하므로 필터 적용
+
+            - id: auth
+              uri: lb://USER
+              predicates:
+                - Path=/auth/**
+              # 필터 없음: 로그인, 회원가입 등은 인증 없이 접근 가능해야 함
+
+            # ==========================================
+            # [일반 유저(User) 라우트]
+            # 내 정보 조회/수정 등
+            # ==========================================
+            - id: users
+              uri: lb://USER
+              predicates:
+                - Path=/users/**
+              filters:
+                - TokenAuthenticationFilter
+
+            # ==========================================
+            # [상품(Product) 라우트 - 메서드별 분기]
+            # 중요: 데이터 변경(CUD)은 인증 필수, 조회(R)는 누구나 가능
+            # ==========================================
+            - id: products-Check
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/products/**
+                - Method=POST, PUT, DELETE # 등록, 수정, 삭제 요청만 매칭
+              filters:
+                - TokenAuthenticationFilter # 인증 필터 적용 (보안)
+
+            - id: products
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/products/**
+                - Method=GET # 조회 요청만 매칭
+              # 필터 없음: 상품 목록/상세 조회는 비로그인 상태에서도 가능
+
+            # ==========================================
+            # [주문(Order) 및 결제(Payment) 라우트]
+            # 장바구니, 결제, 주문 내역은 모두 인증 필수
+            # ==========================================
+            - id: cart
+              uri: lb://ORDER
+              predicates:
+                - Path=/cart/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: payments
+              uri: lb://ORDER
+              predicates:
+                - Path=/payments/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: orders
+              uri: lb://ORDER
+              predicates:
+                - Path=/orders/**
+              filters:
+                - TokenAuthenticationFilter
+
+            # ==========================================
+            # [고객센터(Customer Service) 라우트]
+            # 공지사항 및 문의 관련
+            # ==========================================
+            - id: notice
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/notice/**
+              filters:
+                - TokenAuthenticationFilter # 공지사항 관리는 인증 필요 (단, 조회만 분리할지 고려 필요)
+
+            - id: inquiries-me
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/inquiries/me # '내 문의 내역' 조회
+              filters:
+                - TokenAuthenticationFilter # 본인 확인 필요
+
+            # 문의 사항 변경(CUD) - 인증 필요
+            - id: inquiries-Check
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/inquiries/**
+                - Method=POST, PUT, DELETE
+              filters:
+                - TokenAuthenticationFilter
+
+            # 문의 사항 조회(GET) - 인증 불필요 (공개 Q&A 등)
+            - id: inquiries
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/inquiries/**
+                - Method=GET
+
+custom:
+  security:
+    jwt:
+      access:
+        # Access Token용 키 (32바이트 이상 Base64)
+        # TokenAuthenticationFilter 클래스에서 @Value로 주입받아 사용됨
+        secret: YWNjZXNzLXRva2VuLXNlY3JldC1rZXktZm9yLXNwcmluZy1ib290LXByb2plY3QtZXhhbXBsZS1rZXk=

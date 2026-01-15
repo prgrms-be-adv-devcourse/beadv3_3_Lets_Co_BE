@@ -7,7 +7,7 @@ import co.kr.costomerservice.notice.model.dto.request.NoticeUpsertRequest;
 import co.kr.costomerservice.notice.model.dto.response.AdminNoticeDetailResponse;
 import co.kr.costomerservice.notice.model.dto.response.NoticeListResponse;
 import co.kr.costomerservice.notice.model.dto.response.NoticeResponse;
-import co.kr.costomerservice.notice.model.dto.response.ResultResponse;
+import co.kr.costomerservice.common.response.ResultResponse;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
 import co.kr.costomerservice.notice.service.AdminNoticeService;

@@ -1,4 +1,4 @@
-package co.kr.costomerservice.notice.model.dto.response;
+package co.kr.costomerservice.common.response;
 
 public record ResultResponse(
         String resultCode

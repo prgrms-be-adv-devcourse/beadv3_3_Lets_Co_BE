@@ -15,4 +15,9 @@ public interface CustomerServiceRepository extends JpaRepository<CustomerService
     Page<CustomerServiceEntity> findAllByTypeAndDelFalse(CustomerServiceType type, Pageable pageable);
 
     Optional<CustomerServiceEntity> findByCodeAndDelFalse(String code);
+
+    Page<CustomerServiceEntity> findAllByTypeAndIsPrivateFalseAndDelFalse(CustomerServiceType type, Pageable pageable);
+
+
+    Page<CustomerServiceEntity> findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType customerServiceType, Long userId, Pageable pageable);
 }

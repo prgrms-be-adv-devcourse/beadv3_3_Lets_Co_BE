@@ -123,6 +123,10 @@ public class CustomerServiceEntity {
         this.isPinned = isPinned;
     }
 
+    public void updateStatus(CustomerServiceStatus status){
+        this.status = status;
+    }
+
     public void delete(){
         this.del = true;
     }

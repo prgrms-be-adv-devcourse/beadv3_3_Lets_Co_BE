@@ -6,8 +6,8 @@ import co.kr.user.DAO.UsersLoginRepository;
 import co.kr.user.model.DTO.login.LoginDTO;
 import co.kr.user.model.DTO.login.LoginReq;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.Users_Information;
-import co.kr.user.model.entity.Users_Login;
+import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +55,7 @@ public class LoginService implements LoginServiceImpl{
         }
 
 
-        Users_Information usersInformation = userInformationRepository.findById(users.getUsersIdx())
+        UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
                 .orElseThrow(() -> new IllegalStateException("회원 상세 정보를 찾을 수 없습니다."));
 
 
@@ -71,7 +71,7 @@ public class LoginService implements LoginServiceImpl{
         // ============================================================
         // [추가된 코드] 6. Users_Login 테이블에 Refresh Token 저장
         // ============================================================
-        Users_Login usersLogin = Users_Login.builder()
+        UsersLogin usersLogin = UsersLogin.builder()
                 .usersIdx(users.getUsersIdx())
                 .token(refreshToken)
                 .lastUsedAt(null) // 초기 생성 시점에는 사용 기록 없음 (또는 현재 시간)
@@ -87,7 +87,7 @@ public class LoginService implements LoginServiceImpl{
     @Transactional
     public String logout(String refreshToken) {
         // 1. 쿠키에서 넘어온 Refresh Token이 DB에 있는지 확인
-        Users_Login loginRecord = usersLoginRepository.findByToken(refreshToken)
+        UsersLogin loginRecord = usersLoginRepository.findByToken(refreshToken)
                 .orElse(null);
 
         log.info("loginRecord : {}", loginRecord);

@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 @DynamicInsert
 @Table(name = "Users_Information")
-public class Users_Information {
+public class UsersInformation {
 
     @Id
     @Column(name = "Users_IDX")
@@ -38,14 +38,14 @@ public class Users_Information {
     private int del = 0;
 
     @Builder
-    public Users_Information(Long usersIdx, String name, String phoneNumber, String birth) {
+    public UsersInformation(Long usersIdx, String name, String phoneNumber, String birth) {
         this.usersIdx = usersIdx;
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.birth = birth;
     }
 
-    public void last_Password(String PW) {
+    public void lastPassword(String PW) {
         this.prePW = PW;
     }
 

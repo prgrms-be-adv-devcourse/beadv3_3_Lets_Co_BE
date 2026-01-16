@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @DynamicInsert
 @Table(name = "Users_Verifications")
-public class Users_Verifications {
+public class UsersVerifications {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,7 +54,7 @@ public class Users_Verifications {
     private int del = 0;
 
     @Builder
-    public Users_Verifications(Long usersIdx, UsersVerificationsPurPose purPose, String code, LocalDateTime expiresAt, UsersVerificationsStatus status) {
+    public UsersVerifications(Long usersIdx, UsersVerificationsPurPose purPose, String code, LocalDateTime expiresAt, UsersVerificationsStatus status) {
         this.usersIdx = usersIdx;
         this.purPose = purPose;
         this.code = code;

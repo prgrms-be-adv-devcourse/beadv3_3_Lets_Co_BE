@@ -31,7 +31,7 @@ public class LoginReq {
      */
     @ToString.Exclude // [핵심] 로그 제외 설정
     @NotBlank(message = "Password cannot be empty.")
-    @Size(min = 8, max = 16, message = "Password must be between 8 and 30 characters.")
+    @Size(min = 8, max = 16, message = "Password must be between 8 and 16 characters.")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",
             message = "Password must include at least one letter (lowercase or uppercase), one number, and one special character.")
     @JsonProperty("PW")

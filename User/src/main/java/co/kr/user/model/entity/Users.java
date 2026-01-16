@@ -96,4 +96,8 @@ public class Users {
         this.PW = PW;
         this.failedLoginAttempts = 0;
     }
+
+    public void del() {
+        this.del = 1;
+    }
 }

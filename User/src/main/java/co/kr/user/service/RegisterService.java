@@ -4,12 +4,11 @@ import co.kr.user.DAO.UserInformationRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UserVerificationsRepository;
 import co.kr.user.model.DTO.mail.EmailMessage;
-import co.kr.user.model.DTO.register.AuthenticationReq;
 import co.kr.user.model.DTO.register.RegisterDTO;
 import co.kr.user.model.DTO.register.RegisterReq;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.Users_Information;
-import co.kr.user.model.entity.Users_Verifications;
+import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.util.*;
@@ -17,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.lang.reflect.Member;
+
 import java.time.LocalDateTime;import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -38,7 +37,7 @@ public class RegisterService implements RegisterServiceImpl{
 
     // [Utility] 암호화 및 기타 기능을 위한 도구들
     private final BCryptUtil bCryptUtil;   // 단방향 암호화 (비밀번호용 - 복호화 불가)
-    private final AesUtil aesUtil;         // 양방향 암호화 (개인정보용 - 복호화 가능)
+    private final AESUtil aesUtil;         // 양방향 암호화 (개인정보용 - 복호화 가능)
     private final RandomCodeUtil randomCodeUtil; // 인증 코드 생성기
     private final EMailUtil eMailUtil;     // 이메일 발송기
 
@@ -49,6 +48,7 @@ public class RegisterService implements RegisterServiceImpl{
      */
     @Transactional(readOnly = true)
     public String checkDuplicate(String email) {
+
         // DB에 해당 ID(이메일)가 있는지 확인 (exists 쿼리 실행)
         boolean isDuplicate = userRepository.existsByID(email);
 
@@ -115,19 +115,19 @@ public class RegisterService implements RegisterServiceImpl{
 
         // 3-2. [Users_Information 엔티티 생성 및 저장] (부가 개인 정보)
         // Users 테이블과 1:1 관계이며, Users의 PK(usersIdx)를 외래키로 사용
-        Users_Information usersInformation = Users_Information.builder()
+        UsersInformation usersInformation = UsersInformation.builder()
                 .usersIdx(savedUser.getUsersIdx()) // 방금 저장된 회원의 ID 연결
                 .name(registerReq.getName())
                 .phoneNumber(registerReq.getPhoneNumber())
                 .birth(registerReq.getBirth())
                 .build();
 
-        Users_Information savedUserInformation = userInformationRepository.save(usersInformation);
+        UsersInformation savedUserInformation = userInformationRepository.save(usersInformation);
         log.info("Saved User Information : {}", savedUserInformation.toString());
 
         // 3-3. [인증 정보 생성 및 저장]
         // 이메일 인증을 위한 랜덤 코드를 생성하여 DB에 저장
-        Users_Verifications usersVerifications = Users_Verifications.builder()
+        UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(savedUser.getUsersIdx())
                 .purPose(UsersVerificationsPurPose.SIGNUP) // 목적: 회원가입 인증
                 .code(randomCodeUtil.getCode()) // 랜덤 코드 생성 유틸 호출
@@ -135,7 +135,7 @@ public class RegisterService implements RegisterServiceImpl{
                 .status(UsersVerificationsStatus.PENDING) // 상태: 대기 중
                 .build();
 
-        Users_Verifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
+        UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
         log.info("Saved User Verifications : {}", savedUserVerifications.toString());
 
         // 4. [이메일 발송]
@@ -214,7 +214,7 @@ public class RegisterService implements RegisterServiceImpl{
     public String signupAuthentication(String code) {
         // 1. [DB 조회] 해당 코드를 가진 인증 내역 중 가장 최신 것 조회
         // (코드가 같을 수 있으므로 생성 시간 내림차순으로 1개만 가져옴)
-        Users_Verifications usersVerifications = userVerificationsRepository.findTopByCodeOrderByCreatedAtDesc(code)
+        UsersVerifications usersVerifications = userVerificationsRepository.findTopByCodeOrderByCreatedAtDesc(code)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증 코드입니다."));
 
         // 2. [만료 시간 검사] 현재 시간이 만료 시간보다 지났는지 확인

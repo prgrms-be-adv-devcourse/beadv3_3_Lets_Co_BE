@@ -1,15 +1,13 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.retrieve.RetrieveFirstDTO;
-import co.kr.user.model.DTO.retrieve.RetrieveSecondReq;
-import co.kr.user.model.DTO.retrieve.RetrieveThirdReq;
+import co.kr.user.model.DTO.retrieve.FindPWFirstStepReq;
+import co.kr.user.model.DTO.retrieve.FindPWSecondStepReq;
+import co.kr.user.model.DTO.retrieve.FindPWFirstStepDTO;
 
 public interface RetrieveServiceImpl {
 
-    RetrieveFirstDTO findPwFirst(String ID);
+    FindPWFirstStepDTO findPwFirst(FindPWFirstStepReq findPWFirstStepReq);
 
-    String findPwSecond(RetrieveSecondReq retrieveSecondReq);
-
-    String findPwThird(RetrieveThirdReq retrieveThirdReq);
+    String findPwSecond(FindPWSecondStepReq findPWSecondStepReq);
 
 }

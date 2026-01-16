@@ -1,6 +1,6 @@
 package co.kr.user.DAO;
 
-import co.kr.user.model.entity.Users_Verifications;
+import co.kr.user.model.entity.UsersVerifications;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -10,7 +10,7 @@ import java.util.Optional;
  * 'Users_Verifications' 테이블에 대한 CRUD 작업을 담당합니다.
  * 이메일 발송 후 저장된 인증 코드를 다시 꺼내와서, 사용자가 입력한 코드와 비교할 때 사용됩니다.
  */
-public interface UserVerificationsRepository extends JpaRepository<Users_Verifications, Long> {
+public interface UserVerificationsRepository extends JpaRepository<UsersVerifications, Long> {
 
     /**
      * [인증 코드 조회 메서드]
@@ -26,9 +26,9 @@ public interface UserVerificationsRepository extends JpaRepository<Users_Verific
      * * @param Code 사용자가 입력한 인증 코드 문자열
      * @return Optional<Users_Verifications> (결과가 없을 수도 있으므로 null 안전한 Optional 래퍼 사용)
      */
-    Optional<Users_Verifications> findTopByCodeOrderByCreatedAtDesc(String Code);
+    Optional<UsersVerifications> findTopByCodeOrderByCreatedAtDesc(String Code);
 
 
-    Optional<Users_Verifications> findTopByUsersIdxOrderByCreatedAtDesc(Long usersIdx);
+    Optional<UsersVerifications> findTopByUsersIdxOrderByCreatedAtDesc(Long usersIdx);
 
 }

@@ -1,7 +1,6 @@
 package co.kr.user.DAO;
 
-import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.Users_Information;
+import co.kr.user.model.entity.UsersInformation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -16,7 +15,7 @@ import java.util.Optional;
  * - Users_Information: 관리할 엔티티 객체
  * - Long: 해당 엔티티의 PK(Primary Key) 데이터 타입 (usersIdx)
  */
-public interface UserInformationRepository extends JpaRepository<Users_Information, Long> {
+public interface UserInformationRepository extends JpaRepository<UsersInformation, Long> {
 
     // [기본 CRUD 메서드 자동 제공]
     // 이 인터페이스 내부가 비어있어도, Spring Data JPA가 실행 시점에 자동으로 구현체를 만들어 주입합니다.
@@ -26,6 +25,6 @@ public interface UserInformationRepository extends JpaRepository<Users_Informati
     // - findAll(): 전체 조회 (Select All)
     // - delete(entity): 삭제 (Delete)
 
-    Optional<Users_Information> findById(Long id);
+    Optional<UsersInformation> findById(Long id);
 
 }

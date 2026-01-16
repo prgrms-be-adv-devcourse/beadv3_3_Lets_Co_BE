@@ -1,8 +1,8 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.retrieve.RetrieveFirstDTO;
-import co.kr.user.model.DTO.retrieve.RetrieveSecondReq;
-import co.kr.user.model.DTO.retrieve.RetrieveThirdReq;
+import co.kr.user.model.DTO.retrieve.FindPWFirstStepReq;
+import co.kr.user.model.DTO.retrieve.FindPWSecondStepReq;
+import co.kr.user.model.DTO.retrieve.FindPWFirstStepDTO;
 import co.kr.user.service.RetrieveService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,34 +20,24 @@ public class RetrieveContoller {
 
     private final RetrieveService retrieveService;
 
-    @PostMapping("/find-pw-1")
-    public ResponseEntity<RetrieveFirstDTO> findPwFirst(@RequestParam @Valid String ID) {
+    @PostMapping("/findPW/findID")
+    public ResponseEntity<FindPWFirstStepDTO> findPW(@RequestBody @Valid FindPWFirstStepReq findPWFirstStepReq) {
         log.info("=======================================================");
-        log.info("findPwFirst - Find Password First Request");
-        log.info("ID : {}", ID);
+        log.info("findPW - Find Password First Step");
+        log.info("ID : {}", findPWFirstStepReq.toString());
         log.info("=======================================================");
 
-        return ResponseEntity.ok(retrieveService.findPwFirst(ID));
+        return ResponseEntity.ok(retrieveService.findPwFirst(findPWFirstStepReq));
     }
 
-    @PostMapping("/find-pw-2")
-    public ResponseEntity<String> findPwSecond(@RequestBody @Valid RetrieveSecondReq retrieveSecondReq) {
+    @PostMapping("/findPW/setPW")
+    public ResponseEntity<String> findPW(@RequestBody @Valid FindPWSecondStepReq findPWSecondStepReq) {
         log.info("=======================================================");
-        log.info("findPwSecond - Find Password Second Request");
-        log.info("RetrieveSecondReq : {}", retrieveSecondReq.toString());
-        log.info("=======================================================");
-
-        return ResponseEntity.ok(retrieveService.findPwSecond(retrieveSecondReq));
-    }
-
-    @PostMapping("/find-pw-3")
-    public ResponseEntity<String> findPwThird(@RequestBody @Valid RetrieveThirdReq retrieveThirdReq) {
-        log.info("=======================================================");
-        log.info("findPwThird - Find Password Third Request");
-        log.info("RetrieveThirdReq : {}", retrieveThirdReq.toString());
+        log.info("findPW - Find Password Second Step");
+        log.info("RetrieveSecondReq : {}", findPWSecondStepReq.toString());
         log.info("=======================================================");
 
-        return ResponseEntity.ok(retrieveService.findPwThird(retrieveThirdReq));
+        return ResponseEntity.ok(retrieveService.findPwSecond(findPWSecondStepReq));
     }
 
 }

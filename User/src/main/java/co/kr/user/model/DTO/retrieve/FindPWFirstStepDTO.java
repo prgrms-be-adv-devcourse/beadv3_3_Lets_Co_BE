@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class RetrieveFirstDTO {
+public class FindPWFirstStepDTO {
 
     private String ID;
     private LocalDateTime certificationTime;

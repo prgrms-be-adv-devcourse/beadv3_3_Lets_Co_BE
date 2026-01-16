@@ -3,7 +3,7 @@ package co.kr.user.service;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UsersLoginRepository;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.Users_Login;
+import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.util.JWTUtil;
 import io.jsonwebtoken.Claims;
@@ -43,7 +43,7 @@ public class AuthService implements AuthServiceImpl {
         }
 
         // 2. [2차 검증] DB에 해당 토큰이 존재하는지 확인
-        Users_Login loginEntity = usersLoginRepository.findByToken(refreshToken)
+        UsersLogin loginEntity = usersLoginRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new IllegalArgumentException("DB에 존재하지 않는 토큰입니다. (로그아웃 됨)"));
 
         // 3. [3차 검증] 로그아웃(Revoke)된 상태인지 확인
@@ -85,7 +85,7 @@ public class AuthService implements AuthServiceImpl {
         }
 
         // 2. [2차 검증] DB에 해당 토큰이 존재하는지 확인
-        Users_Login loginEntity = usersLoginRepository.findByToken(refreshToken)
+        UsersLogin loginEntity = usersLoginRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new IllegalArgumentException("DB에 존재하지 않는 토큰입니다. (로그아웃 됨)"));
 
         // 3. [3차 검증] 로그아웃(Revoke)된 상태인지 확인
@@ -112,7 +112,7 @@ public class AuthService implements AuthServiceImpl {
                 users.getUsersIdx()
         );
 
-        Users_Login usersLogin = Users_Login.builder()
+        UsersLogin usersLogin = UsersLogin.builder()
                 .usersIdx(users.getUsersIdx())
                 .token(renewRefreshToken)
                 .lastUsedAt(null) // 초기 생성 시점에는 사용 기록 없음 (또는 현재 시간)

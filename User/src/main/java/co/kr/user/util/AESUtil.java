@@ -21,7 +21,7 @@ import java.util.Base64;
  * 패딩: PKCS5Padding - 데이터 길이가 블록 크기에 맞지 않을 때 채워주는 방식
  */
 @Component // 스프링 빈으로 등록하여 다른 서비스에서 주입받아 사용 가능하게 함
-public class AesUtil {
+public class AESUtil {
 
     // application.yml 파일에 설정된 비밀키 문자열을 가져옴
     @Value("${custom.security.ase256.key}")

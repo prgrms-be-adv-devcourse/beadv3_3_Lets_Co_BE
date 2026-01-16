@@ -3,6 +3,7 @@ package co.kr.user.controller;
 import co.kr.user.model.DTO.register.AuthenticationReq;
 import co.kr.user.model.DTO.register.RegisterDTO;
 import co.kr.user.model.DTO.register.RegisterReq;
+import co.kr.user.model.DTO.register.SignUpCheckReq;
 import co.kr.user.service.RegisterService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -36,23 +37,20 @@ public class RegisterController {
      * 사용자가 입력한 이메일이 이미 가입된 이메일인지 확인합니다.
      * GET 요청: /auth/duplicate-check?email=test@example.com
      *
-     * @param email 검사할 이메일 주소 (필수 입력, 이메일 형식 준수)
+     * @param signUpCheckReq 검사할 이메일 주소 (필수 입력, 이메일 형식 준수)
      * @return 중복 여부에 따른 메시지 문자열
      */
-    @GetMapping("/duplicate-check")
-    public ResponseEntity<String> duplicateCheck(@RequestParam("email")
-                                                 @NotBlank(message = "이메일을 입력해주세요.")    // 빈 값("")이나 null, 공백(" ")을 허용하지 않음
-                                                 @Email(message = "올바른 이메일 형식이 아닙니다.")  // 입력값이 이메일 형식(@ 포함 등)인지 검증
-                                                 String email) {
+    @PostMapping("/signup/check")
+    public ResponseEntity<String> duplicateCheck(@RequestBody @Valid SignUpCheckReq signUpCheckReq) {
 
         // [로그 기록] 요청이 들어왔음을 확인하고 파라미터를 남깁니다.
         log.info("=======================================================");
         log.info("duplicate-check - Checking if E-Mail is available");
-        log.info("email : {}", email);
+        log.info("email : {}", signUpCheckReq.getEmail());
         log.info("=======================================================");
 
         // Service의 checkDuplicate 메서드를 호출하여 결과를 받아온 후, 200 OK 상태코드와 함께 반환합니다.
-        return ResponseEntity.ok(registerService.checkDuplicate(email));
+        return ResponseEntity.ok(registerService.checkDuplicate(signUpCheckReq.getEmail()));
     }
 
     /**
@@ -83,20 +81,20 @@ public class RegisterController {
      * 이메일로 발송된 인증 코드를 사용자가 입력하면, 유효한 코드인지 확인합니다.
      * POST 요청: /auth/signup/Authentication?code=AbCd123
      *
-     * @param code 사용자가 입력한 인증 코드 문자열
+     * @param authenticationReq 사용자가 입력한 인증 코드 문자열
      * @return 인증 성공/실패 여부 메시지
      */
     @PostMapping("/signup/Authentication")
-    public ResponseEntity<String> signupAuthentication(@RequestParam("code") String code) {
+    public ResponseEntity<String> signupAuthentication(@RequestBody @Valid AuthenticationReq authenticationReq) {
 
         // [로그 기록] 인증 시도 로그
         log.info("=======================================================");
         log.info("signupAuthentication - Authentication Request");
-        log.info("code : {}", code);
+        log.info("code : {}", authenticationReq.getCode());
         log.info("=======================================================");
 
         // Service의 인증 로직을 호출하여 결과를 반환합니다.
-        return ResponseEntity.ok(registerService.signupAuthentication(code));
+        return ResponseEntity.ok(registerService.signupAuthentication(authenticationReq.getCode()));
     }
 
 }

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "Users_Login")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Users_Login {
+public class UsersLogin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,7 +35,7 @@ public class Users_Login {
     private String revokeReason;
 
     @Builder
-    public Users_Login(Long usersIdx, String token, LocalDateTime lastUsedAt) {
+    public UsersLogin(Long usersIdx, String token, LocalDateTime lastUsedAt) {
         this.usersIdx = usersIdx;
         this.token = token;
         this.lastUsedAt = lastUsedAt;

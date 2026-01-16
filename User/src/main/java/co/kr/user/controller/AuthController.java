@@ -3,6 +3,7 @@ package co.kr.user.controller;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AuthService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +29,10 @@ public class AuthController {
         return ResponseEntity.ok(authService.getRole(userIdx));
     }
 
-    @PostMapping("/renewAccess")
-    public ResponseEntity<String> renewAccess(@RequestParam @Valid String refreshToken) {
+    @PostMapping("/refresh")
+    public ResponseEntity<String> renewAccess(@RequestParam @Valid
+                                              @NotBlank(message = "리프레시 토큰을 입력해주세요.")  // 빈 값("")이나 null, 공백(" ")을 허용하지 않음
+                                              String refreshToken) {
         log.info("=======================================================");
         log.info("renewAccess - Refresh Token Request");
         log.info("renewAccess : {}", refreshToken);
@@ -39,7 +42,9 @@ public class AuthController {
     }
 
     @PostMapping("renewRefresh")
-    public ResponseEntity<String> renewRefresh(@RequestParam @Valid String refreshToken) {
+    public ResponseEntity<String> renewRefresh(@RequestParam @Valid
+                                               @NotBlank(message = "리프레시 토큰을 입력해주세요.")  // 빈 값("")이나 null, 공백(" ")을 허용하지 않음
+                                               String refreshToken) {
         log.info("=======================================================");
         log.info("renewRefresh - Refresh Token Request");
         log.info("renewRefresh : {}", refreshToken);

@@ -7,22 +7,22 @@ assignees: ''
 
 ---
 
-## 🔍 Bug Description
+## 🔍버그 설명
 > Please provide a clear and concise description of the bug along with the main feature name.
 
 ---
 
-## 🕵️ Causes of the Bug
+## 🕵️ 버그 원인
 > Please provide a clear and concise description of the bug.
 
 ---
 
-## 🛠️ Bug Fixing Process
+## 🛠️ 버그 수정 결과 
 > Please clearly and concisely describe the bug fixing process and the resulting solution.
 
 ---
 
-## 📸 Screenshots
+## 📸 첨부 사진
 > If necessary, attach screenshots to help explain the issue.
 
 | Before | After |
@@ -31,7 +31,7 @@ assignees: ''
 
 ---
 
-## 💡 Additional Information
+## 💡 ETC
 > Add any other information relevant to the issue here.
 
 ---

@@ -1,12 +1,11 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
 import co.kr.product.product.dto.response.ProductCheckStockResponse;
 import co.kr.product.product.dto.response.ProductDetailResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
-import jakarta.ws.rs.QueryParam;
+import co.kr.product.product.service.impl.ProductServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;

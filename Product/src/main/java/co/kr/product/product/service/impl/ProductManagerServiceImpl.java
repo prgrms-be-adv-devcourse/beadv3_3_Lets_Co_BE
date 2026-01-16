@@ -1,6 +1,7 @@
 package co.kr.product.product.service.impl;
 
 
+import co.kr.product.product.client.AuthServiceClient;
 import co.kr.product.product.document.ProductDocument;
 import co.kr.product.product.dto.request.ProductImagesRequest;
 import co.kr.product.product.dto.request.ProductListRequest;
@@ -42,20 +43,22 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private final ProductOptionRepository optionRepository;
     private final ProductImageRepository imageRepository;
     private final ProductEsRepository productEsRepository;
-
+    private final AuthServiceClient authServiceClient;
 
     @Override
     @Transactional
-    public ProductDetailResponse addProduct(String accountCode, UpsertProductRequest request){
+    public ProductDetailResponse addProduct(Long usersIdx, UpsertProductRequest request){
 
-        // 1. 유저 idx  수집
-        Long sellerIdx = 1L;
 
         // 2. 본인확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+            throw new RuntimeException("판매자 권한이 없습니다.");
+        }
 
         // 3. 상품 저장
         ProductEntity item = ProductEntity.builder()
-                .sellerIdx(sellerIdx)
+                .sellerIdx(usersIdx)
                 .productsCode(UUID.randomUUID().toString())
                 .productsName(request.name())
                 .description(request.description())
@@ -109,8 +112,13 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     @Override
     @Transactional
-    public ProductDetailResponse getManagerProductDetail(String accountCode, String code){
-        // !!!!!!!!!!본인 확인 필요!!!!!!!!!
+    public ProductDetailResponse getManagerProductDetail(Long usersIdx, String code){
+
+        // 본인 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
 
         // 상품 조회
         ProductEntity product =  productRepository.findByProductsCodeAndDelFalse(code)
@@ -134,7 +142,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     /**
      * 상품 정보 업데이트
-     * @param accountCode
+     * @param usersIdx
      * @param code
      * @param request
      * @return
@@ -142,11 +150,15 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     @Override
     @Transactional
     public ProductDetailResponse updateProduct(
-            String accountCode,
+            Long usersIdx,
             String code,
             UpsertProductRequest request){
-        // !!!!!!!!!!본인 확인 필요!!!!!!!!!
 
+        // 본인 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
 
         // Entity 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
@@ -246,9 +258,13 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     @Override
     @Transactional
-    public void deleteProduct(String accountCode, String code){
+    public void deleteProduct(Long usersIdx, String code){
 
-        // 본인 확인 필수 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // 본인 확인
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
 
         // 엔티티 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
@@ -281,15 +297,18 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductListResponse getListsBySeller(String accountCode, Pageable pageable, ProductListRequest requests){
-        // 본인 확인 필수!!!!!!!!!
-        // 임시
-        Long sellerIdx = 2L;
+    public ProductListResponse getListsBySeller(Long usersIdx, Pageable pageable, ProductListRequest requests){
+
+
+        String role = authServiceClient.getUserRole(usersIdx);
+        if (!"SELLER".equals(role)) {
+            throw new RuntimeException("판매자가 아닙니다.");
+        }
 
         // 검색어 존재 시 검색 진행
         Page<ProductDocument> pageResult = (requests.search() == null || requests.search().isBlank())
                 ? productEsRepository.findAll(pageable)
-                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(sellerIdx,requests.search() ,pageable);
+                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(usersIdx,requests.search() ,pageable);
         
         // 2. Document -> Response DTO 변환
         List<ProductResponse> items = pageResult.stream()

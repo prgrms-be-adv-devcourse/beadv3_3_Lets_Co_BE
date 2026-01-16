@@ -30,6 +30,7 @@ out/
 **/application-*.yaml
 **/application.yml.example
 **/application.yaml.example
+src/main/resources/application.yml
 
 ### NetBeans ###
 /nbproject/private/

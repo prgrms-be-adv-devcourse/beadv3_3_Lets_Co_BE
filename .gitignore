@@ -118,3 +118,5 @@ jacoco.exec
 *.exec
 test-output/
 reports/
+ERD 사진.png
+/Order/src/main/resources/templates/payments

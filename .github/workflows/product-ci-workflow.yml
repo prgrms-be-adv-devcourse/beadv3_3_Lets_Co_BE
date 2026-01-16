@@ -1,0 +1,16 @@
+name: 제품 서비스 CI 스크립트
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - "Product/**"
+
+jobs:
+  execute-test:
+    uses: ./.github/workflows/ci-workflow.yml
+    secrets: inherit
+    with:
+      service-name: Product

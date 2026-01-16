@@ -13,10 +13,9 @@ public interface UserClient {
      * @param userIdx
      * @param request : AddressInfo (주소 정보), CardInfo (카드 정보)
      */
-    @PostMapping("/order/{userIdx}")
+    @PostMapping("/users/order/{userIdx}")
     UserData getUserData(
             @PathVariable Long userIdx,
             @RequestBody UserData request
     );
-
 }

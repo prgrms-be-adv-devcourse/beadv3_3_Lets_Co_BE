@@ -35,13 +35,13 @@ public interface ProductClient {
      * @param requests : productIdx, optionIdx, quantity
      * 주문 후 상품 재고 관리를 위한 quantity 전송
      */
-    @PostMapping("/products/deduct-stock")
+    @PostMapping("/products/deductStock")
     void checkStock(@RequestBody DeductStock requests);
 
     /*
      * @param requests : productIdx, optionIdx, quantity
      * 주문 후 상품 재고 관리를 위한 quantity 리스트 전송
      */
-    @PostMapping("/products/deduct-stocks")
+    @PostMapping("/products/deductStocks")
     void checkStocks(@RequestBody List<DeductStock> requests);
 }

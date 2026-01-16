@@ -8,12 +8,13 @@ import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/order")
+@RequestMapping("/orders")
 public class OrderController {
 
     private final OrderService orderService;
@@ -34,7 +35,7 @@ public class OrderController {
         OrderResponse info = orderService.directOrder(userIdx, request);
         BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
 
-        return ResponseEntity.ok(body);
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     /*
@@ -52,7 +53,8 @@ public class OrderController {
 
         OrderListResponse info = orderService.cartOrder(userIdx, request);
         BaseResponse<OrderListResponse> body = new BaseResponse<>("ok", info);
-        return ResponseEntity.ok(body);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     @GetMapping
@@ -70,7 +72,7 @@ public class OrderController {
     }
 
     @GetMapping("/{orderCode}")
-    public ResponseEntity<BaseResponse<OrderResponse>> getOrder (
+    public ResponseEntity<BaseResponse<OrderResponse>> getOrderDetails (
             @PathVariable("orderCode") String orderCode,
             HttpServletRequest servletRequest
     ) {

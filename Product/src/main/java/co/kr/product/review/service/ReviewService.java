@@ -5,7 +5,6 @@ import co.kr.product.review.dto.request.ReviewUpsertRequest;
 import co.kr.product.review.dto.response.ReviewListResponse;
 import co.kr.product.review.dto.response.ReviewResponse;
 import co.kr.product.review.repository.ReviewRepository;
-import co.kr.product.security.CurrentUser;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -43,8 +42,7 @@ public class ReviewService {
 
     // 리뷰 작성(회원 + 구매자만 + 상품당 1개)
     @Transactional
-    public ReviewResponse createReview(Long productsIdx, ReviewUpsertRequest req) {
-        Long userIdx = CurrentUser.userIdxOrThrow();
+    public ReviewResponse createReview(Long productsIdx, ReviewUpsertRequest req,Long userIdx ) {
 
         if (req.getOrderItemIdx() == null) {
             throw new IllegalArgumentException("orderItemIdx is required.");
@@ -97,8 +95,7 @@ public class ReviewService {
 
     // 리뷰 수정(회원 + 작성자 본인만)
     @Transactional
-    public ReviewResponse updateReview(Long reviewIdx, ReviewUpsertRequest req) {
-        Long userIdx = CurrentUser.userIdxOrThrow();
+    public ReviewResponse updateReview(Long reviewIdx, ReviewUpsertRequest req, Long usersIdx) {
 
         if (req.getEvaluation() == null || req.getEvaluation() < 1 || req.getEvaluation() > 5) {
             throw new IllegalArgumentException("evaluation must be between 1 and 5.");
@@ -107,7 +104,7 @@ public class ReviewService {
             throw new IllegalArgumentException("content is required.");
         }
 
-        Review review = reviewRepository.findByReviewIdxAndUsersIdxAndDelFalse(reviewIdx, userIdx)
+        Review review = reviewRepository.findByReviewIdxAndUsersIdxAndDelFalse(reviewIdx, usersIdx)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰가 없거나 수정 권한이 없습니다."));
 
         review.update(req.getEvaluation(), req.getContent());
@@ -124,10 +121,9 @@ public class ReviewService {
 
     // 리뷰 삭제(회원 + 작성자 본인만) - soft delete
     @Transactional
-    public void deleteReview(Long reviewIdx) {
-        Long userIdx = CurrentUser.userIdxOrThrow();
+    public void deleteReview(Long reviewIdx, Long usersIdx) {
 
-        Review review = reviewRepository.findByReviewIdxAndUsersIdxAndDelFalse(reviewIdx, userIdx)
+        Review review = reviewRepository.findByReviewIdxAndUsersIdxAndDelFalse(reviewIdx, usersIdx)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰가 없거나 삭제 권한이 없습니다."));
 
         review.softDelete();

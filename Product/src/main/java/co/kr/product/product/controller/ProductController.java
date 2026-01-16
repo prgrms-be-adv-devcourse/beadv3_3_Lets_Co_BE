@@ -1,7 +1,10 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.product.dto.request.DeductStockRequest;
+import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
 import co.kr.product.product.dto.response.ProductCheckStockResponse;
 import co.kr.product.product.dto.response.ProductDetailResponse;
+import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
@@ -10,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -58,6 +63,36 @@ public class ProductController {
             @PathVariable String productsCode){
 
         return productService.getCheckStock(productsCode);
+    }
+
+    @PostMapping("deduct-stock")
+    public void deductStock(
+            @RequestBody DeductStockRequest deductStockRequest
+    ) {
+        productService.deductStock(deductStockRequest);
+    }
+
+    @PostMapping("deduct-stocks")
+    public void deductStockList(
+            @RequestBody List<DeductStockRequest> deductStockRequest
+    ) {
+        productService.deductStocks(deductStockRequest);
+    }
+
+    @GetMapping("/{productsIdx}/{optionIdx}")
+    public ProductInfoToOrderResponse getProductInfo(
+            @PathVariable("productsIdx") Long productsIdx,
+            @PathVariable("optionIdx") Long optionIdx
+    ) {
+        return productService.getProductInfo(productsIdx, optionIdx);
+    }
+
+
+    @GetMapping("/bulk")
+    public List<ProductInfoToOrderResponse> getProductInfoList(
+            @RequestBody List<ProductInfoToOrderRequest> requests
+    ) {
+        return productService.getProductInfoList(requests);
     }
 
 }

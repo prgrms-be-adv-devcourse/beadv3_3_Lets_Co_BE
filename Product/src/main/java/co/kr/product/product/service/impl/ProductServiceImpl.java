@@ -1,5 +1,7 @@
 package co.kr.product.product.service.impl;
 
+import co.kr.product.product.dto.request.DeductStockRequest;
+import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
 import co.kr.product.product.dto.response.*;
 import co.kr.product.product.entity.ProductEntity;
 import co.kr.product.product.entity.ProductImageEntity;
@@ -108,6 +110,91 @@ public class ProductServiceImpl implements ProductService {
                 "Success",
                 product.getStock()
         );
+
+    }
+
+    @Override
+    @Transactional
+    public void deductStock(DeductStockRequest deductStockRequest){
+
+        // 쿼리문에서 남은 개수 확인 및 수정까지
+        // kafka를 쓰더라도 컨슈머의 개수를 늘리면 동시 접속 문제가 생길 수도 있음.
+        // 최대한 수정 과정을 짧게 처리하기위해 쿼리문 하나로 해결해보고자 함
+        productOptionRepository.decreaseStock(deductStockRequest.optionIdx(),deductStockRequest.quantity());
+
+
+    }
+
+    @Override
+    @Transactional
+    public void deductStocks(List<DeductStockRequest> requests){
+
+
+        for (DeductStockRequest request : requests) {
+
+
+            int affectedRows = productOptionRepository.decreaseStock(
+                    request.optionIdx(),
+                    request.quantity()
+            );
+
+            // 업데이트된 행이 0개면 문제 있는것
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("재고가 부족하거나 유효하지 않은 상품입니다. (OptionIdx: " + request.optionIdx() + ")");
+            }
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductInfoToOrderResponse getProductInfo(Long productsIdx, Long optionIdx){
+        ProductEntity product = productRepository.findByProductsIdxAndDelFalse(productsIdx)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
+
+        ProductOptionEntity option = productOptionRepository.findByOptionGroupIdxAndDelFalse(optionIdx)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 옵션입니다: " + optionIdx));
+
+
+        // List<ProductImageEntity> image = productImageRepository.findByProductAndDelFalse(product)
+
+        return new ProductInfoToOrderResponse(
+                productsIdx,
+                optionIdx,
+                product.getProductsName(),
+                option.getOptionName(),
+                option.getOptionPrice(),
+                // option.getOptionSalePrice(),
+                option.getStock()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductInfoToOrderResponse> getProductInfoList(List<ProductInfoToOrderRequest> requests){
+
+        // ** for문을 돌려 List의 길이만큼 select를 사용하는것은 좋지 않음
+        // 1) IN 쿼리를 사용해서 한번에 조회
+        // 2) Fetch Join으로 가져오기
+
+        // > Fetch Join 쓰는 방법이 더 간단하고 성능적으로 좋다고 함. < 공부 필요
+
+        // 1. List 내 optionIds 만 list 로 추출
+        List<Long> optionIds = requests.stream()
+                .map(ProductInfoToOrderRequest::optionIdx).toList();
+
+        // 2. 조회
+        List<ProductOptionEntity> options = productOptionRepository.findAllWithOptions(optionIds);
+
+        // 3. 반환
+        return options.stream().map(opt -> new ProductInfoToOrderResponse(
+                opt.getProduct().getProductsIdx(), // 상품 정보도 이미 들어있음
+                opt.getOptionGroupIdx(),
+                opt.getProduct().getProductsName(),
+                opt.getOptionName(),
+                opt.getOptionPrice(),
+                opt.getStock()
+        )).toList();
+
 
     }
 }

@@ -3,15 +3,15 @@ package co.kr.order.service.impl;
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.*;
+import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.request.CheckStockRequest;
+import co.kr.order.model.dto.request.DeductStock;
 import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.request.ProductRequest;
-import co.kr.order.model.dto.request.UserDataRequest;
-import co.kr.order.model.dto.response.OrderCartResponse;
-import co.kr.order.model.dto.response.OrderDirectResponse;
+import co.kr.order.model.dto.UserData;
+import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.model.dto.response.OrderItemResponse;
+import co.kr.order.model.dto.response.OrderListResponse;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
@@ -42,33 +42,35 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderDirectResponse directOrder(Long userIdx, OrderDirectRequest request) {
+    public OrderResponse directOrder(Long userIdx, OrderDirectRequest request) {
+
+        // 주소/카드 데이터 있는지 확인
+        validateOrderData(request.userData());
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo productInfo;
+        ProductInfo product;
         try {
-            productInfo = productClient.getProduct(new ProductRequest(request.orderRequest().productIdx(), request.orderRequest().optionIdx()));
+            product = productClient.getProduct(request.orderRequest().productIdx(), request.orderRequest().optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 재고 없으면 Error 던짐
-        if(productInfo.stock() < request.orderRequest().quantity()) {
+        if(product.stock() < request.orderRequest().quantity()) {
             throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
         }
 
         // 가격*수량 해서 총 가격 측정
-        BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(request.orderRequest().quantity()));
+        BigDecimal amount = product.price().multiply(BigDecimal.valueOf(request.orderRequest().quantity()));
 
         // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인
         UserData userData = userClient.getUserData(userIdx, request.userData());
-        validateOrderData(userData);
 
         // Order Table 세팅
         OrderEntity orderEntity = OrderEntity.builder()
-                .userIdx(userData.usersIdx())
-                .addressIdx(userData.addressIdx())
-                .cardIdx(userData.cardIdx())
+                .userIdx(userIdx)
+                .addressIdx(userData.addressInfo().addressIdx())
+                .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(UUID.randomUUID().toString())
                 .status(OrderStatus.CREATED.name())
                 .itemsAmount(amount)
@@ -81,11 +83,11 @@ public class OrderServiceImpl implements OrderService {
         // OrderItem Table 세팅
         OrderItemEntity itemEntity = OrderItemEntity.builder()
                 .order(orderEntity)
-                .productIdx(productInfo.productIdx())
+                .productIdx(product.productIdx())
                 .optionIdx(request.orderRequest().optionIdx())
-                .productName(productInfo.productName())
-                .optionName(productInfo.optionContent())
-                .price(productInfo.price())
+                .productName(product.productName())
+                .optionName(product.optionContent())
+                .price(product.price())
                 .quantity(request.orderRequest().quantity())
                 .del(false)
                 .build();
@@ -93,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
         orderItemRepository.save(itemEntity);
 
         // 재고 관리를 위한 상품에게 몇개 샀는지 정보 전송
-        CheckStockRequest stockRequest = new CheckStockRequest(
+        DeductStock stockRequest = new DeductStock(
                 request.orderRequest().productIdx(),
                 request.orderRequest().optionIdx(),
                 request.orderRequest().quantity()
@@ -102,13 +104,19 @@ public class OrderServiceImpl implements OrderService {
 
         // 상품을 상세 내용
         OrderItemResponse itemInfo = new OrderItemResponse(
-                productInfo,
+                new ItemInfo(
+                        product.productIdx(),
+                        product.optionIdx(),
+                        product.productName(),
+                        product.optionContent(),
+                        product.price()
+                ),
                 request.orderRequest().quantity(),
                 amount
         );
 
         // 응답 dto 생성
-        return new OrderDirectResponse(
+        return new OrderResponse(
                 itemInfo
 //                salePrice,
 //                shippingFee,
@@ -118,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderCartResponse cartOrder(Long userIdx, UserDataRequest request) {
+    public OrderListResponse cartOrder(Long userIdx, UserData request) {
 
         UserData userData = userClient.getUserData(userIdx, request);
         validateOrderData(userData);
@@ -127,9 +135,9 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
         OrderEntity orderEntity = OrderEntity.builder()
-                .userIdx(userData.usersIdx())
-                .addressIdx(userData.addressIdx())
-                .cardIdx(userData.cardIdx())
+                .userIdx(userIdx)
+                .addressIdx(userData.addressInfo().addressIdx())
+                .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(UUID.randomUUID().toString())
                 .status(OrderStatus.CREATED.name())
                 .itemsAmount(itemsAmount)
@@ -140,7 +148,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(orderEntity);
 
         // 내 장바구니 목록 조회
-        List<CartEntity> cartEntities = cartRepository.findAllByUserIdx(userData.usersIdx());
+        List<CartEntity> cartEntities = cartRepository.findAllByUserIdx(userIdx);
 
         // 장바구니가 비어있을 경우 예외처리
         if (cartEntities.isEmpty()) {
@@ -171,27 +179,27 @@ public class OrderServiceImpl implements OrderService {
         }
         // DB에 저장할 엔티티 리스트 & 재고 차감 요청 리스트 &  응답용 리스트
         List<OrderItemEntity> orderItemsToSave = new ArrayList<>();
-        List<CheckStockRequest> stockRequests = new ArrayList<>();
+        List<DeductStock> stockRequests = new ArrayList<>();
         List<OrderItemResponse> responseList = new ArrayList<>();
 
         for (CartEntity cartEntity : cartEntities) {
 
             // Map 키 생성
             String key = cartEntity.getProductIdx() + "-" + cartEntity.getOptionIdx();
-            ProductInfo info = productMap.get(key);
+            ProductInfo product = productMap.get(key);
 
             // 상품이 존재하지 않을 경우 예외 처리
-            if (info == null) {
+            if (product == null) {
                 throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
             }
 
             // 재고 부족 시 예외 발생
-            if (info.stock() < cartEntity.getQuantity()) {
+            if (product.stock() < cartEntity.getQuantity()) {
                 throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
             }
 
             // 가격 계산
-            BigDecimal amount = info.price().multiply(BigDecimal.valueOf(cartEntity.getQuantity()));
+            BigDecimal amount = product.price().multiply(BigDecimal.valueOf(cartEntity.getQuantity()));
             itemsAmount = itemsAmount.add(amount);
 
             // OrderItem 엔티티 생성 (아직 저장은 안 함)
@@ -199,19 +207,31 @@ public class OrderServiceImpl implements OrderService {
                     .order(orderEntity)
                     .productIdx(cartEntity.getProductIdx())
                     .optionIdx(cartEntity.getOptionIdx())
-                    .productName(info.productName())
-                    .optionName(info.optionContent())
-                    .price(info.price())
+                    .productName(product.productName())
+                    .optionName(product.optionContent())
+                    .price(product.price())
                     .quantity(cartEntity.getQuantity())
                     .del(false)
                     .build();
             orderItemsToSave.add(orderItemEntity);
 
             // 응답 리스트 추가
-            responseList.add(new OrderItemResponse(info, cartEntity.getQuantity(), amount));
+            responseList.add(
+                    new OrderItemResponse(
+                        new ItemInfo(
+                                product.productIdx(),
+                                product.optionIdx(),
+                                product.productName(),
+                                product.optionContent(),
+                                product.price()
+                        ),
+                        cartEntity.getQuantity(),
+                        amount
+                    )
+            );
 
             // 재고 차감 요청 객체 생성 (product-service용)
-            stockRequests.add(new CheckStockRequest(
+            stockRequests.add(new DeductStock(
                     cartEntity.getProductIdx(),
                     cartEntity.getOptionIdx(),
                     cartEntity.getQuantity()
@@ -230,9 +250,9 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(orderEntity);
 
         // 장바구니 비우기
-        cartRepository.deleteByUserIdx(userData.usersIdx());
+        cartRepository.deleteByUserIdx(userIdx);
 
-        return new OrderCartResponse(
+        return new OrderListResponse(
                 responseList,
                 itemsAmount
 //                salePrice,
@@ -241,15 +261,88 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public OrderListResponse findOrderList(Long userIdx) {
+
+        List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
+
+        if (orderEntities.isEmpty()) {
+            return new OrderListResponse(Collections.emptyList(), BigDecimal.ZERO);
+        }
+
+        List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrderIn(orderEntities);
+
+        List<OrderItemResponse> itemList = new ArrayList<>();
+        for (OrderItemEntity item : itemEntities) {
+            BigDecimal itemTotalAmount = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+
+            itemList.add(new OrderItemResponse(
+                    new ItemInfo(
+                            item.getProductIdx(),
+                            item.getOptionIdx(),
+                            item.getProductName(),
+                            item.getOptionName(),
+                            item.getPrice()
+                    ),
+                    item.getQuantity(),
+                    itemTotalAmount
+            ));
+        }
+
+        BigDecimal totalItemsAmount = BigDecimal.ZERO;
+
+        for (OrderEntity order : orderEntities) {
+            if (order.getItemsAmount() != null) {
+                totalItemsAmount = totalItemsAmount.add(order.getItemsAmount());
+            }
+        }
+
+        return new OrderListResponse(
+                itemList,
+                totalItemsAmount);
+    }
+
+
+    @Transactional(readOnly = true)
+    @Override
+    public OrderResponse findOrder(Long userIdx, String orderCode) {
+
+        OrderEntity orderEntity = orderRepository.findByUserIdxAndOrderCode(userIdx, orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+        List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
+
+        if (itemEntities.isEmpty()) {
+            throw new OrderItemNotFoundException(ErrorCode.ORDER_ITEM_NOT_FOUND);
+        }
+
+        // 단일 Item만 받으므로 첫 번째 상품 가져옴
+        OrderItemEntity itemEntity = itemEntities.get(0);
+        BigDecimal itemTotalAmount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
+
+        return new OrderResponse(
+                new OrderItemResponse(
+                        new ItemInfo(
+                                itemEntity.getProductIdx(),
+                                itemEntity.getOptionIdx(),
+                                itemEntity.getProductName(),
+                                itemEntity.getOptionName(),
+                                itemEntity.getPrice()
+                        ),
+                        itemEntity.getQuantity(),
+                        itemTotalAmount
+                )
+        );
+    }
+
     // 주소/카드 정보 비어있는지 확인
     private void validateOrderData(UserData userData) {
-        if (userData.addressIdx() == null && userData.cardIdx() == null) {
+        if (userData.addressInfo() == null && userData.cardInfo() == null) {
             throw new NoInputOrderDataException(ErrorCode.NO_INPUT_ORDER_DATA);
         }
-        else if (userData.addressIdx() == null) {
+        else if (userData.addressInfo() == null) {
             throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
         }
-        else if (userData.cardIdx() == null) {
+        else if (userData.cardInfo() == null) {
             throw new NoInputCardDataException(ErrorCode.NO_INPUT_CARD_DATA);
         }
     }

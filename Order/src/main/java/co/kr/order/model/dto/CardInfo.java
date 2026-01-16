@@ -8,6 +8,7 @@ package co.kr.order.model.dto;
  * @param expYear: 만료 년
  */
 public record CardInfo (
+        Long cardIdx,
         String cardBrand,
         String cardName,
         String cardToken,

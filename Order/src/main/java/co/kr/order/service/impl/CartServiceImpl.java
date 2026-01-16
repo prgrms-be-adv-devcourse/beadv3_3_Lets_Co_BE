@@ -5,6 +5,7 @@ import co.kr.order.exception.CartNotFoundException;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.mapper.CartMapper;
+import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.response.CartItemResponse;
@@ -38,7 +39,7 @@ public class CartServiceImpl implements CartService {
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
         try {
-            productInfo = productClient.getProduct(new ProductRequest(request.productIdx(), request.optionIdx()));
+            productInfo = productClient.getProduct(request.productIdx(), request.optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -85,7 +86,7 @@ public class CartServiceImpl implements CartService {
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
         try {
-            productInfo = productClient.getProduct(new ProductRequest(request.productIdx(), request.optionIdx()));
+            productInfo = productClient.getProduct(request.productIdx(), request.optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -159,19 +160,25 @@ public class CartServiceImpl implements CartService {
         for (CartEntity entity : entities) {
 
             String key = entity.getProductIdx() + "-" + entity.getOptionIdx();
-            ProductInfo info = productMap.get(key);
+            ProductInfo product = productMap.get(key);
 
-            if (info == null) {
+            if (product == null) {
                 continue;
             }
 
             // 상품 가격 = 단가 * 수량
             int quantity = entity.getQuantity();
-            BigDecimal totalPrice = info.price().multiply(BigDecimal.valueOf(quantity));
+            BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
 
             // 장바구니 아이템 Dto 생성
             CartItemResponse cartItem = new CartItemResponse(
-                    info,
+                    new ItemInfo(
+                            product.productIdx(),
+                            product.optionIdx(),
+                            product.productName(),
+                            product.optionContent(),
+                            product.price()
+                    ),
                     quantity,
                     totalPrice
             );
@@ -196,20 +203,26 @@ public class CartServiceImpl implements CartService {
         CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx()).orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo productInfo;
+        ProductInfo product;
         try {
-            productInfo = productClient.getProduct(new ProductRequest(request.productIdx(), request.optionIdx()));
+            product = productClient.getProduct(request.productIdx(), request.optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 상품 가격 = 단가 * 수량
         int quantity = entity.getQuantity();
-        BigDecimal totalPrice = productInfo.price().multiply(BigDecimal.valueOf(quantity));
+        BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
 
         // 응답 DTO 반환
         return new CartItemResponse(
-                productInfo,
+                new ItemInfo(
+                        product.productIdx(),
+                        product.optionIdx(),
+                        product.productName(),
+                        product.optionContent(),
+                        product.price()
+                ),
                 quantity,
                 totalPrice
         );

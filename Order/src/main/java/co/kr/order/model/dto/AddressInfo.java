@@ -7,6 +7,7 @@ package co.kr.order.model.dto;
  * @param phoneNum : 핸드폰 번호
  */
 public record AddressInfo(
+        Long addressIdx,
         String recipient,
         String address,
         String addressDetail,

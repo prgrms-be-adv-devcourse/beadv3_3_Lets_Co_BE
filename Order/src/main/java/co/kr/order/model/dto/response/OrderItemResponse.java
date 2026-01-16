@@ -1,6 +1,6 @@
 package co.kr.order.model.dto.response;
 
-import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.ItemInfo;
 
 import java.math.BigDecimal;
 
@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  * @param amount : 가격 * 개수
  */
 public record OrderItemResponse(
-        ProductInfo product,
+        ItemInfo product,
         Integer quantity,
         BigDecimal amount
 ) {}

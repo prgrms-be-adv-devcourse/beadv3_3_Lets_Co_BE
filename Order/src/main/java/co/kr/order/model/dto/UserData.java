@@ -1,12 +1,11 @@
 package co.kr.order.model.dto;
 
 /*
- * @param usersIdx
- * @param addressIdx
- * @param cardIdx
+ * @param addressInfo : 주소 정보 (recipient, address, addressDetail, phoneNum)
+ * @param cardInfo : 카드 정보 (cardBrand, cardName, cardToken, exp_month, exp_year)
  */
 public record UserData(
-        Long usersIdx,
-        Long addressIdx,
-        Long cardIdx
+        Long userIdx,
+        AddressInfo addressInfo,
+        CardInfo cardInfo
 ) {}

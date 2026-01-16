@@ -52,8 +52,8 @@ class CartControllerTest {
         ProductInfo mockProduct1 = new ProductInfo(100L, 10L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 10);
         ProductInfo mockProduct2 = new ProductInfo(101L, 11L, "테스트 상품2", "옵션B", new BigDecimal("12000.00"), 10);
 
-        given(productClient.getProduct(new ProductRequest(100L, 10L))).willReturn(mockProduct1);
-        given(productClient.getProduct(new ProductRequest(101L, 11L))).willReturn(mockProduct2);
+        given(productClient.getProduct(100L, 10L)).willReturn(mockProduct1);
+        given(productClient.getProduct(101L, 11L)).willReturn(mockProduct2);
 
         given(productClient.getProductList(any())).willReturn(List.of(mockProduct1, mockProduct2));
 
@@ -123,7 +123,7 @@ class CartControllerTest {
         ProductRequest request = new ProductRequest(102L, 12L);
 
         ProductInfo mockProduct3 = new ProductInfo(102L, 12L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"), 10);
-        given(productClient.getProduct(new ProductRequest(102L, 12L))).willReturn(mockProduct3);
+        given(productClient.getProduct(102L, 12L)).willReturn(mockProduct3);
 
         // when
         ResultActions resultActions = mvc

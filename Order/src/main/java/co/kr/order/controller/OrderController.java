@@ -1,10 +1,10 @@
 package co.kr.order.controller;
 
 import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.request.UserDataRequest;
+import co.kr.order.model.dto.UserData;
 import co.kr.order.model.dto.response.BaseResponse;
-import co.kr.order.model.dto.response.OrderCartResponse;
-import co.kr.order.model.dto.response.OrderDirectResponse;
+import co.kr.order.model.dto.response.OrderListResponse;
+import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class OrderController {
      * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping
-    public ResponseEntity<BaseResponse<OrderDirectResponse>> directOrder(
+    public ResponseEntity<BaseResponse<OrderResponse>> directOrder (
             HttpServletRequest servletRequest,
             @RequestBody OrderDirectRequest request
             ) {
@@ -31,8 +31,8 @@ public class OrderController {
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderDirectResponse info = orderService.directOrder(userIdx, request);
-        BaseResponse<OrderDirectResponse> body = new BaseResponse<>("ok", info);
+        OrderResponse info = orderService.directOrder(userIdx, request);
+        BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
     }
@@ -42,16 +42,45 @@ public class OrderController {
      * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping("/cart")
-    public ResponseEntity<BaseResponse<OrderCartResponse>> cartOrder(
+    public ResponseEntity<BaseResponse<OrderListResponse>> cartOrder (
             HttpServletRequest servletRequest,
-            @RequestBody UserDataRequest request
+            @RequestBody UserData request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderCartResponse info = orderService.cartOrder(userIdx, request);
-        BaseResponse<OrderCartResponse> body = new BaseResponse<>("ok", info);
+        OrderListResponse info = orderService.cartOrder(userIdx, request);
+        BaseResponse<OrderListResponse> body = new BaseResponse<>("ok", info);
+        return ResponseEntity.ok(body);
+    }
+
+    @GetMapping
+    public ResponseEntity<BaseResponse<OrderListResponse>> getOrderList (
+            HttpServletRequest servletRequest
+    ) {
+
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        OrderListResponse info = orderService.findOrderList(userIdx);
+
+        BaseResponse<OrderListResponse> body = new BaseResponse<>("ok", info);
+        return ResponseEntity.ok(body);
+    }
+
+    @GetMapping("/{orderCode}")
+    public ResponseEntity<BaseResponse<OrderResponse>> getOrder (
+            @PathVariable("orderCode") String orderCode,
+            HttpServletRequest servletRequest
+    ) {
+
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        OrderResponse info = orderService.findOrder(userIdx, orderCode);
+
+        BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }
 }

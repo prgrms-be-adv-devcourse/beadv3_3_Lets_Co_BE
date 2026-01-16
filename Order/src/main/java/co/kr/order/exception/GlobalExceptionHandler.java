@@ -9,6 +9,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<BaseResponse<String>> orderNotFoundException(OrderNotFoundException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(OrderItemNotFoundException.class)
+    public ResponseEntity<BaseResponse<String>> orderItemNotFoundException(OrderItemNotFoundException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<BaseResponse<String>> userNotFoundException(UserNotFoundException e) {
         BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());

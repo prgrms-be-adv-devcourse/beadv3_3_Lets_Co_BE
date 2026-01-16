@@ -187,3 +187,12 @@ custom:
         # Access Token용 키 (32바이트 이상 Base64)
         # TokenAuthenticationFilter 클래스에서 @Value로 주입받아 사용됨
         secret: YWNjZXNzLXRva2VuLXNlY3JldC1rZXktZm9yLXNwcmluZy1ib290LXByb2plY3QtZXhhbXBsZS1rZXk=
+
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

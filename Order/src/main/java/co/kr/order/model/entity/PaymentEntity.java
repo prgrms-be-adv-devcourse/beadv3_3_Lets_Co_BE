@@ -3,10 +3,7 @@ package co.kr.order.model.entity;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,8 +19,8 @@ public class PaymentEntity {
     @Column(name = "Payment_IDX")
     private Long paymentIdx;
 
-        @Column(name = "Users_IDX", nullable = false)
-        private Long usersIdx;
+    @Column(name = "Users_IDX", nullable = false)
+    private Long usersIdx;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", nullable = false, length = 10)
@@ -42,6 +39,10 @@ public class PaymentEntity {
     @Column(name = "Card_IDX")
     private Long cardIdx;
 
+    @Column(name = "Payment_Key")
+    private String paymentKey;
+
+
     @Column(name = "Created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -55,7 +56,8 @@ public class PaymentEntity {
             PaymentType type,
             BigDecimal amount,
             Long ordersIdx,
-            Long cardIdx
+            Long cardIdx,
+            String paymentKey
     ) {
         this.usersIdx = usersIdx;
         this.status = status;
@@ -63,7 +65,9 @@ public class PaymentEntity {
         this.amount = amount;
         this.ordersIdx = ordersIdx;
         this.cardIdx = cardIdx;
+        this.paymentKey = paymentKey;
         this.createdAt = LocalDateTime.now();
         this.del = false;
     }
+
 }

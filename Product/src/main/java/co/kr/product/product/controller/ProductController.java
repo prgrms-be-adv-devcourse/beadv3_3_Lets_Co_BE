@@ -58,21 +58,21 @@ public class ProductController {
      * @param productsCode
      * 상품 재고 여부 확인 후 boolean 반환
      */
-    @GetMapping("/{productsCode}/check_stock")
+    @GetMapping("/{productsCode}/checkStock")
     public ProductCheckStockResponse getCheckStock(
             @PathVariable String productsCode){
 
         return productService.getCheckStock(productsCode);
     }
 
-    @PostMapping("deduct-stock")
+    @PostMapping("deductStock")
     public void deductStock(
             @RequestBody DeductStockRequest deductStockRequest
     ) {
         productService.deductStock(deductStockRequest);
     }
 
-    @PostMapping("deduct-stocks")
+    @PostMapping("deductStocks")
     public void deductStockList(
             @RequestBody List<DeductStockRequest> deductStockRequest
     ) {

@@ -63,8 +63,8 @@ class OrderControllerTest {
     @BeforeEach
     void init() {
         // given
-        AddressInfo addressInfo = new AddressInfo(1L, "홍길동", "주소1", "상세1", "01012345678");
-        CardInfo cardInfo = new CardInfo(1L,"브랜드", "카드이름", "card token", 12, 2029);
+        AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo(3L,"브랜드", "카드이름", "card token", 12, 2029);
 
         UserData userData = new UserData(1L, addressInfo, cardInfo);
         given(userClient.getUserData(eq(1L), any())).willReturn(userData);
@@ -86,15 +86,15 @@ class OrderControllerTest {
     void 단일상품_주문_정상 () throws Exception {
 
         OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
-        AddressInfo addressInfo = new AddressInfo(1L, "홍길동", "주소1", "상세1", "01012345678");
-        CardInfo cardInfo = new CardInfo(1L, "브랜드", "카드이름", "card token", 12, 2029);
+        AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo(3L, "브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
         OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order")
+                        post("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -102,7 +102,7 @@ class OrderControllerTest {
                 )
                 .andDo(print());
 
-        resultActions.andExpect(status().isOk())
+        resultActions.andExpect(status().isCreated())
                 .andExpect(handler().handlerType(OrderController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.item.product.productIdx").value(100L))
@@ -155,13 +155,13 @@ class OrderControllerTest {
                 .build();
         cartRepository.save(cart2);
 
-        AddressInfo addressInfo = new AddressInfo(1L, "홍길동", "주소1", "상세1", "01012345678");
-        CardInfo cardInfo = new CardInfo(1L, "브랜드", "카드이름", "card token", 12, 2029);
+        AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo(3L, "브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order/cart")
+                        post("/orders/cart")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -169,7 +169,7 @@ class OrderControllerTest {
                 )
                 .andDo(print());
 
-        resultActions.andExpect(status().isOk())
+        resultActions.andExpect(status().isCreated())
                 .andExpect(handler().handlerType(OrderController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.itemList[0].product.productIdx").value(100L))
@@ -222,15 +222,15 @@ class OrderControllerTest {
 
         // 200개 주문했을 때 (재고는 100개)
         OrderRequest orderRequest = new OrderRequest(100L, 10L, 200);
-        AddressInfo addressInfo = new AddressInfo(1L, "홍길동", "주소1", "상세1", "01012345678");
-        CardInfo cardInfo = new CardInfo(1L, "브랜드", "카드이름", "card token", 12, 2029);
+        AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo(3L, "브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
         OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order")
+                        post("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -262,15 +262,15 @@ class OrderControllerTest {
                 .willThrow(new FeignException.NotFound("Product Not Found", rq, null, null));
 
         OrderRequest orderRequest = new OrderRequest(103L, 10L, 3);
-        AddressInfo addressInfo = new AddressInfo(1L, "홍길동", "주소1", "상세1", "01012345678");
-        CardInfo cardInfo = new CardInfo(1L,"브랜드", "카드이름", "card token", 12, 2029);
+        AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
+        CardInfo cardInfo = new CardInfo(3L,"브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
         OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order")
+                        post("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -306,7 +306,7 @@ class OrderControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order")
+                        post("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -316,7 +316,7 @@ class OrderControllerTest {
 //
         resultActions.andExpect(status().is4xxClientError())
                 .andExpect(handler().handlerType(OrderController.class))
-                .andExpect(jsonPath("$.resultCode").value("NO_INPUT_ADDRESS_DATA"));
+                .andExpect(jsonPath("$.resultCode").value("BAD_REQUEST_VALID"));
 
         // Order 테이블
         List<OrderEntity> orderEntity = orderRepository.findAll();
@@ -332,7 +332,7 @@ class OrderControllerTest {
     void 단일상품_주문_실패_카드정보_없음 () throws Exception {
 
         OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
-        AddressInfo addressInfo = new AddressInfo(1L,"홍길동", "주소1", "상세1", "01012345678");
+        AddressInfo addressInfo = new AddressInfo(2L,"홍길동", "주소1", "상세1", "01012345678");
         CardInfo cardInfo = null;
         UserData userData = new UserData(1L, addressInfo, cardInfo);
         OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
@@ -342,7 +342,7 @@ class OrderControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order")
+                        post("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -352,7 +352,7 @@ class OrderControllerTest {
 //
         resultActions.andExpect(status().is4xxClientError())
                 .andExpect(handler().handlerType(OrderController.class))
-                .andExpect(jsonPath("$.resultCode").value("NO_INPUT_CARD_DATA"));
+                .andExpect(jsonPath("$.resultCode").value("BAD_REQUEST_VALID"));
 
         // Order 테이블
         List<OrderEntity> orderEntity = orderRepository.findAll();
@@ -378,7 +378,7 @@ class OrderControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/order")
+                        post("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -388,7 +388,7 @@ class OrderControllerTest {
 
         resultActions.andExpect(status().is4xxClientError())
                 .andExpect(handler().handlerType(OrderController.class))
-                .andExpect(jsonPath("$.resultCode").value("NO_INPUT_ORDER_DATA"));
+                .andExpect(jsonPath("$.resultCode").value("BAD_REQUEST_VALID"));
 
         // Order 테이블
         List<OrderEntity> orderEntity = orderRepository.findAll();
@@ -443,7 +443,7 @@ class OrderControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        get("/order")
+                        get("/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -485,7 +485,7 @@ class OrderControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        get("/order/" + targetOrderCode)
+                        get("/orders/" + targetOrderCode)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -504,7 +504,7 @@ class OrderControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        get("/order/" + targetOrderCode)
+                        get("/orders/" + targetOrderCode)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")

@@ -7,6 +7,7 @@ import co.kr.order.model.dto.response.OrderListResponse;
 import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<BaseResponse<OrderResponse>> directOrder (
             HttpServletRequest servletRequest,
-            @RequestBody OrderDirectRequest request
+            @Valid @RequestBody OrderDirectRequest request
             ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -45,7 +46,7 @@ public class OrderController {
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderListResponse>> cartOrder (
             HttpServletRequest servletRequest,
-            @RequestBody UserData request
+            @Valid @RequestBody UserData request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");

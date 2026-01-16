@@ -86,7 +86,7 @@ class CartControllerTest {
         // when:
         ResultActions resultActions = mvc
                 .perform(
-                        get("/cart")
+                        get("/carts")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -128,7 +128,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/cart/add")
+                        post("/carts/add")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -137,7 +137,7 @@ class CartControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.product.productName").value("테스트 상품3"))
                 .andExpect(jsonPath("$.data.product.price").value("13000.0"))
@@ -159,7 +159,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/cart/add")
+                        post("/carts/add")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -168,7 +168,7 @@ class CartControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.product.productName").value("테스트 상품1"))
                 .andExpect(jsonPath("$.data.quantity").value(3))
@@ -188,7 +188,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/cart/subtract")
+                        post("/carts/subtract")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -217,7 +217,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        delete("/cart")
+                        delete("/carts")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -226,7 +226,7 @@ class CartControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isOk())
+                .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
         Optional<CartEntity> entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L);

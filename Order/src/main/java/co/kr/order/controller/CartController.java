@@ -6,6 +6,7 @@ import co.kr.order.model.dto.response.CartItemResponse;
 import co.kr.order.model.dto.response.CartResponse;
 import co.kr.order.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class CartController {
     @PostMapping("/add")
     public ResponseEntity<BaseResponse<CartItemResponse>> addCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -46,7 +47,7 @@ public class CartController {
     @PostMapping("/subtract")
     public ResponseEntity<BaseResponse<CartItemResponse>> subtractCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -84,7 +85,7 @@ public class CartController {
     @GetMapping("/item")
     public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -104,7 +105,7 @@ public class CartController {
     @DeleteMapping
     public ResponseEntity<BaseResponse<Void>> deleteCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");

@@ -1,7 +1,6 @@
 package co.kr.order.client;
 
 import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.request.UserDataRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;

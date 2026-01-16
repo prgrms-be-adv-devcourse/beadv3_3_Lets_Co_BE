@@ -73,8 +73,4 @@ public class OrderEntity {
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
     }
-
-    public void setOrderStatus(String status) {
-        this.status = status;
-    }
 }

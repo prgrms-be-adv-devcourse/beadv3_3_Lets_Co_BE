@@ -11,6 +11,5 @@ public record PaymentResponse(
         PaymentType type,
         BigDecimal amount,
         Long ordersIdx,
-        Long cardIdx,
-        String paymentKey
+        Long cardIdx
 ) {}

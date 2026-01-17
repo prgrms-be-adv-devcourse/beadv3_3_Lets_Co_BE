@@ -47,6 +47,18 @@ public class UsersLogin {
         this.revokeReason = "LOGOUT";         // 사유: LOGOUT
     }
 
+    public void maturity() {
+        this.revokedAt = LocalDateTime.now();
+        this.revokeReason = "MATURITY";
+    }
+
+    public void updateToken(String token) {
+        this.token = token;
+        this.lastUsedAt = null; // 새 토큰이므로 사용 기록 초기화
+        this.revokedAt = null;  // 재발급 시 만료 상태 초기화 (필요 시)
+        this.revokeReason = null;
+    }
+
     // Users_Login 클래스 안에 추가하세요
     public void updateLastUsedAt() {
         this.lastUsedAt = LocalDateTime.now();

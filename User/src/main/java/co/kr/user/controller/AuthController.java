@@ -1,7 +1,12 @@
 package co.kr.user.controller;
 
+import co.kr.user.model.DTO.auth.TokenDto;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AuthService;
+import co.kr.user.util.CookieUtil;
+import co.kr.user.util.TokenUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -10,14 +15,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @Slf4j // Lombok: 로그를 남기기 위한 log 객체를 자동으로 생성해줍니다.
 @Validated // Controller 레벨에서 @RequestParam 등의 유효성 검증(Validation)을 활성화합니다.
 @RestController // 이 클래스가 REST API용 컨트롤러임을 명시 (모든 메서드의 리턴값이 JSON 형태가 됨)
 @RequiredArgsConstructor // final이 붙은 필드에 대해 생성자를 자동으로 만들어주어 의존성을 주입받습니다.
 @RequestMapping("/auth") // 이 컨트롤러의 기본 URL 경로를 '/auth'로 설정합니다. (예: /auth/signup)
 public class AuthController {
-
     private final AuthService authService;
+
+    private final CookieUtil cookieUtil;
 
     @GetMapping("/role")
     public ResponseEntity<UsersRole> getRole(@RequestParam @Valid Long userIdx) {
@@ -30,27 +38,44 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<String> renewAccess(@RequestParam @Valid
-                                              @NotBlank(message = "리프레시 토큰을 입력해주세요.")  // 빈 값("")이나 null, 공백(" ")을 허용하지 않음
-                                              String refreshToken) {
-        log.info("=======================================================");
-        log.info("renewAccess - Refresh Token Request");
-        log.info("renewAccess : {}", refreshToken);
-        log.info("=======================================================");
+    public ResponseEntity<String> refresh(
+            @CookieValue(name = CookieUtil.REFRESH_TOKEN_NAME, required = false) String refreshToken,
+            HttpServletResponse response) {
 
-        return ResponseEntity.ok(authService.renewAccessToken(refreshToken));
-    }
+        log.info("===== Token Refresh Request =====");
 
-    @PostMapping("renewRefresh")
-    public ResponseEntity<String> renewRefresh(@RequestParam @Valid
-                                               @NotBlank(message = "리프레시 토큰을 입력해주세요.")  // 빈 값("")이나 null, 공백(" ")을 허용하지 않음
-                                               String refreshToken) {
-        log.info("=======================================================");
-        log.info("renewRefresh - Refresh Token Request");
-        log.info("renewRefresh : {}", refreshToken);
-        log.info("=======================================================");
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).body("Refresh Token이 존재하지 않습니다.");
+        }
 
-        return ResponseEntity.ok(authService.renewRefreshToken(refreshToken));
+        try {
+            // 1. 서비스 로직 수행
+            TokenDto tokenDto = authService.refreshToken(refreshToken);
+
+            // 2. Access Token 쿠키 갱신 (무조건)
+            CookieUtil.addCookie(response,
+                    CookieUtil.ACCESS_TOKEN_NAME,
+                    tokenDto.getAccessToken(),
+                    CookieUtil.ACCESS_TOKEN_EXPIRY);
+
+            // 3. Refresh Token 쿠키 갱신 (값이 있을 때만 = 6일 이하로 남아서 갱신된 경우)
+            if (tokenDto.getRefreshToken() != null) {
+                CookieUtil.addCookie(response,
+                        CookieUtil.REFRESH_TOKEN_NAME,
+                        tokenDto.getRefreshToken(),
+                        CookieUtil.REFRESH_TOKEN_EXPIRY);
+                log.info("Refresh Token 쿠키가 갱신되었습니다.");
+            }
+
+            return ResponseEntity.ok("토큰이 갱신되었습니다.");
+
+        } catch (IllegalArgumentException e) {
+            log.error("토큰 갱신 실패: {}", e.getMessage());
+            // 토큰이 유효하지 않으므로 쿠키 삭제 처리 등 추가 가능
+            CookieUtil.deleteCookie(response, CookieUtil.ACCESS_TOKEN_NAME);
+            CookieUtil.deleteCookie(response, CookieUtil.REFRESH_TOKEN_NAME);
+            return ResponseEntity.status(401).body(e.getMessage());
+        }
     }
 
 }

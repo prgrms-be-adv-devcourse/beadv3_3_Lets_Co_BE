@@ -4,6 +4,7 @@ import co.kr.user.DAO.UserInformationRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UserVerificationsRepository;
 import co.kr.user.model.DTO.mail.EmailMessage;
+import co.kr.user.model.DTO.my.UserAmendReq;
 import co.kr.user.model.DTO.my.UserDeleteDTO;
 import co.kr.user.model.DTO.my.UserProfileDTO;
 import co.kr.user.model.DTO.my.UserDTO;
@@ -70,7 +71,15 @@ public class UserService implements UserServiceImpl{
      */
     public UserProfileDTO myDetails(Long user_Idx) {
         // 기본 유저 정보 조회 (로그인 ID, 역할 등 확인용)
-//        Users user = findUserByIdOrThrow(userId);
+        Users users = userRepository.findById(user_Idx)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        if (users.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        else if (users.getDel() == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
 
         // 상세 유저 정보 조회 (이름, 전화번호 등)
         // UserInformation 테이블에서 해당 유저와 매핑된 정보를 찾음
@@ -233,6 +242,47 @@ public class UserService implements UserServiceImpl{
         users.del();
 
         return "회원 탈퇴가 정상 처리되었습니다.";
+    }
+
+    @Override
+    public UserAmendReq myAmend(Long user_Idx, UserAmendReq userAmendReq) {
+        Users users = userRepository.findById(user_Idx)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        if (users.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        else if (users.getDel() == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+
+        UsersInformation userInfo = userInformationRepository.findById(user_Idx)
+                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + user_Idx));
+
+        if (userInfo.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+
+        UserAmendReq amend = new UserAmendReq();
+        amend.setName(userInfo.getName());
+        amend.setPhoneNumber(userInfo.getPhoneNumber());
+        amend.setBirth(userInfo.getBirth());
+        amend.setGrade("STANDARD");
+
+
+        if (!userAmendReq.getName().equals(userInfo.getName())) {
+            amend.setName(userAmendReq.getName());
+        }
+        if (!userAmendReq.getPhoneNumber().equals(userInfo.getPhoneNumber())) {
+            amend.setPhoneNumber(userAmendReq.getPhoneNumber());
+        }
+        if (!userAmendReq.getBirth().equals(userInfo.getBirth())) {
+            amend.setBirth(userAmendReq.getBirth());
+        }
+
+        userInfo.amend(amend.getName(), amend.getPhoneNumber(), amend.getBirth());
+
+        return amend;
     }
 }
 

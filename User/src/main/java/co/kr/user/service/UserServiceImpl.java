@@ -1,5 +1,6 @@
 package co.kr.user.service;
 
+import co.kr.user.model.DTO.my.UserAmendReq;
 import co.kr.user.model.DTO.my.UserDTO;
 import co.kr.user.model.DTO.my.UserDeleteDTO;
 import co.kr.user.model.DTO.my.UserProfileDTO;
@@ -13,4 +14,6 @@ public interface UserServiceImpl {
     UserDeleteDTO myDelete(Long user_Idx);
 
     String myDelete(Long user_Idx, String authCode);
+
+    UserAmendReq myAmend(Long user_Idx, UserAmendReq userAmendReq);
 }

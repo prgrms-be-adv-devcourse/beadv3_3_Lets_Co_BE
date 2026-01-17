@@ -22,7 +22,7 @@ public class LoginController {
     private final LoginService loginService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginDTO> login(@RequestBody @Valid LoginReq loginReq, HttpServletResponse response) {
+    public ResponseEntity<String> login(@RequestBody @Valid LoginReq loginReq, HttpServletResponse response) {
         log.info("===== login - Login Request =====");
 
         // 1. 서비스 로직 수행
@@ -35,10 +35,12 @@ public class LoginController {
                 loginDTO.getRefreshToken(),
                 CookieUtil.REFRESH_TOKEN_EXPIRY);
 
-        // 3. Response Body에서 Refresh Token 제거 (보안)
-        loginDTO.setRefreshToken(null);
+        CookieUtil.addCookie(response,
+                CookieUtil.ACCESS_TOKEN_NAME,
+                loginDTO.getRefreshToken(),
+                CookieUtil.ACCESS_TOKEN_EXPIRY);
 
-        return ResponseEntity.ok(loginDTO);
+        return ResponseEntity.ok("로그인 성공");
     }
 
     @PostMapping("/logout")

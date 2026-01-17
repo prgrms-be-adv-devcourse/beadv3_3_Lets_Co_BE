@@ -1,12 +1,8 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.my.UserDeleteDTO;
-import co.kr.user.model.DTO.my.UserDeleteSecondStepReq;
-import co.kr.user.model.DTO.my.UserProfileDTO;
-import co.kr.user.model.DTO.my.UserDTO;
+import co.kr.user.model.DTO.my.*;
 import co.kr.user.service.UserService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -82,6 +78,18 @@ public class UserController {
         log.info("=======================================================");
 
         return ResponseEntity.ok(userService.myDelete(user_Idx, userDeleteSecondStepReq.getAuthCode()));
+    }
+
+    @PutMapping("/my/details")
+    public ResponseEntity<UserAmendReq> myamend(@RequestHeader ("X-USERS-IDX") Long user_Idx, @RequestBody UserAmendReq userAmendReq) {
+        log.info("=======================================================");
+        log.info("myamend - My Page Detailed Info Request");
+        log.info("user_Idx : {}", user_Idx);
+        log.info("userAmendDTO : {}", userAmendReq.toString());
+        log.info("=======================================================");
+
+        // 서비스 계층에 상세 정보 조회를 요청
+        return ResponseEntity.ok(userService.myAmend(user_Idx, userAmendReq));
     }
 }
 

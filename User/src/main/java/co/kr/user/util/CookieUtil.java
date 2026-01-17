@@ -12,7 +12,8 @@ public class CookieUtil {
 
     // 유지보수를 위해 쿠키 이름과 만료 시간을 상수로 관리
     public static final String REFRESH_TOKEN_NAME = "refreshToken";
-    public static final String ACCESS_TOKEN_NAME = "accessT oken";
+    public static final String ACCESS_TOKEN_NAME = "accessToken";
+    public static final int ACCESS_TOKEN_EXPIRY = 10 * 60; // 10분
     public static final int REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7일
 
     /**

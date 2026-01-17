@@ -45,6 +45,12 @@ public class UsersInformation {
         this.birth = birth;
     }
 
+    public void amend(String name, String phoneNumber, String birth) {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.birth = birth;
+    }
+
     public void lastPassword(String PW) {
         this.prePW = PW;
     }

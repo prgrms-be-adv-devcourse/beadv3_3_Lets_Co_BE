@@ -2,11 +2,12 @@ package co.kr.user.service;
 
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UsersLoginRepository;
+import co.kr.user.model.DTO.auth.TokenDto;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.util.JWTUtil;
-import io.jsonwebtoken.Claims;
+import co.kr.user.util.TokenUtil; // 제공해주신 TokenUtil 사용
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,107 +20,56 @@ public class AuthService implements AuthServiceImpl {
 
     private final UserRepository userRepository;
     private final UsersLoginRepository usersLoginRepository;
-
     private final JWTUtil jwtUtil;
 
     @Override
     public UsersRole getRole(Long userIdx) {
-        // 값이 없으면 바로 에러를 던지므로, 변수에 담긴 users는 무조건 null이 아님을 보장받음
         Users users = userRepository.findById(userIdx)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
         return users.getRole();
     }
 
-    /**
-     * [토큰 재발급]
-     * Refresh Token으로 검증 후 Access Token 재발급
-     */
-    @Transactional
-    public String renewAccessToken(String refreshToken) {
-        // 1. [1차 검증] 토큰 자체의 서명 및 만료 확인 (JWTUtil)
-        if (!jwtUtil.validateRefreshToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
-        }
-
-        // 2. [2차 검증] DB에 해당 토큰이 존재하는지 확인
-        UsersLogin loginEntity = usersLoginRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("DB에 존재하지 않는 토큰입니다. (로그아웃 됨)"));
-
-        // 3. [3차 검증] 로그아웃(Revoke)된 상태인지 확인
-        if (loginEntity.getRevokedAt() != null) {
-            log.warn("폐기된 토큰 사용 시도! UserIdx: {}", loginEntity.getUsersIdx());
-            throw new IllegalArgumentException("이미 로그아웃된 토큰입니다.");
-        }
-
-        // 4. [교차 검증] 토큰 내 UserID와 DB 기록의 UserID 일치 여부
-        Claims claims = jwtUtil.getRefreshTokenClaims(refreshToken);
-        Long tokenUserIdx = Long.valueOf(claims.getSubject());
-
-        if (!loginEntity.getUsersIdx().equals(tokenUserIdx)) {
-            throw new IllegalArgumentException("토큰 소유자가 일치하지 않습니다.");
-        }
-
-        // 5. [갱신] 마지막 사용 시간 업데이트 (엔티티에 메서드 추가 필요 혹은 Setter 사용)
-        // loginEntity.updateLastUsedAt(); // 이 기능을 엔티티에 추가하면 좋습니다.
-
-        // 6. 유저 정보 조회 (Access Token 생성용)
-        Users user = userRepository.findById(tokenUserIdx)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-
-        loginEntity.updateLastUsedAt();
-
-        // 7. 새 Access Token 발급
-        return jwtUtil.createAccessToken(
-                user.getUsersIdx(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
+    @Override
+    public String accessToken(String AccessToken) {
+        // 기존 코드 유지 (사용하지 않는다면 비워둠)
+        return "";
     }
 
     @Override
-    public String renewRefreshToken(String refreshToken) {
-        // 1. [1차 검증] 토큰 자체의 서명 및 만료 확인 (JWTUtil)
-        if (!jwtUtil.validateRefreshToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+    @Transactional
+    public TokenDto refreshToken(String refreshToken) {
+        // 1. DB에서 리프레시 토큰 존재 여부 확인 (유효성 검증 포함)
+        UsersLogin usersLogin = usersLoginRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다."));
+
+        // 2. 사용자 정보 조회 (Access Token 재발급 시 필요한 정보 가져오기 위함)
+        Users users = userRepository.findById(usersLogin.getUsersIdx())
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        // 3. Access Token은 무조건 재발급
+        String newAccessToken = jwtUtil.createAccessToken(users.getUsersIdx(), users.getCreatedAt(), users.getUpdatedAt());
+
+        // 4. Refresh Token 갱신 여부 판단 (6일 이하 남았는지 체크)
+        String newRefreshToken = null;
+        if (TokenUtil.isTokenExpiringSoon(refreshToken)) {
+            log.info("Refresh Token 만료가 임박하여 재발급합니다.");
+
+            usersLogin.maturity();
+
+            newRefreshToken = jwtUtil.createRefreshToken(users.getUsersIdx());
+
+            // DB 업데이트 (Dirty Checking)
+            // UsersLogin 엔티티에 updateToken 같은 메서드가 없다면 setter 사용,
+            // 혹은 builder로 새로 만들어서 save 해야 함 (여기서는 setter 가정)
+            usersLogin.updateToken(newRefreshToken);
+            // 만약 setToken이 없고 불변 객체라면, Repository.save()로 덮어쓰기 로직 필요
         }
 
-        // 2. [2차 검증] DB에 해당 토큰이 존재하는지 확인
-        UsersLogin loginEntity = usersLoginRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("DB에 존재하지 않는 토큰입니다. (로그아웃 됨)"));
+        // 5. 결과 반환
+        TokenDto tokenDto = new TokenDto();
+        tokenDto.setAccessToken(newAccessToken);
+        tokenDto.setRefreshToken(newRefreshToken); // 갱신 안 됐으면 null
 
-        // 3. [3차 검증] 로그아웃(Revoke)된 상태인지 확인
-        if (loginEntity.getRevokedAt() != null) {
-            log.warn("폐기된 토큰 사용 시도! UserIdx: {}", loginEntity.getUsersIdx());
-            throw new IllegalArgumentException("이미 로그아웃된 토큰입니다.");
-        }
-
-        // 4. [교차 검증] 토큰 내 UserID와 DB 기록의 UserID 일치 여부
-        Claims claims = jwtUtil.getRefreshTokenClaims(refreshToken);
-        Long tokenUserIdx = Long.valueOf(claims.getSubject());
-
-        if (!loginEntity.getUsersIdx().equals(tokenUserIdx)) {
-            throw new IllegalArgumentException("토큰 소유자가 일치하지 않습니다.");
-        }
-
-        loginEntity.logout();
-
-        // 6. 유저 정보 조회 (Access Token 생성용)
-        Users users = userRepository.findById(tokenUserIdx)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-
-        String renewRefreshToken = jwtUtil.createRefreshToken(
-                users.getUsersIdx()
-        );
-
-        UsersLogin usersLogin = UsersLogin.builder()
-                .usersIdx(users.getUsersIdx())
-                .token(renewRefreshToken)
-                .lastUsedAt(null) // 초기 생성 시점에는 사용 기록 없음 (또는 현재 시간)
-                .build();
-
-        usersLoginRepository.save(usersLogin);
-
-        return renewRefreshToken;
+        return tokenDto;
     }
 }

@@ -25,6 +25,6 @@ public interface UserInformationRepository extends JpaRepository<UsersInformatio
     // - findAll(): 전체 조회 (Select All)
     // - delete(entity): 삭제 (Delete)
 
-    Optional<UsersInformation> findById(Long id);
+    Optional<UsersInformation> findById(Long userIdx);
 
 }

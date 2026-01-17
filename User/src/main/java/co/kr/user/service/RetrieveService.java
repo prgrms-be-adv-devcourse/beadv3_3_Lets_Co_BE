@@ -175,7 +175,7 @@ public class RetrieveService implements RetrieveServiceImpl{
 
         usersInformation.lastPassword(users.getPW());
 
-        users.setPW(bCryptUtil.setPassword(findPWSecondStepReq.getNewPW()));
+        users.setPW(bCryptUtil.encode(findPWSecondStepReq.getNewPW()));
 
         // 6. 검증 성공 처리
         verification.confirmVerification();

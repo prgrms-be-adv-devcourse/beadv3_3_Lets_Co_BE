@@ -1,20 +1,16 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.register.AuthenticationReq;
+import co.kr.user.model.DTO.auth.AuthenticationReq;
 import co.kr.user.model.DTO.register.RegisterDTO;
 import co.kr.user.model.DTO.register.RegisterReq;
 import co.kr.user.model.DTO.register.SignUpCheckReq;
 import co.kr.user.service.RegisterService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
 
 /**
  * [회원가입 컨트롤러]

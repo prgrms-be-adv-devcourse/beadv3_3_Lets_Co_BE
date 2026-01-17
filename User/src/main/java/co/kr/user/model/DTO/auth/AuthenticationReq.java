@@ -1,4 +1,4 @@
-package co.kr.user.model.DTO.register;
+package co.kr.user.model.DTO.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;

@@ -7,13 +7,13 @@ import co.kr.user.model.DTO.my.UserProfileDTO;
 
 public interface UserServiceImpl {
 
-    UserDTO my(Long user_Idx);
+    UserDTO my(Long userIdx);
 
-    UserProfileDTO myDetails(Long user_Idx);
+    UserProfileDTO myDetails(Long userIdx);
 
-    UserDeleteDTO myDelete(Long user_Idx);
+    UserDeleteDTO myDelete(Long userIdx);
 
-    String myDelete(Long user_Idx, String authCode);
+    String myDelete(Long userIdx, String authCode);
 
-    UserAmendReq myAmend(Long user_Idx, UserAmendReq userAmendReq);
+    UserAmendReq myAmend(Long userIdx, UserAmendReq userAmendReq);
 }

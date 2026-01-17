@@ -25,7 +25,7 @@ public class BCryptUtil {
      * @param password 사용자가 입력한 원본 비밀번호 (예: "p@ssword123")
      * @return DB에 저장될 BCrypt 해시 문자열
      */
-    public String setPassword(String password) {
+    public String encode(String password) {
         // 1. [Base64 인코딩]
         // 비밀번호를 바이트 배열로 변환한 뒤 Base64 문자열로 만듭니다.
         // 예: "1234" -> "MTIzNA=="
@@ -49,7 +49,7 @@ public class BCryptUtil {
      * @param dbPassword DB에 저장되어 있는 암호화된 비밀번호 (해시값)
      * @return 일치하면 true, 다르면 false
      */
-    public boolean checkPassword(String password, String dbPassword) {
+    public boolean check(String password, String dbPassword) {
         // 1. [동일한 전처리]
         // 비교를 위해 입력받은 비밀번호를 저장할 때와 똑같이 Base64로 인코딩합니다.
         String basePW = Base64.getEncoder().encodeToString(password.getBytes());

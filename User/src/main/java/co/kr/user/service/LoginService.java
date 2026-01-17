@@ -50,7 +50,7 @@ public class LoginService implements LoginServiceImpl{
 
         // 3. 비밀번호 검증 (BCryptUtil 사용)
         // 사용자가 입력한 PW와 DB의 암호화된 PW 비교
-        if (!bCryptUtil.checkPassword(loginReq.getPW(), users.getPW())) {
+        if (!bCryptUtil.check(loginReq.getPW(), users.getPW())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 

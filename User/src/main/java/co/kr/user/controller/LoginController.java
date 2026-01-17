@@ -23,7 +23,10 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody @Valid LoginReq loginReq, HttpServletResponse response) {
-        log.info("===== login - Login Request =====");
+        log.info("=======================================================");
+        log.info("login - Login Request");
+        log.info("loginReq : {}", loginReq.toString());
+        log.info("=======================================================");
 
         // 1. 서비스 로직 수행
         LoginDTO loginDTO = loginService.login(loginReq);
@@ -48,8 +51,10 @@ public class LoginController {
             // 쿠키 값을 가져올 때 상수를 사용 (@CookieValue의 name 속성에는 상수 직접 사용 불가하여 문자열 유지하거나, HttpServletRequest로 변경 가능)
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response) {
-
-        log.info("===== logout - Logout Request =====");
+        log.info("=======================================================");
+        log.info("logout - Logout Request");
+        log.info("refreshToken : {}", refreshToken);
+        log.info("=======================================================");
 
         // 1. 서비스 로그아웃 처리
         String value = loginService.logout(refreshToken);

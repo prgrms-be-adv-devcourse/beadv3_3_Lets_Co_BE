@@ -92,7 +92,7 @@ public class RegisterService implements RegisterServiceImpl{
 
         // 2. [암호화 수행] 보안이 필요한 데이터 변환
         // 비밀번호 -> BCrypt 해시 (복구 불가능, 로그인 시 비교만 가능)
-        registerReq.setPW(bCryptUtil.setPassword(registerReq.getPW()));
+        registerReq.setPW(bCryptUtil.encode(registerReq.getPW()));
 
         // 이름, 전화번호, 생년월일 -> AES 암호화 (관리자 페이지 등에서 복호화해서 볼 수 있음)
         registerReq.setName(aesUtil.encrypt(registerReq.getName()));

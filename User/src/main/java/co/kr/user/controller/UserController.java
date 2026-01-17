@@ -30,14 +30,14 @@ public class UserController {
      * 역할: 로그인한 사용자의 핵심 정보(ID, 잔액, 등급 등)를 반환합니다.
      */
     @PostMapping("/my")
-    public ResponseEntity<UserDTO> my(@RequestHeader ("X-USERS-IDX") Long user_Idx) {
+    public ResponseEntity<UserDTO> my(@RequestHeader ("X-USERS-IDX") Long userIdx) {
         log.info("=======================================================");
         log.info("my - My Page Request");
-        log.info("user_Idx : {}", user_Idx);
+        log.info("userIdx : {}", userIdx);
         log.info("=======================================================");
 
         // 서비스 계층에 조회를 요청하고 결과를 200 OK 상태 코드와 함께 반환
-        return ResponseEntity.ok(userService.my(user_Idx));
+        return ResponseEntity.ok(userService.my(userIdx));
     }
 
     /**
@@ -46,50 +46,50 @@ public class UserController {
      * 역할: 마이페이지의 '상세 정보' 탭 등에서 사용될 민감하거나 구체적인 정보(이름, 전화번호, 생년월일 등)를 반환합니다.
      */
     @PostMapping("/my/details")
-    public ResponseEntity<UserProfileDTO> myDetails(@RequestHeader ("X-USERS-IDX") Long user_Idx) {
+    public ResponseEntity<UserProfileDTO> myDetails(@RequestHeader ("X-USERS-IDX") Long userIdx) {
         log.info("=======================================================");
         log.info("meDetails - My Page Detailed Info Request");
-        log.info("user_Idx : {}", user_Idx);
+        log.info("userIdx : {}", userIdx);
         log.info("=======================================================");
 
         // 서비스 계층에 상세 정보 조회를 요청
-        return ResponseEntity.ok(userService.myDetails(user_Idx));
+        return ResponseEntity.ok(userService.myDetails(userIdx));
     }
 
     @PostMapping("/my/delete")
-    public ResponseEntity<UserDeleteDTO> meDelete(@RequestHeader ("X-USERS-IDX") Long user_Idx) {
+    public ResponseEntity<UserDeleteDTO> myDelete(@RequestHeader ("X-USERS-IDX") Long userIdx) {
         log.info("=======================================================");
         log.info("meDelete - My Page Delete Info Request");
-        log.info("user_Idx : {}", user_Idx);
+        log.info("userIdx : {}", userIdx);
         log.info("=======================================================");
 
         // 서비스 계층에 상세 정보 조회를 요청
-        return ResponseEntity.ok(userService.myDelete(user_Idx));
+        return ResponseEntity.ok(userService.myDelete(userIdx));
     }
 
     @DeleteMapping("/my/delete")
     public ResponseEntity<String> deleteUser(@RequestHeader ("X-USERS-IDX")
-                                             Long user_Idx,
+                                             Long userIdx,
                                              @RequestBody @Valid UserDeleteSecondStepReq userDeleteSecondStepReq) {
         log.info("=======================================================");
         log.info("deleteUser - My Page Delete Info Request");
-        log.info("user_Idx : {}", user_Idx);
+        log.info("userIdx : {}", userIdx);
         log.info("authCode : {}", userDeleteSecondStepReq.getAuthCode());
         log.info("=======================================================");
 
-        return ResponseEntity.ok(userService.myDelete(user_Idx, userDeleteSecondStepReq.getAuthCode()));
+        return ResponseEntity.ok(userService.myDelete(userIdx, userDeleteSecondStepReq.getAuthCode()));
     }
 
     @PutMapping("/my/details")
-    public ResponseEntity<UserAmendReq> myamend(@RequestHeader ("X-USERS-IDX") Long user_Idx, @RequestBody UserAmendReq userAmendReq) {
+    public ResponseEntity<UserAmendReq> myamend(@RequestHeader ("X-USERS-IDX") Long userIdx, @RequestBody UserAmendReq userAmendReq) {
         log.info("=======================================================");
         log.info("myamend - My Page Detailed Info Request");
-        log.info("user_Idx : {}", user_Idx);
+        log.info("userIdx : {}", userIdx);
         log.info("userAmendDTO : {}", userAmendReq.toString());
         log.info("=======================================================");
 
         // 서비스 계층에 상세 정보 조회를 요청
-        return ResponseEntity.ok(userService.myAmend(user_Idx, userAmendReq));
+        return ResponseEntity.ok(userService.myAmend(userIdx, userAmendReq));
     }
 }
 

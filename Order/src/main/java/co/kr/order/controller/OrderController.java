@@ -1,7 +1,7 @@
 package co.kr.order.controller;
 
+import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.UserData;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderListResponse;
 import co.kr.order.model.dto.response.OrderResponse;
@@ -46,7 +46,7 @@ public class OrderController {
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderListResponse>> cartOrder (
             HttpServletRequest servletRequest,
-            @Valid @RequestBody UserData request
+            @Valid @RequestBody OrderCartRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -56,6 +56,21 @@ public class OrderController {
         BaseResponse<OrderListResponse> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    }
+
+    @PostMapping("/refund/{orderCode}")
+    public ResponseEntity<BaseResponse<String>> refund(
+            @PathVariable("orderCode") String orderCode,
+            HttpServletRequest servletRequest
+    ) {
+
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        String info = orderService.refund(userIdx, orderCode);
+        BaseResponse<String> body = new BaseResponse<>("ok", info);
+
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping

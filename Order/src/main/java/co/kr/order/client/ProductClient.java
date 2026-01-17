@@ -1,6 +1,6 @@
 package co.kr.order.client;
 
-import co.kr.order.model.dto.request.DeductStock;
+import co.kr.order.model.dto.DeductStock;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.ProductRequest;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -36,12 +36,12 @@ public interface ProductClient {
      * 주문 후 상품 재고 관리를 위한 quantity 전송
      */
     @PostMapping("/products/deductStock")
-    void checkStock(@RequestBody DeductStock requests);
+    void deductStock(@RequestBody DeductStock requests);
 
     /*
      * @param requests : productIdx, optionIdx, quantity
      * 주문 후 상품 재고 관리를 위한 quantity 리스트 전송
      */
     @PostMapping("/products/deductStocks")
-    void checkStocks(@RequestBody List<DeductStock> requests);
+    void deductStocks(@RequestBody List<DeductStock> requests);
 }

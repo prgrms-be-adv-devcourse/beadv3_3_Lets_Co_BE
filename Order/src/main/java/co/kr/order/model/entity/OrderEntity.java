@@ -74,7 +74,7 @@ public class OrderEntity {
         this.totalAmount = totalAmount;
     }
 
-    public void setOrderStatus(String status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 }

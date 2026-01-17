@@ -1,4 +1,4 @@
-package co.kr.order.model.dto.request;
+package co.kr.order.model.dto;
 
 /*
  * @param productIdx

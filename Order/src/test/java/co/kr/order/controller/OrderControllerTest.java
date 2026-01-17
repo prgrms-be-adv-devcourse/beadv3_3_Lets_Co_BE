@@ -6,7 +6,7 @@ import co.kr.order.model.dto.AddressInfo;
 import co.kr.order.model.dto.CardInfo;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.request.OrderRequest;
+import co.kr.order.model.dto.OrderItem;
 import co.kr.order.model.dto.UserData;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.model.entity.OrderEntity;
@@ -85,12 +85,12 @@ class OrderControllerTest {
     @Transactional
     void 단일상품_주문_정상 () throws Exception {
 
-        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        OrderItem orderItem = new OrderItem(100L, 10L, 3);
         AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
         CardInfo cardInfo = new CardInfo(3L, "브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
-        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+        OrderDirectRequest request = new OrderDirectRequest(orderItem, userData);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -221,12 +221,12 @@ class OrderControllerTest {
     void 단일상품_주문_실패_재고없음 () throws Exception {
 
         // 200개 주문했을 때 (재고는 100개)
-        OrderRequest orderRequest = new OrderRequest(100L, 10L, 200);
+        OrderItem orderItem = new OrderItem(100L, 10L, 200);
         AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
         CardInfo cardInfo = new CardInfo(3L, "브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
-        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+        OrderDirectRequest request = new OrderDirectRequest(orderItem, userData);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -261,12 +261,12 @@ class OrderControllerTest {
         given(productClient.getProduct(103L, 10L))
                 .willThrow(new FeignException.NotFound("Product Not Found", rq, null, null));
 
-        OrderRequest orderRequest = new OrderRequest(103L, 10L, 3);
+        OrderItem orderItem = new OrderItem(103L, 10L, 3);
         AddressInfo addressInfo = new AddressInfo(2L, "홍길동", "주소1", "상세1", "01012345678");
         CardInfo cardInfo = new CardInfo(3L,"브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
 
-        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+        OrderDirectRequest request = new OrderDirectRequest(orderItem, userData);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -295,11 +295,11 @@ class OrderControllerTest {
     @Transactional
     void 단일상품_주문_실패_주소정보_없음 () throws Exception {
 
-        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        OrderItem orderItem = new OrderItem(100L, 10L, 3);
         AddressInfo addressInfo = null;
         CardInfo cardInfo = new CardInfo(1L,"브랜드", "카드이름", "card token", 12, 2029);
         UserData userData = new UserData(1L, addressInfo, cardInfo);
-        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+        OrderDirectRequest request = new OrderDirectRequest(orderItem, userData);
 
         UserData noAddress = new UserData(1L, addressInfo, cardInfo);
         given(userClient.getUserData(eq(1L), any())).willReturn(noAddress);
@@ -331,11 +331,11 @@ class OrderControllerTest {
     @Transactional
     void 단일상품_주문_실패_카드정보_없음 () throws Exception {
 
-        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        OrderItem orderItem = new OrderItem(100L, 10L, 3);
         AddressInfo addressInfo = new AddressInfo(2L,"홍길동", "주소1", "상세1", "01012345678");
         CardInfo cardInfo = null;
         UserData userData = new UserData(1L, addressInfo, cardInfo);
-        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+        OrderDirectRequest request = new OrderDirectRequest(orderItem, userData);
 
         UserData noAddress = new UserData(1L, addressInfo, cardInfo);
         given(userClient.getUserData(eq(1L), any())).willReturn(noAddress);
@@ -367,11 +367,11 @@ class OrderControllerTest {
     @Transactional
     void 단일상품_주문_실패_결제정보_없음 () throws Exception {
 
-        OrderRequest orderRequest = new OrderRequest(100L, 10L, 3);
+        OrderItem orderItem = new OrderItem(100L, 10L, 3);
         AddressInfo addressInfo = null;
         CardInfo cardInfo = null;
         UserData userData = new UserData(1L, addressInfo, cardInfo);
-        OrderDirectRequest request = new OrderDirectRequest(orderRequest, userData);
+        OrderDirectRequest request = new OrderDirectRequest(orderItem, userData);
 
         UserData noAddress = new UserData(1L, null, null);
         given(userClient.getUserData(eq(1L), any())).willReturn(noAddress);

@@ -3,15 +3,17 @@ package co.kr.order.service.impl;
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.*;
+import co.kr.order.model.dto.DeductStock;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.request.DeductStock;
-import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.response.OrderResponse;
+import co.kr.order.model.dto.request.OrderCartRequest;
+import co.kr.order.model.dto.request.OrderDirectRequest;
+import co.kr.order.model.dto.request.PaymentRequest;
+import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.response.OrderItemResponse;
 import co.kr.order.model.dto.response.OrderListResponse;
+import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
@@ -34,8 +36,9 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderJpaRepository orderRepository;
     private final OrderItemJpaRepository orderItemRepository;
-
     private final CartJpaRepository cartRepository;
+
+    private final PaymentServiceImpl paymentService;
 
     private final ProductClient productClient;
     private final UserClient userClient;
@@ -50,28 +53,31 @@ public class OrderServiceImpl implements OrderService {
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo product;
         try {
-            product = productClient.getProduct(request.orderRequest().productIdx(), request.orderRequest().optionIdx());
+            product = productClient.getProduct(request.orderItem().productIdx(), request.orderItem().optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 재고 없으면 Error 던짐
-        if(product.stock() < request.orderRequest().quantity()) {
+        if(product.stock() < request.orderItem().quantity()) {
             throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
         }
 
         // 가격*수량 해서 총 가격 측정
-        BigDecimal amount = product.price().multiply(BigDecimal.valueOf(request.orderRequest().quantity()));
+        BigDecimal amount = product.price().multiply(BigDecimal.valueOf(request.orderItem().quantity()));
 
         // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인
         UserData userData = userClient.getUserData(userIdx, request.userData());
+
+        // orderCode 생성
+        String orderCode = UUID.randomUUID().toString();
 
         // Order Table 세팅
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
                 .addressIdx(userData.addressInfo().addressIdx())
                 .cardIdx(userData.cardInfo().cardIdx())
-                .orderCode(UUID.randomUUID().toString())
+                .orderCode(orderCode)
                 .status(OrderStatus.CREATED.name())
                 .itemsAmount(amount)
                 .totalAmount(amount) // 일단 할인/배송비 고려 x
@@ -84,23 +90,44 @@ public class OrderServiceImpl implements OrderService {
         OrderItemEntity itemEntity = OrderItemEntity.builder()
                 .order(orderEntity)
                 .productIdx(product.productIdx())
-                .optionIdx(request.orderRequest().optionIdx())
+                .optionIdx(request.orderItem().optionIdx())
                 .productName(product.productName())
                 .optionName(product.optionContent())
                 .price(product.price())
-                .quantity(request.orderRequest().quantity())
+                .quantity(request.orderItem().quantity())
                 .del(false)
                 .build();
 
         orderItemRepository.save(itemEntity);
 
-        // 재고 관리를 위한 상품에게 몇개 샀는지 정보 전송
-        DeductStock stockRequest = new DeductStock(
-                request.orderRequest().productIdx(),
-                request.orderRequest().optionIdx(),
-                request.orderRequest().quantity()
+        // 실제 결제 진행
+        paymentService.pay(
+                userIdx,
+                new PaymentRequest(
+                        orderCode,
+                        request.paymentType()
+                )
         );
-        productClient.checkStock(stockRequest);
+
+        // Product-Service에 구매한 수량만큼 재고 감소 요청
+        DeductStock stockRequest = new DeductStock(
+                request.orderItem().productIdx(),
+                request.orderItem().optionIdx(),
+                request.orderItem().quantity()
+        );
+
+        try {
+            // Product-Service에 구매한 수량만큼 재고 감소 요청
+            productClient.deductStock(stockRequest);
+
+        } catch (Exception e) {
+            // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
+            // 반드시 결제를 취소(환불) 해줘야 함
+            paymentService.refund(userIdx, orderCode);
+
+            // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
+            throw e;
+        }
 
         // 상품을 상세 내용
         OrderItemResponse itemInfo = new OrderItemResponse(
@@ -111,7 +138,7 @@ public class OrderServiceImpl implements OrderService {
                         product.optionContent(),
                         product.price()
                 ),
-                request.orderRequest().quantity(),
+                request.orderItem().quantity(),
                 amount
         );
 
@@ -126,19 +153,19 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderListResponse cartOrder(Long userIdx, UserData request) {
+    public OrderListResponse cartOrder(Long userIdx, OrderCartRequest request) {
 
-        UserData userData = userClient.getUserData(userIdx, request);
+        UserData userData = userClient.getUserData(userIdx, request.userData());
         validateOrderData(userData);
 
-        // 주문(Order) 엔티티 생성 및 저장
+        String orderCode = UUID.randomUUID().toString();
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
                 .addressIdx(userData.addressInfo().addressIdx())
                 .cardIdx(userData.cardInfo().cardIdx())
-                .orderCode(UUID.randomUUID().toString())
+                .orderCode(orderCode)
                 .status(OrderStatus.CREATED.name())
                 .itemsAmount(itemsAmount)
                 .totalAmount(itemsAmount) // 추후 배송비 등이 있다면 로직 추가 필요
@@ -238,9 +265,6 @@ public class OrderServiceImpl implements OrderService {
             ));
         }
 
-        // Product-Service에 구매한 수량만큼 재고 감소 요청
-        productClient.checkStocks(stockRequests);
-
         // 주문 상품 일괄 저장 (insert 한번)
         orderItemRepository.saveAll(orderItemsToSave);
 
@@ -249,8 +273,29 @@ public class OrderServiceImpl implements OrderService {
         // orderEntity.setTotalAmount(...); // 일단 totalAmount는 안하니까
         orderRepository.save(orderEntity);
 
-        // 장바구니 비우기
-        cartRepository.deleteByUserIdx(userIdx);
+        // 실제 결제 진행
+        paymentService.pay(
+                userIdx,
+                new PaymentRequest(
+                        orderCode,
+                        request.paymentType()
+                )
+        );
+
+        try {
+            // Product-Service에 구매한 수량만큼 재고 감소 요청
+            productClient.deductStocks(stockRequests);
+            // 주문완료 후 카트내역 삭제
+            cartRepository.deleteByUserIdx(userIdx);
+
+        } catch (Exception e) {
+            // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
+            // 반드시 결제를 취소(환불) 해줘야 함
+            paymentService.refund(userIdx, orderCode);
+
+            // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
+            throw e;
+        }
 
         return new OrderListResponse(
                 responseList,
@@ -259,6 +304,18 @@ public class OrderServiceImpl implements OrderService {
 //                shippingFee,
 //                totalAmount
         );
+    }
+
+    @Transactional
+    @Override
+    public String refund(Long userIdx, String orderCode) {
+
+        OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+        paymentService.refund(userIdx, orderCode);
+        orderEntity.setStatus(OrderStatus.REFUNDED.name());
+
+        return "환불처리 되었습니다.";
     }
 
     @Transactional(readOnly = true)

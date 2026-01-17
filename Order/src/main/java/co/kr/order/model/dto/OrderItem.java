@@ -1,4 +1,4 @@
-package co.kr.order.model.dto.request;
+package co.kr.order.model.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
  * @param optionIdx
  * @param quantity
  */
-public record OrderRequest(
+public record OrderItem(
         @NotNull(message = "상품 ID는 필수입니다.")
         Long productIdx,
 

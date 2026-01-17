@@ -9,6 +9,7 @@ import co.kr.order.model.dto.request.PaymentTossConfirmRequest;
 import co.kr.order.model.dto.response.PaymentResponse;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.PaymentEntity;
+import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
 import co.kr.order.mapper.PaymentMapper;
@@ -142,7 +143,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
         paymentRepository.save(refundPayment);
 
-        updateOrderStatus(order, "REFUNDED");
+        updateOrderStatus(order, OrderStatus.REFUNDED);
 
         return PaymentMapper.toResponse(refundPayment);
     }
@@ -181,7 +182,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentEntity saved = paymentRepository.save(payment);
         if (order != null) {
-            updateOrderStatus(order, "PAID");
+            updateOrderStatus(order, OrderStatus.PAID);
         }
 
         return PaymentMapper.toResponse(saved);
@@ -218,7 +219,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-        updateOrderStatus(order, "PAID");
+        updateOrderStatus(order, OrderStatus.PAID);
 
         return PaymentMapper.toResponse(saved);
     }
@@ -252,7 +253,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentEntity saved = paymentRepository.save(payment);
         if (order != null) {
-            updateOrderStatus(order, "PAID");
+            updateOrderStatus(order, OrderStatus.PAID);
         }
 
         return PaymentMapper.toResponse(saved);
@@ -318,7 +319,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private void updateOrderStatus(OrderEntity order, String status) {
+    private void updateOrderStatus(OrderEntity order, OrderStatus status) {
         order.setStatus(status);
         orderRepository.save(order);
     }

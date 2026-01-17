@@ -17,7 +17,7 @@ public record OrderDirectRequest(
         OrderItem orderItem,
 
         @Valid
-        @NotNull(message = "사용자 정보(주소/카드)는 필수입니다.")
+        @NotNull(message = "사용자 정보(주소)는 필수입니다.")
         UserData userData,
 
         @Valid

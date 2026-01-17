@@ -7,6 +7,6 @@ public record ItemInfo (
         Long optionIdx,
         String productName,
 //        String imageUrl,
-        String optionContent,
+        String optionName,
         BigDecimal price
 ) {}

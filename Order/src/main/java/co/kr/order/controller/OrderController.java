@@ -3,7 +3,6 @@ package co.kr.order.controller;
 import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.response.BaseResponse;
-import co.kr.order.model.dto.response.OrderListResponse;
 import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class OrderController {
      * @param request : productIdx, optionIdx, quantity
      */
     @PostMapping("/cart")
-    public ResponseEntity<BaseResponse<OrderListResponse>> cartOrder (
+    public ResponseEntity<BaseResponse<OrderResponse>> cartOrder (
             HttpServletRequest servletRequest,
             @Valid @RequestBody OrderCartRequest request
     ) {
@@ -52,8 +53,8 @@ public class OrderController {
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderListResponse info = orderService.cartOrder(userIdx, request);
-        BaseResponse<OrderListResponse> body = new BaseResponse<>("ok", info);
+        OrderResponse info = orderService.cartOrder(userIdx, request);
+        BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
@@ -74,16 +75,16 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<OrderListResponse>> getOrderList (
+    public ResponseEntity<BaseResponse<List<OrderResponse>>> getOrderList (
             HttpServletRequest servletRequest
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderListResponse info = orderService.findOrderList(userIdx);
+        List<OrderResponse> info = orderService.findOrderList(userIdx);
 
-        BaseResponse<OrderListResponse> body = new BaseResponse<>("ok", info);
+        BaseResponse<List<OrderResponse>> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }
 

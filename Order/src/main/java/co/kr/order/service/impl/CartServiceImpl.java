@@ -176,7 +176,7 @@ public class CartServiceImpl implements CartService {
                             product.productIdx(),
                             product.optionIdx(),
                             product.productName(),
-                            product.optionContent(),
+                            product.optionName(),
                             product.price()
                     ),
                     quantity,
@@ -220,7 +220,7 @@ public class CartServiceImpl implements CartService {
                         product.productIdx(),
                         product.optionIdx(),
                         product.productName(),
-                        product.optionContent(),
+                        product.optionName(),
                         product.price()
                 ),
                 quantity,

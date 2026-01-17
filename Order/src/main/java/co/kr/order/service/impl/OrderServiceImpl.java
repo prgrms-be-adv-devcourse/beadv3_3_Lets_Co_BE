@@ -12,12 +12,12 @@ import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.request.PaymentRequest;
 import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.dto.response.OrderItemResponse;
-import co.kr.order.model.dto.response.OrderListResponse;
 import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.vo.OrderStatus;
+import co.kr.order.model.vo.PaymentType;
 import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
@@ -47,8 +47,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse directOrder(Long userIdx, OrderDirectRequest request) {
 
-        // 주소/카드 데이터 있는지 확인
-        validateOrderData(request.userData());
+        // 주소 데이터 있는지 확인
+        if (request.userData().addressInfo() == null) {
+            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
+        }
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo product;
@@ -78,7 +80,7 @@ public class OrderServiceImpl implements OrderService {
                 .addressIdx(userData.addressInfo().addressIdx())
                 .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(orderCode)
-                .status(OrderStatus.CREATED.name())
+                .status(OrderStatus.CREATED)
                 .itemsAmount(amount)
                 .totalAmount(amount) // 일단 할인/배송비 고려 x
                 .del(false)
@@ -92,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
                 .productIdx(product.productIdx())
                 .optionIdx(request.orderItem().optionIdx())
                 .productName(product.productName())
-                .optionName(product.optionContent())
+                .optionName(product.optionName())
                 .price(product.price())
                 .quantity(request.orderItem().quantity())
                 .del(false)
@@ -100,14 +102,15 @@ public class OrderServiceImpl implements OrderService {
 
         orderItemRepository.save(itemEntity);
 
-        // 실제 결제 진행
-        paymentService.pay(
-                userIdx,
-                new PaymentRequest(
-                        orderCode,
-                        request.paymentType()
-                )
-        );
+        if (request.paymentType() != PaymentType.TOSS_PAY) {
+            paymentService.pay(
+                    userIdx,
+                    new PaymentRequest(
+                            orderCode,
+                            request.paymentType()
+                    )
+            );
+        }
 
         // Product-Service에 구매한 수량만큼 재고 감소 요청
         DeductStock stockRequest = new DeductStock(
@@ -123,7 +126,12 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
             // 반드시 결제를 취소(환불) 해줘야 함
-            paymentService.refund(userIdx, orderCode);
+
+            // TOSS_PAY는 아직 결제 전이므로 주문 상태만 취소로 변경 (혹은 삭제)
+            if (request.paymentType() != PaymentType.TOSS_PAY) {
+                // 이미 돈이 나간 경우에만 환불 처리
+                paymentService.refund(userIdx, orderCode);
+            }
 
             // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
             throw e;
@@ -135,28 +143,28 @@ public class OrderServiceImpl implements OrderService {
                         product.productIdx(),
                         product.optionIdx(),
                         product.productName(),
-                        product.optionContent(),
+                        product.optionName(),
                         product.price()
                 ),
                 request.orderItem().quantity(),
                 amount
         );
 
-        // 응답 dto 생성
         return new OrderResponse(
-                itemInfo
-//                salePrice,
-//                shippingFee,
-//                totalAmount
+                List.of(itemInfo),
+                amount
         );
     }
 
     @Transactional
     @Override
-    public OrderListResponse cartOrder(Long userIdx, OrderCartRequest request) {
+    public OrderResponse cartOrder(Long userIdx, OrderCartRequest request) {
 
         UserData userData = userClient.getUserData(userIdx, request.userData());
-        validateOrderData(userData);
+
+        if (request.userData().addressInfo() == null) {
+            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
+        }
 
         String orderCode = UUID.randomUUID().toString();
         BigDecimal itemsAmount = BigDecimal.ZERO;
@@ -166,7 +174,7 @@ public class OrderServiceImpl implements OrderService {
                 .addressIdx(userData.addressInfo().addressIdx())
                 .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(orderCode)
-                .status(OrderStatus.CREATED.name())
+                .status(OrderStatus.CREATED)
                 .itemsAmount(itemsAmount)
                 .totalAmount(itemsAmount) // 추후 배송비 등이 있다면 로직 추가 필요
                 .del(false)
@@ -235,7 +243,7 @@ public class OrderServiceImpl implements OrderService {
                     .productIdx(cartEntity.getProductIdx())
                     .optionIdx(cartEntity.getOptionIdx())
                     .productName(product.productName())
-                    .optionName(product.optionContent())
+                    .optionName(product.optionName())
                     .price(product.price())
                     .quantity(cartEntity.getQuantity())
                     .del(false)
@@ -249,7 +257,7 @@ public class OrderServiceImpl implements OrderService {
                                 product.productIdx(),
                                 product.optionIdx(),
                                 product.productName(),
-                                product.optionContent(),
+                                product.optionName(),
                                 product.price()
                         ),
                         cartEntity.getQuantity(),
@@ -273,14 +281,16 @@ public class OrderServiceImpl implements OrderService {
         // orderEntity.setTotalAmount(...); // 일단 totalAmount는 안하니까
         orderRepository.save(orderEntity);
 
-        // 실제 결제 진행
-        paymentService.pay(
-                userIdx,
-                new PaymentRequest(
-                        orderCode,
-                        request.paymentType()
-                )
-        );
+        // TOSS_PAY가 아닐 때만 즉시 결제 시도
+        if (request.paymentType() != PaymentType.TOSS_PAY) {
+            paymentService.pay(
+                    userIdx,
+                    new PaymentRequest(
+                            orderCode,
+                            request.paymentType()
+                    )
+            );
+        }
 
         try {
             // Product-Service에 구매한 수량만큼 재고 감소 요청
@@ -291,13 +301,18 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
             // 반드시 결제를 취소(환불) 해줘야 함
-            paymentService.refund(userIdx, orderCode);
+
+            // TOSS_PAY는 결제 전이므로 별도 환불 로직 불필요 (트랜잭션 롤백)
+            if (request.paymentType() != PaymentType.TOSS_PAY) {
+                // 이미 돈이 나간 경우(DEPOSIT 등)에만 환불 처리
+                paymentService.refund(userIdx, orderCode);
+            }
 
             // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
             throw e;
         }
 
-        return new OrderListResponse(
+        return new OrderResponse(
                 responseList,
                 itemsAmount
 //                salePrice,
@@ -313,94 +328,84 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
 
         paymentService.refund(userIdx, orderCode);
-        orderEntity.setStatus(OrderStatus.REFUNDED.name());
+        orderEntity.setStatus(OrderStatus.REFUNDED);
 
-        return "환불처리 되었습니다.";
+        return "환불처리가 완료 되었습니다.";
     }
 
     @Transactional(readOnly = true)
     @Override
-    public OrderListResponse findOrderList(Long userIdx) {
+    public List<OrderResponse> findOrderList(Long userIdx) {
+
+        List<OrderResponse> responseOrderList = new ArrayList<>();
 
         List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
+        for(OrderEntity orderEntity : orderEntities) {
 
-        if (orderEntities.isEmpty()) {
-            return new OrderListResponse(Collections.emptyList(), BigDecimal.ZERO);
-        }
+            List<OrderItemResponse> responseItemList = new ArrayList<>();
 
-        List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrderIn(orderEntities);
+            BigDecimal itemsAmount = BigDecimal.ZERO;
+            List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
+            for(OrderItemEntity itemEntity : itemEntities) {
 
-        List<OrderItemResponse> itemList = new ArrayList<>();
-        for (OrderItemEntity item : itemEntities) {
-            BigDecimal itemTotalAmount = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-
-            itemList.add(new OrderItemResponse(
-                    new ItemInfo(
-                            item.getProductIdx(),
-                            item.getOptionIdx(),
-                            item.getProductName(),
-                            item.getOptionName(),
-                            item.getPrice()
-                    ),
-                    item.getQuantity(),
-                    itemTotalAmount
-            ));
-        }
-
-        BigDecimal totalItemsAmount = BigDecimal.ZERO;
-
-        for (OrderEntity order : orderEntities) {
-            if (order.getItemsAmount() != null) {
-                totalItemsAmount = totalItemsAmount.add(order.getItemsAmount());
+                BigDecimal amount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
+                itemsAmount = itemsAmount.add(amount);
+                responseItemList.add(
+                        new OrderItemResponse(
+                                new ItemInfo(
+                                        itemEntity.getProductIdx(),
+                                        itemEntity.getOptionIdx(),
+                                        itemEntity.getProductName(),
+                                        itemEntity.getOptionName(),
+                                        itemEntity.getPrice()
+                                ),
+                                itemEntity.getQuantity(),
+                                amount
+                        )
+                );
             }
+
+            responseOrderList.add(
+                    new OrderResponse(
+                            responseItemList,
+                            itemsAmount
+                    )
+            );
         }
 
-        return new OrderListResponse(
-                itemList,
-                totalItemsAmount);
+        return responseOrderList;
     }
-
 
     @Transactional(readOnly = true)
     @Override
     public OrderResponse findOrder(Long userIdx, String orderCode) {
 
+        List<OrderItemResponse> responseItemList = new ArrayList<>();
+        BigDecimal itemsAmount = BigDecimal.ZERO;
+
         OrderEntity orderEntity = orderRepository.findByUserIdxAndOrderCode(userIdx, orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
 
-        if (itemEntities.isEmpty()) {
-            throw new OrderItemNotFoundException(ErrorCode.ORDER_ITEM_NOT_FOUND);
+        for(OrderItemEntity entity : itemEntities) {
+
+            BigDecimal amount = entity.getPrice().multiply(BigDecimal.valueOf(entity.getQuantity()));
+            itemsAmount = itemsAmount.add(amount);
+
+            responseItemList.add(
+                    new OrderItemResponse(
+                            new ItemInfo(
+                                    entity.getProductIdx(),
+                                    entity.getOptionIdx(),
+                                    entity.getProductName(),
+                                    entity.getOptionName(),
+                                    entity.getPrice()
+                            ),
+                            entity.getQuantity(),
+                            amount
+                    )
+            );
         }
 
-        // 단일 Item만 받으므로 첫 번째 상품 가져옴
-        OrderItemEntity itemEntity = itemEntities.get(0);
-        BigDecimal itemTotalAmount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
-
-        return new OrderResponse(
-                new OrderItemResponse(
-                        new ItemInfo(
-                                itemEntity.getProductIdx(),
-                                itemEntity.getOptionIdx(),
-                                itemEntity.getProductName(),
-                                itemEntity.getOptionName(),
-                                itemEntity.getPrice()
-                        ),
-                        itemEntity.getQuantity(),
-                        itemTotalAmount
-                )
-        );
-    }
-
-    // 주소/카드 정보 비어있는지 확인
-    private void validateOrderData(UserData userData) {
-        if (userData.addressInfo() == null && userData.cardInfo() == null) {
-            throw new NoInputOrderDataException(ErrorCode.NO_INPUT_ORDER_DATA);
-        }
-        else if (userData.addressInfo() == null) {
-            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
-        }
-        else if (userData.cardInfo() == null) {
-            throw new NoInputCardDataException(ErrorCode.NO_INPUT_CARD_DATA);
-        }
+        return new OrderResponse(responseItemList, itemsAmount);
     }
 }

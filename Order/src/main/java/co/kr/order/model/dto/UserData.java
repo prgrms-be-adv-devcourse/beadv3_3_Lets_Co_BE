@@ -14,7 +14,5 @@ public record UserData(
         @NotNull(message = "주소 정보는 필수입니다.")
         AddressInfo addressInfo,
 
-        @Valid
-        @NotNull(message = "카드 정보는 필수입니다.")
         CardInfo cardInfo
 ) {}

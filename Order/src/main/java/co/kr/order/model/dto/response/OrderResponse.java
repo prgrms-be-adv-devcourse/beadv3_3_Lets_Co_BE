@@ -1,12 +1,13 @@
 package co.kr.order.model.dto.response;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 /*
- * @param item : 주문 상품 정보
- * 직접 주문 (단일 상품 주문) 응답 dto
+ * @param itemList : 상품 리스트 정보 (OrderItemResponse)
+ * @param itemsAmount : 상품 리스트 총 가격 (단일상품 * 개수) * cart에 담긴 상품 개수
  */
 public record OrderResponse(
-        OrderItemResponse item
-//        BigDecimal discountAmount,
-//        BigDecimal shippingFee,
-//        BigDecimal totalAmount
+        List<OrderItemResponse> itemList,
+        BigDecimal itemsAmount
 ) {}

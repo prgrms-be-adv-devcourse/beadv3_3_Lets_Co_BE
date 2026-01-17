@@ -13,6 +13,8 @@ public record OrderItemResponse(
         ItemInfo product,
         Integer quantity,
         BigDecimal amount
+//        BigDecimal discountAmount,
+//        BigDecimal shippingFee
 ) {}
 
 

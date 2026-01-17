@@ -53,15 +53,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(NoInputOrderDataException.class)
-    public ResponseEntity<BaseResponse<String>> cartNotFoundException(NoInputOrderDataException e) {
-        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
     @ExceptionHandler(NoInputAddressDataException.class)
-    public ResponseEntity<BaseResponse<String>> cartNotFoundException(NoInputAddressDataException e) {
+    public ResponseEntity<BaseResponse<String>> noInputAddressDataException(NoInputAddressDataException e) {
         BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -69,13 +62,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<BaseResponse<String>> productNotFoundException(ProductNotFoundException e) {
-        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(NoInputCardDataException.class)
-    public ResponseEntity<BaseResponse<String>> cartNotFoundException(NoInputCardDataException e) {
         BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

@@ -92,20 +92,20 @@ class CartControllerTest {
                                 .header("X-USERS-IDX", "1")
                 )
                 .andDo(print());
-//
+
         // then:
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(handler().handlerType(CartController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.cartItemList[0].product.productName").value("테스트 상품1"))
-                .andExpect(jsonPath("$.data.cartItemList[0].product.optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.cartItemList[0].product.optionName").value("옵션A"))
                 .andExpect(jsonPath("$.data.cartItemList[0].product.price").value("10000.0"))
                 .andExpect(jsonPath("$.data.cartItemList[0].quantity").value(2))
                 .andExpect(jsonPath("$.data.cartItemList[0].amount").value("20000.0"))
 
                 .andExpect(jsonPath("$.data.cartItemList[1].product.productName").value("테스트 상품2"))
-                .andExpect(jsonPath("$.data.cartItemList[1].product.optionContent").value("옵션B"))
+                .andExpect(jsonPath("$.data.cartItemList[1].product.optionName").value("옵션B"))
                 .andExpect(jsonPath("$.data.cartItemList[1].product.price").value("12000.0"))
                 .andExpect(jsonPath("$.data.cartItemList[1].quantity").value(3))
                 .andExpect(jsonPath("$.data.cartItemList[1].amount").value("36000.0"));

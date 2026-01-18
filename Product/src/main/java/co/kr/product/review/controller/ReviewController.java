@@ -5,6 +5,7 @@ import co.kr.product.review.dto.response.CommonResponse;
 import co.kr.product.review.dto.response.ReviewListResponse;
 import co.kr.product.review.dto.response.ReviewResponse;
 import co.kr.product.review.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class ReviewController {
     // 리뷰 작성 (회원)
     @PostMapping("/products/{productsIdx}/reviews")
     public ReviewResponse createReview(@PathVariable Long productsIdx,
-                                       @RequestBody ReviewUpsertRequest req,
+                                       @RequestBody @Valid ReviewUpsertRequest req,
                                        @RequestHeader("X-USERS-IDX") Long usersIdx) {
         return reviewService.createReview(productsIdx, req, usersIdx);
     }
@@ -34,7 +35,7 @@ public class ReviewController {
     // 리뷰 수정 (회원 + 본인)
     @PatchMapping("/reviews/{reviewIdx}")
     public ReviewResponse updateReview(@PathVariable Long reviewIdx,
-                                       @RequestBody ReviewUpsertRequest req,
+                                       @RequestBody @Valid ReviewUpsertRequest req,
                                        @RequestHeader("X-USERS-IDX") Long usersIdx) {
         return reviewService.updateReview(reviewIdx, req, usersIdx);
     }

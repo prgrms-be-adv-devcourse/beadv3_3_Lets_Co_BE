@@ -6,6 +6,7 @@ import co.kr.product.product.dto.response.ProductDetailResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.dto.response.ResultResponse;
 import co.kr.product.product.service.ProductManagerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +32,7 @@ public class SellerController {
     public ResponseEntity<ProductListResponse> getLists(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable,
-            @ModelAttribute ProductListRequest requests
+            @ModelAttribute @Valid ProductListRequest requests
             ){
         ProductListResponse result = productManagerService.getListsBySeller(usersIdx, pageable, requests);
 
@@ -48,7 +49,7 @@ public class SellerController {
     @PostMapping("/products")
     public  ResponseEntity<ProductDetailResponse> addProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-            @RequestBody UpsertProductRequest request
+            @RequestBody @Valid UpsertProductRequest request
 
             ){
         ProductDetailResponse result = productManagerService.addProduct(usersIdx,request);
@@ -83,7 +84,7 @@ public class SellerController {
     public ResponseEntity<ProductDetailResponse> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode,
-            @RequestBody UpsertProductRequest request
+            @RequestBody @Valid UpsertProductRequest request
     ){
         ProductDetailResponse result = productManagerService.updateProduct(usersIdx,productCode, request);
         return ResponseEntity.ok(result);

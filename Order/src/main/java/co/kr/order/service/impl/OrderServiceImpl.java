@@ -429,12 +429,12 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
 
         // 2. 상태 검증 (PAID 상태에서만 완료 가능)
-        if (!OrderStatus.PAID.name().equals(order.getStatus())) {
+        if (!order.getStatus().equals(OrderStatus.PAID)) {
             throw new IllegalStateException("결제 완료된 주문만 완료 처리할 수 있습니다. 현재 상태=" + order.getStatus());
         }
 
         // 3. 주문 상태 변경
-        order.setOrderStatus(OrderStatus.COMPLETED.name());
+        order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
         log.info("주문 완료 처리: orderId={}", orderId);
 

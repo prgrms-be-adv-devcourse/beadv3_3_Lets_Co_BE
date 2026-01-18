@@ -289,6 +289,7 @@ public class PaymentServiceImpl implements PaymentService {
             log.warn("토스 결제 승인 요청 실패", e);
         }
     }
+
     /**
      * 토스페이먼츠 결제 취소 API 호출
      * 전체 환불 처리이기 때문에 부분 환불을 위한 amount 파라미터는 없음

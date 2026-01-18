@@ -1,6 +1,9 @@
 package co.kr.order.service.impl;
 
 import co.kr.order.client.ProductClient;
+import co.kr.order.client.UserClient;
+import co.kr.order.model.dto.SellerInfo;
+import co.kr.order.model.dto.SettlementInfo;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.entity.PaymentEntity;
@@ -16,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -29,6 +30,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final OrderJpaRepository orderRepository;
     private final PaymentJpaRepository paymentRepository;
     private final ProductClient productClient;
+    private final UserClient userClient;
 
     /**
      * 정산 생성 (주문 완료 시 호출)
@@ -149,4 +151,100 @@ public class SettlementServiceImpl implements SettlementService {
                     entry.getKey(), entry.getValue(), paymentIdx);
         }
     }
+
+
+    /*
+     * 정산목록 조회를 Order-service 쪽에서 할지, Member-service에서 할지?
+     * member에서 sellerIdx 주면 Order에서 sellerIdx 맞는거 찾아 List나 단건을 주기만 함면 될거같음
+     */
+    @Transactional
+    @Override
+    public List<SettlementInfo> getSettlementList(Long sellerIdx) {
+
+        List<SettlementHistoryEntity> entities = settlementRepository.findAllSellerIdx(sellerIdx);
+
+        List<SettlementInfo> returnSettlementList = new ArrayList<>();
+
+        for(SettlementHistoryEntity entity : entities) {
+            SettlementInfo settlementInfo = new SettlementInfo(
+                    entity.getSettlementIdx(),
+                    entity.getSellerIdx(),
+                    entity.getPaymentIdx(),
+                    entity.getType().toString(),
+                    entity.getAmount(),
+                    entity.getCreatedAt()
+            );
+
+            returnSettlementList.add(settlementInfo);
+        }
+
+        return returnSettlementList;
+    }
+
+    @Transactional
+    @Override
+    public SettlementInfo getSettlement(Long sellerIdx, Long paymentIdx) {
+
+        SettlementHistoryEntity entity = settlementRepository.findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
+
+        return new SettlementInfo(
+                entity.getSettlementIdx(),
+                entity.getSellerIdx(),
+                entity.getPaymentIdx(),
+                entity.getType().toString(),
+                entity.getAmount(),
+                entity.getCreatedAt()
+        );
+    }
+
+    // 정산처리
+    @Transactional
+    public String processSettlement() {
+
+        List<SettlementHistoryEntity> entities = settlementRepository.findAll();
+        if(entities.isEmpty()) return null;
+
+        Map<Long, BigDecimal> sellerResponse = new HashMap<>();
+
+        for(SettlementHistoryEntity entity : entities) {
+
+            if (entity.getType() == SettlementType.REFUND || entity.getType() == SettlementType.COMPLETED) {
+                continue;
+            }
+
+            Long sellerIdx = entity.getSellerIdx();
+            BigDecimal amount = entity.getAmount();
+
+            entity.setType(SettlementType.COMPLETED);
+
+            sellerResponse.merge(sellerIdx, amount, BigDecimal::add);
+        }
+
+        Set<Long> sellerIds = sellerResponse.keySet();
+        if (!sellerResponse.isEmpty()) {
+
+            // 만약 정산금을 예치금으로 준다면
+            if(true) {
+                userClient.sendSettlementData(sellerResponse);
+                return "정산금 처리 완료(예치금)" ;
+            }
+
+            // 만약 정산금을 통장으로 준다면
+            if(true) {
+                SellerInfo sellerInfo = userClient.getSellerData(sellerIds);
+
+                Long sellerIdx = sellerInfo.sellerIdx();
+                String businessLicense = sellerInfo.businessLicense();
+                String bankBrand = sellerInfo.bankBrand();
+                String bankName = sellerInfo.bankName();
+                String bankToken = sellerInfo.bankToken();
+
+                // sellerInfo의 데이터 가지고 계좌에 돈을 주는 로직 (이건 구현 못함)
+                return "정산금 처리 완료(카드)";
+            }
+        }
+
+        return null;
+    }
+
 }

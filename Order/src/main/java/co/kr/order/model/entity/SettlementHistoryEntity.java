@@ -67,4 +67,8 @@ public class SettlementHistoryEntity {
         this.createdAt = LocalDateTime.now();
         this.del = false;
     }
+
+    public void setType(SettlementType type) {
+        this.type = type;
+    }
 }

@@ -5,17 +5,11 @@ import co.kr.order.client.UserClient;
 import co.kr.order.model.dto.*;
 import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.entity.CartEntity;
-import co.kr.order.model.entity.OrderEntity;
-import co.kr.order.model.entity.OrderItemEntity;
-import co.kr.order.model.entity.PaymentEntity;
+import co.kr.order.model.entity.*;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
-import co.kr.order.repository.CartJpaRepository;
-import co.kr.order.repository.OrderItemJpaRepository;
-import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.repository.PaymentJpaRepository;
+import co.kr.order.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import feign.Request;
@@ -37,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -64,6 +59,7 @@ class OrderControllerTest {
     @Autowired OrderItemJpaRepository orderItemRepository;
     @Autowired CartJpaRepository cartRepository;
     @Autowired PaymentJpaRepository paymentRepository;
+    @Autowired SettlementRepository settlementRepository;
 
     String setOrderCode = "TARGET-UUID-1234";
 
@@ -138,6 +134,7 @@ class OrderControllerTest {
      * - 장바구니 주문
      * - 주문 조회
      * - 주문 상세 조회
+     * - 주문 확정
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
      */
 
@@ -647,6 +644,70 @@ class OrderControllerTest {
     }
 
 
+    @Transactional
+    @Test
+    void 주문_확정_정상() throws Exception {
+
+        String orderCode = UUID.randomUUID().toString();
+
+        // Getter
+        OrderEntity order = OrderEntity.builder()
+                .userIdx(1L)
+                .addressIdx(1L)
+                .cardIdx(1L)
+                .orderCode(orderCode)
+                .status(OrderStatus.PAID)
+                .itemsAmount(new BigDecimal("20000.00"))
+                .del(false)
+                .build();
+        orderRepository.save(order);
+
+        OrderItemEntity item = OrderItemEntity.builder()
+                .order(order)
+                .productIdx(100L)
+                .optionIdx(10L)
+                .productName("테스트 상품")
+                .optionName("옵션C")
+                .price(new BigDecimal("10000.00"))
+                .quantity(2)
+                .del(false)
+                .build();
+        orderItemRepository.save(item);
+
+        PaymentEntity payment = PaymentEntity.builder()
+                .usersIdx(1L)
+                .ordersIdx(order.getId())
+                .amount(new BigDecimal("20000.00"))
+                .status(PaymentStatus.PAYMENT)
+                .type(PaymentType.CARD)
+                .build();
+        paymentRepository.save(payment);
+
+        List<Long> productIdList = List.of(100L);
+        given(productClient.getSellersByProductIds(productIdList)).willReturn(Map.of(100L, 1L));
+
+        // 영속성 컨텍스트의 변경 내용을 DB에 반영(flush), 캐시를 비우기(clear)
+        em.flush();
+        em.clear();
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/orders/%d/complete".formatted(order.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("X-USERS-IDX", "1")
+                ).andDo(print());
+
+        resultActions.andExpect(status().isOk())
+                .andExpect(handler().handlerType(OrderController.class))
+                .andExpect(jsonPath("$.resultCode").value("ok"));
+
+
+        SettlementHistoryEntity settlementEntity = settlementRepository.findByPaymentIdx(payment.getPaymentIdx());
+        Assertions.assertThat(settlementEntity.getSellerIdx()).isEqualTo(1L);
+        Assertions.assertThat(settlementEntity.getPaymentIdx()).isEqualTo(payment.getPaymentIdx());
+        Assertions.assertThat(settlementEntity.getAmount()).isEqualByComparingTo("20000.00");
+    }
 
 
     /**

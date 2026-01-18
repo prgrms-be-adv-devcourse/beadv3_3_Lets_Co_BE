@@ -200,7 +200,8 @@ public class CartServiceImpl implements CartService {
     public CartItemResponse getCartItem(Long userIdx, ProductRequest request) {
 
         // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
-        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx()).orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
+        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx())
+                .orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo product;

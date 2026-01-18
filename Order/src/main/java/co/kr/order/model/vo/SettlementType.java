@@ -7,5 +7,6 @@ package co.kr.order.model.vo;
  */
 public enum SettlementType {
     SALE,
-    REFUND
+    REFUND,
+    COMPLETED
 }

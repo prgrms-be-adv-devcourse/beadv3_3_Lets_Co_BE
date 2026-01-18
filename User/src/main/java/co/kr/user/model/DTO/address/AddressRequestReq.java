@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class AddressRequestReq {
-
     private String addressCode;
     private int defaultAddress;
     private String recipient;

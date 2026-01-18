@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface UsersLoginRepository extends JpaRepository<UsersLogin, Long> {
-    // 필요 시 토큰으로 조회하는 메서드 추가
-    Optional<UsersLogin> findByToken(String token);
+    Optional<UsersLogin> findFirstByTokenOrderByLoginIdxDesc(String token);
+
+    UsersLogin findFirstByUsersIdxOrderByLoginIdxDesc(Long usersIdx);
 }

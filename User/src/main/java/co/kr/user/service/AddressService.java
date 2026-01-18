@@ -6,21 +6,21 @@ import co.kr.user.model.DTO.address.AddressListDTO;
 import co.kr.user.model.DTO.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
+import co.kr.user.util.AESUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AddressService implements AddressServiceImpl{
-
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
+
+    private final AESUtil aesUtil;
 
     @Override
     public List<AddressListDTO> addressList(Long userIdx) {
@@ -34,21 +34,24 @@ public class AddressService implements AddressServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        UsersAddress usersAddress = userAddressRepository.findById(users.getUsersIdx())
-                .orElseThrow(() -> new IllegalArgumentException("주소를 추가해 주세요"));
+        List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(users.getUsersIdx(), 0);
 
-        // 1. Create the DTO
-        AddressListDTO addressListDTO = new AddressListDTO();
+        if (usersAddressList.isEmpty()) {
+            throw new IllegalArgumentException("주소를 추가해 주세요");
+        }
 
-        // 2. Map fields from Entity (UsersAddress) to DTO (AddressListDTO)
-        addressListDTO.setAddressCode(usersAddress.getAddressCode());
-        addressListDTO.setDefaultAddress(usersAddress.getDefaultAddress());
-        addressListDTO.setRecipient(usersAddress.getRecipient());
-        addressListDTO.setAddress(usersAddress.getAddress());
-        addressListDTO.setAddressDetail(usersAddress.getAddressDetail());
-        addressListDTO.setPhoneNumber(usersAddress.getPhoneNumber());
-
-        return List.of(addressListDTO);
+        return usersAddressList.stream()
+                .map(address -> {
+                    AddressListDTO dto = new AddressListDTO();
+                    dto.setAddressCode(address.getAddressCode());
+                    dto.setDefaultAddress(address.getDefaultAddress());
+                    dto.setRecipient(aesUtil.decrypt(address.getRecipient()));
+                    dto.setAddress(aesUtil.decrypt(address.getAddress()));
+                    dto.setAddressDetail(aesUtil.decrypt(address.getAddressDetail()));
+                    dto.setPhoneNumber(aesUtil.decrypt(address.getPhoneNumber()));
+                    return dto;
+                })
+                .toList();
     }
 
     @Override
@@ -64,17 +67,17 @@ public class AddressService implements AddressServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        // Entity 생성 (Builder 사용)
         UsersAddress usersAddress = UsersAddress.builder()
                         .usersIdx(users.getUsersIdx())
                         .addressCode(UUID.randomUUID().toString())
                         .defaultAddress(addressRequestReq.getDefaultAddress())
-                        .recipient(addressRequestReq.getRecipient())
-                        .address(addressRequestReq.getAddress())
-                        .addressDetail(addressRequestReq.getAddressDetail())
-                        .phoneNumber(addressRequestReq.getPhoneNumber())
+                        .recipient(aesUtil.encrypt(addressRequestReq.getRecipient()))
+                        .address(aesUtil.encrypt(addressRequestReq.getAddress()))
+                        .addressDetail(aesUtil.encrypt(addressRequestReq.getAddressDetail()))
+                        .phoneNumber(aesUtil.encrypt(addressRequestReq.getPhoneNumber()))
                         .build();
         userAddressRepository.save(usersAddress);
+
         return "주소가 성공적으로 추가되었습니다.";
     }
 
@@ -91,11 +94,9 @@ public class AddressService implements AddressServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        // UUID로 주소 찾기
-        UsersAddress usersAddress = userAddressRepository.findByaddressCode(addressRequestReq.getAddressCode())
+        UsersAddress usersAddress = userAddressRepository.findByAddressCode(addressRequestReq.getAddressCode())
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
-        // 권한 체크 (내 주소가 맞는지)
         if (!usersAddress.getUsersIdx().equals(userIdx)) {
             throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
         }
@@ -107,18 +108,31 @@ public class AddressService implements AddressServiceImpl{
         } else {
             dto.setDefaultAddress(0);
         }
-        if (addressRequestReq.getRecipient().equals(usersAddress.getRecipient())) {
-            dto.setRecipient(usersAddress.getRecipient());
+        if (addressRequestReq.getRecipient() == null || addressRequestReq.getRecipient().isEmpty()) {
+            dto.setRecipient(aesUtil.encrypt(usersAddress.getRecipient()));
         }
-        if (addressRequestReq.getAddress().equals(usersAddress.getAddress())) {
-            dto.setAddress(usersAddress.getAddress());
+        else {
+            dto.setRecipient(aesUtil.encrypt(addressRequestReq.getRecipient()));
         }
-        if (addressRequestReq.getAddressDetail().equals(usersAddress.getAddressDetail())) {
-            dto.setAddressDetail(usersAddress.getAddressDetail());
+        if (addressRequestReq.getAddress() == null || addressRequestReq.getAddress().isEmpty()) {
+            dto.setAddress(aesUtil.encrypt(usersAddress.getAddress()));
         }
-        if (addressRequestReq.getPhoneNumber().equals(usersAddress.getPhoneNumber())) {
-            dto.setPhoneNumber(usersAddress.getPhoneNumber());
+        else {
+            dto.setAddress(aesUtil.encrypt(addressRequestReq.getAddress()));
         }
+        if (addressRequestReq.getAddressDetail() == null || addressRequestReq.getAddressDetail().isEmpty()) {
+            dto.setAddressDetail(aesUtil.encrypt(usersAddress.getAddressDetail()));
+        }
+        else {
+            dto.setAddressDetail(aesUtil.encrypt(addressRequestReq.getAddressDetail()));
+        }
+        if (addressRequestReq.getPhoneNumber() == null || addressRequestReq.getPhoneNumber().isEmpty()) {
+            dto.setPhoneNumber(aesUtil.encrypt(usersAddress.getPhoneNumber()));
+        }
+        else {
+            dto.setPhoneNumber(aesUtil.encrypt(addressRequestReq.getPhoneNumber()));
+        }
+
 
         usersAddress.updateAddress(
                 dto.getDefaultAddress(),
@@ -144,11 +158,9 @@ public class AddressService implements AddressServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        // UUID로 주소 찾기
-        UsersAddress usersAddress = userAddressRepository.findByaddressCode(addressCode)
+        UsersAddress usersAddress = userAddressRepository.findByAddressCode(addressCode)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
-        // 권한 체크 (내 주소가 맞는지)
         if (!usersAddress.getUsersIdx().equals(userIdx)) {
             throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
         }

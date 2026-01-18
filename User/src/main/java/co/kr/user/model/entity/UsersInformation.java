@@ -16,7 +16,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @DynamicInsert
 @Table(name = "Users_Information")
 public class UsersInformation {
-
     @Id
     @Column(name = "Users_IDX")
     private Long usersIdx;
@@ -54,5 +53,4 @@ public class UsersInformation {
     public void lastPassword(String PW) {
         this.prePW = PW;
     }
-
 }

@@ -1,7 +1,6 @@
 package co.kr.user.model.entity;
 
 import co.kr.user.model.vo.UsersRole;
-import co.kr.user.model.vo.UsersVerificationsStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -23,7 +22,6 @@ import java.time.LocalDateTime;
 @DynamicInsert
 @Table(name = "Users")
 public class Users {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Users_IDX")
@@ -95,6 +93,31 @@ public class Users {
     public void setPW(String PW) {
         this.PW = PW;
         this.failedLoginAttempts = 0;
+    }
+
+    public void loginFail() {
+        this.failedLoginAttempts += 1;
+    }
+
+    public void lockFor15Minutes() {
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = LocalDateTime.now().plusMinutes(15);
+    }
+
+    public void loginSuccess() {
+        this.failedLoginAttempts = 0;
+    }
+
+    public void setRole(UsersRole role) {
+        this.role = role;
+    }
+
+    public void AdminLockUser(LocalDateTime lockedUntil) {
+        this.lockedUntil = lockedUntil;
+    }
+
+    public void AdminUserDel() {
+        this.del = 1;
     }
 
     public void del() {

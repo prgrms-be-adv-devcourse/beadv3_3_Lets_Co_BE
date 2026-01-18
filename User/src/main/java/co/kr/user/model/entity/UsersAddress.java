@@ -73,5 +73,4 @@ public class UsersAddress {
     public void del() {
         this.del = 1;
     }
-
 }

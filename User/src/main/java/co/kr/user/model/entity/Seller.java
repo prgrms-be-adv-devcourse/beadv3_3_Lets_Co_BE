@@ -17,23 +17,18 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @DynamicInsert
 @Table(name = "Seller")
 public class Seller {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Seller_IDX", nullable = false)
     private Long sellerIdx;
 
     @Column(name = "Business_License", nullable = false, length = 20)
     private String businessLicense;
 
-
     @Column(name = "Bank_Brand", nullable = false, length = 20)
     private String bankBrand;
 
-
     @Column(name = "Bank_Name", nullable = false, length = 200)
     private String bankName;
-
 
     @Column(name = "Bank_Token", nullable = false)
     private String bankToken;

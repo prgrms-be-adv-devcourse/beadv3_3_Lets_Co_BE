@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class SellerRegisterDTO {
-
     private String ID;
     private LocalDateTime certificationTime;
 }

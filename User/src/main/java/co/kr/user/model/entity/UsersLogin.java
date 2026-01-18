@@ -8,11 +8,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Users_Login")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "Users_Login")
 public class UsersLogin {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Login_IDX")
@@ -21,7 +20,6 @@ public class UsersLogin {
     @Column(name = "Users_IDX", nullable = false)
     private Long usersIdx;
 
-    // 주의: 토큰 길이가 255자를 넘을 경우 TEXT 등으로 변경하거나 해시값을 저장해야 함
     @Column(name = "Token", nullable = false, length = 255)
     private String token;
 
@@ -43,8 +41,8 @@ public class UsersLogin {
 
     public void logout() {
         this.lastUsedAt = LocalDateTime.now();
-        this.revokedAt = LocalDateTime.now(); // 현재 시간으로 만료 처리
-        this.revokeReason = "LOGOUT";         // 사유: LOGOUT
+        this.revokedAt = LocalDateTime.now();
+        this.revokeReason = "LOGOUT";
     }
 
     public void maturity() {
@@ -54,12 +52,16 @@ public class UsersLogin {
 
     public void updateToken(String token) {
         this.token = token;
-        this.lastUsedAt = null; // 새 토큰이므로 사용 기록 초기화
-        this.revokedAt = null;  // 재발급 시 만료 상태 초기화 (필요 시)
+        this.lastUsedAt = null;
+        this.revokedAt = null;
         this.revokeReason = null;
     }
 
-    // Users_Login 클래스 안에 추가하세요
+    public void lockToken(LocalDateTime revokedAt, String revokeReason) {
+        this.revokedAt = revokedAt;
+        this.revokeReason = revokeReason;
+    }
+
     public void updateLastUsedAt() {
         this.lastUsedAt = LocalDateTime.now();
     }

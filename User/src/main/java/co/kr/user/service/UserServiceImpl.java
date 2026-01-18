@@ -6,7 +6,6 @@ import co.kr.user.model.DTO.my.UserDeleteDTO;
 import co.kr.user.model.DTO.my.UserProfileDTO;
 
 public interface UserServiceImpl {
-
     UserDTO my(Long userIdx);
 
     UserProfileDTO myDetails(Long userIdx);

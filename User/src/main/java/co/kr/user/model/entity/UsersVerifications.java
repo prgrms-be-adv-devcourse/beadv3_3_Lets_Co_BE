@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 @DynamicInsert
 @Table(name = "Users_Verifications")
 public class UsersVerifications {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Verification_IDX")
@@ -66,5 +65,4 @@ public class UsersVerifications {
         this.status = UsersVerificationsStatus.VERIFIED;
         this.verifiedAt = LocalDateTime.now();
     }
-
 }

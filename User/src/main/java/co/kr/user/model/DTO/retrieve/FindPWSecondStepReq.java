@@ -10,7 +10,6 @@ import lombok.ToString;
 
 @Data
 public class FindPWSecondStepReq {
-
     @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     @JsonProperty("ID")
@@ -20,8 +19,7 @@ public class FindPWSecondStepReq {
     @JsonProperty("authCode")
     private String authCode;
 
-    // 변경할 새 비밀번호이므로 로그 노출 금지
-    @ToString.Exclude // [핵심]
+    @ToString.Exclude
     @NotBlank(message = "Password cannot be empty.")
     @Size(min = 8, max = 16, message = "Password must be between 8 and 16 characters.")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",
@@ -29,8 +27,7 @@ public class FindPWSecondStepReq {
     @JsonProperty("newPW")
     private String newPW;
 
-    // 비밀번호 확인 필드도 로그 노출 금지
-    @ToString.Exclude // [핵심]
+    @ToString.Exclude
     @NotBlank(message = "Password cannot be empty.")
     @Size(min = 8, max = 16, message = "Password must be between 8 and 16 characters.")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",

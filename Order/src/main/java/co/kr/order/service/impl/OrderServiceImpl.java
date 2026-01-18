@@ -20,14 +20,17 @@ import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.service.OrderService;
+import co.kr.order.service.SettlementService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -39,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final ProductClient productClient;
     private final UserClient userClient;
+    private final SettlementService settlementService;
 
     @Transactional
     @Override
@@ -252,5 +256,34 @@ public class OrderServiceImpl implements OrderService {
         else if (userData.cardIdx() == null) {
             throw new NoInputCardDataException(ErrorCode.NO_INPUT_CARD_DATA);
         }
+    }
+
+    /**
+     * 주문 완료 처리
+     * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
+     * - 주문 상태를 COMPLETED로 변경
+     * - 정산 생성
+     *
+     * @param orderId 주문 ID
+     */
+    @Transactional
+    @Override
+    public void completeOrder(Long orderId) {
+        // 1. 주문 조회
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
+
+        // 2. 상태 검증 (PAID 상태에서만 완료 가능)
+        if (!OrderStatus.PAID.name().equals(order.getStatus())) {
+            throw new IllegalStateException("결제 완료된 주문만 완료 처리할 수 있습니다. 현재 상태=" + order.getStatus());
+        }
+
+        // 3. 주문 상태 변경
+        order.setOrderStatus(OrderStatus.COMPLETED.name());
+        orderRepository.save(order);
+        log.info("주문 완료 처리: orderId={}", orderId);
+
+        // 4. 정산 생성
+        settlementService.createSettlement(orderId);
     }
 }

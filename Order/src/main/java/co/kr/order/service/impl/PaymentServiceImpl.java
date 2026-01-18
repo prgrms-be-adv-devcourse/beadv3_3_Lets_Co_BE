@@ -15,6 +15,7 @@ import co.kr.order.mapper.PaymentMapper;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.repository.PaymentJpaRepository;
 import co.kr.order.service.PaymentService;
+import co.kr.order.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentJpaRepository paymentRepository;
     private final OrderJpaRepository orderRepository;
     private final UserClient userClient;
+    private final SettlementService settlementService;
     private final ObjectMapper om;
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -143,6 +145,9 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(refundPayment);
 
         updateOrderStatus(order, "REFUNDED");
+
+        // 환불 정산 생성 (정산에서 차감 처리)
+        settlementService.createRefundSettlement(order.getId(), refundPayment.getPaymentIdx());
 
         return PaymentMapper.toResponse(refundPayment);
     }

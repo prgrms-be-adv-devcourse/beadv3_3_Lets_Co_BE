@@ -7,8 +7,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "Product")
 public interface ProductClient {
@@ -40,4 +42,12 @@ public interface ProductClient {
      */
     @PostMapping("/products/check-stocks")
     void checkStocks(@RequestBody List<CheckStockRequest> requests);
+
+    /*
+     * 정산용: 상품 ID 목록으로 판매자 ID 조회
+     * @param productIds 상품 ID 목록
+     * @return Map<상품ID, 판매자ID>
+     */
+    @GetMapping("/products/sellers")
+    Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds);
 }

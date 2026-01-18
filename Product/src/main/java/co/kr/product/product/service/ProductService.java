@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
 
@@ -112,6 +114,22 @@ public class ProductService {
                     true
             );
         }
+    }
+
+    /**
+     * 정산용: 상품 ID 목록으로 판매자 ID 조회
+     * - Order 서비스에서 정산 생성 시 호출
+     *
+     * @param productIds 상품 ID 목록
+     * @return Map<상품ID, 판매자ID>
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, Long> getSellersByProductIds(List<Long> productIds) {
+        return productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(
+                        ProductEntity::getProductsIdx,
+                        ProductEntity::getSellerIdx
+                ));
     }
 }
 

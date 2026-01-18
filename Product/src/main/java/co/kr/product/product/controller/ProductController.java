@@ -12,6 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/products")
@@ -59,6 +62,18 @@ public class ProductController {
             @PathVariable String productsCode){
 
         return productService.getCheckStock(productsCode);
+    }
+
+    /**
+     * 정산용: 상품 ID 목록으로 판매자 ID 조회
+     * - Order 서비스에서 정산 생성 시 내부 호출
+     *
+     * @param productIds 상품 ID 목록
+     * @return Map<상품ID, 판매자ID>
+     */
+    @GetMapping("/sellers")
+    public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
+        return productService.getSellersByProductIds(productIds);
     }
 
 }

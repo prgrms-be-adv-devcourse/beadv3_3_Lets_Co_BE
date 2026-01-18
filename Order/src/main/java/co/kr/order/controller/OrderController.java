@@ -102,4 +102,18 @@ public class OrderController {
         BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }
+
+    /**
+     * 주문 완료 처리 (배송 완료 후 호출)
+     * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
+     * - 주문 상태를 COMPLETED로 변경하고 정산 생성
+     *
+     * @param orderId 주문 ID
+     */
+    @PostMapping("/{orderId}/complete")
+    public ResponseEntity<BaseResponse<Void>> completeOrder(@PathVariable Long orderId) {
+        orderService.completeOrder(orderId);
+        BaseResponse<Void> body = new BaseResponse<>("ok", null);
+        return ResponseEntity.ok(body);
+    }
 }

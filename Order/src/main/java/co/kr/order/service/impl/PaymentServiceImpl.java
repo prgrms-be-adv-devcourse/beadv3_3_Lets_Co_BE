@@ -86,8 +86,8 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     @Transactional
-    public PaymentResponse refund(Long userIdx, PaymentRequest request) {
-        OrderEntity order = orderRepository.findByOrderCode(request.orderCode())
+    public PaymentResponse refund(Long userIdx, String orderCode) {
+        OrderEntity order = orderRepository.findByOrderCode(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
         if (!order.getUserIdx().equals(userIdx)) {

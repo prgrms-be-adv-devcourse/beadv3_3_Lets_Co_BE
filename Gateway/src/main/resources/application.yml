@@ -81,6 +81,13 @@ spring:
             - id: auth
               uri: lb://USER
               predicates:
+                - Path=/auth/role
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: auth
+              uri: lb://USER
+              predicates:
                 - Path=/auth/**
               # 필터 없음: 로그인, 회원가입 등은 인증 없이 접근 가능해야 함
 

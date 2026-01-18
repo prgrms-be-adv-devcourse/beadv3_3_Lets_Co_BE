@@ -52,8 +52,8 @@ class CartControllerTest {
         ProductInfo mockProduct1 = new ProductInfo(100L, 10L, "테스트 상품1", "옵션A", new BigDecimal("10000.00"), 10);
         ProductInfo mockProduct2 = new ProductInfo(101L, 11L, "테스트 상품2", "옵션B", new BigDecimal("12000.00"), 10);
 
-        given(productClient.getProduct(new ProductRequest(100L, 10L))).willReturn(mockProduct1);
-        given(productClient.getProduct(new ProductRequest(101L, 11L))).willReturn(mockProduct2);
+        given(productClient.getProduct(100L, 10L)).willReturn(mockProduct1);
+        given(productClient.getProduct(101L, 11L)).willReturn(mockProduct2);
 
         given(productClient.getProductList(any())).willReturn(List.of(mockProduct1, mockProduct2));
 
@@ -86,26 +86,26 @@ class CartControllerTest {
         // when:
         ResultActions resultActions = mvc
                 .perform(
-                        get("/cart")
+                        get("/carts")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
                 )
                 .andDo(print());
-//
+
         // then:
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(handler().handlerType(CartController.class))
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.cartItemList[0].product.productName").value("테스트 상품1"))
-                .andExpect(jsonPath("$.data.cartItemList[0].product.optionContent").value("옵션A"))
+                .andExpect(jsonPath("$.data.cartItemList[0].product.optionName").value("옵션A"))
                 .andExpect(jsonPath("$.data.cartItemList[0].product.price").value("10000.0"))
                 .andExpect(jsonPath("$.data.cartItemList[0].quantity").value(2))
                 .andExpect(jsonPath("$.data.cartItemList[0].amount").value("20000.0"))
 
                 .andExpect(jsonPath("$.data.cartItemList[1].product.productName").value("테스트 상품2"))
-                .andExpect(jsonPath("$.data.cartItemList[1].product.optionContent").value("옵션B"))
+                .andExpect(jsonPath("$.data.cartItemList[1].product.optionName").value("옵션B"))
                 .andExpect(jsonPath("$.data.cartItemList[1].product.price").value("12000.0"))
                 .andExpect(jsonPath("$.data.cartItemList[1].quantity").value(3))
                 .andExpect(jsonPath("$.data.cartItemList[1].amount").value("36000.0"));
@@ -123,12 +123,12 @@ class CartControllerTest {
         ProductRequest request = new ProductRequest(102L, 12L);
 
         ProductInfo mockProduct3 = new ProductInfo(102L, 12L, "테스트 상품3", "옵션C", new BigDecimal("13000.00"), 10);
-        given(productClient.getProduct(new ProductRequest(102L, 12L))).willReturn(mockProduct3);
+        given(productClient.getProduct(102L, 12L)).willReturn(mockProduct3);
 
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/cart/add")
+                        post("/carts/add")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -137,7 +137,7 @@ class CartControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.product.productName").value("테스트 상품3"))
                 .andExpect(jsonPath("$.data.product.price").value("13000.0"))
@@ -159,7 +159,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/cart/add")
+                        post("/carts/add")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -168,7 +168,7 @@ class CartControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.data.product.productName").value("테스트 상품1"))
                 .andExpect(jsonPath("$.data.quantity").value(3))
@@ -188,7 +188,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/cart/subtract")
+                        post("/carts/subtract")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -217,7 +217,7 @@ class CartControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        delete("/cart")
+                        delete("/carts")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .accept(MediaType.APPLICATION_JSON)
                                 .header("X-USERS-IDX", "1")
@@ -226,7 +226,7 @@ class CartControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isOk())
+                .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
         Optional<CartEntity> entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L);

@@ -1,7 +1,6 @@
 package co.kr.order.client;
 
 import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.request.UserDataRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +10,7 @@ import java.math.BigDecimal;
 
 @FeignClient(name="User")
 public interface UserClient {
+
     /*
      * @param userIdx
      * @param request : AddressInfo (주소 정보), CardInfo (카드 정보)
@@ -18,7 +18,7 @@ public interface UserClient {
     @PostMapping("/users/order/{userIdx}")
     UserData getUserData(
             @PathVariable Long userIdx,
-            @RequestBody UserDataRequest request
+            @RequestBody UserData request
     );
 
     /*

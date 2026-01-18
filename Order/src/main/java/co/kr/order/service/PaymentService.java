@@ -9,7 +9,7 @@ public interface PaymentService {
 
     PaymentResponse pay(Long userIdx, PaymentRequest request);
 
-    PaymentResponse refund(Long userIdx, PaymentRequest request);
+    PaymentResponse refund(Long userIdx, String orderCode);
 
     PaymentResponse confirmTossPayment(Long userIdx, PaymentTossConfirmRequest request);
 }

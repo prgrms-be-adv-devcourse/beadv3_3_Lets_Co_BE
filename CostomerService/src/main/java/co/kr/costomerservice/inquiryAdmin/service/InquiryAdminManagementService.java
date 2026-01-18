@@ -1,6 +1,6 @@
 package co.kr.costomerservice.inquiryAdmin.service;
 
-import co.kr.costomerservice.common.response.ResultResponse;
+import co.kr.costomerservice.common.dto.response.ResultResponse;
 import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryAnswerDeleteRequest;
 import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryAnswerUpsertRequest;
 import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryUpsertRequest;

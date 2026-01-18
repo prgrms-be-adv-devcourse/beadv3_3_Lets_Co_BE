@@ -1,8 +1,9 @@
 package co.kr.costomerservice.qnaProduct.controller;
 
-import co.kr.costomerservice.common.response.ResultResponse;
+import co.kr.costomerservice.common.dto.response.ResultResponse;
 import co.kr.costomerservice.qnaProduct.model.request.QnaProductListRequest;
 import co.kr.costomerservice.qnaProduct.model.request.QnaProductUpsertRequest;
+import co.kr.costomerservice.qnaProduct.model.response.QnaAndProductInfoListResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductDetailResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductListResponse;
 import co.kr.costomerservice.qnaProduct.service.QnaProductService;
@@ -85,7 +86,7 @@ public class QnaProductController {
 
     // 본인 문의 내역 조회
     @GetMapping("/me")
-    public ResponseEntity<QnaProductListResponse> getMyProductQnaList(
+    public ResponseEntity<QnaAndProductInfoListResponse> getMyProductQnaList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){

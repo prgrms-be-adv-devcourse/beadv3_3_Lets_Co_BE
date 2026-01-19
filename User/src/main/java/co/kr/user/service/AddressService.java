@@ -38,7 +38,7 @@ public class AddressService implements AddressServiceImpl{
         }
 
         UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndDefaultAddressAndDelOrderByAddressIdxDesc(users.getUsersIdx(), 1, 0)
-                .orElseThrow(() -> new IllegalArgumentException("Default 주소가 없습니다."));
+                .orElseThrow(null);
 
         return usersAddress.getAddressIdx();
     }
@@ -56,7 +56,7 @@ public class AddressService implements AddressServiceImpl{
         }
 
         UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(users.getUsersIdx(), addressCode, 0)
-                .orElseThrow(() -> new IllegalArgumentException("해당 카드 정보가 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보가 없습니다."));
 
         return usersAddress.getAddressIdx();
     }
@@ -148,25 +148,24 @@ public class AddressService implements AddressServiceImpl{
             dto.setDefaultAddress(0);
         }
         if (addressRequestReq.getRecipient() == null || addressRequestReq.getRecipient().isEmpty()) {
-            dto.setRecipient(aesUtil.encrypt(usersAddress.getRecipient()));
-        }
-        else {
+            dto.setRecipient(usersAddress.getRecipient()); // 암호화 메서드 제거
+        } else {
             dto.setRecipient(aesUtil.encrypt(addressRequestReq.getRecipient()));
         }
         if (addressRequestReq.getAddress() == null || addressRequestReq.getAddress().isEmpty()) {
-            dto.setAddress(aesUtil.encrypt(usersAddress.getAddress()));
+            dto.setAddress(usersAddress.getAddress());
         }
         else {
             dto.setAddress(aesUtil.encrypt(addressRequestReq.getAddress()));
         }
         if (addressRequestReq.getAddressDetail() == null || addressRequestReq.getAddressDetail().isEmpty()) {
-            dto.setAddressDetail(aesUtil.encrypt(usersAddress.getAddressDetail()));
+            dto.setAddressDetail(usersAddress.getAddressDetail());
         }
         else {
             dto.setAddressDetail(aesUtil.encrypt(addressRequestReq.getAddressDetail()));
         }
         if (addressRequestReq.getPhoneNumber() == null || addressRequestReq.getPhoneNumber().isEmpty()) {
-            dto.setPhoneNumber(aesUtil.encrypt(usersAddress.getPhoneNumber()));
+            dto.setPhoneNumber(usersAddress.getPhoneNumber());
         }
         else {
             dto.setPhoneNumber(aesUtil.encrypt(addressRequestReq.getPhoneNumber()));

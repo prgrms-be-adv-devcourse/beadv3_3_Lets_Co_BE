@@ -164,19 +164,19 @@ public class CardService implements CardServiceImpl{
             dto.setDefaultCard(0);
         }
         if (cardRequestReq.getCardBrand() == null || cardRequestReq.getCardBrand().equals("")) {
-            dto.setCardBrand(aesUtil.encrypt(userCard.getCardBrand()));
+            dto.setCardBrand(userCard.getCardBrand());
         }
         else {
             dto.setCardBrand(aesUtil.encrypt(cardRequestReq.getCardBrand()));
         }
         if (cardRequestReq.getCardName() == null || cardRequestReq.getCardName().equals("")) {
-            dto.setCardName(aesUtil.encrypt(userCard.getCardName()));
+            dto.setCardName(userCard.getCardName());
         }
         else {
             dto.setCardName(aesUtil.encrypt(cardRequestReq.getCardName()));
         }
         if (cardRequestReq.getCardToken() == null || cardRequestReq.getCardToken().equals("")) {
-            dto.setCardToken(aesUtil.encrypt(userCard.getCardToken()));
+            dto.setCardToken(userCard.getCardToken());
         }
         else {
             dto.setCardToken(aesUtil.encrypt(cardRequestReq.getCardToken()));

@@ -24,13 +24,6 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-**/application.yml
-**/application.yaml
-**/application-*.yml
-**/application-*.yaml
-**/application.yml.example
-**/application.yaml.example
-src/main/resources/application.yml
 
 ### NetBeans ###
 /nbproject/private/

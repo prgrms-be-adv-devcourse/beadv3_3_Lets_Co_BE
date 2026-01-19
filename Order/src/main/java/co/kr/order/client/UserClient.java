@@ -1,12 +1,16 @@
 package co.kr.order.client;
 
+import co.kr.order.model.dto.SellerInfo;
 import co.kr.order.model.dto.UserData;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Set;
 
 @FeignClient(name="User")
 public interface UserClient {
@@ -42,4 +46,10 @@ public interface UserClient {
             @PathVariable Long userIdx,
             @RequestBody BigDecimal amount
     );
+
+    @PostMapping("/users/settlement/")
+    void sendSettlementData(@RequestBody Map<Long, BigDecimal> settlementData);
+
+    @GetMapping("/users/seller/")
+    SellerInfo getSellerData(Set<Long> sellerIdxList);
 }

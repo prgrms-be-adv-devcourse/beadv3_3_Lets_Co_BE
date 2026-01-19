@@ -9,6 +9,7 @@ import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
 import co.kr.product.product.service.impl.ProductServiceImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -67,14 +68,14 @@ public class ProductController {
 
     @PostMapping("deductStock")
     public void deductStock(
-            @RequestBody DeductStockRequest deductStockRequest
+            @RequestBody @Valid DeductStockRequest deductStockRequest
     ) {
         productService.deductStock(deductStockRequest);
     }
 
     @PostMapping("deductStocks")
     public void deductStockList(
-            @RequestBody List<DeductStockRequest> deductStockRequest
+            @RequestBody @Valid List<DeductStockRequest> deductStockRequest
     ) {
         productService.deductStocks(deductStockRequest);
     }
@@ -90,7 +91,7 @@ public class ProductController {
 
     @GetMapping("/bulk")
     public List<ProductInfoToOrderResponse> getProductInfoList(
-            @RequestBody List<ProductInfoToOrderRequest> requests
+            @RequestBody @Valid List<ProductInfoToOrderRequest> requests
     ) {
         return productService.getProductInfoList(requests);
     }

@@ -2,7 +2,6 @@ package co.kr.user.service;
 
 import co.kr.user.DAO.UserCardRepository;
 import co.kr.user.DAO.UserRepository;
-import co.kr.user.model.DTO.card.CardDTO;
 import co.kr.user.model.DTO.card.CardListDTO;
 import co.kr.user.model.DTO.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
@@ -10,7 +9,6 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.util.AESUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.YearMonth;

@@ -17,7 +17,6 @@ import co.kr.user.util.AESUtil;
 import co.kr.user.util.EMailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -25,7 +24,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.LocalDateTime;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserServiceImpl{
@@ -230,8 +228,6 @@ public class UserService implements UserServiceImpl{
         amend.setBirth(userInfo.getBirth());
         amend.setGrade("STANDARD");
 
-
-        log.info(amend.toString());
         if (!userAmendReq.getName().isEmpty()) {
             amend.setName(aesUtil.encrypt(userAmendReq.getName()));
         }
@@ -241,7 +237,6 @@ public class UserService implements UserServiceImpl{
         if (!userAmendReq.getBirth().isEmpty()) {
             amend.setBirth(aesUtil.encrypt(userAmendReq.getBirth()));
         }
-        log.info(amend.toString());
 
         userInfo.amend(amend.getName(), amend.getPhoneNumber(), amend.getBirth());
 

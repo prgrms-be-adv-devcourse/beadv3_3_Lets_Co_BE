@@ -28,7 +28,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SellerService implements SellerServiceImpl {
@@ -137,7 +136,6 @@ public class SellerService implements SellerServiceImpl {
     @Override
     @Transactional
     public String sellerRegisterCheck(Long userIdx, String authCode) {
-        log.info(userIdx.toString());
         Users users = userRepository.findById(userIdx)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 

@@ -68,12 +68,9 @@ public class AdminService implements AdminServiceImpl{
                     UsersInformation info = userInfoMap.get(user.getUsersIdx());
 
                     if (info != null) {
-//                        dto.setName(aesUtil.decrypt(info.getName()));
-//                        dto.setPhoneNumber(aesUtil.decrypt(info.getPhoneNumber()));
-//                        dto.setBirth(aesUtil.decrypt(info.getBirth()));
-                        dto.setName(info.getName());
-                        dto.setPhoneNumber(info.getPhoneNumber());
-                        dto.setBirth(info.getBirth());
+                        dto.setName(aesUtil.decrypt(info.getName()));
+                        dto.setPhoneNumber(aesUtil.decrypt(info.getPhoneNumber()));
+                        dto.setBirth(aesUtil.decrypt(info.getBirth()));
                     }
 
                     return dto;
@@ -114,12 +111,9 @@ public class AdminService implements AdminServiceImpl{
         dto.setAgreeTermsAt(usersDetail.getAgreeTermsAt());
         dto.setAgreePrivacyAt(usersDetail.getAgreePrivacyAt());
         dto.setAgreeMarketingAt(usersDetail.getAgreeMarketingAt());
-//        dto.setName(aesUtil.decrypt(usersInformationDetail.getName()));
-//        dto.setPhoneNumber(aesUtil.decrypt(usersInformationDetail.getPhoneNumber()));
-//        dto.setBirth(aesUtil.decrypt(usersInformationDetail.getBirth()));
-        dto.setName(usersInformationDetail.getName());
-        dto.setPhoneNumber(usersInformationDetail.getPhoneNumber());
-        dto.setBirth(usersInformationDetail.getBirth());
+        dto.setName(aesUtil.decrypt(usersInformationDetail.getName()));
+        dto.setPhoneNumber(aesUtil.decrypt(usersInformationDetail.getPhoneNumber()));
+        dto.setBirth(aesUtil.decrypt(usersInformationDetail.getBirth()));
         dto.setCreatedAt(usersDetail.getCreatedAt());
         dto.setUpdatedAt(usersDetail.getUpdatedAt());
 

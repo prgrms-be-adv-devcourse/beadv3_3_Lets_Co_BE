@@ -2,6 +2,7 @@ package co.kr.costomerservice.qnaProduct.controller;
 
 
 import co.kr.costomerservice.qnaProduct.model.request.QnaAnswerUpsertRequest;
+import co.kr.costomerservice.qnaProduct.model.response.QnaAndProductInfoListResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductDetailResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductForSellerListResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductListResponse;
@@ -20,7 +21,7 @@ public class QnaSellerController {
 
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
     @GetMapping
-    public ResponseEntity<QnaProductForSellerListResponse> getMyQnaList(
+    public ResponseEntity<QnaAndProductInfoListResponse> getMyQnaList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
             ){

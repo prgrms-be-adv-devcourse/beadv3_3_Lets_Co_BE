@@ -16,10 +16,9 @@ import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.util.AESUtil;
 import co.kr.user.util.BCryptUtil;
-import co.kr.user.util.EMailUtil;
+import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -28,6 +27,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * 판매자(Seller) 등록 및 인증 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
+ * 일반 사용자가 판매자 전환 신청을 할 때의 정보 저장, 이메일 인증 발송, 인증 확인 및 권한 변경 등을 수행합니다.
+ */
 @Service
 @RequiredArgsConstructor
 public class SellerService implements SellerServiceImpl {
@@ -36,17 +39,26 @@ public class SellerService implements SellerServiceImpl {
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
 
-    private final EMailUtil eMailUtil;
-    private final RandomCodeUtil randomCodeUtil;
-    private final AESUtil aesUtil;
-    private final BCryptUtil bCryptUtil;
+    private final MailUtil mailUtil; // 이메일 발송 유틸
+    private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸
+    private final AESUtil aesUtil; // 양방향 암호화 (이름 복호화용)
+    private final BCryptUtil bCryptUtil; // 단방향 암호화 (계좌 토큰용)
 
+    /**
+     * 판매자 등록 신청 메서드입니다.
+     * 판매자 정보(사업자 번호, 계좌 정보 등)를 저장하고, 본인 확인을 위한 인증 이메일을 발송합니다.
+     *
+     * @param userIdx 로그인한 사용자의 식별자
+     * @param sellerRegisterReq 판매자 등록 요청 정보
+     * @return SellerRegisterDTO (인증 요청 결과 및 만료 시간)
+     */
     @Override
     @Transactional
     public SellerRegisterDTO sellerRegister(Long userIdx, SellerRegisterReq sellerRegisterReq) {
         Users users = userRepository.findById(userIdx)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
+        // 계정 상태 검증
         if (users.getDel() == 1) {
             throw new IllegalStateException("탈퇴한 회원입니다.");
         }
@@ -54,26 +66,30 @@ public class SellerService implements SellerServiceImpl {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        Seller seller =Seller.builder()
-            .sellerIdx(users.getUsersIdx())
-            .businessLicense(sellerRegisterReq.getBusinessLicense())
-            .bankBrand(sellerRegisterReq.getBankBrand())
-            .bankName(sellerRegisterReq.getBankName())
-            .bankToken(bCryptUtil.encode(sellerRegisterReq.getBankToken()))
-            .build();
+        // Seller 엔티티 생성 및 저장
+        // 계좌 토큰 등 민감 정보는 암호화(BCrypt)하여 저장
+        Seller seller = Seller.builder()
+                .sellerIdx(users.getUsersIdx())
+                .businessLicense(sellerRegisterReq.getBusinessLicense())
+                .bankBrand(sellerRegisterReq.getBankBrand())
+                .bankName(sellerRegisterReq.getBankName())
+                .bankToken(bCryptUtil.encode(sellerRegisterReq.getBankToken()))
+                .build();
 
         sellerRepository.save(seller);
 
+        // 인증 코드 생성 및 저장 (목적: SELLER_SIGNUP)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(users.getUsersIdx())
                 .purPose(UsersVerificationsPurPose.SELLER_SIGNUP)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효기간 30분
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
         UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
 
+        // 이메일 템플릿 구성
         String htmlTemplate = """
         <div style='background-color: #f6f7f9; padding: 40px 20px; font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6;'>
             <div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
@@ -110,7 +126,7 @@ public class SellerService implements SellerServiceImpl {
             </div>
         </div>
         """;
-
+        
         String finalContent = htmlTemplate.formatted(savedUserVerifications.getCode());
 
         EmailMessage emailMessage = EmailMessage.builder()
@@ -119,10 +135,11 @@ public class SellerService implements SellerServiceImpl {
                 .message(finalContent)
                 .build();
 
+        // 트랜잭션 커밋 후 이메일 발송
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                eMailUtil.sendEmail(emailMessage, true);
+                mailUtil.sendEmail(emailMessage, true);
             }
         });
 
@@ -133,6 +150,15 @@ public class SellerService implements SellerServiceImpl {
         return sellerRegisterDTO;
     }
 
+    /**
+     * 판매자 등록 인증 확인 메서드입니다.
+     * 이메일로 전송된 인증 코드를 검증하고, 성공 시 사용자의 권한(Role)을 SELLER로 변경합니다.
+     * 승인 완료 알림 이메일도 함께 발송합니다.
+     *
+     * @param userIdx 로그인한 사용자의 식별자
+     * @param authCode 사용자가 입력한 인증 코드
+     * @return 처리 결과 메시지
+     */
     @Override
     @Transactional
     public String sellerRegisterCheck(Long userIdx, String authCode) {
@@ -146,13 +172,16 @@ public class SellerService implements SellerServiceImpl {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
+        // 최신 인증 내역 조회
         UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
+        // 요청자 본인 확인
         if (!Objects.equals(verification.getUsersIdx(), users.getUsersIdx())) {
             throw new IllegalArgumentException("잘못된 인증 요청입니다.");
         }
 
+        // 인증 목적, 만료 시간, 코드 일치 여부 검증
         if (verification.getPurPose() != UsersVerificationsPurPose.SELLER_SIGNUP) {
             throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
         }
@@ -169,15 +198,19 @@ public class SellerService implements SellerServiceImpl {
             return "이미 인증 완료된 코드입니다.";
         }
 
+        // 인증 완료 처리
         verification.confirmVerification();
 
+        // 판매자 정보 조회 및 승인 처리
         Seller seller = sellerRepository.findBySellerIdx(users.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
+        // 사용자 권한을 SELLER로 변경
         users.setRole(UsersRole.SELLER);
 
         seller.confirmVerification();
 
+        // 승인 완료 이메일 발송을 위해 사용자 이름 조회(복호화 필요)
         UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
                 .orElseThrow();
 
@@ -228,7 +261,7 @@ public class SellerService implements SellerServiceImpl {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                eMailUtil.sendEmail(emailMessage, true);
+                mailUtil.sendEmail(emailMessage, true);
             }
         });
 

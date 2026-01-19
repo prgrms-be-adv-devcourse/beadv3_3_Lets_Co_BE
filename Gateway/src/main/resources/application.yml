@@ -206,6 +206,4 @@ custom:
   security:
     jwt:
       access:
-        # Access Token용 키 (32바이트 이상 Base64)
-        # TokenAuthenticationFilter 클래스에서 @Value로 주입받아 사용됨
-        secret: YWNjZXNzLXRva2VuLXNlY3JldC1rZXktZm9yLXNwcmluZy1ib290LXByb2plY3QtZXhhbXBsZS1rZXk=
+        secret: N3Ryb25nZXItYW5kLWxvbmdlci1yYW5kb20tc2VjcmV0LWtleS1mb3ItYWNjZXNzLXRva2VuLXByb3RlY3Rpb24tZ2VuZXJhdGVkLWJ5LWFp

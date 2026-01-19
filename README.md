@@ -1,8 +1,8 @@
-# 🙋‍♂️ Merchandise Sales Website Development Project
+# 🙋‍♂️ 상품 판매 사이트 개발 프로젝트
 
 
-## ❗Team Introduce
-### ℹ️ Team Name : Let's Co
+## ❗팀 소개
+### ℹ️ 팀 이름 : Let's Co
 
 | Role | Name | Department |
 | --- | --- | --- |

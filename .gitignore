@@ -67,6 +67,7 @@ application-secret.yml
 application-prod.yml
 application-real.yml
 application-oauth.yml
+application-local.yml
 application.yml
 **/application.yml
 config/application-*.yml
@@ -100,4 +101,3 @@ jacoco.exec
 *.exec
 test-output/
 reports/
-

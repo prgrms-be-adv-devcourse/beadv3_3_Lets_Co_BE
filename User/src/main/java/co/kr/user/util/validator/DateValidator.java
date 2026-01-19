@@ -7,45 +7,37 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 /**
- * [날짜 검증 로직 구현체]
- * @ValiDate 어노테이션이 붙은 필드의 값이 유효한지 실제로 검사하는 클래스입니다.
- * ConstraintValidator<ValiDate, String>를 구현하여,
- * 'ValiDate' 어노테이션이 붙은 'String' 타입의 필드를 검증함을 명시합니다.
+ * 커스텀 어노테이션 @ValiDate의 실제 검증 로직을 구현하는 클래스입니다.
+ * 문자열로 입력된 날짜가 'YYYY-MM-DD' 형식인지, 그리고 오늘보다 과거의 날짜인지 확인합니다.
  */
 public class DateValidator implements ConstraintValidator<ValiDate, String> {
 
     /**
-     * [검증 메서드]
-     * @param value 검증할 대상 값 (여기서는 사용자가 입력한 생년월일 문자열, 예: "2024-05-01")
-     * @param context 검증 컨텍스트 (에러 메시지 커스터마이징 등에 사용되나 여기서는 기본값 사용)
-     * @return true(유효함), false(유효하지 않음)
+     * 유효성 검증을 수행하는 메서드입니다.
+     *
+     * @param value 검증 대상이 되는 날짜 문자열 (예: "1990-01-01")
+     * @param context 검증 컨텍스트 (오류 메시지 등을 설정할 때 사용 가능)
+     * @return 유효하면 true, 유효하지 않으면 false
      */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        // 1. [Null 체크 패스]
-        // 값이 null이거나 빈 문자열인 경우, 유효한 것으로 간주하고 true를 반환합니다.
-        // 이유: 필수 값 체크는 @NotBlank 같은 다른 어노테이션이 담당하는 것이 역할 분리에 좋기 때문입니다.
-        // 즉, 값이 '있다면' 형식이 맞는지 검사하겠다는 의미입니다.
+        // null이거나 빈 문자열인 경우 유효한 것으로 간주합니다.
+        // (필수 입력값 검증은 @NotNull, @NotEmpty 등을 별도로 사용해야 함을 의미합니다.)
         if (value == null || value.trim().isEmpty()) {
             return true;
         }
 
         try {
-            // 2. [날짜 파싱 시도]
-            // 입력된 문자열(String)을 ISO 날짜 형식(YYYY-MM-DD)에 맞춰 LocalDate 객체로 변환합니다.
-            // 이 과정에서 "2024-13-01"이나 "2024-02-30" 같이 달력에 없는 날짜가 들어오면
-            // DateTimeParseException 예외가 발생하여 catch 블록으로 이동합니다.
+            // 입력된 문자열을 ISO_DATE 형식(YYYY-MM-DD)으로 파싱을 시도합니다.
+            // 형식이 맞지 않으면 DateTimeParseException 예외가 발생하여 catch 블록으로 이동합니다.
             LocalDate birthDate = LocalDate.parse(value, DateTimeFormatter.ISO_DATE);
 
-            // 3. [미래 날짜 검증]
-            // 생년월일이 오늘 날짜보다 이후(미래)라면 유효하지 않은 데이터입니다.
-            // isBefore(LocalDate.now()) -> 오늘보다 이전 날짜여야 true 반환
+            // 파싱된 날짜가 현재 날짜(LocalDate.now())보다 이전인지 확인합니다.
+            // 생년월일은 미래일 수 없으므로 과거여야 true를 반환합니다.
             return birthDate.isBefore(LocalDate.now());
 
         } catch (DateTimeParseException e) {
-            // 4. [예외 처리]
-            // 날짜 형식이 깨졌거나("abcd", "1990/01/01"), 존재하지 않는 날짜인 경우
-            // 검증 실패(false)로 처리합니다.
+            // 날짜 형식이 올바르지 않은 경우(예: "2023/01/01", "invalid-date") 유효하지 않음으로 처리합니다.
             return false;
         }
     }

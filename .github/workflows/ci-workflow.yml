@@ -1,0 +1,56 @@
+name: CI 스크립트 실행
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+
+jobs:
+  code-test:
+    name: 코드 테스트
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 브랜치로 체크아웃
+        uses: actions/checkout@v5
+
+      - name: JDK 세팅
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+      - name: application.yml 설정 파일 생성
+        run: |
+          mkdir -p ${{ inputs.service-name }}/src/main/resources
+
+          if [[ "${{ inputs.service-name }}" == *"Gateway"* ]]; then
+            echo '${{ secrets.GATEWAY_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+
+          elif [[ "${{ inputs.service-name }}" == *"Discovery"* ]]; then
+            echo '${{ secrets.DISCOVERY_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            
+          elif [[ "${{ inputs.service-name }}" == *"CostomerService"* ]]; then
+            echo '${{ secrets.COSTOMERSERVICE_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            
+          elif [[ "${{ inputs.service-name }}" == *"Order"* ]]; then  # <--- Product -> Order로 수정
+            echo '${{ secrets.ORDER_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            
+          elif [[ "${{ inputs.service-name }}" == *"Product"* ]]; then
+            echo '${{ secrets.PRODUCT_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            
+          elif [[ "${{ inputs.service-name }}" == *"User"* ]]; then
+            echo '${{ secrets.USER_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            
+          else
+            echo "알 수 없는 서비스입니다: ${{ inputs.service-name }}"
+            exit 1
+          fi
+
+      - name: gradlew 권한 세팅
+        run: chmod +x ./${{ inputs.service-name }}/gradlew
+
+      - name: 테스트 실행
+        working-directory: ./${{ inputs.service-name }}
+        run: ./gradlew test --no-daemon

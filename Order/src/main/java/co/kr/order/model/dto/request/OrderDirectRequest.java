@@ -22,5 +22,7 @@ public record OrderDirectRequest(
 
         @Valid
         @NotNull(message = "결제 방법을 선택하세요")
-        PaymentType paymentType
+        PaymentType paymentType,
+
+        String tossKey
 ) {}

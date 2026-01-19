@@ -82,7 +82,7 @@ public class SettlementServiceImpl implements SettlementService {
         for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
             SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
-                    .type(SettlementType.SALE)
+                    .type(SettlementType.ORDERS_CONFIRMED)
                     .paymentIdx(payment.getPaymentIdx())
                     .amount(entry.getValue())
                     .build();
@@ -141,7 +141,7 @@ public class SettlementServiceImpl implements SettlementService {
         for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
             SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
-                    .type(SettlementType.REFUND)
+                    .type(SettlementType.SETTLE_PAYOUT)
                     .paymentIdx(paymentIdx)
                     .amount(entry.getValue())
                     .build();
@@ -161,7 +161,7 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     public List<SettlementInfo> getSettlementList(Long sellerIdx) {
 
-        List<SettlementHistoryEntity> entities = settlementRepository.findAllSellerIdx(sellerIdx);
+        List<SettlementHistoryEntity> entities = settlementRepository.findAllBySellerIdx(sellerIdx);
 
         List<SettlementInfo> returnSettlementList = new ArrayList<>();
 
@@ -208,14 +208,14 @@ public class SettlementServiceImpl implements SettlementService {
 
         for(SettlementHistoryEntity entity : entities) {
 
-            if (entity.getType() == SettlementType.REFUND || entity.getType() == SettlementType.COMPLETED) {
+            if (entity.getType() == SettlementType.SETTLE_PAYOUT || entity.getType() == SettlementType.CANCEL_ADJUST) {
                 continue;
             }
 
             Long sellerIdx = entity.getSellerIdx();
             BigDecimal amount = entity.getAmount();
 
-            entity.setType(SettlementType.COMPLETED);
+            entity.setType(SettlementType.CANCEL_ADJUST);
 
             sellerResponse.merge(sellerIdx, amount, BigDecimal::add);
         }

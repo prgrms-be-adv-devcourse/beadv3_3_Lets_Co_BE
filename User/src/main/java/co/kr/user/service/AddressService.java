@@ -4,6 +4,7 @@ import co.kr.user.DAO.UserAddressRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.model.DTO.address.AddressListDTO;
 import co.kr.user.model.DTO.address.AddressRequestReq;
+import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.util.AESUtil;
@@ -11,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +23,43 @@ public class AddressService implements AddressServiceImpl{
     private final UserAddressRepository userAddressRepository;
 
     private final AESUtil aesUtil;
+
+    @Override
+    public Long defaultAddress(Long userIdx) {
+        Users users = userRepository.findById(userIdx)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+
+        if (users.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        else if (users.getDel() == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+
+        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndDefaultAddressAndDelOrderByAddressIdxDesc(users.getUsersIdx(), 1, 0)
+                .orElseThrow(() -> new IllegalArgumentException("Default 주소가 없습니다."));
+
+        return usersAddress.getAddressIdx();
+    }
+
+    @Override
+    public Long searchAddress(Long userIdx, String addressCode) {
+        Users users = userRepository.findById(userIdx)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        if (users.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        else if (users.getDel() == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+
+        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(users.getUsersIdx(), addressCode, 0)
+                .orElseThrow(() -> new IllegalArgumentException("해당 카드 정보가 없습니다."));
+
+        return usersAddress.getAddressIdx();
+    }
 
     @Override
     public List<AddressListDTO> addressList(Long userIdx) {

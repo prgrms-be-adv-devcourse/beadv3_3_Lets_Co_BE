@@ -1,8 +1,6 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.card.CardDelReq;
-import co.kr.user.model.DTO.card.CardListDTO;
-import co.kr.user.model.DTO.card.CardRequestReq;
+import co.kr.user.model.DTO.card.*;
 import co.kr.user.service.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +16,16 @@ import java.util.List;
 @RequestMapping("/users/card")
 public class CardController {
     private final CardService cardService;
+
+    @PostMapping("/default")
+    public ResponseEntity<Long> defaultCard(@RequestHeader("X-USERS-IDX") Long userIdx) {
+        return ResponseEntity.ok(cardService.defaultCard(userIdx));
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Long> searchCard(@RequestHeader("X-USERS-IDX") Long userIdx, @RequestBody CardReq cardReq) {
+        return ResponseEntity.ok(cardService.searchCard(userIdx, cardReq.getCardCode()));
+    }
 
     @PostMapping("/list")
     public ResponseEntity<List<CardListDTO>> cardList(@RequestHeader("X-USERS-IDX") Long userIdx) {

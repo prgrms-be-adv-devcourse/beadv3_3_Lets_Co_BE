@@ -2,7 +2,9 @@ package co.kr.user.controller;
 
 import co.kr.user.model.DTO.address.AddressDelReq;
 import co.kr.user.model.DTO.address.AddressListDTO;
+import co.kr.user.model.DTO.address.AddressReq;
 import co.kr.user.model.DTO.address.AddressRequestReq;
+import co.kr.user.model.DTO.card.CardReq;
 import co.kr.user.service.AddressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,16 @@ import java.util.List;
 @RequestMapping("/users/address")
 public class AddressController {
     private final AddressService addressService;
+
+    @PostMapping("/default")
+    public ResponseEntity<Long> defaultAddress(@RequestHeader("X-USERS-IDX") Long userIdx) {
+        return ResponseEntity.ok(addressService.defaultAddress(userIdx));
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Long> searchAddress(@RequestHeader("X-USERS-IDX") Long userIdx, @RequestBody AddressReq addressReq) {
+        return ResponseEntity.ok(addressService.searchAddress(userIdx, addressReq.getAddressCode()));
+    }
 
     @PostMapping("/list")
     public ResponseEntity<List<AddressListDTO>> addressList(@RequestHeader("X-USERS-IDX") Long userIdx) {

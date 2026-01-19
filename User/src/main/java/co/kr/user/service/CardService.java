@@ -2,6 +2,7 @@ package co.kr.user.service;
 
 import co.kr.user.DAO.UserCardRepository;
 import co.kr.user.DAO.UserRepository;
+import co.kr.user.model.DTO.card.CardDTO;
 import co.kr.user.model.DTO.card.CardListDTO;
 import co.kr.user.model.DTO.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
@@ -9,8 +10,10 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.util.AESUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +24,57 @@ public class CardService implements CardServiceImpl{
     private final UserCardRepository userCardRepository;
 
     private final AESUtil aesUtil;
+
+    @Override
+    public Long defaultCard(Long userIdx) {
+        Users users = userRepository.findById(userIdx)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+
+        if (users.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        else if (users.getDel() == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+
+        UserCard userCard = userCardRepository.findFirstByUsersIdxAndDefaultCardAndDelOrderByCardIdxDesc(users.getUsersIdx(), 1, 0)
+                .orElseThrow(() -> new IllegalArgumentException("Default 카드가 없습니다."));
+
+        YearMonth cardExpiry = YearMonth.of(userCard.getExpYear(), userCard.getExpMonth());
+        YearMonth currentMonth = YearMonth.now();
+
+        if (cardExpiry.isBefore(currentMonth)) {
+            throw new IllegalStateException("만료된 카드입니다. 카드를 다시 등록해 주세요.");
+        }
+
+        return userCard.getCardIdx();
+    }
+
+    @Override
+    public Long searchCard(Long userIdx, String cardCode) {
+        Users users = userRepository.findById(userIdx)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        if (users.getDel() == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        else if (users.getDel() == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+
+        UserCard userCard = userCardRepository.findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(users.getUsersIdx(), cardCode, 0)
+                .orElseThrow(() -> new IllegalArgumentException("해당 카드 정보가 없습니다."));
+
+        YearMonth cardExpiry = YearMonth.of(userCard.getExpYear(), userCard.getExpMonth());
+        YearMonth currentMonth = YearMonth.now();
+
+        if (cardExpiry.isBefore(currentMonth)) {
+            throw new IllegalStateException("만료된 카드입니다. 카드를 다시 등록해 주세요.");
+        }
+
+        return userCard.getCardIdx();
+    }
 
     @Override
     public List<CardListDTO> cardList(Long userIdx) {

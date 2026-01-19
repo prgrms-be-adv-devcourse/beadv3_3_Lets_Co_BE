@@ -160,6 +160,7 @@ public class ProductServiceImpl implements ProductService {
         return new ProductInfoToOrderResponse(
                 productsIdx,
                 optionIdx,
+                product.getSellerIdx(),
                 product.getProductsName(),
                 option.getOptionName(),
                 option.getOptionPrice(),
@@ -189,6 +190,7 @@ public class ProductServiceImpl implements ProductService {
         return options.stream().map(opt -> new ProductInfoToOrderResponse(
                 opt.getProduct().getProductsIdx(), // 상품 정보도 이미 들어있음
                 opt.getOptionGroupIdx(),
+                opt.getProduct().getSellerIdx(),
                 opt.getProduct().getProductsName(),
                 opt.getOptionName(),
                 opt.getOptionPrice(),

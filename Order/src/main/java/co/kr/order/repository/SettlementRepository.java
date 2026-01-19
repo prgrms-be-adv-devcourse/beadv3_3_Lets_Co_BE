@@ -18,6 +18,6 @@ public interface SettlementRepository extends JpaRepository<SettlementHistoryEnt
 
     SettlementHistoryEntity findByPaymentIdx(Long paymentIdx);
 
-    List<SettlementHistoryEntity> findAllSellerIdx(Long sellerIdx);
+    List<SettlementHistoryEntity> findAllBySellerIdx(Long sellerIdx);
     SettlementHistoryEntity findBySellerIdxAndPaymentIdx(Long sellerIdx, Long paymentIdx);
 }

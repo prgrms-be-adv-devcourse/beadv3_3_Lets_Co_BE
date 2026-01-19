@@ -152,6 +152,45 @@ public class SettlementServiceImpl implements SettlementService {
         }
     }
 
+    /**
+     * 새로 환불 생성이 아니라 type(상태)만 바꿀 경우
+     */
+    @Override
+    @Transactional
+    public void refundSettlement(Long orderId, Long paymentIdx) {
+
+        // 주문 조회
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
+
+        List<OrderItemEntity> orderItems = order.getOrderItems();
+        if (orderItems.isEmpty()) {
+            log.warn("주문 상품이 없습니다. orderId={}", orderId);
+            return;
+        }
+
+        List<Long> productIds = orderItems.stream()
+                .map(OrderItemEntity::getProductIdx)
+                .toList();
+
+        // Product 서비스에서 상품별 판매자 정보 조회
+        Map<Long, Long> productSellerMap = productClient.getSellersByProductIds(productIds);
+
+        Set<Long> sellerIds = new HashSet<>(productSellerMap.values());
+
+        for (Long sellerIdx : sellerIds) {
+            SettlementHistoryEntity settlementEntity = settlementRepository.findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
+
+            if (settlementEntity != null) {
+                settlementEntity.setType(SettlementType.CANCEL_ADJUST);
+
+                log.info("환불 정산 상태 변경 완료: sellerIdx={}, paymentIdx={}", sellerIdx, paymentIdx);
+            } else {
+                log.error("정산 데이터를 찾을 수 없습니다! sellerIdx={}, paymentIdx={}", sellerIdx, paymentIdx);
+            }
+        }
+    }
+
 
     /*
      * 정산목록 조회를 Order-service 쪽에서 할지, Member-service에서 할지?

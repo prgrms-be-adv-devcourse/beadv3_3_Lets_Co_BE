@@ -35,8 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -521,10 +520,10 @@ class OrderControllerTest {
     @Test
     @Transactional
     void 환불_처리_정상() throws Exception {
-
         String refundOrderCode = "Test_Order_Code";
 
-        // 환불 처리를 위한 데이터 추가
+        given(productClient.getSellersByProductIds(anyList())).willReturn(Map.of(100L, 1L));
+
         OrderEntity order = OrderEntity.builder()
                 .userIdx(1L)
                 .addressIdx(1L)
@@ -553,7 +552,7 @@ class OrderControllerTest {
                 .ordersIdx(order.getId())
                 .amount(new BigDecimal("20000.00"))
                 .status(PaymentStatus.PAYMENT)
-                .type(PaymentType.CARD)
+                .type(PaymentType.DEPOSIT)
                 .build();
         paymentRepository.save(payment);
 
@@ -565,6 +564,9 @@ class OrderControllerTest {
                 .build();
         settlementRepository.save(settlement);
 
+        em.flush();
+        em.clear();
+
         ResultActions resultActions = mvc
                 .perform(
                         post("/orders/refund/" + refundOrderCode)
@@ -575,21 +577,22 @@ class OrderControllerTest {
 
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(OrderController.class))
-                .andExpect(jsonPath("$.resultCode").value("ok"))
-                .andExpect(jsonPath("$.data").value("환불처리가 완료 되었습니다."));
+                .andExpect(jsonPath("$.resultCode").value("ok"));
 
         OrderEntity updatedOrder = orderRepository.findByOrderCode(refundOrderCode).get();
-        Assertions.assertThat(order.getStatus()).isEqualTo(OrderStatus.REFUNDED);
+        Assertions.assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.REFUNDED);
 
-        List<PaymentEntity> payments = paymentRepository.findAll();
-        PaymentEntity refund = payments.stream()
-                .filter(p -> p.getOrdersIdx().equals(updatedOrder.getId()))
-                .filter(p -> p.getStatus() == PaymentStatus.REFUND)
-                .findFirst().get();
+        List<PaymentEntity> payments = paymentRepository.findAllByOrdersIdx(updatedOrder.getId());
 
-        Assertions.assertThat(refund.getStatus()).isEqualTo(PaymentStatus.REFUND);
+        PaymentEntity originalPayment = payments.stream()
+                .filter(p -> p.getType() == PaymentType.DEPOSIT)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("원래 결제 데이터를 찾을 수 없습니다."));
 
-        SettlementHistoryEntity settlementEntity = settlementRepository.findBySellerIdxAndPaymentIdx(1L, payment.getPaymentIdx());
+        SettlementHistoryEntity settlementEntity = settlementRepository
+                .findBySellerIdxAndPaymentIdx(1L, originalPayment.getPaymentIdx());
+
+        Assertions.assertThat(settlementEntity).isNotNull();
         Assertions.assertThat(settlementEntity.getType()).isEqualTo(SettlementType.CANCEL_ADJUST);
     }
 

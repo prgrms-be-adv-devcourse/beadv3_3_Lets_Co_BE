@@ -27,7 +27,7 @@ public interface SettlementService {
      * @param paymentIdx 환불 결제 ID
      */
     void createRefundSettlement(Long orderId, Long paymentIdx);
-
+    void refundSettlement(Long orderId, Long paymentIdx);
 
     /*
      * 정산목록 조회를 Order-service 쪽에서 할지, Member-service에서 할지 모르겠어서

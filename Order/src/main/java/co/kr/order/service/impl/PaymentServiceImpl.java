@@ -4,6 +4,7 @@ package co.kr.order.service.impl;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.PaymentFailedException;
+import co.kr.order.mapper.PaymentMapper;
 import co.kr.order.model.dto.request.PaymentRequest;
 import co.kr.order.model.dto.request.PaymentTossConfirmRequest;
 import co.kr.order.model.dto.response.PaymentResponse;
@@ -12,15 +13,14 @@ import co.kr.order.model.entity.PaymentEntity;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
-import co.kr.order.mapper.PaymentMapper;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.repository.PaymentJpaRepository;
 import co.kr.order.service.PaymentService;
 import co.kr.order.service.SettlementService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -148,8 +148,10 @@ public class PaymentServiceImpl implements PaymentService {
         updateOrderStatus(order, OrderStatus.REFUNDED);
 
         // 환불 정산 생성 (정산에서 차감 처리)
-        settlementService.createRefundSettlement(order.getId(), refundPayment.getPaymentIdx());
+//        settlementService.createRefundSettlement(order.getId(), refundPayment.getPaymentIdx());
 
+        // 환불 생성이 아니라 현재상태 CANCEL_ADJUST로 수정
+        settlementService.refundSettlement(order.getId(), payment.getPaymentIdx());
         return PaymentMapper.toResponse(refundPayment);
     }
 

@@ -101,3 +101,4 @@ jacoco.exec
 test-output/
 reports/
 
+k8s/exec/config/db-secret.yml

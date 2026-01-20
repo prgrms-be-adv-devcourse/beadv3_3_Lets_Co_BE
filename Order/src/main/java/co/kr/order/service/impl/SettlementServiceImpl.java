@@ -34,7 +34,8 @@ public class SettlementServiceImpl implements SettlementService {
     private final ProductClient productClient;
     private final UserClient userClient;
 
-    @Value("${custom.settlement.fee-rate:0.02}") // 기본값을 넣었으나 위
+    // 운영 편의성을 위해 기본값을 넣었으나 apllication.yml 에서 관리할 것임.
+    @Value("${custom.settlement.fee-rate:0.02}")
     private BigDecimal settlementFeeRate;
 
     /**

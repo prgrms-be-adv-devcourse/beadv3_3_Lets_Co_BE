@@ -107,7 +107,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
 
         return new ProductCheckStockResponse(
-                "Success",
+                "ok",
                 product.getStock()
         );
 

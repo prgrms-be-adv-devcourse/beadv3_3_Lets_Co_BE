@@ -15,10 +15,12 @@ import co.kr.order.repository.SettlementRepository;
 import co.kr.order.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Slf4j
@@ -31,6 +33,9 @@ public class SettlementServiceImpl implements SettlementService {
     private final PaymentJpaRepository paymentRepository;
     private final ProductClient productClient;
     private final UserClient userClient;
+
+    @Value("${custom.settlement.fee-rate:0.02}") // 기본값을 넣었으나 위
+    private BigDecimal settlementFeeRate;
 
     /**
      * 정산 생성 (주문 완료 시 호출)
@@ -103,54 +108,7 @@ public class SettlementServiceImpl implements SettlementService {
      * 4. 판매자별로 환불 금액 합산
      * 5. 판매자별 REFUND Settlement 레코드 생성
      */
-    @Override
-    @Transactional
-    public void createRefundSettlement(Long orderId, Long paymentIdx) {
-        // 주문 조회
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
 
-        // OrderItem에서 상품 ID 목록 추출
-        List<OrderItemEntity> orderItems = order.getOrderItems();
-        if (orderItems.isEmpty()) {
-            log.warn("주문 상품이 없습니다. orderId={}", orderId);
-            return;
-        }
-
-        List<Long> productIds = orderItems.stream()
-                .map(OrderItemEntity::getProductIdx)
-                .toList();
-
-        // Product 서비스에서 상품별 판매자 정보 조회
-        Map<Long, Long> productSellerMap = productClient.getSellersByProductIds(productIds);
-
-        //  판매자별로 환불 금액 합산
-        Map<Long, BigDecimal> sellerAmountMap = new HashMap<>();
-        for (OrderItemEntity item : orderItems) {
-            Long sellerIdx = productSellerMap.get(item.getProductIdx());
-            if (sellerIdx == null) {
-                log.warn("판매자 정보를 찾을 수 없습니다. productIdx={}", item.getProductIdx());
-                continue;
-            }
-
-            BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-            sellerAmountMap.merge(sellerIdx, itemTotal, BigDecimal::add);
-        }
-
-        // 판매자별 레코드 생성
-        for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
-            SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
-                    .sellerIdx(entry.getKey())
-                    .type(SettlementType.SETTLE_PAYOUT)
-                    .paymentIdx(paymentIdx)
-                    .amount(entry.getValue())
-                    .build();
-
-            settlementRepository.save(settlement);
-            log.info("환불 정산 생성 완료: sellerIdx={}, amount={}, paymentIdx={}",
-                    entry.getKey(), entry.getValue(), paymentIdx);
-        }
-    }
 
     /**
      * 새로 환불 생성이 아니라 type(상태)만 바꿀 경우
@@ -253,37 +211,84 @@ public class SettlementServiceImpl implements SettlementService {
 
             Long sellerIdx = entity.getSellerIdx();
             BigDecimal amount = entity.getAmount();
+            BigDecimal payoutAmount = amount
+                    .multiply(BigDecimal.ONE.subtract(settlementFeeRate))
+                    .setScale(2, RoundingMode.HALF_UP);
 
-            entity.setType(SettlementType.CANCEL_ADJUST);
+            entity.setType(SettlementType.SETTLE_PAYOUT);
 
-            sellerResponse.merge(sellerIdx, amount, BigDecimal::add);
+            sellerResponse.merge(sellerIdx, payoutAmount, BigDecimal::add);
         }
 
         Set<Long> sellerIds = sellerResponse.keySet();
         if (!sellerResponse.isEmpty()) {
 
-            // 만약 정산금을 예치금으로 준다면
-            if(true) {
-                userClient.sendSettlementData(sellerResponse);
-                return "정산금 처리 완료(예치금)" ;
-            }
+           if(true) {
+               SellerInfo sellerInfo = userClient.getSellerData(sellerIds);
 
-            // 만약 정산금을 통장으로 준다면
-            if(true) {
-                SellerInfo sellerInfo = userClient.getSellerData(sellerIds);
+               Long sellerIdx = sellerInfo.sellerIdx();
+               String businessLicense = sellerInfo.businessLicense();
+               String bankBrand = sellerInfo.bankBrand();
+               String bankName = sellerInfo.bankName();
+               String bankToken = sellerInfo.bankToken();
 
-                Long sellerIdx = sellerInfo.sellerIdx();
-                String businessLicense = sellerInfo.businessLicense();
-                String bankBrand = sellerInfo.bankBrand();
-                String bankName = sellerInfo.bankName();
-                String bankToken = sellerInfo.bankToken();
-
-                // sellerInfo의 데이터 가지고 계좌에 돈을 주는 로직 (이건 구현 못함)
-                return "정산금 처리 완료(카드)";
-            }
+               // sellerInfo의 데이터 가지고 계좌에 돈을 주는 로직 (이건 구현 못함)
+               return "정산금 처리 완료(카드)";
+           }
         }
 
         return null;
     }
+
+    
+    // @Override
+    // @Transactional
+    // public void createRefundSettlement(Long orderId, Long paymentIdx) {
+    //     // 주문 조회
+    //     OrderEntity order = orderRepository.findById(orderId)
+    //             .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
+
+    //     // OrderItem에서 상품 ID 목록 추출
+    //     List<OrderItemEntity> orderItems = order.getOrderItems();
+    //     if (orderItems.isEmpty()) {
+    //         log.warn("주문 상품이 없습니다. orderId={}", orderId);
+    //         return;
+    //     }
+
+    //     List<Long> productIds = orderItems.stream()
+    //             .map(OrderItemEntity::getProductIdx)
+    //             .toList();
+
+    //     // Product 서비스에서 상품별 판매자 정보 조회
+    //     Map<Long, Long> productSellerMap = productClient.getSellersByProductIds(productIds);
+
+    //     //  판매자별로 환불 금액 합산
+    //     Map<Long, BigDecimal> sellerAmountMap = new HashMap<>();
+    //     for (OrderItemEntity item : orderItems) {
+    //         Long sellerIdx = productSellerMap.get(item.getProductIdx());
+    //         if (sellerIdx == null) {
+    //             log.warn("판매자 정보를 찾을 수 없습니다. productIdx={}", item.getProductIdx());
+    //             continue;
+    //         }
+
+    //         BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+    //         sellerAmountMap.merge(sellerIdx, itemTotal, BigDecimal::add);
+    //     }
+
+    //     // 판매자별 레코드 생성
+    //     for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
+    //         SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
+    //                 .sellerIdx(entry.getKey())
+    //                 .type(SettlementType.CANCEL_ADJUST)
+    //                 .paymentIdx(paymentIdx)
+    //                 .amount(entry.getValue())
+    //                 .build();
+
+    //         settlementRepository.save(settlement);
+    //         log.info("환불 정산 생성 완료: sellerIdx={}, amount={}, paymentIdx={}",
+    //                 entry.getKey(), entry.getValue(), paymentIdx);
+    //     }
+    // }
+
 
 }

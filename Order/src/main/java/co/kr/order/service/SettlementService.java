@@ -26,7 +26,7 @@ public interface SettlementService {
      * @param orderId 주문 ID
      * @param paymentIdx 환불 결제 ID
      */
-    void createRefundSettlement(Long orderId, Long paymentIdx);
+//    void createRefundSettlement(Long orderId, Long paymentIdx);
     void refundSettlement(Long orderId, Long paymentIdx);
 
     /*

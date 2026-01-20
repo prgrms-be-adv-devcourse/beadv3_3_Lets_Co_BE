@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | PO | 문민규 | 소프트웨어 | germ47@naver.com |
 | Backend | 정운석 | 소프트웨어 | jjh326326@naver.com |
-| Backend | 이용희 | 소프트웨어 | ------- |
+| Backend | 이용희 | 소프트웨어 | dydgmlzaa@naver.com |
 | Database | 안수현 | 컴퓨터공학 | soxyxs4996@gmail.com |
 | Backend | 최정민 | 컴퓨터공학 | gnb0804@gmail.com  |
 

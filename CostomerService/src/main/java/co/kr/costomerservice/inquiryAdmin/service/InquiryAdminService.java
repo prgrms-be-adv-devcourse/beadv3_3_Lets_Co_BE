@@ -1,6 +1,5 @@
 package co.kr.costomerservice.inquiryAdmin.service;
 
-
 import co.kr.costomerservice.common.dto.response.ResultResponse;
 import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryUpsertRequest;
 import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryDetailResponse;

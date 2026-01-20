@@ -175,3 +175,12 @@ custom:
     jwt:
       access:
         secret: N3Ryb25nZXItYW5kLWxvbmdlci1yYW5kb20tc2VjcmV0LWtleS1mb3ItYWNjZXNzLXRva2VuLXByb3RlY3Rpb24tZ2VuZXJhdGVkLWJ5LWFp
+
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

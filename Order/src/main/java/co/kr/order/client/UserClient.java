@@ -3,10 +3,7 @@ package co.kr.order.client;
 import co.kr.order.model.dto.UserData;
 import co.kr.order.model.dto.request.UserDataRequest;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name="User")
 public interface UserClient {
@@ -21,7 +18,7 @@ public interface UserClient {
      */
     @PostMapping("/order")
     UserData getUserData(
-            Long userIdx,
+            @RequestParam("userIdx") Long userIdx,
             @RequestBody UserDataRequest request
     );
 }

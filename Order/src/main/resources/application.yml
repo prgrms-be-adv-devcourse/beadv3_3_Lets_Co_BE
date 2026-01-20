@@ -1,21 +1,58 @@
 
+server:
+  port: 8082
+
+
 spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://GutJJeu.iptime.org:3306/GutJJeu
+    username: LetsCo
+    password: e@Hx9D1M9X!a(Emo
 
-  application:
-    name: Order
-
-  profiles:
-    active: local
 
   jpa:
-    show-sql: true
-
     hibernate:
+      ddl-auto: validate
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-
     properties:
       hibernate:
+        show_sql: true
         format_sql: true
-        highlight_sql: true
-        use_sql_comments: true
+
+
+  application:
+    name: Orders
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+
+#spring:
+#
+#  application:
+#    name: Order
+#
+#  profiles:
+#    active: local
+#
+#  jpa:
+#    show-sql: true
+#
+#    hibernate:
+#      naming:
+#        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+#
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        highlight_sql: true
+#        use_sql_comments: true

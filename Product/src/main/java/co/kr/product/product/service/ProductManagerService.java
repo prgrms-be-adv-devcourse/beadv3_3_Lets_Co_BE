@@ -8,13 +8,13 @@ import org.springframework.data.domain.Pageable;
 
 public interface ProductManagerService {
 
-    ProductDetailResponse addProduct(String accountCode, UpsertProductRequest request);
+    ProductDetailResponse addProduct(Long usersIdx, UpsertProductRequest request);
 
-    ProductDetailResponse getManagerProductDetail(String accountCode, String code);
+    ProductDetailResponse getManagerProductDetail(Long usersIdx, String code);
 
-    ProductDetailResponse updateProduct(String accountCode, String code, UpsertProductRequest request);
+    ProductDetailResponse updateProduct(Long usersIdx, String code, UpsertProductRequest request);
 
-    void deleteProduct(String accountCode, String code);
+    void deleteProduct(Long usersIdx, String code);
 
-    ProductListResponse getListsBySeller(String accountCode, Pageable pageable, ProductListRequest requests);
+    ProductListResponse getListsBySeller(Long usersIdx, Pageable pageable, ProductListRequest requests);
 }

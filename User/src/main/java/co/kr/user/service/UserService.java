@@ -13,7 +13,7 @@ import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
-import co.kr.user.util.AESUtil;
+import co.kr.user.util.AesUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class UserService implements UserServiceImpl {
     private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
 
-    private final AESUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
+    private final AesUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸리티
     private final MailUtil mailUtil; // 이메일 발송 유틸리티
 

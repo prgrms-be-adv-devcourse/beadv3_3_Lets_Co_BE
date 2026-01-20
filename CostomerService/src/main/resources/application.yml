@@ -1,27 +1,5 @@
-server:
-  port: 8083
-
-
 spring:
-  datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://GutJJeu.iptime.org:3306/GutJJeu
-    username: LetsCo
-    password: e@Hx9D1M9X!a(Emo
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-
   application:
-    name: Board
-
-eureka:
-  instance:
-    instance-id: ${spring.application.name}:${server.port}
-    prefer-ip-address: true
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+    name: CostomerService
+  profiles:
+    active: local

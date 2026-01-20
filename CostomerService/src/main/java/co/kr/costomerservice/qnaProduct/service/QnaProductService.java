@@ -1,7 +1,8 @@
 package co.kr.costomerservice.qnaProduct.service;
 
-import co.kr.costomerservice.common.response.ResultResponse;
+import co.kr.costomerservice.common.dto.response.ResultResponse;
 import co.kr.costomerservice.qnaProduct.model.request.QnaProductUpsertRequest;
+import co.kr.costomerservice.qnaProduct.model.response.QnaAndProductInfoListResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductDetailResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductListResponse;
 import org.springframework.data.domain.Pageable;
@@ -17,5 +18,5 @@ public interface QnaProductService {
 
     ResultResponse deleteQna(String qnaCode, Long userIdx);
 
-    QnaProductListResponse getMyProductQnaList(Long userIdx, Pageable pageable);
+    QnaAndProductInfoListResponse getMyProductQnaList(Long userIdx, Pageable pageable);
 }

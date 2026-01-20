@@ -101,3 +101,14 @@ jacoco.exec
 *.exec
 test-output/
 reports/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+CostomerService/src/main/resources/application_local.yml
+CostomerService/gradle/wrapper/gradle-wrapper.jar
+/elk/volumes
+Product/src/main/resources/application-local.yml
+Product/src/main/resources/application.yml
+elk/ls/pipeline/logstash-products.conf
+elk/docker-compose.yml

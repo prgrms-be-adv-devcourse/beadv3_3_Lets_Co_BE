@@ -6,7 +6,7 @@ import co.kr.user.model.DTO.card.CardListDTO;
 import co.kr.user.model.DTO.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
-import co.kr.user.util.AESUtil;
+import co.kr.user.util.AesUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class CardService implements CardServiceImpl{
     private final UserRepository userRepository;
     private final UserCardRepository userCardRepository;
 
-    private final AESUtil aesUtil; // 암호화 유틸리티
+    private final AesUtil aesUtil; // 암호화 유틸리티
 
     /**
      * 사용자의 기본 결제 카드를 조회하고 유효성을 검증하는 메서드입니다.

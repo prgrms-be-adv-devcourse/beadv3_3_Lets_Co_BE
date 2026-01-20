@@ -15,6 +15,7 @@ public record QnaProductResponse(
         LocalDateTime createdAt,
 
         String userName
+
 ) {
 
 }

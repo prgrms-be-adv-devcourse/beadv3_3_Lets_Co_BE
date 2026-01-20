@@ -70,10 +70,10 @@ public class SellerService implements SellerServiceImpl {
         // 계좌 토큰 등 민감 정보는 암호화(BCrypt)하여 저장
         Seller seller = Seller.builder()
                 .sellerIdx(users.getUsersIdx())
-                .businessLicense(sellerRegisterReq.getBusinessLicense())
-                .bankBrand(sellerRegisterReq.getBankBrand())
-                .bankName(sellerRegisterReq.getBankName())
-                .bankToken(bCryptUtil.encode(sellerRegisterReq.getBankToken()))
+                .businessLicense(aesUtil.encrypt(sellerRegisterReq.getBusinessLicense()))
+                .bankBrand(aesUtil.encrypt(sellerRegisterReq.getBankBrand()))
+                .bankName(aesUtil.encrypt(sellerRegisterReq.getBankName()))
+                .bankToken(aesUtil.encrypt(sellerRegisterReq.getBankToken()))
                 .build();
 
         sellerRepository.save(seller);

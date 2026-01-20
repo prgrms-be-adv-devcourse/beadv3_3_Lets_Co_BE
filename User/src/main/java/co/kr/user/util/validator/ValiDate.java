@@ -5,38 +5,21 @@ import jakarta.validation.Payload;
 import java.lang.annotation.*;
 
 /**
- * [사용자 정의 날짜 검증 어노테이션]
- * @Pattern이나 @Past 같은 기본 어노테이션만으로는 해결하기 어려운
- * 복잡한 날짜 검증(형식 확인 + 미래 날짜 방지 + 유효한 날짜 여부 등)을 위해 만든 커스텀 어노테이션입니다.
- *
- * 사용 예시:
- * @ValiDate
- * private String birth;
+ * 날짜 형식을 검증하기 위한 커스텀 어노테이션입니다.
+ * DTO의 필드에 @ValiDate를 붙여서 사용하며, DateValidator 클래스를 통해 검증이 수행됩니다.
  */
-@Documented // javadoc 등의 문서 생성 시 이 어노테이션 정보도 포함되도록 설정합니다.
-@Constraint(validatedBy = DateValidator.class) // [핵심] 이 어노테이션이 붙은 필드는 'DateValidator' 클래스가 검증 로직을 수행한다고 연결합니다.
-@Target({ElementType.FIELD}) // 이 어노테이션은 멤버 변수(Field) 위에만 붙일 수 있습니다.
-@Retention(RetentionPolicy.RUNTIME) // 컴파일 이후 런타임(실행) 시점까지 이 어노테이션 정보가 유지되어야 리플렉션 등을 통해 검증이 가능합니다.
+@Documented
+@Constraint(validatedBy = DateValidator.class) // 실제 검증 로직을 담당할 클래스(DateValidator)를 지정합니다.
+@Target({ElementType.FIELD}) // 이 어노테이션은 필드(멤버 변수)에만 적용할 수 있습니다.
+@Retention(RetentionPolicy.RUNTIME) // 런타임까지 어노테이션 정보가 유지되어 리플렉션 등을 통해 검증이 가능하게 합니다.
 public @interface ValiDate {
 
-    /**
-     * [기본 에러 메시지]
-     * 유효성 검사에 실패했을 때 출력될 기본 메시지입니다.
-     * 사용하는 쪽에서 message="..." 로 덮어씌울 수 있습니다.
-     */
+    // 유효성 검증 실패 시 반환할 기본 에러 메시지입니다.
     String message() default "생년월일은 과거 날짜여야 하며, 올바른 형식(YYYY-MM-DD)이어야 합니다.";
 
-    /**
-     * [그룹 설정]
-     * 특정 상황(예: 등록 시, 수정 시)에 따라 검증 그룹을 나눌 때 사용합니다.
-     * (현재는 기본값인 빈 배열 {} 사용)
-     */
+    // 상황별 유효성 검증 그룹(Groups)을 지정할 때 사용합니다. (기본값은 빈 배열)
     Class<?>[] groups() default {};
 
-    /**
-     * [페이로드 설정]
-     * 심각도(Severity) 등 클라이언트에게 전달할 추가적인 메타데이터를 정의할 때 사용합니다.
-     * (보통 잘 사용하지 않으며, 규약상 필수적으로 포함해야 하는 필드입니다.)
-     */
+    // 심각도 등 추가적인 메타데이터(Payload)를 전달할 때 사용합니다. (기본값은 빈 배열)
     Class<? extends Payload>[] payload() default {};
 }

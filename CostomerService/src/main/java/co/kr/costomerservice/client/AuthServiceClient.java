@@ -9,6 +9,3 @@ public interface AuthServiceClient {
     @GetMapping("/auth/role")
     String getUserRole(@RequestParam("usersIdx") Long usersIdx);
 }
-
-
-

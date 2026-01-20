@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -57,8 +58,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional
     public InquiryDetailResponse addInquiry(Long userId, InquiryUpsertRequest request){
-
-
         // 2. 새로운 entity 객체 생성
         CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
                 .code(UUID.randomUUID().toString())
@@ -101,7 +100,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional(readOnly = true)
     public InquiryDetailResponse getInquiryDetail(Long userId, String inquiryCode){
-
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
@@ -116,8 +114,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
             throw new IllegalArgumentException("해당 게시글은 문의가 아닙니다.");
         }
-
-
         List<CustomerServiceDetailEntity> inquiryDetailEntity = customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiryEntity);
 
         // 3. 반환
@@ -135,7 +131,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional
     public InquiryDetailResponse updateInquiry(Long userId,String inquiryCode, InquiryUpsertRequest request){
-
 
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
@@ -200,7 +195,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional
     public ResultResponse deleteInquiry(Long userId, String inquiryCode){
-
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));

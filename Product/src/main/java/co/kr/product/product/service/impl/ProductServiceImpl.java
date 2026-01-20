@@ -49,7 +49,7 @@ public class ProductServiceImpl implements ProductService {
                 ))
                 .toList();
 
-        return new ProductListResponse("SUCCESS", items);
+        return new ProductListResponse("ok", items);
     }
 
     /**
@@ -87,7 +87,7 @@ public class ProductServiceImpl implements ProductService {
                 .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
 
         return toProductDetail(
-                "success",
+                "ok",
                 productEntity,
                 options,
                 images

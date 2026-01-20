@@ -1,34 +1,32 @@
 package co.kr.user.DAO;
 
-import co.kr.user.model.entity.Users_Verifications;
+import co.kr.user.model.entity.UsersVerifications;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
 /**
- * [인증 정보 리포지토리]
- * 'Users_Verifications' 테이블에 대한 CRUD 작업을 담당합니다.
- * 이메일 발송 후 저장된 인증 코드를 다시 꺼내와서, 사용자가 입력한 코드와 비교할 때 사용됩니다.
+ * 사용자 인증 정보(UsersVerifications) 엔티티의 데이터베이스 접근을 담당하는 리포지토리 인터페이스입니다.
+ * 인증 코드 발송 내역 저장, 코드 검증을 위한 조회, 최신 인증 요청 확인 등의 기능을 제공합니다.
  */
-public interface UserVerificationsRepository extends JpaRepository<Users_Verifications, Long> {
+public interface UserVerificationsRepository extends JpaRepository<UsersVerifications, Long> {
+    /**
+     * 인증 코드(Code)를 기준으로 가장 최근에 생성된 인증 내역을 조회하는 메서드입니다.
+     * 사용자가 입력한 인증 코드가 유효한지(DB에 존재하는지) 검증할 때 사용됩니다.
+     * 혹시 모를 중복 코드 생성 가능성에 대비하여, 생성일 기준 내림차순(최신순)으로 정렬 후 첫 번째 항목을 가져옵니다.
+     *
+     * @param Code 사용자가 입력한 인증 코드
+     * @return 해당 코드를 가진 최신 인증 내역 (Optional)
+     */
+    Optional<UsersVerifications> findTopByCodeOrderByCreatedAtDesc(String Code);
 
     /**
-     * [인증 코드 조회 메서드]
-     * 사용자가 입력한 인증 코드(Code)를 기반으로 DB에서 데이터를 찾습니다.
-     * * * 메서드 이름 분석 (Spring Data JPA 규칙):
-     * 1. find: 조회 기능을 수행합니다.
-     * 2. Top: 여러 개의 결과가 있다면 그 중 맨 위의 1개만 가져옵니다. (Limit 1)
-     * 3. ByCode: WHERE Code = ? 조건절을 생성합니다.
-     * 4. OrderByCreatedAtDesc: 생성일(CreatedAt) 기준 내림차순(DESC) 정렬합니다.
-     * * * 해석:
-     * "해당 코드를 가진 데이터 중, 가장 최근에 생성된 1건을 찾아라."
-     * (이유: 랜덤 코드라 하더라도 만에 하나 중복될 수 있으므로, 가장 최신의 유효한 코드를 가져오기 위함입니다.)
-     * * @param Code 사용자가 입력한 인증 코드 문자열
-     * @return Optional<Users_Verifications> (결과가 없을 수도 있으므로 null 안전한 Optional 래퍼 사용)
+     * 특정 사용자(UsersIdx)의 가장 최근 인증 요청 내역을 조회하는 메서드입니다.
+     * '생성일' 기준 내림차순으로 정렬하여 가장 마지막에 요청된 건을 가져옵니다.
+     * 비밀번호 찾기나 회원 탈퇴 등의 과정에서, 해당 유저가 요청한 인증 건이 맞는지 확인하거나 인증 상태를 체크할 때 사용됩니다.
+     *
+     * @param userIdx 사용자 고유 식별자
+     * @return 해당 사용자의 최신 인증 내역 (Optional)
      */
-    Optional<Users_Verifications> findTopByCodeOrderByCreatedAtDesc(String Code);
-
-
-    Optional<Users_Verifications> findTopByUsersIdxOrderByCreatedAtDesc(Long usersIdx);
-
+    Optional<UsersVerifications> findTopByUsersIdxOrderByCreatedAtDesc(Long userIdx);
 }

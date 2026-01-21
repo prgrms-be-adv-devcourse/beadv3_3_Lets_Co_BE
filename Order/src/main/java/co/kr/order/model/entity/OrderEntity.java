@@ -1,5 +1,6 @@
 package co.kr.order.model.entity;
 
+import co.kr.order.model.vo.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,7 +37,7 @@ public class OrderEntity {
     private String orderCode;
 
     @Column(name = "Status", nullable = false)
-    private String status;
+    private OrderStatus status;
 
     @Column(name = "Items_Amount", precision = 19, scale = 2, nullable = false)
     private BigDecimal itemsAmount;
@@ -55,7 +56,7 @@ public class OrderEntity {
 
     @Builder
     public OrderEntity(Long userIdx, Long addressIdx, Long cardIdx, String orderCode,
-                       String status, BigDecimal itemsAmount, BigDecimal totalAmount, Boolean del) {
+                       OrderStatus status, BigDecimal itemsAmount, BigDecimal totalAmount, Boolean del) {
         this.userIdx = userIdx;
         this.addressIdx = addressIdx;
         this.cardIdx = cardIdx;
@@ -72,5 +73,9 @@ public class OrderEntity {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
     }
 }

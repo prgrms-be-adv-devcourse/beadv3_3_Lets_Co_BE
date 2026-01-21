@@ -5,7 +5,7 @@ import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
 import co.kr.costomerservice.common.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
-import co.kr.costomerservice.common.response.ResultResponse;
+import co.kr.costomerservice.common.dto.response.ResultResponse;
 import co.kr.costomerservice.common.vo.CustomerServiceStatus;
 import co.kr.costomerservice.common.vo.CustomerServiceType;
 import co.kr.costomerservice.inquiryAdmin.dto.InquiryDTO;

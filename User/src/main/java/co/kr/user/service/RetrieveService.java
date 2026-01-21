@@ -4,49 +4,55 @@ import co.kr.user.DAO.UserInformationRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UserVerificationsRepository;
 import co.kr.user.model.DTO.mail.EmailMessage;
-import co.kr.user.model.DTO.retrieve.RetrieveFirstDTO;
-import co.kr.user.model.DTO.retrieve.RetrieveSecondReq;
-import co.kr.user.model.DTO.retrieve.RetrieveThirdReq;
+import co.kr.user.model.DTO.retrieve.FindPWFirstStepReq;
+import co.kr.user.model.DTO.retrieve.FindPWSecondStepReq;
+import co.kr.user.model.DTO.retrieve.FindPWFirstStepDTO;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.Users_Information;
-import co.kr.user.model.entity.Users_Verifications;
+import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.util.BCryptUtil;
-import co.kr.user.util.EMailUtil;
-import co.kr.user.util.JWTUtil;
+import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-@Slf4j
+/**
+ * 회원 정보 찾기(Retrieve) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
+ * 비밀번호 재설정을 위한 인증번호 발송 및 검증, 비밀번호 변경 기능을 수행합니다.
+ */
 @Service
-@RequiredArgsConstructor // final 필드에 대한 생성자 자동 주입
+@RequiredArgsConstructor
 public class RetrieveService implements RetrieveServiceImpl{
-
     private final UserRepository userRepository;
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
 
-    private final RandomCodeUtil randomCodeUtil;
-    private final EMailUtil eMailUtil;
-    private final BCryptUtil bCryptUtil;
+    private final RandomCodeUtil randomCodeUtil; // 인증코드 생성 유틸리티
+    private final MailUtil mailUtil; // 이메일 발송 유틸리티
+    private final BCryptUtil bCryptUtil; // 비밀번호 암호화 유틸리티
 
+    /**
+     * 비밀번호 찾기 1단계: 인증번호 발송 메서드입니다.
+     * 사용자가 입력한 아이디(이메일)로 회원을 조회하고, 본인 인증을 위한 코드를 이메일로 전송합니다.
+     *
+     * @param findPWFirstStepReq 아이디 정보가 담긴 요청 객체
+     * @return FindPWFirstStepDTO (인증 요청 결과 및 만료 시간)
+     */
     @Override
     @Transactional
-    public RetrieveFirstDTO findPwFirst(String ID) {
-
-        Users users = userRepository.findByID(ID)
+    public FindPWFirstStepDTO findPwFirst(FindPWFirstStepReq findPWFirstStepReq) {
+        // 사용자 조회
+        Users users = userRepository.findByID(findPWFirstStepReq.getID())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
-        // 2. 탈퇴 여부 확인 (Del 컬럼 활용)
-        // (Users 엔티티에 getDel() 메서드가 있다고 가정)
+        // 계정 상태 검증
         if (users.getDel() == 1) {
             throw new IllegalStateException("탈퇴한 회원입니다.");
         }
@@ -54,19 +60,18 @@ public class RetrieveService implements RetrieveServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        log.info("user : {}", users.toString());
-
-        Users_Verifications usersVerifications = Users_Verifications.builder()
+        // 인증 코드 생성 및 DB 저장 (목적: RESET_PW)
+        UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(users.getUsersIdx())
-                .purPose(UsersVerificationsPurPose.RESET_PW) // 목적: 회원가입 인증
-                .code(randomCodeUtil.getCode()) // 랜덤 코드 생성 유틸 호출
-                .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효기간: 30분 뒤
-                .status(UsersVerificationsStatus.PENDING) // 상태: 대기 중
+                .purPose(UsersVerificationsPurPose.RESET_PW)
+                .code(randomCodeUtil.getCode())
+                .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효시간 30분
+                .status(UsersVerificationsStatus.PENDING)
                 .build();
 
-        Users_Verifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
-        log.info("Saved User Verifications : {}", savedUserVerifications.toString());
+        UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
 
+        // 이메일 템플릿 작성
         String passwordResetTemplate = """
             <div style='background-color: #f6f7f9; padding: 40px 20px; font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6;'>
                 <div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
@@ -105,36 +110,43 @@ public class RetrieveService implements RetrieveServiceImpl{
 
         String finalContent = passwordResetTemplate.formatted(savedUserVerifications.getCode());
 
-        // 메일 전송 객체 생성
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getID()) // 수신자: 가입한 이메일 ID
+                .to(users.getID())
                 .subject("[GutJJeu] 비밀번호 재설정 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
 
-        // [핵심 변경] 트랜잭션 커밋 후 실행 (After Commit)
+        // 트랜잭션 커밋 후 이메일 전송 (데이터 정합성 및 비동기 처리 고려)
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                log.info("Transaction Committed. Sending Email to {}", users.getID());
-                eMailUtil.sendEmail(emailMessage, true);
+                mailUtil.sendEmail(emailMessage, true);
             }
         });
 
-        RetrieveFirstDTO retrieveDTO = new RetrieveFirstDTO();
+        // 결과 반환
+        FindPWFirstStepDTO retrieveDTO = new FindPWFirstStepDTO();
         retrieveDTO.setID(users.getID());
         retrieveDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
         return retrieveDTO;
     }
 
+    /**
+     * 비밀번호 찾기 2단계: 인증 확인 및 비밀번호 변경 메서드입니다.
+     * 사용자가 입력한 인증 코드를 검증하고, 유효할 경우 비밀번호를 재설정합니다.
+     *
+     * @param findPWSecondStepReq 인증 코드 및 새 비밀번호 정보
+     * @return 처리 결과 메시지
+     */
     @Override
     @Transactional
-    public String findPwSecond(RetrieveSecondReq retrieveSecondReq) {
-
-        Users users = userRepository.findByID(retrieveSecondReq.getID())
+    public String findPwSecond(FindPWSecondStepReq findPWSecondStepReq) {
+        // 사용자 조회
+        Users users = userRepository.findByID(findPWSecondStepReq.getID())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
+        // 계정 상태 검증
         if (users.getDel() == 1) {
             throw new IllegalStateException("탈퇴한 회원입니다.");
         }
@@ -142,24 +154,20 @@ public class RetrieveService implements RetrieveServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        // 3. 해당 유저의 가장 최근 인증 내역 조회
-        Users_Verifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
+        // 최신 인증 내역 조회
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
-        log.info("verification : {}", verification.toString());
-
-        // [추가 검증] 조회해온 인증 내역이 '비밀번호 찾기(RESET_PW)'용인지 확인 필요
+        // 인증 내역 유효성 검사 (목적, 만료 시간, 코드 일치 여부)
         if (verification.getPurPose() != UsersVerificationsPurPose.RESET_PW) {
             throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
         }
 
-        // 4. 인증 시간 만료 여부 확인
         if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.");
         }
 
-        // 5. 인증 코드 일치 여부 확인
-        if (!verification.getCode().equals(retrieveSecondReq.getAuthCode())) {
+        if (!verification.getCode().equals(findPWSecondStepReq.getAuthCode())) {
             throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
         }
 
@@ -167,73 +175,22 @@ public class RetrieveService implements RetrieveServiceImpl{
             return "이미 인증 완료된 코드입니다.";
         }
 
-        // 6. 검증 성공 처리
-        verification.confirmVerification();
-
-        Users_Verifications usersVerifications = Users_Verifications.builder()
-                .usersIdx(users.getUsersIdx())
-                .purPose(UsersVerificationsPurPose.CHANGE_PW) // 목적: 회원가입 인증
-                .code(randomCodeUtil.getCode()) // 랜덤 코드 생성 유틸 호출
-                .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효기간: 30분 뒤
-                .status(UsersVerificationsStatus.PENDING) // 상태: 대기 중
-                .build();
-
-        Users_Verifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
-        log.info("Saved User Verifications : {}", savedUserVerifications.toString());
-
-        return savedUserVerifications.getCode();
-    }
-
-    @Override
-    @Transactional
-    public String findPwThird(RetrieveThirdReq retrieveThirdReq) {
-        Users users = userRepository.findByID(retrieveThirdReq.getID())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
-
-        Users_Verifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
-                .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
-
-        log.info("verification : {}", verification.toString());
-
-        // 4. 인증 시간 만료 여부 확인
-        if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.");
-        }
-
-        // 5. 인증 코드 일치 여부 확인
-        // (retrieveSecondReq에 사용자가 입력한 인증번호 필드가 getCode() 혹은 getCertificationNumber()라고 가정)
-        if (!verification.getCode().equals(retrieveThirdReq.getAuthCode())) {
-            throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
-        }
-
-        if (verification.getStatus() == UsersVerificationsStatus.VERIFIED) {
-            throw new IllegalArgumentException("이미 인증 완료된 코드입니다.");
-        }
-
-        if (verification.getPurPose() != UsersVerificationsPurPose.CHANGE_PW) {
-            throw new IllegalArgumentException("올바르지 않은 인증 요청입니다. (비밀번호 변경 단계가 아님)");
-        }
-
-        verification.confirmVerification();
-
-        if (!retrieveThirdReq.getPassword().equals(retrieveThirdReq.getPasswordCheck())) {
+        // 비밀번호 확인 검증
+        if (!findPWSecondStepReq.getNewPW().equals(findPWSecondStepReq.getNewPWCheck())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        Users_Information usersInformation = userInformationRepository.findById(users.getUsersIdx())
-                        .orElseThrow();
+        // 기존 비밀번호 백업 (UsersInformation 테이블)
+        UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
+                .orElseThrow();
+        usersInformation.lastPassword(users.getPW());
 
-        usersInformation.last_Password(users.getPW());
+        // 새 비밀번호 암호화 및 저장
+        users.setPW(bCryptUtil.encode(findPWSecondStepReq.getNewPW()));
 
-        users.setPW(bCryptUtil.setPassword(retrieveThirdReq.getPassword()));
+        // 인증 상태 완료로 변경
+        verification.confirmVerification();
 
-        return "비밀번호가 변경되었습니다.";
+        return "비밀번호 재설정이 정상 처리되었습니다.";
     }
 }

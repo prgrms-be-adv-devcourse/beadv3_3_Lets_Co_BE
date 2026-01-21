@@ -4,7 +4,7 @@ import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
 import co.kr.costomerservice.common.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
-import co.kr.costomerservice.common.response.ResultResponse;
+import co.kr.costomerservice.common.dto.response.ResultResponse;
 import co.kr.costomerservice.common.vo.CustomerServiceStatus;
 import co.kr.costomerservice.common.vo.CustomerServiceType;
 import co.kr.costomerservice.inquiryAdmin.dto.InquiryDTO;
@@ -58,9 +58,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional
     public InquiryDetailResponse addInquiry(Long userId, InquiryUpsertRequest request){
-
-        // TODO: 본인확인!!!!!!
-
         // 2. 새로운 entity 객체 생성
         CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
                 .code(UUID.randomUUID().toString())
@@ -103,24 +100,20 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional(readOnly = true)
     public InquiryDetailResponse getInquiryDetail(Long userId, String inquiryCode){
-        // TODO 본인확인 필수!!!!!!!!!!!!!
-        // 임시. 글 작성한 본인이 본인 글에 접속 할 경우
-        boolean isOwner = true;
-
-        // 2. 엔티티 조회'및 유효성 검사
+        // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
-        // 2.1 해당 글이 비밀글이고, 작성자가 아닌 경우
-        if(!Objects.equals(inquiryEntity.getUsersIdx(), userId) && inquiryEntity.getIsPrivate() == true){
+        // 2. 유효성 검사
+        // 2.1 작성자인가 확인 후 비밀글인지 확인
+        boolean isOwner = Objects.equals(inquiryEntity.getUsersIdx(), userId);
+        if(!isOwner && inquiryEntity.getIsPrivate() == true){
             throw new IllegalArgumentException("해당 문의는 비밀 글 입니다.");
         }
+
         // 2.2 타입이 문의가 아닌경우
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
             throw new IllegalArgumentException("해당 게시글은 문의가 아닙니다.");
         }
-
-
-
         List<CustomerServiceDetailEntity> inquiryDetailEntity = customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiryEntity);
 
         // 3. 반환
@@ -138,22 +131,24 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional
     public InquiryDetailResponse updateInquiry(Long userId,String inquiryCode, InquiryUpsertRequest request){
-        // TODO 본인확인 필수!!!!!!!!!!!!!
-        // 임시. 글 작성한 본인이 본인 글에 접속 할 경우
-        boolean isOwner = true;
 
-        // 2. 엔티티 조회'및 유효성 검사
+        // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
 
+        // 2. 유효성 검사
+        // 2.1 작성자인가?
+        boolean isOwner = Objects.equals(inquiryEntity.getUsersIdx(), userId);
+        if(!isOwner){
+            throw new IllegalArgumentException("해당 문의의 작성자가 아닙니다.");
+        }
+
+        // 2.2 타입이 문의 인가?
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
             throw new IllegalArgumentException("해당 게시글은 문의가 아닙니다.");
         }
 
-        if(!Objects.equals(inquiryEntity.getUsersIdx(), userId)){
-            throw new IllegalArgumentException("해당 문의의 작성자가 아닙니다.");
-        }
-        // 2.1 관리자가 답변 전이라면 수정 가능
+        // 2.3 관리자가 답변 전이라면 수정 가능
         if (inquiryEntity.getStatus() != CustomerServiceStatus.WAITING){
             throw new IllegalArgumentException("더 이상 수정이 불가능 합니다.");
         }
@@ -170,13 +165,13 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         List<CustomerServiceDetailEntity> inquiryDetailEntity = customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiryEntity);
 
-        // 찾은 DetailEntityList 중 수정 할 Entity를 code로 찾기
+        // 3. 찾은 DetailEntityList 중 수정 할 Entity를 code로 찾기
         CustomerServiceDetailEntity willUpdate = inquiryDetailEntity.stream()
                 .filter(detail -> inquiryCode.equals(detail.getDetailCode()))
                 .findFirst()  // 첫 번째 발견된 것 가져오기
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 내용입니다."));
 
-        // 3. request 기반 update 진행
+        // 4. request 기반 update 진행
         inquiryEntity.update(
                 request.category(),
                 inquiryEntity.getStatus(), // status는 유저가 바꿀것이 아님.
@@ -187,7 +182,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         willUpdate.update(request.content());
 
-        // 4. 반환
+        // 5. 반환
         return InquiryMapper.toDetailResponse(
                 "success",
                 isOwner,
@@ -200,13 +195,11 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Override
     @Transactional
     public ResultResponse deleteInquiry(Long userId, String inquiryCode){
-        // TODO 본인확인 필수!!!!!!!!!!!!!
-
-
-        // 2. 엔티티 조회'및 유효성 검사
+        // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
 
+        // 2. 유효성 검사
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
             throw new IllegalArgumentException("해당 게시글은 문의가 아닙니다.");
         }

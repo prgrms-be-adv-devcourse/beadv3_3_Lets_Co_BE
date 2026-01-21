@@ -13,8 +13,12 @@ public record QnaProductForSellerResponse(
         Long viewCount,
         LocalDateTime createdAt,
 
-        String userName
+        String userName,
 
-        // TODO: 상품 정보 추가!!!
+        // 간단한 상품 정보
+        String productCode,
+        String name,
+
+        String imageUrl
 ) {
 }

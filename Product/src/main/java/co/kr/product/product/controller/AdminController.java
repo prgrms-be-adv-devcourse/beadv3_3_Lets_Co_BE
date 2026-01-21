@@ -8,6 +8,7 @@ import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.dto.response.ResultResponse;
 import co.kr.product.product.service.ProductManagerService;
 import co.kr.product.product.service.ProductSearchService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -42,7 +43,7 @@ public class AdminController {
     @GetMapping("/products")
     public ResponseEntity<ProductListResponse> getProductList(
             @PageableDefault Pageable pageable,
-            @ModelAttribute ProductListRequest requests
+            @ModelAttribute @Valid ProductListRequest requests
             ){
 
 
@@ -78,7 +79,7 @@ public class AdminController {
     public ResponseEntity<ProductDetailResponse> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
 
-            @RequestBody UpsertProductRequest request,
+            @RequestBody @Valid UpsertProductRequest request,
             @PathVariable("code") String productCode){
 
         ProductDetailResponse result = productManagerService.updateProduct(usersIdx, productCode, request);

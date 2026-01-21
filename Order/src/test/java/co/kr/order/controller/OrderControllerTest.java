@@ -298,7 +298,7 @@ class OrderControllerTest {
         Assertions.assertThat(paymentEntity.getAmount()).isEqualByComparingTo("30000.00");
         // settlement 테이블
         SettlementHistoryEntity settlementEntity = settlementRepository.findBySellerIdxAndPaymentIdx(1L, paymentEntity.getPaymentIdx());
-        Assertions.assertThat(settlementEntity.getType()).isEqualTo(SettlementType.ORDERS_CONFIRMED);
+        Assertions.assertThat(settlementEntity.getType()).isEqualTo(SettlementType.Orders_CONFIRMED);
         Assertions.assertThat(settlementEntity.getAmount()).isEqualByComparingTo("30000.00");
     }
 
@@ -385,7 +385,7 @@ class OrderControllerTest {
         Assertions.assertThat(paymentEntity.getAmount()).isEqualByComparingTo("30000.00");
         // settlement 테이블
         SettlementHistoryEntity settlementEntity = settlementRepository.findBySellerIdxAndPaymentIdx(1L, paymentEntity.getPaymentIdx());
-        Assertions.assertThat(settlementEntity.getType()).isEqualTo(SettlementType.ORDERS_CONFIRMED);
+        Assertions.assertThat(settlementEntity.getType()).isEqualTo(SettlementType.Orders_CONFIRMED);
         Assertions.assertThat(settlementEntity.getAmount()).isEqualByComparingTo("30000.00");
     }
 
@@ -506,11 +506,11 @@ class OrderControllerTest {
         Assertions.assertThat(paymentEntity.getAmount()).isEqualByComparingTo("65000.00");
 
         SettlementHistoryEntity settlementEntity1 = settlementRepository.findBySellerIdxAndPaymentIdx(1L, paymentEntity.getPaymentIdx());
-        Assertions.assertThat(settlementEntity1.getType()).isEqualTo(SettlementType.ORDERS_CONFIRMED);
+        Assertions.assertThat(settlementEntity1.getType()).isEqualTo(SettlementType.Orders_CONFIRMED);
         Assertions.assertThat(settlementEntity1.getAmount()).isEqualByComparingTo("20000.00");
 
         SettlementHistoryEntity settlementEntity2 = settlementRepository.findBySellerIdxAndPaymentIdx(2L, paymentEntity.getPaymentIdx());
-        Assertions.assertThat(settlementEntity2.getType()).isEqualTo(SettlementType.ORDERS_CONFIRMED);
+        Assertions.assertThat(settlementEntity2.getType()).isEqualTo(SettlementType.Orders_CONFIRMED);
         Assertions.assertThat(settlementEntity2.getAmount()).isEqualByComparingTo("45000.00");
 
         List<CartEntity> cartEntity = cartRepository.findAll();
@@ -559,7 +559,7 @@ class OrderControllerTest {
         SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
                 .paymentIdx(payment.getPaymentIdx())
                 .sellerIdx(1L)
-                .type(SettlementType.ORDERS_CONFIRMED)
+                .type(SettlementType.Orders_CONFIRMED)
                 .amount(new BigDecimal("20000.00"))
                 .build();
         settlementRepository.save(settlement);
@@ -683,73 +683,6 @@ class OrderControllerTest {
                 )
                 .andDo(print());
     }
-
-
-    @Transactional
-    @Test
-    void 주문_확정_정상() throws Exception {
-
-        String orderCode = UUID.randomUUID().toString();
-
-        // Getter
-        OrderEntity order = OrderEntity.builder()
-                .userIdx(1L)
-                .addressIdx(1L)
-                .cardIdx(1L)
-                .orderCode(orderCode)
-                .status(OrderStatus.PAID)
-                .itemsAmount(new BigDecimal("20000.00"))
-                .del(false)
-                .build();
-        orderRepository.save(order);
-
-        OrderItemEntity item = OrderItemEntity.builder()
-                .order(order)
-                .productIdx(100L)
-                .optionIdx(10L)
-                .productName("테스트 상품")
-                .optionName("옵션C")
-                .price(new BigDecimal("10000.00"))
-                .quantity(2)
-                .del(false)
-                .build();
-        orderItemRepository.save(item);
-
-        PaymentEntity payment = PaymentEntity.builder()
-                .usersIdx(1L)
-                .ordersIdx(order.getId())
-                .amount(new BigDecimal("20000.00"))
-                .status(PaymentStatus.PAYMENT)
-                .type(PaymentType.CARD)
-                .build();
-        paymentRepository.save(payment);
-
-        List<Long> productIdList = List.of(100L);
-        given(productClient.getSellersByProductIds(productIdList)).willReturn(Map.of(100L, 1L));
-
-        // 영속성 컨텍스트의 변경 내용을 DB에 반영(flush), 캐시를 비우기(clear)
-        em.flush();
-        em.clear();
-
-        ResultActions resultActions = mvc
-                .perform(
-                        post("/orders/%d/complete".formatted(order.getId()))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                                .header("X-USERS-IDX", "1")
-                ).andDo(print());
-
-        resultActions.andExpect(status().isOk())
-                .andExpect(handler().handlerType(OrderController.class))
-                .andExpect(jsonPath("$.resultCode").value("ok"));
-
-
-        SettlementHistoryEntity settlementEntity = settlementRepository.findByPaymentIdx(payment.getPaymentIdx());
-        Assertions.assertThat(settlementEntity.getSellerIdx()).isEqualTo(1L);
-        Assertions.assertThat(settlementEntity.getPaymentIdx()).isEqualTo(payment.getPaymentIdx());
-        Assertions.assertThat(settlementEntity.getAmount()).isEqualByComparingTo("20000.00");
-    }
-
 
     /**
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ

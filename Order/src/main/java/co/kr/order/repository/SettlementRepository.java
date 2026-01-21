@@ -27,7 +27,7 @@ public interface SettlementRepository extends JpaRepository<SettlementHistoryEnt
             UPDATE SettlementHistoryEntity s
             SET s.type = :newType
             WHERE s.sellerIdx = :sellerIdx
-              AND s.type = co.kr.order.model.vo.SettlementType.ORDERS_CONFIRMED
+              AND s.type = co.kr.order.model.vo.SettlementType.Orders_CONFIRMED
               AND s.del = false
               AND s.createdAt >= :startDate
               AND s.createdAt <= :endDate

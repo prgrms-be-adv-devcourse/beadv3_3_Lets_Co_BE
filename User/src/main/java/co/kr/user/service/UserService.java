@@ -3,6 +3,7 @@ package co.kr.user.service;
 import co.kr.user.DAO.UserInformationRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UserVerificationsRepository;
+import co.kr.user.DAO.UsersLoginRepository;
 import co.kr.user.model.DTO.mail.EmailMessage;
 import co.kr.user.model.DTO.my.UserAmendReq;
 import co.kr.user.model.DTO.my.UserDeleteDTO;
@@ -10,6 +11,7 @@ import co.kr.user.model.DTO.my.UserProfileDTO;
 import co.kr.user.model.DTO.my.UserDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
@@ -34,6 +36,7 @@ public class UserService implements UserServiceImpl {
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
+    private final UsersLoginRepository usersLoginRepository;
 
     private final AESUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸리티
@@ -219,7 +222,7 @@ public class UserService implements UserServiceImpl {
         }
 
         // 최신 인증 요청 조회
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 인증 목적 및 만료 시간, 코드 일치 여부 검증
@@ -244,6 +247,15 @@ public class UserService implements UserServiceImpl {
 
         // 회원 탈퇴 처리 (Del = 1)
         users.del();
+
+        // 토큰 폐기 처리
+        UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((users.getUsersIdx()));
+
+        if (usersLogin != null) {
+            if (usersLogin.getRevokedAt() == null && usersLogin.getRevokeReason() == null) {
+                usersLogin.lockToken(LocalDateTime.now(), "LOCKED");
+            }
+        }
 
         return "회원 탈퇴가 정상 처리되었습니다.";
     }

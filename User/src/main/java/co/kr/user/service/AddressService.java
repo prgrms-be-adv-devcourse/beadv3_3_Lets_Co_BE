@@ -4,7 +4,6 @@ import co.kr.user.DAO.UserAddressRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.model.DTO.address.AddressListDTO;
 import co.kr.user.model.DTO.address.AddressRequestReq;
-import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.util.AESUtil;
@@ -12,7 +11,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -184,7 +182,7 @@ public class AddressService implements AddressServiceImpl{
         }
 
         // 수정할 주소 조회
-        UsersAddress usersAddress = userAddressRepository.findByAddressCode(addressRequestReq.getAddressCode())
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressRequestReq.getAddressCode(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
         // 소유권 검증
@@ -268,7 +266,7 @@ public class AddressService implements AddressServiceImpl{
         }
 
         // 삭제할 주소 조회
-        UsersAddress usersAddress = userAddressRepository.findByAddressCode(addressCode)
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressCode, 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
         // 소유권 검증

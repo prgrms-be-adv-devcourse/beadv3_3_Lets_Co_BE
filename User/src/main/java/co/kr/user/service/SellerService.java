@@ -173,7 +173,7 @@ public class SellerService implements SellerServiceImpl {
         }
 
         // 최신 인증 내역 조회
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 요청자 본인 확인
@@ -202,7 +202,7 @@ public class SellerService implements SellerServiceImpl {
         verification.confirmVerification();
 
         // 판매자 정보 조회 및 승인 처리
-        Seller seller = sellerRepository.findBySellerIdx(users.getUsersIdx())
+        Seller seller = sellerRepository.findBySellerIdxAndDel(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
         // 사용자 권한을 SELLER로 변경

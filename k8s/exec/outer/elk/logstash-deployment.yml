@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: logstash
+
+spec:
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: logstash
+
+  template:
+
+    metadata:
+      labels:
+        app: logstash
+
+    spec:
+      containers:
+        - name: logstash
+          image: lujol/logstash:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5044
+          
+          env:
+            - name: JDBC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: JDBC_URL
+            
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_USER
+            
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_PASSWORD
+            
+            - name: ELASTIC_URL
+              valueFrom: 
+                secretKeyRef: 
+                  name: db-secret
+                  key: ELASTIC_URL
+
+          # 하나의 포드에 여러개의 컨테이너? 존재 가능
+          # 지금은 하나밖에 없지만 추가 시 더 선언해서 사용
+          # 후에 이미지 가져오는 파아프라인도 추가 에정
+          volumeMounts:
+            - name: logstash-config
+              mountPath: /usr/share/logstash/pipeline
+
+      volumes:
+        - name: logstash-config
+          configMap:
+            name: logstash-configmap
+

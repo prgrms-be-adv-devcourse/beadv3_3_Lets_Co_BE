@@ -1,15 +1,11 @@
 # Compiled class file
 *.class
-
 # Log file
 *.log
-
 # BlueJ files
 *.ctxt
-
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
-
 # Package Files #
 *.jar
 *.war
@@ -18,22 +14,18 @@
 *.zip
 *.tar.gz
 *.rar
-
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
-
 ### Build Tools & Output (Gradle) ###
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-
 # Maven (혹시 사용할 경우를 대비)
 target/
 !.mvn/wrapper/maven-wrapper.jar
-
 ### IDE Settings (개발 툴 설정) ###
 # STS / Eclipse
 .apt_generated
@@ -46,7 +38,6 @@ target/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
-
 # IntelliJ IDEA
 .idea
 *.iws
@@ -56,23 +47,19 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 *.run.xml
-
 # NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-
 # VS Code
 .vscode/
-
 ### Security & Sensitive Data (중요! 보안 파일) ###
 # 환경변수 파일
 .env
 .env.local
 .env.*
-
 # Spring Boot 설정 파일 (비밀번호/키가 들어있는 경우)
 # 보통 application.yml은 올리고, 비밀정보가 담긴 파일만 무시합니다.
 # 본인이 사용하는 파일명에 맞춰 수정하세요.
@@ -80,10 +67,10 @@ application-secret.yml
 application-prod.yml
 application-real.yml
 application-oauth.yml
+application-local.yml
 application.yml
 **/application.yml
 config/application-*.yml
-
 # 인증서 및 키 파일
 *.pem
 *.pub
@@ -91,7 +78,6 @@ config/application-*.yml
 *.p12
 *.jks
 *.keystore
-
 ### Logs & Crash Reports (로그 파일) ###
 *.log
 logs/
@@ -100,23 +86,32 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 hs_err_pid*
-
 ### OS System Files (운영체제 시스템 파일) ###
 # Mac
 .DS_Store
 .AppleDouble
 .LSOverride
-
 # Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-
 ### Test & Coverage (테스트 결과) ###
 jacoco.exec
 *.exec
 test-output/
 reports/
-ERD 사진.png
+
+# ERD 사진.png
 /Order/src/main/resources/templates/payments
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+CostomerService/src/main/resources/application_local.yml
+CostomerService/gradle/wrapper/gradle-wrapper.jar
+/elk/volumes
+Product/src/main/resources/application-local.yml
+Product/src/main/resources/application.yml
+elk/ls/pipeline/logstash-products.conf
+elk/docker-compose.yml

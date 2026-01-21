@@ -79,7 +79,7 @@ public class SettlementServiceImpl implements SettlementService {
         for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
             SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
-                    .type(SettlementType.ORDERS_CONFIRMED)
+                    .type(SettlementType.Orders_CONFIRMED)
                     .paymentIdx(payment.getPaymentIdx())
                     .amount(entry.getValue())
                     .build();
@@ -97,7 +97,7 @@ public class SettlementServiceImpl implements SettlementService {
      * 1. 주문 정보 조회
      * 2. OrderItem에서 상품 ID 목록 추출
      * 3. Product 서비스에서 상품별 판매자 정보 조회
-     * 4. 판매자별 기존 정산 레코드(ORDERS_CONFIRMED) 조회
+     * 4. 판매자별 기존 정산 레코드(Orders_CONFIRMED) 조회
      * 5. 급 완료가 아니면 CANCEL_ADJUST로 상태 변경
      */
     @Override
@@ -130,7 +130,7 @@ public class SettlementServiceImpl implements SettlementService {
                 // SETTLE_PAYOUT 환불 시 에러 로그 및 수동 처리 필요
                 if (settlementEntity.getType() == SettlementType.SETTLE_PAYOUT) {
                     log.error("========================================");
-                    log.error("시스템 에러: PAYOUT 건에 대한 환불 요청 발생!");
+                    log.error("에러: PAYOUT 건에 대한 환불 요청 발생!");
                     log.error("확인 필요 - sellerIdx: {}, paymentIdx: {}, amount: {}",
                             sellerIdx, paymentIdx, settlementEntity.getAmount());
                     log.error("========================================");

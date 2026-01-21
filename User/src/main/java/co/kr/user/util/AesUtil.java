@@ -15,7 +15,7 @@ import java.util.Base64;
  * application.properties(또는 yml)에 설정된 비밀키(Secret Key)를 기반으로 동작합니다.
  */
 @Component // 스프링 빈으로 등록하여 다른 컴포넌트에서 주입받아 사용할 수 있게 합니다.
-public class AESUtil {
+public class AesUtil {
 
     // application.yml 파일에서 'aes.secret-key' 프로퍼티 값을 읽어옵니다.
     @Value("${custom.security.ase256.key}")

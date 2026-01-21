@@ -1,8 +1,12 @@
 package co.kr.product.product.dto.response;
 
+import java.util.List;
+
 public record ProductCheckStockResponse(
         String returnCode,
 
-        boolean isInStock
+        Integer productStock,
+
+        List<OptionCheckStockResponse> optionStocks
 ) {
 }

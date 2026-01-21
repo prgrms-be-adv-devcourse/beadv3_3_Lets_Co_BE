@@ -9,7 +9,7 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
-import co.kr.user.util.AESUtil;
+import co.kr.user.util.AesUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class AdminService implements AdminServiceImpl{
     private final UserInformationRepository userInformationRepository;
     private final UsersLoginRepository usersLoginRepository;
 
-    private final AESUtil aesUtil; // 개인정보 복호화 유틸리티
+    private final AesUtil aesUtil; // 개인정보 복호화 유틸리티
 
     /**
      * 전체 회원 목록을 조회하는 메서드입니다.

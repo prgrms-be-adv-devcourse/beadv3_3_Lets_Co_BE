@@ -1,16 +1,21 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
+import co.kr.product.product.dto.request.DeductStockRequest;
+import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
 import co.kr.product.product.dto.response.ProductCheckStockResponse;
 import co.kr.product.product.dto.response.ProductDetailResponse;
+import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
-import jakarta.ws.rs.QueryParam;
+import co.kr.product.product.service.impl.ProductServiceImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,11 +59,41 @@ public class ProductController {
      * @param productsCode
      * 상품 재고 여부 확인 후 boolean 반환
      */
-    @GetMapping("/{productsCode}/check_stock")
+    @GetMapping("/{productsCode}/checkStock")
     public ProductCheckStockResponse getCheckStock(
             @PathVariable String productsCode){
 
         return productService.getCheckStock(productsCode);
+    }
+
+    @PostMapping("deductStock")
+    public void deductStock(
+            @RequestBody @Valid DeductStockRequest deductStockRequest
+    ) {
+        productService.deductStock(deductStockRequest);
+    }
+
+    @PostMapping("deductStocks")
+    public void deductStockList(
+            @RequestBody @Valid List<DeductStockRequest> deductStockRequest
+    ) {
+        productService.deductStocks(deductStockRequest);
+    }
+
+    @GetMapping("/{productsIdx}/{optionIdx}")
+    public ProductInfoToOrderResponse getProductInfo(
+            @PathVariable("productsIdx") Long productsIdx,
+            @PathVariable("optionIdx") Long optionIdx
+    ) {
+        return productService.getProductInfo(productsIdx, optionIdx);
+    }
+
+
+    @GetMapping("/bulk")
+    public List<ProductInfoToOrderResponse> getProductInfoList(
+            @RequestBody @Valid List<ProductInfoToOrderRequest> requests
+    ) {
+        return productService.getProductInfoList(requests);
     }
 
 }

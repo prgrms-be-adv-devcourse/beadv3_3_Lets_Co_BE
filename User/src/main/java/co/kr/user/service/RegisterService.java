@@ -32,7 +32,7 @@ public class RegisterService implements RegisterServiceImpl {
     private final UserVerificationsRepository userVerificationsRepository;
 
     private final BCryptUtil bCryptUtil; // 비밀번호 해싱(단방향 암호화)
-    private final AESUtil aesUtil; // 개인정보 양방향 암호화
+    private final AesUtil aesUtil; // 개인정보 양방향 암호화
     private final RandomCodeUtil randomCodeUtil; // 인증코드 생성
     private final MailUtil mailUtil; // 이메일 발송
 

@@ -6,7 +6,7 @@ import co.kr.user.model.DTO.address.AddressListDTO;
 import co.kr.user.model.DTO.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
-import co.kr.user.util.AESUtil;
+import co.kr.user.util.AesUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class AddressService implements AddressServiceImpl{
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
 
-    private final AESUtil aesUtil; // 개인정보 양방향 암호화 유틸리티
+    private final AesUtil aesUtil; // 개인정보 양방향 암호화 유틸리티
 
     /**
      * 사용자의 기본 배송지 식별자(PK)를 조회하는 메서드입니다.

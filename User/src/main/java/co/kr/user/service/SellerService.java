@@ -14,7 +14,7 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
-import co.kr.user.util.AESUtil;
+import co.kr.user.util.AesUtil;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
@@ -41,7 +41,7 @@ public class SellerService implements SellerServiceImpl {
 
     private final MailUtil mailUtil; // 이메일 발송 유틸
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸
-    private final AESUtil aesUtil; // 양방향 암호화 (이름 복호화용)
+    private final AesUtil aesUtil; // 양방향 암호화 (이름 복호화용)
     private final BCryptUtil bCryptUtil; // 단방향 암호화 (계좌 토큰용)
 
     /**

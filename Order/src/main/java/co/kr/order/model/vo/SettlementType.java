@@ -6,7 +6,7 @@ package co.kr.order.model.vo;
  * - REFUND: 환불 차감 (환불 시 발생)
  */
 public enum SettlementType {
-    ORDERS_CONFIRMED,
+    Orders_CONFIRMED,
     SETTLE_PAYOUT,
     CANCEL_ADJUST
 }

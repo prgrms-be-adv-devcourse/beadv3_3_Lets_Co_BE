@@ -16,9 +16,10 @@ public interface UserVerificationsRepository extends JpaRepository<UsersVerifica
      * 혹시 모를 중복 코드 생성 가능성에 대비하여, 생성일 기준 내림차순(최신순)으로 정렬 후 첫 번째 항목을 가져옵니다.
      *
      * @param Code 사용자가 입력한 인증 코드
+     * @param del
      * @return 해당 코드를 가진 최신 인증 내역 (Optional)
      */
-    Optional<UsersVerifications> findTopByCodeOrderByCreatedAtDesc(String Code);
+    Optional<UsersVerifications> findTopByCodeAndDelOrderByCreatedAtDesc(String Code, int del);
 
     /**
      * 특정 사용자(UsersIdx)의 가장 최근 인증 요청 내역을 조회하는 메서드입니다.
@@ -26,7 +27,8 @@ public interface UserVerificationsRepository extends JpaRepository<UsersVerifica
      * 비밀번호 찾기나 회원 탈퇴 등의 과정에서, 해당 유저가 요청한 인증 건이 맞는지 확인하거나 인증 상태를 체크할 때 사용됩니다.
      *
      * @param userIdx 사용자 고유 식별자
+     * @param del
      * @return 해당 사용자의 최신 인증 내역 (Optional)
      */
-    Optional<UsersVerifications> findTopByUsersIdxOrderByCreatedAtDesc(Long userIdx);
+    Optional<UsersVerifications> findTopByUsersIdxAndDelOrderByCreatedAtDesc(Long userIdx, int del);
 }

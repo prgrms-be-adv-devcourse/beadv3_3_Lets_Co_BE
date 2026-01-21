@@ -15,7 +15,8 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
      * Seller 엔티티는 Users 엔티티와 식별자를 공유하므로, UsersIdx 값을 그대로 사용하여 조회할 수 있습니다.
      *
      * @param sellerIdx 조회할 판매자의 고유 식별자 (UsersIdx와 동일)
+     * @param del
      * @return 조회된 판매자 정보 객체 (Optional)
      */
-    Optional<Seller> findBySellerIdx(Long sellerIdx);
+    Optional<Seller> findBySellerIdxAndDel(Long sellerIdx, int del);
 }

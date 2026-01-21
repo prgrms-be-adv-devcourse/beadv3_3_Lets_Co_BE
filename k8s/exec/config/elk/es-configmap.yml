@@ -1,0 +1,15 @@
+apiVersion: v1
+
+kind: ConfigMap
+
+metadata:
+  name: elasticsearch-configmap
+
+data:
+  node.name: "es-01"
+  cluster.name: "search-product"
+  discovery.type: "single-node"
+  xpack.security.enabled: "false"
+  xpack.security.http.ssl.enabled: "false"
+  ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+

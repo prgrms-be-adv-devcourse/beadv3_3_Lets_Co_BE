@@ -155,7 +155,7 @@ public class RetrieveService implements RetrieveServiceImpl{
         }
 
         // 최신 인증 내역 조회
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(users.getUsersIdx())
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 인증 내역 유효성 검사 (목적, 만료 시간, 코드 일치 여부)

@@ -49,7 +49,7 @@ public class ProductServiceImpl implements ProductService {
                 ))
                 .toList();
 
-        return new ProductListResponse("ok", items);
+        return new ProductListResponse("SUCCESS", items);
     }
 
     /**
@@ -87,7 +87,7 @@ public class ProductServiceImpl implements ProductService {
                 .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
 
         return toProductDetail(
-                "ok",
+                "success",
                 productEntity,
                 options,
                 images
@@ -103,25 +103,41 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public ProductCheckStockResponse getCheckStock(String productsCode) {
+
+        // TODO : option id or code 를 받아오는것이 훨 좋음
+
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
 
+        List<ProductOptionEntity> options = productOptionRepository.findByProductAndDelFalse(product);
+
+        List<OptionCheckStockResponse> optionStockResponses = options.stream().map(
+                option -> new OptionCheckStockResponse(
+                        option.getOptionCode(),
+                        option.getStock())
+
+        ).toList();
+
         return new ProductCheckStockResponse(
-                "ok",
-                product.getStock()
+                "Success",
+                product.getStock(),
+                optionStockResponses
         );
 
     }
 
     @Override
     @Transactional
-    public void deductStock(DeductStockRequest deductStockRequest){
+    public void deductStock(DeductStockRequest request){
 
         // 쿼리문에서 남은 개수 확인 및 수정까지
         // kafka를 쓰더라도 컨슈머의 개수를 늘리면 동시 접속 문제가 생길 수도 있음.
         // 최대한 수정 과정을 짧게 처리하기위해 쿼리문 하나로 해결해보고자 함
-        productOptionRepository.decreaseStock(deductStockRequest.optionIdx(),deductStockRequest.quantity());
+        int affectedRow = productOptionRepository.decreaseStock(request.optionIdx(), request.quantity());
 
+        if (affectedRow == 0){
+            throw new IllegalArgumentException("재고가 부족하거나 유효하지 않은 상품입니다. (OptionIdx: " + request.optionIdx() + ")");
+        }
 
     }
 
@@ -160,6 +176,7 @@ public class ProductServiceImpl implements ProductService {
         return new ProductInfoToOrderResponse(
                 productsIdx,
                 optionIdx,
+                product.getSellerIdx(),
                 product.getProductsName(),
                 option.getOptionName(),
                 option.getOptionPrice(),
@@ -189,6 +206,7 @@ public class ProductServiceImpl implements ProductService {
         return options.stream().map(opt -> new ProductInfoToOrderResponse(
                 opt.getProduct().getProductsIdx(), // 상품 정보도 이미 들어있음
                 opt.getOptionGroupIdx(),
+                opt.getProduct().getSellerIdx(),
                 opt.getProduct().getProductsName(),
                 opt.getOptionName(),
                 opt.getOptionPrice(),

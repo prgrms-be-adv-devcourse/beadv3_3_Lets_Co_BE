@@ -1,8 +1,6 @@
 package co.kr.user.DAO;
 
-import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.UsersAddress;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -51,7 +49,8 @@ public interface UserAddressRepository extends JpaRepository<UsersAddress, Long>
      * 사용자 식별자 없이 코드 자체의 유효성을 검증하거나 정보를 찾을 때 사용될 수 있습니다.
      *
      * @param addressCode 조회할 주소의 고유 코드
+     * @param del
      * @return 해당 코드를 가진 배송지 정보 (Optional)
      */
-    Optional<UsersAddress> findByAddressCode(String addressCode);
+    Optional<UsersAddress> findByAddressCodeAndDel(String addressCode, int del);
 }

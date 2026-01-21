@@ -65,14 +65,14 @@ public class UsersAddress {
      * 기본 주소(도로명 주소, 지번 주소 등)입니다.
      * 개인정보 보호를 위해 암호화되어 저장될 수 있습니다.
      */
-    @Column(name = "Address", nullable = false)
+    @Column(name = "Address", nullable = false, length = 512)
     private String address;
 
     /**
      * 상세 주소(동, 호수 등)입니다.
      * 개인정보 보호를 위해 암호화되어 저장될 수 있습니다.
      */
-    @Column(name = "Address_Detail", nullable = false)
+    @Column(name = "Address_Detail", nullable = false, length = 512)
     private String addressDetail;
 
     /**

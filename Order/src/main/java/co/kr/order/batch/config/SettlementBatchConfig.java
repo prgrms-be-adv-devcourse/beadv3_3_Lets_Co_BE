@@ -129,7 +129,7 @@ public class SettlementBatchConfig {
         reader.setQueryProvider(queryProviderFactory.getObject());
 
         Map<String, Object> params = new HashMap<>();
-        params.put("type", SettlementType.ORDERS_CONFIRMED.name());
+        params.put("type", SettlementType.Orders_CONFIRMED.name());
         params.put("startDate", startDate);
         params.put("endDate", endDate);
         reader.setParameterValues(params);

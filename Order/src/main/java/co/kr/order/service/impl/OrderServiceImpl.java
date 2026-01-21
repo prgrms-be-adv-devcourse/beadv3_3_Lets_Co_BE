@@ -361,7 +361,7 @@ public class OrderServiceImpl implements OrderService {
         SettlementHistoryEntity entity = SettlementHistoryEntity.builder()
                 .sellerIdx(sellerIdx)
                 .paymentIdx(paymentIdx)
-                .type(SettlementType.ORDERS_CONFIRMED)
+                .type(SettlementType.Orders_CONFIRMED)
                 .amount(amount)
                 .build();
         settlementRepository.save(entity);

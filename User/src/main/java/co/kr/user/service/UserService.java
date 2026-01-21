@@ -16,8 +16,10 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.util.AesUtil;
+import co.kr.user.util.CookieUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -210,7 +212,7 @@ public class UserService implements UserServiceImpl {
      */
     @Override
     @Transactional
-    public String myDelete(Long userIdx, String authCode) {
+    public String myDelete(Long userIdx, String authCode, HttpServletResponse response) {
         Users users = userRepository.findById(userIdx)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
@@ -256,6 +258,13 @@ public class UserService implements UserServiceImpl {
                 usersLogin.lockToken(LocalDateTime.now(), "LOCKED");
             }
         }
+
+
+        // 2. 클라이언트 브라우저에 저장된 Access Token 쿠키를 삭제합니다.
+        //    (유효 시간을 0으로 설정한 쿠키를 덮어씌워 삭제 효과를 냅니다.)
+        CookieUtil.deleteCookie(response, CookieUtil.ACCESS_TOKEN_NAME);
+        // 3. 클라이언트 브라우저에 저장된 Refresh Token 쿠키를 삭제합니다.
+        CookieUtil.deleteCookie(response, CookieUtil.REFRESH_TOKEN_NAME);
 
         return "회원 탈퇴가 정상 처리되었습니다.";
     }

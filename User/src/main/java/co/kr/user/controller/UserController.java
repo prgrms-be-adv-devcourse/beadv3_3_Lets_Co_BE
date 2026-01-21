@@ -2,6 +2,7 @@ package co.kr.user.controller;
 
 import co.kr.user.model.DTO.my.*;
 import co.kr.user.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -73,9 +74,10 @@ public class UserController {
      */
     @DeleteMapping("/my/delete")
     public ResponseEntity<String> deleteUser(@RequestHeader ("X-USERS-IDX") Long userIdx,
-                                             @RequestBody @Valid UserDeleteSecondStepReq userDeleteSecondStepReq) {
+                                             @RequestBody @Valid UserDeleteSecondStepReq userDeleteSecondStepReq,
+                                             HttpServletResponse response) {
         // UserService를 통해 인증 코드(AuthCode)를 검증하고, 일치할 경우 최종 탈퇴 처리를 수행합니다.
-        return ResponseEntity.ok(userService.myDelete(userIdx, userDeleteSecondStepReq.getAuthCode()));
+        return ResponseEntity.ok(userService.myDelete(userIdx, userDeleteSecondStepReq.getAuthCode(), response));
     }
 
     /**

@@ -77,6 +77,7 @@ public class ProductController {
     @GetMapping("/sellers")
     public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
         return productService.getSellersByProductIds(productIds);
+    }
 
     @PostMapping("deductStock")
     public void deductStock(

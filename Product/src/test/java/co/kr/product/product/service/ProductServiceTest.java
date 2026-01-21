@@ -344,5 +344,10 @@ class ProductServiceTest {
         // Then
         Assertions.assertThat(result.get(0)).isEqualTo(productResponse1);
         Assertions.assertThat(result.get(1)).isEqualTo(productResponse2);
+
+        verify(productOptionRepository, times(1))
+                .findAllWithOptions(argThat(list ->
+                        list.contains(1L) && list.contains(2L) && list.size() == 2
+                ));
     }
 }

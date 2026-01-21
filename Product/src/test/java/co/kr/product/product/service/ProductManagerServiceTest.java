@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -96,6 +97,22 @@ class ProductManagerServiceTest {
                 .build();
     }
 
+    ProductOptionEntity createOptionEntity() {
+
+        ProductOptionEntity option = ProductOptionEntity.builder()
+                .optionCode(UUID.randomUUID().toString())
+                .optionName("옵션A")
+                .sortOrders(1)
+                .optionPrice(BigDecimal.valueOf(10000))
+                .optionSalePrice(BigDecimal.valueOf(10000))
+                .stock(100)
+                .status(ProductStatus.ON_SALE.name())
+                .build();
+        ReflectionTestUtils.setField(option, "optionGroupIdx", 10L);
+
+        return option;
+    }
+
     @Test
     @DisplayName("상품 등록 성공 - SELLER 권한")
     void addProduct_Success() {
@@ -103,11 +120,12 @@ class ProductManagerServiceTest {
         Long userIdx = 1L;
         UpsertProductRequest request = createUpsertRequest();
         ProductEntity savedProduct = createProductEntity();
+        List<ProductOptionEntity> savedOptions = List.of(createOptionEntity());
 
         given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
         given(productRepository.save(any(ProductEntity.class))).willReturn(savedProduct);
-        given(optionRepository.saveAll(any())).willReturn(List.of());
-        given(imageRepository.saveAll(any())).willReturn(List.of());
+
+        given(optionRepository.saveAll(any())).willReturn(savedOptions);
 
         // When
         ProductDetailResponse response = productService.addProduct(userIdx, request);
@@ -138,13 +156,14 @@ class ProductManagerServiceTest {
     void getManagerProductDetail_Success() {
         // Given
         Long userIdx = 1L;
-        String productCode = "some-uuid";
+        String productCode = UUID.randomUUID().toString();
         ProductEntity product = createProductEntity();
+        ProductOptionEntity option = createOptionEntity();
 
         given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
         given(productRepository.findByProductsCodeAndDelFalse(productCode)).willReturn(Optional.of(product));
         given(imageRepository.findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(product)).willReturn(List.of());
-        given(optionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product)).willReturn(List.of());
+        given(optionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product)).willReturn(List.of(option));
 
         // When
         ProductDetailResponse response = productService.getManagerProductDetail(userIdx, productCode);
@@ -204,6 +223,7 @@ class ProductManagerServiceTest {
     @Test
     @DisplayName("상품 삭제 성공 - Soft Delete 확인")
     void deleteProduct_Success() {
+
         // Given
         Long userIdx = 1L;
         String productCode = "some-uuid";

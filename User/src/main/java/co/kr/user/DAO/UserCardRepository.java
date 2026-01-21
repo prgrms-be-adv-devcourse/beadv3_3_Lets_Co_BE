@@ -48,7 +48,8 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
      * 특정 카드의 존재 여부를 확인하거나, 소유자 검증 전 단계에서 정보를 로드할 때 사용됩니다.
      *
      * @param cardCode 조회할 카드의 고유 코드
+     * @param del
      * @return 해당 코드를 가진 카드 정보 (Optional)
      */
-    Optional<UserCard> findByCardCode(String cardCode);
+    Optional<UserCard> findByCardCodeAndDel(String cardCode, int del);
 }

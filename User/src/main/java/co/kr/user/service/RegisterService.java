@@ -184,7 +184,7 @@ public class RegisterService implements RegisterServiceImpl {
     @Transactional
     public String signupAuthentication(String code) {
         // 코드 조회
-        UsersVerifications usersVerifications = userVerificationsRepository.findTopByCodeOrderByCreatedAtDesc(code)
+        UsersVerifications usersVerifications = userVerificationsRepository.findTopByCodeAndDelOrderByCreatedAtDesc(code, 0)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증 코드입니다."));
 
         // 유효성 검증 (만료, 목적, 이미 인증됨 등)

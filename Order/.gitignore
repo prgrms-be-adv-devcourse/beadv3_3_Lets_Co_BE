@@ -92,6 +92,11 @@ application.yml
 **/application.yml
 config/application-*.yml
 
+# application-test.yml 은 버전관리 허용
+!application-test.yml
+!**/application-test.yml
+
+
 # 인증서 및 키 파일
 *.pem
 *.pub

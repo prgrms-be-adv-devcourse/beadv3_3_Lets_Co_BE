@@ -147,9 +147,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         updateOrderStatus(order, OrderStatus.REFUNDED);
 
-        // 환불 정산 생성 (정산에서 차감 처리)
-//        settlementService.createRefundSettlement(order.getId(), refundPayment.getPaymentIdx());
-
         // 환불 생성이 아니라 현재상태 CANCEL_ADJUST로 수정
         settlementService.refundSettlement(order.getId(), payment.getPaymentIdx());
         return PaymentMapper.toResponse(refundPayment);

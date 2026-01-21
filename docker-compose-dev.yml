@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  gateway-service:
+    build:
+      context: ./Gateway
+      dockerfile: Dockerfile
+    image: lujol/gateway-service:v1
+    container_name: gateway-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=8080    
+    networks:
+      - msa-network
+
+  discovery-service:
+    build:
+      context: ./Discovery     
+      dockerfile: Dockerfile
+    image: lujol/discovery-service:v1
+    container_name: discovery-app
+    ports:
+      - "8081:8080"      
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - msa-network
+
+
+  customerservice-service:
+    build:
+      context: ./CostomerService      
+      dockerfile: Dockerfile
+    image:  lujol/customerservice-service:v1
+    container_name: customerservice-app
+    ports:
+      - "8082:8080"       
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - msa-network
+
+
+  order-service:
+    build:
+      context: ./Order              
+      dockerfile: Dockerfile
+    image: lujol/order-service:v1
+    container_name: order-app
+    ports:
+      - "8083:8080"         
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - msa-network
+
+
+
+  product-service:
+    build:
+      context: ./Product            
+      dockerfile: Dockerfile
+    image: lujol/product-service:v1
+    container_name: product-app
+    ports:
+      - "8084:8080"        
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - msa-network
+
+  user-service:
+    build:
+      context: ./User            
+      dockerfile: Dockerfile
+    image: lujol/user-service:v1
+    container_name: user-app
+    ports:
+      - "8085:8080" 
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - msa-network
+
+networks:
+  msa-network:
+    driver: bridge

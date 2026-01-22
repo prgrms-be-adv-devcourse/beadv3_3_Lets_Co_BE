@@ -215,7 +215,9 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
-@Transactional(readOnly = true)
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<Long, Long> getSellersByProductIds(List<Long> productIds) {
         return productRepository.findAllById(productIds).stream()
                 .collect(Collectors.toMap(

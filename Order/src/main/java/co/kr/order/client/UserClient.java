@@ -12,7 +12,8 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
-@FeignClient(name="User")
+// @FeignClient(name="User")
+@FeignClient(name = "user-service")
 public interface UserClient {
 
     /*

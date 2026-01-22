@@ -18,10 +18,15 @@ public record InquiryUpsertRequest(
         @Size(min = 2, max = 200, message = "제목은 2자 이상 200자 이하로 입력해주세요.")
         String title,
 
+        @NotBlank(message = "이름을 입력해주세요.")
+        @Size(min = 1, max = 10, message = "내용은 최소 1자 이상, 10자 이하로 작성해주세요.")
+        String name,
+
         @NotBlank(message = "문의 내용을 입력해주세요.")
         @Size(min = 10, max = 5000, message = "내용은 최소 10자 이상, 5000자 이하로 작성해주세요.")
         String content,
         boolean isPrivate
+
         ) {
 
 }

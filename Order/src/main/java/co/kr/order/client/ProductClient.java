@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "Product")
+//@FeignClient(name = "Product")
+@FeignClient(name = "product-service")
 public interface ProductClient {
 
     @GetMapping("/products/{productIdx}/{optionIdx}")

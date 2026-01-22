@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
-@FeignClient(name = "Product", url = "http://product-service:8080")
+// @FeignClient(name = "Product", url = "http://product-service:8080")
+@FeignClient(name = "product-service")
 public interface ProductServiceClient {
     @PostMapping("/product/byIdx")
     List<ProductInfoResponse> getProductInfo(ProductIdxsRequest request);

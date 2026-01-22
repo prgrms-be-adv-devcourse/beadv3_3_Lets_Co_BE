@@ -22,11 +22,10 @@ permissions:
 jobs:
   releasing: # 첫 번째 단계: 릴리즈 (이미지 빌드)
     uses: ./.github/workflows/release-workflow.yml # 공통 release 워크플로우 호출
-    secrets: inherit
-    # secrets: # 필요한 시크릿 전달
-    #   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-    #   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-    #   APPLICATION_YML: ${{ secrets.PRODUCT_YML }} # Product 전용 YML 전달
+    secrets: # 필요한 시크릿 전달
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      APPLICATION_YML: ${{ secrets.PRODUCT_YML }} # Product 전용 YML 전달
     with: # 필요한 파라미터 전달
       service-name: product-service
       service-dir: Product

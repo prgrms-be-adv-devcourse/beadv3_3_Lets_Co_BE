@@ -8,7 +8,6 @@ import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
-import co.kr.product.product.service.impl.ProductServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

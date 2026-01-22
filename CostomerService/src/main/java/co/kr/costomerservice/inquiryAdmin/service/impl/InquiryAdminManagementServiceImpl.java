@@ -72,7 +72,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 답변 추가
     @Override
     @Transactional
-    public InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request){
+    public InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request) {
 
         //1. 권한 확인
         String role = authServiceClient.getUserRole(userId);

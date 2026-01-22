@@ -122,7 +122,7 @@ class ProductManagerServiceTest {
         ProductEntity savedProduct = createProductEntity();
         List<ProductOptionEntity> savedOptions = List.of(createOptionEntity());
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productRepository.save(any(ProductEntity.class))).willReturn(savedProduct);
 
         given(optionRepository.saveAll(any())).willReturn(savedOptions);
@@ -143,7 +143,7 @@ class ProductManagerServiceTest {
         // Given
         Long userIdx = 1L;
         UpsertProductRequest request = createUpsertRequest();
-        given(authServiceClient.getUserRole(userIdx)).willReturn("USER"); // SELLER가 아님
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("USER"); // SELLER가 아님
 
         // When & Then
         assertThatThrownBy(() -> productService.addProduct(userIdx, request))
@@ -160,7 +160,7 @@ class ProductManagerServiceTest {
         ProductEntity product = createProductEntity();
         ProductOptionEntity option = createOptionEntity();
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productRepository.findByProductsCodeAndDelFalse(productCode)).willReturn(Optional.of(product));
         given(imageRepository.findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(product)).willReturn(List.of());
         given(optionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product)).willReturn(List.of(option));
@@ -187,7 +187,7 @@ class ProductManagerServiceTest {
         List<ProductImageEntity> existingImages = new ArrayList<>();
         existingImages.add(ProductImageEntity.builder().product(product).url("old.jpg").build());
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productRepository.findByProductsCodeAndDelFalse(productCode)).willReturn(Optional.of(product));
         given(optionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product)).willReturn(existingOptions);
         given(imageRepository.findByProductAndDelFalse(product)).willReturn(existingImages);
@@ -211,7 +211,7 @@ class ProductManagerServiceTest {
         String productCode = "unknown-code";
         UpsertProductRequest request = createUpsertRequest();
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productRepository.findByProductsCodeAndDelFalse(productCode)).willReturn(Optional.empty());
 
         // When & Then
@@ -232,7 +232,7 @@ class ProductManagerServiceTest {
         ProductOptionEntity option = ProductOptionEntity.builder().product(product).build();
         ProductImageEntity image = ProductImageEntity.builder().product(product).build();
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productRepository.findByProductsCodeAndDelFalse(productCode)).willReturn(Optional.of(product));
         given(optionRepository.findByProductAndDelFalse(product)).willReturn(List.of(option));
         given(imageRepository.findByProductAndDelFalse(product)).willReturn(List.of(image));
@@ -266,7 +266,7 @@ class ProductManagerServiceTest {
 
         Page<ProductDocument> esPage = new PageImpl<>(List.of(doc));
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productEsRepository.findAll(pageable)).willReturn(esPage);
 
         // When
@@ -300,7 +300,7 @@ class ProductManagerServiceTest {
 
         Page<ProductDocument> esPage = new PageImpl<>(List.of(doc));
 
-        given(authServiceClient.getUserRole(userIdx)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("SELLER");
         given(productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(userIdx, searchKeyword, pageable))
                 .willReturn(esPage);
 

@@ -71,7 +71,7 @@ class QnaSellerServiceTest {
 
         ProductInfoResponse productInfo = new ProductInfoResponse(PRODUCT_IDX, "P-CODE", "상품명A", "img.jpg");
 
-        given(authServiceClient.getUserRole(SELLER_IDX)).willReturn("SELLER");
+        given(authServiceClient.getUserRole(SELLER_IDX).getBody()).willReturn("SELLER");
         given(customerServiceRepository.findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType.QNA_PRODUCT, SELLER_IDX, pageable))
                 .willReturn(qnaPage);
         given(productServiceClient.getProductInfo(any(ProductIdxsRequest.class)))
@@ -91,7 +91,7 @@ class QnaSellerServiceTest {
     @DisplayName("판매자 내 상품 문의 목록 조회 실패 - 권한 없음")
     void getMyQnaList_Fail_Unauthorized() {
         // Given
-        given(authServiceClient.getUserRole(SELLER_IDX)).willReturn("USER"); // 일반 유저
+        given(authServiceClient.getUserRole(SELLER_IDX).getBody()).willReturn("USER"); // 일반 유저
 
         // When & Then
         assertThatThrownBy(() -> qnaSellerService.getMyQnaList(SELLER_IDX, PageRequest.of(0, 10)))

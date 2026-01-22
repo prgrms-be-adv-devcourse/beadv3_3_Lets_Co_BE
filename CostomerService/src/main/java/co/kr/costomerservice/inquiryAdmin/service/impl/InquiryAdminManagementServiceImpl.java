@@ -41,7 +41,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     public InquiryListResponse getInquiryList(Pageable pageable, Long usersIdx){
 
         // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("관리자 권한이 없습니다.");
         }
@@ -75,7 +75,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     public InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request) {
 
         //1. 권한 확인
-        String role = authServiceClient.getUserRole(userId);
+        String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("관리자 권한이 없습니다.");
         }
@@ -125,7 +125,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     public ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request, Long usersIdx){
 
         // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("관리자 권한이 없습니다.");
         }
@@ -153,7 +153,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     public InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request, Long usersIdx){
 
         // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("관리자 권한이 없습니다.");
         }
@@ -201,7 +201,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     public ResultResponse deleteInquiry(String inquiryCode, Long usersIdx){
 
         // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("관리자 권한이 없습니다.");
         }

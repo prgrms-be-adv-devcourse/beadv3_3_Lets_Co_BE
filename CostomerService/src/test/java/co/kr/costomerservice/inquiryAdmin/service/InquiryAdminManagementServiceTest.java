@@ -61,7 +61,7 @@ class InquiryAdminManagementServiceTest {
         CustomerServiceEntity inquiry = createInquiryEntity(INQUIRY_CODE, CustomerServiceType.QNA_ADMIN);
         Page<CustomerServiceEntity> pageResult = new PageImpl<>(List.of(inquiry));
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.QNA_ADMIN, pageable))
                 .willReturn(pageResult);
 
@@ -91,7 +91,7 @@ class InquiryAdminManagementServiceTest {
 
         InquiryAnswerUpsertRequest request = new InquiryAnswerUpsertRequest(DETAIL_CODE, "답변입니다.");
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(INQUIRY_CODE)).willReturn(Optional.of(inquiry));
         given(customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiry)).willReturn(detailList);
 
@@ -118,7 +118,7 @@ class InquiryAdminManagementServiceTest {
                 .build();
         ReflectionTestUtils.setField(detail, "del", false); // 초기상태
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceDetailRepository.findByDetailCodeAndDelFalse(DETAIL_CODE))
                 .willReturn(Optional.of(detail));
 
@@ -150,7 +150,7 @@ class InquiryAdminManagementServiceTest {
                 true
         );
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(INQUIRY_CODE)).willReturn(Optional.of(inquiry));
         given(customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiry)).willReturn(List.of(detail));
 
@@ -175,7 +175,7 @@ class InquiryAdminManagementServiceTest {
         CustomerServiceDetailEntity detail2 = createDetailEntity(inquiry, "D2");
         List<CustomerServiceDetailEntity> detailList = List.of(detail1, detail2);
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(INQUIRY_CODE)).willReturn(Optional.of(inquiry));
         given(customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiry)).willReturn(detailList);
 
@@ -196,7 +196,7 @@ class InquiryAdminManagementServiceTest {
     void fail_Unauthorized() {
         // Given
         Long fakeAdminIdx = 1L;
-        given(authServiceClient.getUserRole(fakeAdminIdx)).willReturn("USER");
+        given(authServiceClient.getUserRole(fakeAdminIdx).getBody()).willReturn("USER");
 
         // When & Then
         assertThatThrownBy(() -> managementService.deleteInquiry("code", fakeAdminIdx))
@@ -211,7 +211,7 @@ class InquiryAdminManagementServiceTest {
         // QNA_PRODUCT 타입의 글을 관리자 문의 기능으로 수정하려고 할 때
         CustomerServiceEntity productQna = createInquiryEntity(INQUIRY_CODE, CustomerServiceType.QNA_PRODUCT);
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(INQUIRY_CODE))
                 .willReturn(Optional.of(productQna));
 

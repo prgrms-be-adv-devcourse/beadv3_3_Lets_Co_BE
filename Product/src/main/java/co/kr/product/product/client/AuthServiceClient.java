@@ -1,6 +1,7 @@
 package co.kr.product.product.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -8,5 +9,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "user-service", url = "http://user-service:8080")
 public interface AuthServiceClient {
     @GetMapping("/auth/role")
-    String getUserRole(@RequestParam("usersIdx") Long usersIdx);
+    ResponseEntity<String> getUserRole(@RequestParam("userIdx") Long userIdx);
 }

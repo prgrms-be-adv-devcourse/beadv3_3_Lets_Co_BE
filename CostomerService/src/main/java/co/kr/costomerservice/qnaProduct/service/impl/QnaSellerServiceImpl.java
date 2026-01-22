@@ -42,7 +42,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
 
         // 1. 유저 확인
-        String role = authServiceClient.getUserRole(userIdx);
+        String role = authServiceClient.getUserRole(userIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }

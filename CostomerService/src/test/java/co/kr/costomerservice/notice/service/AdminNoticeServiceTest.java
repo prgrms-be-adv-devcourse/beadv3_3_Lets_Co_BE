@@ -54,7 +54,7 @@ class AdminNoticeServiceTest {
         // Given
         NoticeUpsertRequest request = createRequest();
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.save(any(CustomerServiceEntity.class)))
                 .willAnswer(i -> i.getArgument(0));
         given(customerServiceDetailRepository.save(any(CustomerServiceDetailEntity.class)))
@@ -80,7 +80,7 @@ class AdminNoticeServiceTest {
 
         // Given
         Long userIdx = 1L;
-        given(authServiceClient.getUserRole(userIdx)).willReturn("USER");
+        given(authServiceClient.getUserRole(userIdx).getBody()).willReturn("USER");
 
         // When & Then
         assertThatThrownBy(() -> adminNoticeService.addNotice(userIdx, createRequest()))
@@ -97,7 +97,7 @@ class AdminNoticeServiceTest {
         CustomerServiceEntity notice = createNoticeEntity(NOTICE_CODE, CustomerServiceType.NOTICE);
         Page<CustomerServiceEntity> pageResult = new PageImpl<>(List.of(notice));
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE, pageable))
                 .willReturn(pageResult);
 
@@ -120,7 +120,7 @@ class AdminNoticeServiceTest {
         CustomerServiceEntity notice = createNoticeEntity(NOTICE_CODE, CustomerServiceType.NOTICE);
         CustomerServiceDetailEntity detail = createDetailEntity(notice);
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(NOTICE_CODE)).willReturn(Optional.of(notice));
         given(customerServiceDetailRepository.findByCustomerServiceAndDelFalse(notice)).willReturn(Optional.of(detail));
 
@@ -143,7 +143,7 @@ class AdminNoticeServiceTest {
         // Given
         CustomerServiceEntity qna = createNoticeEntity(NOTICE_CODE, CustomerServiceType.QNA_PRODUCT);
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(NOTICE_CODE)).willReturn(Optional.of(qna));
 
         // When & Then
@@ -164,7 +164,7 @@ class AdminNoticeServiceTest {
                 "수정제목", "수정내용", true, true, LocalDateTime.now()
         );
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(NOTICE_CODE)).willReturn(Optional.of(notice));
         given(customerServiceDetailRepository.findByCustomerServiceAndDelFalse(notice)).willReturn(Optional.of(detail));
 
@@ -187,7 +187,7 @@ class AdminNoticeServiceTest {
         CustomerServiceEntity notice = createNoticeEntity(NOTICE_CODE, CustomerServiceType.NOTICE);
         CustomerServiceDetailEntity detail = createDetailEntity(notice);
 
-        given(authServiceClient.getUserRole(ADMIN_IDX)).willReturn("ADMIN");
+        given(authServiceClient.getUserRole(ADMIN_IDX).getBody()).willReturn("ADMIN");
         given(customerServiceRepository.findByCodeAndDelFalse(NOTICE_CODE)).willReturn(Optional.of(notice));
         given(customerServiceDetailRepository.findByCustomerServiceAndDelFalse(notice)).willReturn(Optional.of(detail));
 

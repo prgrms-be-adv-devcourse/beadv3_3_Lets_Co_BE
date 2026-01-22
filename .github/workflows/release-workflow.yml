@@ -88,6 +88,9 @@ jobs: # 실제 수행할 작업들을 정의합니다.
         # 실행 권한 부여 후 빌드 수행 (테스트는 제외 -x test)
         run: chmod +x gradlew && ./gradlew clean build -x test --no-daemon
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Sign in to Docker Hub # 도커 허브 로그인
         uses: docker/login-action@v3
         with:

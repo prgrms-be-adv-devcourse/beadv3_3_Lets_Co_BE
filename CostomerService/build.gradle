@@ -44,12 +44,13 @@ dependencies {
     // --- [Zipkin/Tracing 관련 수정된 부분] ---
     // 1. Micrometer와 Brave 연결 (이미 존재함 - 유지)
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
     // 2. spring-boot-starter-zipkin 제거 후 아래 Reporter 추가
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
-}
+
 
 dependencyManagement {
     imports {

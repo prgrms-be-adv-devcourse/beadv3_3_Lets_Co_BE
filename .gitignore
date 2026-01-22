@@ -121,3 +121,4 @@ k8s/exec/config/secret/db-secret.yml
 
 /k8s/exec/config/secret
 
+Order/src/main/resources/application.yml

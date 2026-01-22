@@ -1,5 +1,6 @@
 package co.kr.order.service;
 
+import co.kr.order.model.dto.request.ChargeRequest;
 import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.response.OrderResponse;
@@ -24,4 +25,6 @@ public interface OrderService {
      * @param orderId 주문 ID
      */
     void completeOrder(Long orderId);
+
+    String charge(Long userIdx, ChargeRequest request);
 }

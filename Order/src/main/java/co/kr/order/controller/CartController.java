@@ -82,7 +82,7 @@ public class CartController {
      * @param request : productIdx와 optionIdx
      * 장바구니에 담겨 있는 단일 상품 정보 조회
      */
-    @GetMapping("/item")
+    @PostMapping("/item")
     public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
             HttpServletRequest servletRequest,
             @Valid @RequestBody ProductRequest request

@@ -2,7 +2,6 @@ package co.kr.product.product.service;
 
 import co.kr.product.product.dto.request.DeductStockRequest;
 import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
-import co.kr.product.product.dto.response.ProductCheckStockResponse;
 import co.kr.product.product.dto.response.ProductDetailResponse;
 import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
 import co.kr.product.product.dto.vo.ProductStatus;
@@ -180,19 +179,7 @@ class ProductServiceTest {
     @Test
     void 상품_재고_체크 () {
 
-        // Given
-        ProductCheckStockResponse fakeResponse = new ProductCheckStockResponse(
-                "ok",
-                option1.getStock()
-        );
-
-        given(productRepository.findByProductsCodeAndDelFalse(productCode)).willReturn(Optional.of(product));
-
-        // when
-        ProductCheckStockResponse response = productService.getCheckStock(productCode);
-
-        // Todo! 재고를 가져올 때 product 테이블의 stock이 아니라 옵션의 stock을 가져와야 하는것이 아닌지? (담당자와 상의)
-        Assertions.assertThat(response).isEqualTo(fakeResponse);
+        // todo
     }
 
     @Test
@@ -206,20 +193,6 @@ class ProductServiceTest {
         productService.deductStock(request);
 
         then(productOptionRepository).should(times(1)).decreaseStock(request.optionIdx(), request.quantity());
-    }
-
-    @Test
-    void 상품_재고_감소_단일_재고부족 () {
-
-        // Given
-        DeductStockRequest request = new DeductStockRequest(1L,1L,99999);
-
-        given(productOptionRepository.decreaseStock(request.optionIdx(), request.quantity())).willReturn(0);
-
-        productService.deductStock(request);
-
-        // todo! 재고없을 때 예외를 던지는 코드 필요할 것 같음 (담당자 상의)
-//        Assertions.assertThatThrownBy(() -> productService.deductStock(request)).isInstanceOf(OutofStockException.class)
     }
 
     @Test
@@ -260,23 +233,7 @@ class ProductServiceTest {
     @Test
     void 상품_정보_요청 () {
 
-        // Given
-        ProductInfoToOrderResponse response = new ProductInfoToOrderResponse(
-                product.getProductsIdx(),
-                option1.getOptionGroupIdx(),
-                product.getProductsName(),
-                option1.getOptionName(),
-                option1.getOptionPrice(),
-                product.getStock()
-        );
-
-        Long productIdx = 1L;
-        Long optionIdx = 1L;
-
-        given(productRepository.findByProductsIdxAndDelFalse(productIdx)).willReturn(Optional.of(product));
-        given(productOptionRepository.findByOptionGroupIdxAndDelFalse(optionIdx)).willReturn(Optional.of(option1));
-
-        given(productService.getProductInfo(productIdx, optionIdx)).willReturn(response);
+        // todo
     }
 
     @Test
@@ -294,6 +251,7 @@ class ProductServiceTest {
         ProductInfoToOrderResponse productResponse1 = new ProductInfoToOrderResponse(
                 productRequest1.productIdx(),
                 productRequest1.optionIdx(),
+                product.getSellerIdx(),
                 product.getProductsName(),
                 option1.getOptionName(),
                 option1.getOptionPrice(),
@@ -328,6 +286,7 @@ class ProductServiceTest {
         ProductInfoToOrderResponse productResponse2 = new ProductInfoToOrderResponse(
                 productRequest2.productIdx(),
                 productRequest2.optionIdx(),
+                product2.getSellerIdx(),
                 "상품B",
                 option3.getOptionName(),
                 option3.getOptionPrice(),

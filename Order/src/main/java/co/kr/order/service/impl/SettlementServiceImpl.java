@@ -161,7 +161,7 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     public List<SettlementInfo> getSettlementList(Long sellerIdx) {
 
-        List<SettlementHistoryEntity> entities = settlementRepository.findAllSellerIdx(sellerIdx);
+        List<SettlementHistoryEntity> entities = settlementRepository.findAllBySellerIdx(sellerIdx);
 
         List<SettlementInfo> returnSettlementList = new ArrayList<>();
 

@@ -1,15 +1,14 @@
 package co.kr.user.controller;
 
 import co.kr.user.model.DTO.auth.TokenDto;
+import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AuthService;
 import co.kr.user.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 인증(Auth) 관련 부가 기능을 처리하는 컨트롤러 클래스입니다.
@@ -22,6 +21,19 @@ public class AuthController {
 
     // 인증 관련 비즈니스 로직(권한 확인, 토큰 재발급 등)을 처리하는 서비스 객체입니다.
     private final AuthService authService;
+
+    /**
+     * 사용자 권한(Role) 조회 API
+     * * <p>HTTP Method: GET</p>
+     * <p>Path: /auth/role</p>
+     * * @param userIdx 조회할 사용자의 고유 식별자 (Query Parameter, 예: ?userIdx=1)
+     * @return 사용자의 권한 정보(UsersRole Enum 등)를 반환 (200 OK)
+     */
+    @GetMapping("/role")
+    public ResponseEntity<UsersRole> getRole(@RequestParam @Valid Long userIdx) {
+        // 서비스 계층을 호출하여 해당 userIdx를 가진 유저의 역할(ADMIN, USER 등)을 조회합니다.
+        return ResponseEntity.ok(authService.getRole(userIdx));
+    }
 
     /**
      * 토큰 재발급(Refresh) API

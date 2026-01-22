@@ -11,6 +11,7 @@ import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.util.AesUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
  * 전체 회원 목록 조회, 회원 상세 정보 확인, 권한 수정(Role), 계정 정지(Block) 및 강제 탈퇴(Delete) 기능을 수행합니다.
  * 모든 메서드는 실행 전 요청자가 관리자 권한을 가지고 있는지 검증합니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminService implements AdminServiceImpl{
@@ -204,29 +206,41 @@ public class AdminService implements AdminServiceImpl{
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
+        log.info("1");
         UsersRole role = authService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
+        log.info("2");
 
         // 정지 날짜 유효성 검사
         if (lockedUntil.isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("정지 해제 일시는 현재 시간보다 이후여야 합니다.");
         }
+        log.info("3");
 
         Users userData = userRepository.findByIDAndDel(id, 0)
                 .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
 
+        log.info("4");
         // 계정 잠금 처리
         userData.AdminLockUser(lockedUntil);
 
+        log.info("5");
         // 토큰 강제 만료 처리 (로그아웃 효과)
         UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((userData.getUsersIdx()));
 
+        log.info("6");
         if (usersLogin != null) {
+
+            log.info("7");
             if (usersLogin.getRevokedAt() == null && usersLogin.getRevokeReason() == null) {
+
+                log.info("8");
                 usersLogin.lockToken(LocalDateTime.now(), "LOCKED");
+
+                log.info("9");
             }
         }
 

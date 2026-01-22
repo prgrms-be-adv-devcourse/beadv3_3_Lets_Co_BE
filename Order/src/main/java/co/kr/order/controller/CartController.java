@@ -6,13 +6,15 @@ import co.kr.order.model.dto.response.CartItemResponse;
 import co.kr.order.model.dto.response.CartResponse;
 import co.kr.order.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cart")
+@RequestMapping("/carts")
 public class CartController {
 
     private final CartService cartService;
@@ -25,7 +27,7 @@ public class CartController {
     @PostMapping("/add")
     public ResponseEntity<BaseResponse<CartItemResponse>> addCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -34,8 +36,7 @@ public class CartController {
         CartItemResponse info = cartService.addCartItem(userIdx, request);
         BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
 
-        // ok(200)으로 리턴
-        return ResponseEntity.ok(body);
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     /*
@@ -46,7 +47,7 @@ public class CartController {
     @PostMapping("/subtract")
     public ResponseEntity<BaseResponse<CartItemResponse>> subtractCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -55,7 +56,6 @@ public class CartController {
         CartItemResponse info = cartService.subtractCartItem(userIdx, request);
         BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
 
-        // ok(200)으로 리턴
         return ResponseEntity.ok(body);
     }
 
@@ -74,7 +74,6 @@ public class CartController {
         CartResponse info = cartService.getCartList(userIdx);
         BaseResponse<CartResponse> body = new BaseResponse<>("ok", info);
 
-        // ok(200)으로 리턴
         return ResponseEntity.ok(body);
     }
 
@@ -86,7 +85,7 @@ public class CartController {
     @GetMapping("/item")
     public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -95,7 +94,6 @@ public class CartController {
         CartItemResponse info = cartService.getCartItem(userIdx, request);
         BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
 
-        // ok(200)으로 리턴
         return ResponseEntity.ok(body);
     }
 
@@ -107,7 +105,7 @@ public class CartController {
     @DeleteMapping
     public ResponseEntity<BaseResponse<Void>> deleteCartItem(
             HttpServletRequest servletRequest,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
@@ -116,7 +114,6 @@ public class CartController {
         cartService.deleteCartItem(userIdx, request);
         BaseResponse<Void> body = new BaseResponse<>("ok", null);
 
-        // ok(200)으로 리턴
-        return ResponseEntity.ok(body);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(body);
     }
 }

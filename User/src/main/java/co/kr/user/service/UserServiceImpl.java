@@ -4,6 +4,7 @@ import co.kr.user.model.DTO.my.UserAmendReq;
 import co.kr.user.model.DTO.my.UserDTO;
 import co.kr.user.model.DTO.my.UserDeleteDTO;
 import co.kr.user.model.DTO.my.UserProfileDTO;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 회원 정보 관리(마이페이지) 관련 비즈니스 로직을 정의하는 인터페이스입니다.
@@ -48,7 +49,7 @@ public interface UserServiceImpl {
      * @param authCode 사용자가 입력한 인증 코드
      * @return 탈퇴 처리 결과 메시지
      */
-    String myDelete(Long userIdx, String authCode);
+    String myDelete(Long userIdx, String authCode, HttpServletResponse response);
 
     /**
      * 회원 정보 수정 메서드 정의입니다.

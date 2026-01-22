@@ -35,27 +35,27 @@ public class Seller {
      * 사업자 등록 번호입니다.
      * 판매 활동을 위한 필수 정보입니다.
      */
-    @Column(name = "Business_License", nullable = false, length = 20)
+    @Column(name = "Business_License", nullable = false, length = 255)
     private String businessLicense;
 
     /**
      * 정산 받을 은행명(브랜드)입니다.
      * 예: 신한은행, 국민은행 등
      */
-    @Column(name = "Bank_Brand", nullable = false, length = 20)
+    @Column(name = "Bank_Brand", nullable = false, length = 255)
     private String bankBrand;
 
     /**
      * 예금주 명 또는 은행 지점명 등 구체적인 계좌 명칭입니다.
      */
-    @Column(name = "Bank_Name", nullable = false, length = 200)
+    @Column(name = "Bank_Name", nullable = false, length = 255)
     private String bankName;
 
     /**
      * 암호화된 계좌 정보(계좌 번호 또는 핀테크 토큰)입니다.
      * 민감한 금융 정보이므로 반드시 암호화되어 저장되어야 합니다.
      */
-    @Column(name = "Bank_Token", nullable = false)
+    @Column(name = "Bank_Token", nullable = false, length = 1024)
     private String bankToken;
 
     /**

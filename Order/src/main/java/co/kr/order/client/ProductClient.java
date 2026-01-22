@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 //@FeignClient(name = "Product")
-@FeignClient(name = "product-service")
+@FeignClient(name = "product-service" , url = "http://product-service:8080")
 public interface ProductClient {
 
     @GetMapping("/products/{productIdx}/{optionIdx}")

@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 // @FeignClient(name="User")
-@FeignClient(name = "user-service")
+@FeignClient(name = "user-service", , url = "http://user-service:8080")
 public interface UserClient {
 
     /*

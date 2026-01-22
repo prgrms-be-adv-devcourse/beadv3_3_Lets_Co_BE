@@ -134,6 +134,7 @@ class SellerServiceTest {
         System.out.println(result);
     }
 
+
     /*
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
      * 헬퍼 매서드 (Given)

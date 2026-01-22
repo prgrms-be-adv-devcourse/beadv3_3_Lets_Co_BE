@@ -4,7 +4,6 @@ kind: Deployment
 
 metadata:
   name: user-service
-  namespace: msa-project
   labels:
     app: user-service
 

@@ -4,7 +4,6 @@ kind: Deployment
 
 metadata:
   name: customerservice-service
-  namespace: msa-project
   labels:
     app: customerservice-service
 

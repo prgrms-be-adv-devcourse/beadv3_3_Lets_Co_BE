@@ -1,80 +1,16 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.PaymentRepository;
-import co.kr.user.DAO.UserRepository;
 import co.kr.user.model.DTO.Payment.PaymentReq;
 import co.kr.user.model.DTO.Payment.PaymentListDTO;
-import co.kr.user.model.entity.Payment;
-import co.kr.user.model.entity.Users;
-import co.kr.user.model.vo.PaymentStatus;
-import co.kr.user.model.vo.PaymentType;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * 사용자의 예치금(포인트) 잔액 및 결제/충전 내역을 관리하는 서비스 클래스입니다.
- * 현재 잔액 조회, 전체 충전 내역 조회, 기간별 내역 조회 기능을 제공합니다.
+ * 사용자 잔액(Balance) 및 결제 내역 관리 비즈니스 로직을 정의하는 인터페이스입니다.
+ * 현재 잔액 조회, 전체 거래 내역 조회, 조건별(기간) 거래 내역 조회 기능을 명세합니다.
+ * 구현체: PaymentServiceImpl
  */
-@Service
-@RequiredArgsConstructor
-public class PaymentService implements PaymentServiceImpl{
-    private final UserRepository userRepository;
-    private final PaymentRepository paymentRepository;
+public interface PaymentService {
 
-    @Override
-    public List<PaymentListDTO> balanceHistory(Long userIdx, PaymentReq paymentReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
-
-        // List가 비어있으면 전체 조회로 간주하여 모든 Enum 값 주입
-        if (paymentReq.getPaymentType() == null || paymentReq.getPaymentType().isEmpty()) {
-            paymentReq.setPaymentType(Arrays.asList(PaymentType.values()));
-        }
-
-        if (paymentReq.getPaymentStatus() == null || paymentReq.getPaymentStatus().isEmpty()) {
-            paymentReq.setPaymentStatus(Arrays.asList(PaymentStatus.values()));
-        }
-
-        if (paymentReq.getStartDate() == null) {
-            paymentReq.setStartDate(users.getCreatedAt());
-        }
-        if (paymentReq.getEndDate() == null || paymentReq.getEndDate().isAfter(LocalDateTime.now())) {
-            paymentReq.setEndDate(LocalDateTime.now());
-        }
-
-        // [수정] Repository 메서드 변경에 맞춰 호출 (StatusIn, TypeIn)
-        List<Payment> paymentList = paymentRepository.findAllByUsersIdxAndStatusInAndTypeInAndCreatedAtBetweenOrderByCreatedAtDesc(
-                users.getUsersIdx(),
-                paymentReq.getPaymentStatus(), // List<PaymentStatus>
-                paymentReq.getPaymentType(),   // List<PaymentType>
-                paymentReq.getStartDate(),
-                paymentReq.getEndDate()
-        );
-
-        if (paymentList.isEmpty()) {
-            throw new IllegalArgumentException("결제 내역이 없습니다.");
-        }
-
-        return paymentList.stream()
-                .map(payment -> {
-                    PaymentListDTO dto = new PaymentListDTO();
-                    dto.setStatus(payment.getStatus());
-                    dto.setType(payment.getType());
-                    dto.setAmount(payment.getAmount());
-                    dto.setCreatedAt(payment.getCreatedAt());
-                    return dto;
-                })
-                .toList();
-    }
+    List<PaymentListDTO> balanceHistory(Long userIdx, PaymentReq paymentReq);
 }

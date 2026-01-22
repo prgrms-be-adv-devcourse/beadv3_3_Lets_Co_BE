@@ -21,15 +21,13 @@ jobs:
         with:
           java-version: "21"
           distribution: "temurin"
+
       - name: application.yml 설정 파일 생성
         run: |
           mkdir -p ${{ inputs.service-name }}/src/main/resources
 
           if [[ "${{ inputs.service-name }}" == *"Gateway"* ]]; then
             echo '${{ secrets.GATEWAY_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
-
-          elif [[ "${{ inputs.service-name }}" == *"Discovery"* ]]; then
-            echo '${{ secrets.DISCOVERY_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
           elif [[ "${{ inputs.service-name }}" == *"CostomerService"* ]]; then
             echo '${{ secrets.COSTOMERSERVICE_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml

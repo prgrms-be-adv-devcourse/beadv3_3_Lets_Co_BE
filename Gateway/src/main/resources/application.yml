@@ -1,0 +1,186 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: Gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: seller-PRODUCT
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/seller/products/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: seller-User
+              uri: lb://USER
+              predicates:
+                - Path=/seller/users/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: admin-User
+              uri: lb://USER
+              predicates:
+                - Path=/admin/users/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: admin-PRODUCT
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/admin/products/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: admin-inquiries
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/admin/inquiries/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: admin-notice
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/admin/notice/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: admin-block
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/admin/block
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: auth-logout
+              uri: lb://USER
+              predicates:
+                - Path=/auth/logout
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: auth
+              uri: lb://USER
+              predicates:
+                - Path=/auth/role
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: auth
+              uri: lb://USER
+              predicates:
+                - Path=/auth/**
+
+            - id: users
+              uri: lb://USER
+              predicates:
+                - Path=/users/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: products-Check
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/products/**
+                - Method=POST, PUT, DELETE
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: products
+              uri: lb://PRODUCT
+              predicates:
+                - Path=/products/**
+                - Method=GET
+
+            - id: cart
+              uri: lb://ORDER
+              predicates:
+                - Path=/cart/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: payments
+              uri: lb://ORDER
+              predicates:
+                - Path=/payments/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: orders
+              uri: lb://ORDER
+              predicates:
+                - Path=/orders/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: notice
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/notice/**
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: inquiries-me
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/inquiries/me
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: inquiries-Check
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/inquiries/**
+                - Method=POST, PUT, DELETE
+              filters:
+                - TokenAuthenticationFilter
+
+            - id: inquiries
+              uri: lb://COSTOMERSERVICE
+              predicates:
+                - Path=/inquiries/**
+                - Method=GET
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
+  swagger-ui:
+    enabled: true
+    path: /api/docs
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      consume: b3
+      produce: b3_multi
+
+    export:
+      zipkin:
+        enabled: true
+        endpoint: http://localhost:9411/api/v2/spans
+
+custom:
+  security:
+    jwt:
+      access:
+        secret: N3Ryb25nZXItYW5kLWxvbmdlci1yYW5kb20tc2VjcmV0LWtleS1mb3ItYWNjZXNzLXRva2VuLXByb3RlY3Rpb24tZ2VuZXJhdGVkLWJ5LWFp
+
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

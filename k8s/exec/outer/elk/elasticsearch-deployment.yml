@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: elasticsearch
+
+spec:
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: elasticsearch
+
+  template:
+
+    metadata:
+      labels:
+        app: elasticsearch
+
+    spec:
+      containers:
+        - name: elasticsearch
+          image: lujol/es:latest
+          imagePullPolicy: Always
+
+          # 중요 환경변수 secret에서 가져오기
+          env:
+            - name: ELASTIC_PASSWORD 
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: ELASTIC_PASSWORD
+          ports:
+            - containerPort: 9200
+
+          # 그 외 기타 설정은 configmap에서 
+          envFrom:
+            - configMapRef:
+                name: elasticsearch-configmap

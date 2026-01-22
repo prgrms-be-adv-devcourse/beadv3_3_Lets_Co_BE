@@ -109,7 +109,8 @@ public class PaymentServiceImpl implements PaymentService {
         switch (payment.getType()) {
             case DEPOSIT -> {
                 try {
-                    userClient.refundBalance(userIdx, refundAmount);
+                    // 트리거
+//                    userClient.refundBalance(userIdx, refundAmount);
                     log.info("Balance 환불 성공: userIdx={}, amount={}", userIdx, refundAmount);
                 } catch (Exception e) {
                     log.error("Balance 환불 실패: userIdx={}, amount={}", userIdx, refundAmount, e);
@@ -208,7 +209,8 @@ public class PaymentServiceImpl implements PaymentService {
         BigDecimal paymentAmount = order.getTotalAmount();
 
         try {
-            userClient.useBalance(userIdx, paymentAmount);
+            // 트리거
+//            userClient.useBalance(userIdx, paymentAmount);
         } catch (Exception e) {
             log.error("Balance(예치금) 결제 실패: userIdx={}, amount={}", userIdx, paymentAmount, e);
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);

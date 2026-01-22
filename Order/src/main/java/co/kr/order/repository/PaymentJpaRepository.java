@@ -11,4 +11,6 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentEntity, Long>
     Optional<PaymentEntity> findByOrdersIdx(Long ordersIdx);
 
     List<PaymentEntity> findAllByOrdersIdx(Long id);
+
+    PaymentEntity findByUsersIdx(Long userIdx);
 }

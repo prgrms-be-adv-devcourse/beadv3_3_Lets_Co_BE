@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
  * @param cardInfo : 카드 정보 (cardBrand, cardName, cardToken, exp_month, exp_year)
  */
 public record UserData(
-        Long userIdx,
 
         @Valid
         @NotNull(message = "주소 정보는 필수입니다.")

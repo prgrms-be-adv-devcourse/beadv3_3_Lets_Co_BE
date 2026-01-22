@@ -15,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -95,6 +96,10 @@ public class ProductController {
         return productService.getProductInfoList(requests);
     }
 
+    @GetMapping("/sellers")
+    public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
+        return productService.getSellersByProductIds(productIds);
+    }
 }
 
 

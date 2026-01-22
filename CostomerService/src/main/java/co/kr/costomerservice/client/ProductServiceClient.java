@@ -13,10 +13,10 @@ import java.util.List;
 // @FeignClient(name = "Product", url = "http://product-service:8080")
 @FeignClient(name = "product-service" , url = "http://product-service:8080")
 public interface ProductServiceClient {
-    @PostMapping("/product/byIdx")
+    @PostMapping("/products/byIdx")
     List<ProductInfoResponse> getProductInfo(ProductIdxsRequest request);
 
-    @GetMapping("/product/getSeller/{productsIdx}")
+    @GetMapping("/products/getSeller/{productsIdx}")
     ProductSellerResponse getSellerIdx(@PathVariable("productsIdx") Long productsIdx);
 
 }

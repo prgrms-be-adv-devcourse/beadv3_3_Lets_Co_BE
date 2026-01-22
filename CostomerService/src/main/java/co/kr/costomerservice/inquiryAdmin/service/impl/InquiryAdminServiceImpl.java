@@ -68,6 +68,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 .isPrivate(request.isPrivate())
                 .isPinned(false)
                 .usersIdx(userId)
+                .username(request.name())
                 .build();
 
         // 2.1 저장

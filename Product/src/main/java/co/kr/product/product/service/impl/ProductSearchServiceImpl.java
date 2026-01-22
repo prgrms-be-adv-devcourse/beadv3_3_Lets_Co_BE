@@ -1,7 +1,6 @@
 package co.kr.product.product.service.impl;
 
 import co.kr.product.product.document.ProductDocument;
-import co.kr.product.product.dto.request.ProductListRequest;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.dto.response.ProductResponse;
 import co.kr.product.product.repository.ProductEsRepository;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -44,7 +42,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 .toList();
 
         return new ProductListResponse(
-                "success",items
+                "ok",items
 
         );
     }

@@ -6,7 +6,7 @@ import java.util.List;
 
 public record InquiryListResponse(
         String resultCode,
-        List<InquiryDTO> info
+        List<InquiryDTO> list
 ) {
 
 }

@@ -34,7 +34,7 @@ jobs:
           elif [[ "${{ inputs.service-name }}" == *"CostomerService"* ]]; then
             echo '${{ secrets.COSTOMERSERVICE_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
-          elif [[ "${{ inputs.service-name }}" == *"Order"* ]]; then  # <--- Product -> Order로 수정
+          elif [[ "${{ inputs.service-name }}" == *"Order"* ]]; then
             echo '${{ secrets.ORDER_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
           elif [[ "${{ inputs.service-name }}" == *"Product"* ]]; then

@@ -1,7 +1,6 @@
 package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
-import co.kr.order.client.UserClient;
 import co.kr.order.model.dto.OrderItem;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.OrderCartRequest;
@@ -54,14 +53,12 @@ class OrderControllerTest {
     @Autowired ObjectMapper objectMapper;
     @PersistenceContext EntityManager em;
 
-    @MockitoBean UserClient userClient;
     @MockitoBean ProductClient productClient;
 
     @Autowired OrderJpaRepository orderRepository;
     @Autowired OrderItemJpaRepository orderItemRepository;
     @Autowired CartJpaRepository cartRepository;
     @Autowired PaymentJpaRepository paymentRepository;
-    @Autowired SettlementRepository settlementRepository;
 
     String setOrderCode = "TARGET-UUID-1234";
 

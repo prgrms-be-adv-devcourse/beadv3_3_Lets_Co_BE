@@ -46,12 +46,11 @@ public class QnaProductController {
      */
     @GetMapping("/{productsCode}/{qnaCode}")
     public ResponseEntity<QnaProductDetailResponse> getProductQnaDetail(
-        //@PathVariable("productsCode") String productsCode,
-        @PathVariable("qnaCode") String qnaCode
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
+            //@PathVariable("productsCode") String productsCode,
+            @PathVariable("qnaCode") String qnaCode
     ){
-        // 임시
-        Long userIdx = 2L;
-        return ResponseEntity.ok(qnaProductService.getProductQnaDetail(qnaCode,userIdx ));
+        return ResponseEntity.ok(qnaProductService.getProductQnaDetail(qnaCode,usersIdx ));
     }
 
 

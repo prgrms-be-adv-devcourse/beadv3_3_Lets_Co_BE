@@ -14,7 +14,7 @@ public record ProductDetailResponse(
         BigDecimal price,
         BigDecimal salePrice,
         Long viewCount,
-        int stock,
+        Integer stock,
         co.kr.product.product.dto.vo.ProductStatus status,
         List<ProductOptionsResponse> options,
         List<ProductImageResponse> images

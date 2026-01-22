@@ -100,7 +100,7 @@ public class ProductController {
     }
 
     @PostMapping("/products/byIdx")
-    public List<ProductInfoResponse> getProductInfo(ProductIdxsRequest request){
+    public List<ProductInfoResponse> getProductInfo(@RequestBody ProductIdxsRequest request){
         return productService.getProductInfoForBoard(request);
     };
 

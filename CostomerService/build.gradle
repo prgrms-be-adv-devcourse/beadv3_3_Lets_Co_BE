@@ -32,7 +32,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    // implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
@@ -40,8 +40,15 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // --- [Zipkin/Tracing 관련 수정된 부분] ---
+    // 1. Micrometer와 Brave 연결 (이미 존재함 - 유지)
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    implementation 'org.springframework.boot:spring-boot-starter-zipkin'
+    // 2. spring-boot-starter-zipkin 제거 후 아래 Reporter 추가
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+
 }
 
 dependencyManagement {

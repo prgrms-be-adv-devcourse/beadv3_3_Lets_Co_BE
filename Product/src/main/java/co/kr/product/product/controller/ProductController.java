@@ -95,6 +95,10 @@ public class ProductController {
         return productService.getProductInfoList(requests);
     }
 
+    @GetMapping("/sellers")
+    public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
+        return productService.getSellersByProductIds(productIds);
+    }
 }
 
 

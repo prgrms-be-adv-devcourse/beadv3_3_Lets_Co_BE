@@ -26,4 +26,6 @@ public interface ProductService {
     ProductInfoToOrderResponse getProductInfo(Long productsIdx, Long optionIdx);
 
     List<ProductInfoToOrderResponse> getProductInfoList(List<ProductInfoToOrderRequest> requests);
+
+    Map<Long, Long> getSellersByProductIds(List<Long> productIds) ;
 }

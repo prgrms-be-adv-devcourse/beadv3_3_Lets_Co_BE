@@ -213,7 +213,15 @@ public class ProductServiceImpl implements ProductService {
                 opt.getStock()
         )).toList();
 
+    }
 
+@Transactional(readOnly = true)
+    public Map<Long, Long> getSellersByProductIds(List<Long> productIds) {
+        return productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(
+                        ProductEntity::getProductsIdx,
+                        ProductEntity::getSellerIdx
+                ));
     }
 }
 

@@ -12,6 +12,13 @@ on: # 트리거 조건
       - "Gateway/**" # Gateway 폴더 내의 파일이 변경되었을 때만 실행
   workflow_dispatch: # 수동으로 실행 버튼을 눌러서 시작할 수도 있음
 
+  # 👇 [여기 추가] 이 권한 설정이 반드시 필요합니다!
+permissions:
+  contents: read
+  packages: write # 이미지를 GHCR에 푸시한다면 필요
+  id-token: write # OIDC 토큰 발급 (AWS 연결 등) 및 서명용
+  attestations: write # 빌드 증명(Attestation) 작성용
+
 jobs:
   releasing: # 첫 번째 단계: 릴리즈 (이미지 빌드)
     uses: ./.github/workflows/release-workflow.yml # 공통 release 워크플로우 호출

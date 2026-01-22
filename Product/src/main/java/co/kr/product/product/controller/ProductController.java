@@ -1,11 +1,9 @@
 package co.kr.product.product.controller;
 
 import co.kr.product.product.dto.request.DeductStockRequest;
+import co.kr.product.product.dto.request.ProductIdxsRequest;
 import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
-import co.kr.product.product.dto.response.ProductCheckStockResponse;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.dto.response.*;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
 import jakarta.validation.Valid;
@@ -100,6 +98,18 @@ public class ProductController {
     public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
         return productService.getSellersByProductIds(productIds);
     }
+
+    @PostMapping("/products/byIdx")
+    public List<ProductInfoResponse> getProductInfo(ProductIdxsRequest request){
+        return productService.getProductInfoForBoard(request);
+    };
+
+    @GetMapping("/products/getSeller/{productsIdx}")
+    public ProductSellerResponse getSellerIdx(@PathVariable("productsIdx") Long productsIdx){
+        return productService.getSellerIdx(productsIdx);
+    };
+
+
 }
 
 

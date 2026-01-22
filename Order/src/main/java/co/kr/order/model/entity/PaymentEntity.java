@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,13 +45,8 @@ public class PaymentEntity {
     @Column(name = "Payment_Key")
     private String paymentKey;
 
-
     @Column(name = "Created_at", nullable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "Del", nullable = false)
-    @ColumnDefault("0")
-    private int del = 0;
 
     @Builder
     public PaymentEntity(

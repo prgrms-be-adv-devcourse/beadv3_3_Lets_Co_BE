@@ -99,12 +99,12 @@ public class ProductController {
         return productService.getSellersByProductIds(productIds);
     }
 
-    @PostMapping("/products/byIdx")
+    @PostMapping("/byIdx")
     public List<ProductInfoResponse> getProductInfo(@RequestBody ProductIdxsRequest request){
         return productService.getProductInfoForBoard(request);
     };
 
-    @GetMapping("/products/getSeller/{productsIdx}")
+    @GetMapping("/getSeller/{productsIdx}")
     public ProductSellerResponse getSellerIdx(@PathVariable("productsIdx") Long productsIdx){
         return productService.getSellerIdx(productsIdx);
     };

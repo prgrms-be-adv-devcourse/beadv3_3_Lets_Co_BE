@@ -16,13 +16,13 @@ on: # 워크플로우가 실행되는 트리거 조건을 정의합니다.
         required: false
         type: string
         default: "v"
-    # secrets: # 호출할 때 넘겨받아야 할 보안 값(Secrets)들을 정의합니다.
-    #   DOCKER_USERNAME: # Docker Hub 아이디
-    #     required: true
-    #   DOCKER_PASSWORD: # Docker Hub 비밀번호/토큰
-    #     required: true
-    #   APPLICATION_YML: # 생성할 application.yml의 내용
-    #     required: true
+    secrets: # 호출할 때 넘겨받아야 할 보안 값(Secrets)들을 정의합니다.
+      DOCKER_USERNAME: # Docker Hub 아이디
+        required: true
+      DOCKER_PASSWORD: # Docker Hub 비밀번호/토큰
+        required: true
+      APPLICATION_YML: # 생성할 application.yml의 내용
+        required: true
     outputs: # 이 워크플로우가 끝난 후 반환할 값을 정의합니다.
       tag_name: # 생성된 태그 이름(버전)을 반환합니다.
         value: ${{ jobs.tagging.outputs.tag_name }}
@@ -103,9 +103,7 @@ jobs: # 실제 수행할 작업들을 정의합니다.
         with:
           images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}
           tags: |
-            type=sha
             type=raw,value=${{ needs.tagging.outputs.tag_name }}
-            type=raw,value=latest
 
       - name: Build and Push Image # 이미지를 빌드하고 푸시
         uses: docker/build-push-action@v5

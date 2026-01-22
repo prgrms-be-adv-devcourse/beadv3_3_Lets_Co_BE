@@ -76,15 +76,6 @@ public class Payment {
     private LocalDateTime createdAt;
 
     /**
-     * 내역 삭제 여부를 나타내는 플래그입니다.
-     * 0: 정상, 1: 삭제됨 (Soft Delete)
-     * 결제 내역은 중요 데이터이므로 보통 삭제하지 않으나, 관리 목적상 필드가 존재합니다.
-     */
-    @Column(name = "Del", nullable = false)
-    @ColumnDefault("0")
-    private int del = 0;
-
-    /**
      * 결제 내역 생성을 위한 빌더입니다.
      *
      * @param usersIdx 사용자 식별자

@@ -25,7 +25,7 @@ jobs:
     secrets: # 필요한 시크릿 전달
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      APPLICATION_YML: ${{ secrets.PRODUCT_YML }} # Product 전용 YML 전달
+      APPLICATION_YML: ${{ secrets.PRODUCT_PROD_YML }} # Product 전용 YML 전달
     with: # 필요한 파라미터 전달
       service-name: product-service
       service-dir: Product

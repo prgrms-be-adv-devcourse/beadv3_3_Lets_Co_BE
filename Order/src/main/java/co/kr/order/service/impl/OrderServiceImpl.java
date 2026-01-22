@@ -492,7 +492,6 @@ public class OrderServiceImpl implements OrderService {
      * 주문 완료 처리 (일단 보류)
      * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
      * - 주문 상태를 COMPLETED로 변경
-     * - 정산 생성
      *
      * @param orderId 주문 ID
      */
@@ -512,8 +511,5 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
         log.info("주문 완료 처리: orderId={}", orderId);
-
-        // 4. 정산 생성
-        settlementService.createSettlement(orderId);
     }
 }

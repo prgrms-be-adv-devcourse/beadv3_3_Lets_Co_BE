@@ -46,9 +46,9 @@ import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
-class UserServiceTest {
+class UserServiceImplTest {
 
-    @InjectMocks UserService userService;
+    @InjectMocks UserServiceImpl userService;
 
     @Mock AesUtil aesUtil;
     @Mock RandomCodeUtil randomCodeUtil;

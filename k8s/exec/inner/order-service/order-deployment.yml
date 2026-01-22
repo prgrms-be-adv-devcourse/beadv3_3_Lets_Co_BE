@@ -4,7 +4,6 @@ kind: Deployment
 
 metadata:
   name: order-service
-  namespace: msa-project
   labels:
     app: order-service
 

@@ -1,0 +1,43 @@
+name: Gateway Service CD # 워크플로우 이름
+
+concurrency: # 동시 실행 제어
+  group: gateway-service-deploy # 그룹 이름을 지정
+  cancel-in-progress: false # 진행 중인 배포가 있다면 취소하지 않고 대기 (순차 배포)
+
+on: # 트리거 조건
+  push:
+    branches:
+      - main # main 브랜치에 푸시될 때
+    paths:
+      - "Gateway/**" # Gateway 폴더 내의 파일이 변경되었을 때만 실행
+  workflow_dispatch: # 수동으로 실행 버튼을 눌러서 시작할 수도 있음
+
+  # 👇 [여기 추가] 이 권한 설정이 반드시 필요합니다!
+permissions:
+  contents: write
+  packages: write # 이미지를 GHCR에 푸시한다면 필요
+  id-token: write # OIDC 토큰 발급 (AWS 연결 등) 및 서명용
+  attestations: write # 빌드 증명(Attestation) 작성용
+
+jobs:
+  releasing: # 첫 번째 단계: 릴리즈 (이미지 빌드)
+    uses: ./.github/workflows/release-workflow.yml # 공통 release 워크플로우 호출
+    secrets: # 필요한 시크릿 전달
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      APPLICATION_YML: ${{ secrets.GATEWAY_PROD_YML }} # Gateway 전용 YML 전달
+    with: # 필요한 파라미터 전달
+      service-name: gateway-service
+      service-dir: Gateway
+      file-name: Dockerfile
+      tag-prefix: "gateway-v" # [추가] 이렇게 하면 gateway-v1.0.0 형식으로 생성됨
+
+  deploying: # 두 번째 단계: 배포
+    needs: releasing # releasing 단계가 성공해야 실행됨
+    uses: ./.github/workflows/deploy-workflow.yml # 공통 deploy 워크플로우 호출
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+    with:
+      service-name: gateway-service
+      # releasing 단계에서 만들어진 태그(버전)를 넘겨받아 배포에 사용
+      image-tag: ${{ needs.releasing.outputs.tag_name }}

@@ -1,15 +1,11 @@
-
 server:
   port: 8082
 
-
 spring:
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://GutJJeu.iptime.org:3306/GutJJeu
+    url: jdbc:mariadb://GutJJeus.iptime.org:3306/GutJJeu
     username: LetsCo
-    password: e@Hx9D1M9X!a(Emo
-
+    password: "zggNVJXDw[mXH98Y"
 
   jpa:
     hibernate:
@@ -20,7 +16,6 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
-
 
   application:
     name: Orders

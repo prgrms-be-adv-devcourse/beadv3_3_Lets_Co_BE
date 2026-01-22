@@ -102,7 +102,8 @@ jacoco.exec
 test-output/
 reports/
 
-k8s/exec/config/db-secret.yml
+# ERD 사진.png
+/Order/src/main/resources/templates/payments
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
@@ -119,3 +120,4 @@ elk/docker-compose.yml
 k8s/exec/config/secret/db-secret.yml
 
 /k8s/exec/config/secret
+

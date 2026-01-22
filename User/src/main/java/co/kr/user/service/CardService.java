@@ -200,7 +200,7 @@ public class CardService implements CardServiceImpl{
         }
 
         // 수정할 카드 조회
-        UserCard userCard = userCardRepository.findByCardCode(cardRequestReq.getCardCode())
+        UserCard userCard = userCardRepository.findByCardCodeAndDel(cardRequestReq.getCardCode(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 카드 정보를 찾을 수 없습니다."));
 
         // 소유권 검증
@@ -294,7 +294,7 @@ public class CardService implements CardServiceImpl{
         }
 
         // 삭제할 카드 조회
-        UserCard userCard = userCardRepository.findByCardCode(CardCode)
+        UserCard userCard = userCardRepository.findByCardCodeAndDel(CardCode, 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
         // 소유권 검증

@@ -1,6 +1,5 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.document.ProductDocument;
 import co.kr.product.product.dto.request.ProductListRequest;
 import co.kr.product.product.dto.request.UpsertProductRequest;
 import co.kr.product.product.dto.response.ProductDetailResponse;
@@ -15,8 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @Slf4j
@@ -104,7 +101,7 @@ public class AdminController {
 
         productManagerService.deleteProduct(usersIdx, productCode);
 
-        return ResponseEntity.ok(new ResultResponse("Success"));
+        return ResponseEntity.ok(new ResultResponse("ok"));
 
     }
 

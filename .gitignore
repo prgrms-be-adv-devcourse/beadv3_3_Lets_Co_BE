@@ -115,3 +115,10 @@ Product/src/main/resources/application-local.yml
 Product/src/main/resources/application.yml
 elk/ls/pipeline/logstash-products.conf
 elk/docker-compose.yml
+
+
+k8s/exec/config/secret/db-secret.yml
+
+/k8s/exec/config/secret
+
+Order/src/main/resources/application.yml

@@ -4,7 +4,6 @@ kind: Deployment
 
 metadata:
   name: customerservice-service
-  namespace: msa-project
   labels:
     app: customerservice-service
 
@@ -25,31 +24,35 @@ spec:
     spec:
       containers:
         - name: customerservice-service
-          image: lujol/customerservice-service:v1
+          image: lujol/customerservice-service:v2
           # image tag에 버전을 명시하는것이 아닌, latest를 사용하면 필요한 옵션 
           # Always : pod가 시작될 때 항상 dokerhub에 진입해서 이미지 해시값을 획인한다고 함 
           # imagePullPolicy: Always
 
-          # 임시 
           env:
-          - name: SPRING_DATASOURCE_URL  
+          - name: JDBC_URL  
             valueFrom:
               secretKeyRef:
                 name: db-secret
                 key: JDBC_URL            
           
-          - name: SPRING_DATASOURCE_USERNAME
+          - name: DB_USER
             valueFrom:
               secretKeyRef:
                 name: db-secret
                 key: DB_USER 
             
-          - name: SPRING_DATASOURCE_PASSWORD
+          - name: DB_PASSWORD
             valueFrom: 
               secretKeyRef:
                 name: db-secret
                 key: DB_PASSWORD 
 
+          - name: ZIPKIN_ENDPOINT
+            valueFrom: 
+              secretKeyRef:
+                name: zipkin-secret
+                key: ZIPKIN_ENDPOINT 
           ports:
             - containerPort: 8080
 

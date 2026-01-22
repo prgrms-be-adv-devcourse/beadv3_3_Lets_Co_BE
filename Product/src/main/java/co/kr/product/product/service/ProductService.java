@@ -9,6 +9,7 @@ import co.kr.product.product.dto.response.ProductListResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProductService {
     ProductListResponse getProducts(Pageable pageable);
@@ -26,4 +27,6 @@ public interface ProductService {
     ProductInfoToOrderResponse getProductInfo(Long productsIdx, Long optionIdx);
 
     List<ProductInfoToOrderResponse> getProductInfoList(List<ProductInfoToOrderRequest> requests);
+
+    Map<Long, Long> getSellersByProductIds(List<Long> productIds) ;
 }

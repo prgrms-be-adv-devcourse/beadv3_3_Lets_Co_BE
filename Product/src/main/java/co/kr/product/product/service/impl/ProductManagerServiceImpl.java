@@ -102,7 +102,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 반환 데이터 생성
         ProductDetailResponse result = toProductDetail(
-                "success",
+                "ok",
                         savedItem,
                         savedOpt,
                         savedImg);
@@ -133,7 +133,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // mapper 사용
         return toProductDetail(
-                "success",
+                "ok",
                 product,
                 options,
                 images
@@ -248,7 +248,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // mapper 사용
         return toProductDetail(
-                "success",
+                "ok",
                 product,
                 options,
                 images
@@ -322,7 +322,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 ))
                 .toList();
         return new ProductListResponse(
-                "success",items
+                "ok",items
 
         );
     }

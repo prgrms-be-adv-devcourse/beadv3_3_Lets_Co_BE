@@ -8,7 +8,6 @@ import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
 import co.kr.product.product.dto.response.ProductListResponse;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
-import co.kr.product.product.service.impl.ProductServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -96,6 +96,10 @@ public class ProductController {
         return productService.getProductInfoList(requests);
     }
 
+    @GetMapping("/sellers")
+    public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
+        return productService.getSellersByProductIds(productIds);
+    }
 }
 
 

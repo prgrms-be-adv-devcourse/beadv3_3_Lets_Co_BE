@@ -21,13 +21,13 @@ public interface SettlementService {
     /**
      * 환불 정산 생성 (환불 시 호출)
      * - 환불된 주문의 판매자 조회
-     * - 정산 차감 레코드 생성 (Type: REFUND)
+     * - 기존 정산 레코드(ORDERS_CONFIRMED) 조회
+     * - 지급 완료가 아니면 CANCEL_ADJUST로 상태 변경
      *
      * @param orderId 주문 ID
      * @param paymentIdx 환불 결제 ID
      */
-    void createRefundSettlement(Long orderId, Long paymentIdx);
-
+    void refundSettlement(Long orderId, Long paymentIdx);
 
     /*
      * 정산목록 조회를 Order-service 쪽에서 할지, Member-service에서 할지 모르겠어서

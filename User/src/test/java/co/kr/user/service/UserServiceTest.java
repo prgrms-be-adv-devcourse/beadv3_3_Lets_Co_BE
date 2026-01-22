@@ -3,6 +3,7 @@ package co.kr.user.service;
 import co.kr.user.DAO.UserInformationRepository;
 import co.kr.user.DAO.UserRepository;
 import co.kr.user.DAO.UserVerificationsRepository;
+import co.kr.user.DAO.UsersLoginRepository;
 import co.kr.user.model.DTO.mail.EmailMessage;
 import co.kr.user.model.DTO.my.UserAmendReq;
 import co.kr.user.model.DTO.my.UserDTO;
@@ -10,17 +11,23 @@ import co.kr.user.model.DTO.my.UserDeleteDTO;
 import co.kr.user.model.DTO.my.UserProfileDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.util.AesUtil;
+import co.kr.user.util.CookieUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -48,6 +55,7 @@ class UserServiceTest {
     @Mock MailUtil mailUtil;
 
     @Mock UserRepository userRepository;
+    @Mock UsersLoginRepository usersLoginRepository;
     @Mock UserInformationRepository userInformationRepository;
     @Mock UserVerificationsRepository userVerificationsRepository;
 
@@ -111,8 +119,8 @@ class UserServiceTest {
 
     @Test
     @DisplayName("회원 탈퇴 1차 - 정상")
-    void 회원_탈퇴_1차 () {
-
+    void 회원_탈퇴_1차() {
+        // lenient 설정은 그대로 유지 (필요한 경우)
         lenient().when(aesUtil.decrypt(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // given
@@ -124,41 +132,52 @@ class UserServiceTest {
         given(userVerificationsRepository.save(any(UsersVerifications.class))).willReturn(savedVerifications);
 
         // when
+        // 1차 탈퇴 요청은 파라미터가 1개(userIdx)이므로 그대로 둡니다.
         UserDeleteDTO result = userService.myDelete(USER_IDX);
 
         // then
         verify(userVerificationsRepository).save(any(UsersVerifications.class));
 
+        // 트랜잭션 동기화 (이메일 발송)
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         for (TransactionSynchronization sync : synchronizations) {
             sync.afterCommit();
         }
         verify(mailUtil).sendEmail(any(EmailMessage.class), eq(true));
 
-        // 확인용
         System.out.println(result);
     }
 
     @Test
     @DisplayName("회원 탈퇴 확정 2단계 - 정상")
-    void 회원_탈퇴_2단계 () {
+    void 회원_탈퇴_2단계() {
 
         // given
         Users user = createUser();
         UsersVerifications verification = createUsersVerification(USER_IDX);
 
+        UsersLogin usersLogin = UsersLogin.builder()
+                .usersIdx(USER_IDX)
+                .token("access_token")
+                .build();
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
         given(userRepository.findById(USER_IDX)).willReturn(Optional.ofNullable(user));
-        Assertions.assertNotNull(user);
-        given(userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(user.getUsersIdx())).willReturn(Optional.of(verification));
+        given(userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(USER_IDX, 0)) .willReturn(Optional.of(verification));
+        given(usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc(USER_IDX)).willReturn(usersLogin);
 
         // when
-        String result = userService.myDelete(USER_IDX, verification.getCode());
+        String result = userService.myDelete(USER_IDX, verification.getCode(), response);
 
         // then
         assertThat(result).isEqualTo("회원 탈퇴가 정상 처리되었습니다.");
-        assertThat(user.getDel()).isEqualTo(1);
+        assertThat(user.getDel()).isEqualTo(1); // 탈퇴 상태 변경 확인
 
-        // 확인용
+        // 쿠키가 삭제되었는지 확인 (MaxAge가 0인지 확인)
+        assertThat(response.getCookie(CookieUtil.ACCESS_TOKEN_NAME).getMaxAge()).isZero();
+        assertThat(response.getCookie(CookieUtil.REFRESH_TOKEN_NAME).getMaxAge()).isZero();
+
         System.out.println(result);
     }
 
@@ -203,6 +222,7 @@ class UserServiceTest {
                 .build();
 
         // setter나 builder가 없어서 임시로
+        ReflectionTestUtils.setField(result, "usersIdx", USER_IDX);
         ReflectionTestUtils.setField(result, "balance", BigDecimal.valueOf(10000));
         ReflectionTestUtils.setField(result, "del", 0);
         ReflectionTestUtils.setField(result, "createdAt", LocalDateTime.now());

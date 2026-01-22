@@ -4,6 +4,7 @@ import co.kr.user.model.DTO.my.*;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,7 +127,7 @@ class UserControllerTest {
         UserDeleteSecondStepReq request = new UserDeleteSecondStepReq();
         request.setAuthCode("123456");
 
-        given(userService.myDelete(eq(userIdx), any(String.class))).willReturn("회원 탈퇴가 정상 처리되었습니다.");
+        given(userService.myDelete(eq(userIdx), any(String.class), any(HttpServletResponse.class))).willReturn("회원 탈퇴가 정상 처리되었습니다.");
 
         // When
         ResultActions resultActions = mvc.perform(

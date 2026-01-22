@@ -79,7 +79,6 @@ class SellerServiceTest {
         UsersVerifications sellerVerification = createSellerVerification(USER_IDX);
 
         given(userRepository.findById(USER_IDX)).willReturn(Optional.ofNullable(user));
-        given(bCryptUtil.encode(any())).willReturn("encrypted_token_value");
         given(randomCodeUtil.getCode()).willReturn("123456");
         given(userVerificationsRepository.save(any(UsersVerifications.class))).willReturn(sellerVerification);
 
@@ -111,8 +110,9 @@ class SellerServiceTest {
         UsersInformation userInfo = createUsersInformation(USER_IDX);
 
         given(userRepository.findById(USER_IDX)).willReturn(Optional.of(user));
-        given(userVerificationsRepository.findTopByUsersIdxOrderByCreatedAtDesc(USER_IDX)).willReturn(Optional.of(sellerVerification));
-        given(sellerRepository.findBySellerIdx(USER_IDX)).willReturn(Optional.of(seller));
+        given(userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(USER_IDX, 0)).willReturn(Optional.of(sellerVerification));
+        given(sellerRepository.findBySellerIdxAndDel(USER_IDX, 0)).willReturn(Optional.of(seller));
+
         given(userInformationRepository.findById(USER_IDX)).willReturn(Optional.of(userInfo));
         given(aesUtil.decrypt(any())).willReturn("홍길동");
 
@@ -123,6 +123,7 @@ class SellerServiceTest {
         assertThat(result).isEqualTo("판매자 등록이 완료되었습니다.");
         assertThat(user.getRole()).isEqualTo(UsersRole.SELLER);
 
+        // 트랜잭션 동기화 (이메일 발송)
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         for (TransactionSynchronization sync : synchronizations) {
             sync.afterCommit();
@@ -132,7 +133,6 @@ class SellerServiceTest {
         // 확인용
         System.out.println(result);
     }
-
 
     /*
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ

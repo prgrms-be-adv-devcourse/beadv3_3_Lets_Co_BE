@@ -4,6 +4,7 @@ package co.kr.order.service.impl;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.PaymentFailedException;
+import co.kr.order.mapper.PaymentMapper;
 import co.kr.order.model.dto.request.PaymentRequest;
 import co.kr.order.model.dto.request.PaymentTossConfirmRequest;
 import co.kr.order.model.dto.response.PaymentResponse;
@@ -12,15 +13,14 @@ import co.kr.order.model.entity.PaymentEntity;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
-import co.kr.order.mapper.PaymentMapper;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.repository.PaymentJpaRepository;
 import co.kr.order.service.PaymentService;
 import co.kr.order.service.SettlementService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -147,9 +147,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         updateOrderStatus(order, OrderStatus.REFUNDED);
 
-        // 환불 정산 생성 (정산에서 차감 처리)
-        settlementService.createRefundSettlement(order.getId(), refundPayment.getPaymentIdx());
-
+        // 환불 생성이 아니라 현재상태 CANCEL_ADJUST로 수정
+        settlementService.refundSettlement(order.getId(), payment.getPaymentIdx());
         return PaymentMapper.toResponse(refundPayment);
     }
 
@@ -239,27 +238,27 @@ public class PaymentServiceImpl implements PaymentService {
             String paymentKey,
             BigDecimal amount
     ) {
-        OrderEntity order = orderRepository.findByOrderCode(orderCode).orElse(null);
-        BigDecimal resolvedAmount = amount != null
-                ? amount
-                : (order != null ? order.getTotalAmount() : null);
-        if (order != null && resolvedAmount != null) {
-            sendTossConfirm(order, paymentKey, resolvedAmount);
+        OrderEntity order = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        if (!order.getUserIdx().equals(userIdx)) {
+            throw new IllegalArgumentException("주문 소유자가 아닙니다.");
         }
+
+        BigDecimal resolvedAmount = amount != null ? amount : order.getTotalAmount();
+        sendTossConfirm(order, paymentKey, resolvedAmount);
 
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.TOSS_PAY)
                 .amount(resolvedAmount)
-                .ordersIdx(order != null ? order.getId() : null)
+                .ordersIdx(order.getId())
                 .paymentKey(paymentKey)
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-        if (order != null) {
-            updateOrderStatus(order, OrderStatus.PAID);
-        }
+        updateOrderStatus(order, OrderStatus.PAID);
 
         return PaymentMapper.toResponse(saved);
     }
@@ -284,9 +283,19 @@ public class PaymentServiceImpl implements PaymentService {
                     .POST(HttpRequest.BodyPublishers.ofByteArray(om.writeValueAsBytes(payload)))
                     .build();
 
-            httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                log.error("토스페이 승인 실패 - Status: {}, Body: {}", response.statusCode(), response.body());
+                throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
+            }
+
+            log.info("토스페이 승인 API 응답: {}", response.body());
+        } catch (PaymentFailedException e) {
+            throw e;
         } catch (Exception e) {
-            log.warn("토스 결제 승인 요청 실패", e);
+            log.error("토스 결제 승인 요청 실패: orderCode={}, paymentKey={}", order.getOrderCode(), paymentKey, e);
+            throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
         }
     }
 

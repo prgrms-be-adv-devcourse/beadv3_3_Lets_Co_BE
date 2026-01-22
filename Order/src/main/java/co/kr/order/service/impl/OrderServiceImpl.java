@@ -7,20 +7,21 @@ import co.kr.order.model.dto.DeductStock;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.UserData;
-import co.kr.order.model.dto.request.OrderCartRequest;
-import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.request.PaymentRequest;
-import co.kr.order.model.dto.request.ProductRequest;
+import co.kr.order.model.dto.request.*;
 import co.kr.order.model.dto.response.OrderItemResponse;
 import co.kr.order.model.dto.response.OrderResponse;
+import co.kr.order.model.dto.response.PaymentResponse;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
+import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentType;
+import co.kr.order.model.vo.SettlementType;
 import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
+import co.kr.order.repository.SettlementRepository;
 import co.kr.order.service.OrderService;
 import co.kr.order.service.SettlementService;
 import feign.FeignException;
@@ -46,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductClient productClient;
     private final UserClient userClient;
     private final SettlementService settlementService;
+    private final SettlementRepository settlementRepository;
 
     @Transactional
     @Override
@@ -57,20 +59,20 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo product;
+        ProductInfo productInfo;
         try {
-            product = productClient.getProduct(request.orderItem().productIdx(), request.orderItem().optionIdx());
+            productInfo = productClient.getProduct(request.orderItem().productIdx(), request.orderItem().optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 재고 없으면 Error 던짐
-        if(product.stock() < request.orderItem().quantity()) {
+        if (productInfo.stock() < request.orderItem().quantity()) {
             throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
         }
 
         // 가격*수량 해서 총 가격 측정
-        BigDecimal amount = product.price().multiply(BigDecimal.valueOf(request.orderItem().quantity()));
+        BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(request.orderItem().quantity()));
 
         // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인
         UserData userData = userClient.getUserData(userIdx, request.userData());
@@ -89,25 +91,25 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(amount) // 일단 할인/배송비 고려 x
                 .del(false)
                 .build();
-
         orderRepository.save(orderEntity);
 
         // OrderItem Table 세팅
         OrderItemEntity itemEntity = OrderItemEntity.builder()
                 .order(orderEntity)
-                .productIdx(product.productIdx())
+                .productIdx(productInfo.productIdx())
                 .optionIdx(request.orderItem().optionIdx())
-                .productName(product.productName())
-                .optionName(product.optionName())
-                .price(product.price())
+                .productName(productInfo.productName())
+                .optionName(productInfo.optionName())
+                .price(productInfo.price())
                 .quantity(request.orderItem().quantity())
                 .del(false)
                 .build();
-
         orderItemRepository.save(itemEntity);
 
-        if (request.paymentType() != PaymentType.TOSS_PAY) {
-            paymentService.pay(
+        PaymentResponse pay;
+        if (!request.paymentType().equals(PaymentType.TOSS_PAY)) {
+            // 일반 결제 (CARD, DEPOSIT 등) 처리
+            pay = paymentService.pay(
                     userIdx,
                     new PaymentRequest(
                             orderCode,
@@ -115,6 +117,19 @@ public class OrderServiceImpl implements OrderService {
                     )
             );
         }
+        else {
+            // TOSS_PAY 처리
+            pay = paymentService.confirmTossPayment(
+                    userIdx,
+                    new PaymentTossConfirmRequest(
+                            orderCode,
+                            request.tossKey(),
+                            amount
+                    )
+            );
+        }
+
+        saveSettlementHistory(productInfo.sellerIdx(), pay.paymentIdx(), amount);
 
         // Product-Service에 구매한 수량만큼 재고 감소 요청
         DeductStock stockRequest = new DeductStock(
@@ -144,11 +159,11 @@ public class OrderServiceImpl implements OrderService {
         // 상품을 상세 내용
         OrderItemResponse itemInfo = new OrderItemResponse(
                 new ItemInfo(
-                        product.productIdx(),
-                        product.optionIdx(),
-                        product.productName(),
-                        product.optionName(),
-                        product.price()
+                        productInfo.productIdx(),
+                        productInfo.optionIdx(),
+                        productInfo.productName(),
+                        productInfo.optionName(),
+                        productInfo.price()
                 ),
                 request.orderItem().quantity(),
                 amount
@@ -180,27 +195,27 @@ public class OrderServiceImpl implements OrderService {
                 .orderCode(orderCode)
                 .status(OrderStatus.CREATED)
                 .itemsAmount(itemsAmount)
-                .totalAmount(itemsAmount) // 추후 배송비 등이 있다면 로직 추가 필요
+                .totalAmount(itemsAmount)
                 .del(false)
                 .build();
 
         orderRepository.save(orderEntity);
 
-        // 내 장바구니 목록 조회
         List<CartEntity> cartEntities = cartRepository.findAllByUserIdx(userIdx);
-
-        // 장바구니가 비어있을 경우 예외처리
         if (cartEntities.isEmpty()) {
             throw new IllegalArgumentException("장바구니가 비어있습니다.");
         }
 
-        // Product-Service에 보낼 상품 ID 목록 추출 (Bulk 조회용)
-        List<ProductRequest> productRequests = new ArrayList<>();
-        for (CartEntity cart : cartEntities) {
-            productRequests.add(new ProductRequest(cart.getProductIdx(), cart.getOptionIdx()));
-        }
+        // 상품 정보 및 판매자 정보 조회 (Bulk)
+        List<ProductRequest> productRequests = cartEntities.stream()
+                .map(cart -> new ProductRequest(cart.getProductIdx(), cart.getOptionIdx()))
+                .toList();
 
-        // 상품 정보 한 번에 조회 (Bulk Fetch)
+        List<Long> productIds = cartEntities.stream()
+                .map(CartEntity::getProductIdx)
+                .distinct()
+                .toList();
+
         List<ProductInfo> productInfos;
         try {
             productInfos = productClient.getProductList(productRequests);
@@ -208,40 +223,39 @@ public class OrderServiceImpl implements OrderService {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        // 조회된 리스트를 Map으로 변환
-        // Key: productIdx-optionIdx, Value: ProductInfo
+        // 상품별 판매자 ID 조회
+        Map<Long, Long> productSellerMap = productClient.getSellersByProductIds(productIds);
+
+        // 조회된 리스트를 Map으로 변환 (Key: "상품ID-옵션ID")
         Map<String, ProductInfo> productMap = new HashMap<>();
         for (ProductInfo info : productInfos) {
-            // Map에 저장 (Key: "상품ID-옵션ID", Value: ProductInfo 객체)
             String key = info.productIdx() + "-" + info.optionIdx();
             productMap.put(key, info);
         }
-        // DB에 저장할 엔티티 리스트 & 재고 차감 요청 리스트 &  응답용 리스트
+
+        // 4. 데이터 가공 및 정산 금액 합산 준비
         List<OrderItemEntity> orderItemsToSave = new ArrayList<>();
         List<DeductStock> stockRequests = new ArrayList<>();
         List<OrderItemResponse> responseList = new ArrayList<>();
+        Map<Long, BigDecimal> sellerAmountMap = new HashMap<>(); // 판매자별 정산금 합산용
 
         for (CartEntity cartEntity : cartEntities) {
 
-            // Map 키 생성
             String key = cartEntity.getProductIdx() + "-" + cartEntity.getOptionIdx();
             ProductInfo product = productMap.get(key);
 
-            // 상품이 존재하지 않을 경우 예외 처리
             if (product == null) {
                 throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
             }
 
-            // 재고 부족 시 예외 발생
             if (product.stock() < cartEntity.getQuantity()) {
                 throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
             }
 
-            // 가격 계산
             BigDecimal amount = product.price().multiply(BigDecimal.valueOf(cartEntity.getQuantity()));
             itemsAmount = itemsAmount.add(amount);
 
-            // OrderItem 엔티티 생성 (아직 저장은 안 함)
+            // OrderItem 생성
             OrderItemEntity orderItemEntity = OrderItemEntity.builder()
                     .order(orderEntity)
                     .productIdx(cartEntity.getProductIdx())
@@ -255,39 +269,55 @@ public class OrderServiceImpl implements OrderService {
             orderItemsToSave.add(orderItemEntity);
 
             // 응답 리스트 추가
-            responseList.add(
-                    new OrderItemResponse(
-                        new ItemInfo(
-                                product.productIdx(),
-                                product.optionIdx(),
-                                product.productName(),
-                                product.optionName(),
-                                product.price()
-                        ),
-                        cartEntity.getQuantity(),
-                        amount
-                    )
-            );
+            responseList.add(new OrderItemResponse(
+                    new ItemInfo(
+                            product.productIdx(),
+                            product.optionIdx(),
+                            product.productName(),
+                            product.optionName(),
+                            product.price()
+                    ),
+                    cartEntity.getQuantity(),
+                    amount
+            ));
 
-            // 재고 차감 요청 객체 생성 (product-service용)
+            // 재고 차감 요청 리스트 추가
             stockRequests.add(new DeductStock(
                     cartEntity.getProductIdx(),
                     cartEntity.getOptionIdx(),
                     cartEntity.getQuantity()
             ));
+
+            // 판매자별 정산 금액 합산 로직
+            Long sellerIdx = productSellerMap.get(cartEntity.getProductIdx());
+            if (sellerIdx != null) {
+                sellerAmountMap.merge(sellerIdx, amount, BigDecimal::add);
+            }
         }
 
-        // 주문 상품 일괄 저장 (insert 한번)
+        // 주문 상품 DB 저장
         orderItemRepository.saveAll(orderItemsToSave);
 
-        // 주문 총액 업데이트
+        // 6. 주문 총액 업데이트
         orderEntity.setItemsAmount(itemsAmount);
-        // orderEntity.setTotalAmount(...); // 일단 totalAmount는 안하니까
+        orderEntity.setTotalAmount(itemsAmount);
         orderRepository.save(orderEntity);
 
-        // TOSS_PAY가 아닐 때만 즉시 결제 시도
-        if (request.paymentType() != PaymentType.TOSS_PAY) {
-            paymentService.pay(
+        // 결제 처리
+        PaymentResponse pay;
+        if (request.paymentType() == PaymentType.TOSS_PAY) {
+            // TOSS_PAY
+            pay = paymentService.confirmTossPayment(
+                    userIdx,
+                    new PaymentTossConfirmRequest(
+                            orderCode,
+                            request.tossKey(),
+                            itemsAmount
+                    )
+            );
+        } else {
+            // 일반 결제
+            pay = paymentService.pay(
                     userIdx,
                     new PaymentRequest(
                             orderCode,
@@ -296,33 +326,45 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
+        // 판매자별 정산 내역 저장 (Loop)
+        for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
+            saveSettlementHistory(entry.getKey(), pay.paymentIdx(), entry.getValue());
+        }
+
+        // 재고 차감 및 장바구니 비우기 (실패 시 보상 트랜잭션 수행)
         try {
-            // Product-Service에 구매한 수량만큼 재고 감소 요청
             productClient.deductStocks(stockRequests);
-            // 주문완료 후 카트내역 삭제
             cartRepository.deleteByUserIdx(userIdx);
 
         } catch (Exception e) {
-            // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
-            // 반드시 결제를 취소(환불) 해줘야 함
+            log.error("주문 후처리 실패 (재고 차감 등). 환불 진행. orderCode={}", orderCode, e);
 
-            // TOSS_PAY는 결제 전이므로 별도 환불 로직 불필요 (트랜잭션 롤백)
+            // TOSS_PAY는 승인이 완료된 상태이므로 취소 필요
+            // 다른 결제 수단도 돈이 나갔다면 환불 처리
             if (request.paymentType() != PaymentType.TOSS_PAY) {
-                // 이미 돈이 나간 경우(DEPOSIT 등)에만 환불 처리
+                paymentService.refund(userIdx, orderCode);
+            } else {
+                // Toss 결제도 승인 후 실패 시 환불(취소) 처리 필요
+                // (Toss는 승인 API 호출 성공 시 돈이 나간 상태임)
                 paymentService.refund(userIdx, orderCode);
             }
 
-            // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
             throw e;
         }
 
-        return new OrderResponse(
-                responseList,
-                itemsAmount
-//                salePrice,
-//                shippingFee,
-//                totalAmount
-        );
+        return new OrderResponse(responseList, itemsAmount);
+    }
+
+
+    private void saveSettlementHistory(Long sellerIdx, Long paymentIdx, BigDecimal amount) {
+
+        SettlementHistoryEntity entity = SettlementHistoryEntity.builder()
+                .sellerIdx(sellerIdx)
+                .paymentIdx(paymentIdx)
+                .type(SettlementType.Orders_CONFIRMED)
+                .amount(amount)
+                .build();
+        settlementRepository.save(entity);
     }
 
     @Transactional

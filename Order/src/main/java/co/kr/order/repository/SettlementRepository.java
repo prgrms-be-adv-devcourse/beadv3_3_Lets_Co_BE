@@ -1,23 +1,42 @@
 package co.kr.order.repository;
 
 import co.kr.order.model.entity.SettlementHistoryEntity;
+import co.kr.order.model.vo.SettlementType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 정산 내역 Repository
- */
 @Repository
 public interface SettlementRepository extends JpaRepository<SettlementHistoryEntity, Long> {
 
-    // 추후 조회 API 개발 시 메서드 추가 예정
-    // - findBySellerIdxAndCreatedAtBetween (기간별 조회)
-    // - sumAmountBySellerAndType (요약 조회)
-
-    SettlementHistoryEntity findByPaymentIdx(Long paymentIdx);
-
     List<SettlementHistoryEntity> findAllBySellerIdx(Long sellerIdx);
+
     SettlementHistoryEntity findBySellerIdxAndPaymentIdx(Long sellerIdx, Long paymentIdx);
+
+    /**
+     * Update settlement type (ORDERS_CONFIRMED -> SETTLE_PAYOUT).
+     * JPQL UPDATE를 수행하는데, @Modifying이 없으면 Spring Data가 조회 쿼리로 취급해서 실행이 안 됩니다
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE SettlementHistoryEntity s
+            SET s.type = :newType
+            WHERE s.sellerIdx = :sellerIdx
+              AND s.type = co.kr.order.model.vo.SettlementType.Orders_CONFIRMED
+              AND s.del = false
+              AND s.createdAt >= :startDate
+              AND s.createdAt <= :endDate
+            """)
+    int updateTypeBySellerIdxAndPeriod(
+            @Param("sellerIdx") Long sellerIdx,
+            @Param("newType") SettlementType newType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
 }

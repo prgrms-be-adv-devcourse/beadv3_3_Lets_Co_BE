@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
 
@@ -213,7 +215,17 @@ public class ProductServiceImpl implements ProductService {
                 opt.getStock()
         )).toList();
 
+    }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> getSellersByProductIds(List<Long> productIds) {
+        return productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(
+                        ProductEntity::getProductsIdx,
+                        ProductEntity::getSellerIdx
+                ));
     }
 }
 

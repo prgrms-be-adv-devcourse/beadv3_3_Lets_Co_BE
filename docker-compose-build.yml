@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  gateway-service:
+    build:
+      context: ./Gateway
+      dockerfile: Dockerfile
+    image: lujol/gateway-service:v6
+  discovery-service:
+    build:
+      context: ./Discovery     
+      dockerfile: Dockerfile
+    image: lujol/discovery-service:v6
+
+  customerservice-service:
+    build:
+      context: ./CostomerService      
+      dockerfile: Dockerfile
+    image:  lujol/customerservice-service:v6
+
+  order-service:
+    build:
+      context: ./Order              
+      dockerfile: Dockerfile
+    image: lujol/order-service:v6
+
+  product-service:
+    build:
+      context: ./Product            
+      dockerfile: Dockerfile
+    image: lujol/product-service:v6
+
+  user-service:
+    build:
+      context: ./User            
+      dockerfile: Dockerfile
+    image: lujol/user-service:v6

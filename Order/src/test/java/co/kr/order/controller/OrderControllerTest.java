@@ -5,10 +5,7 @@ import co.kr.order.model.dto.OrderItem;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.entity.CartEntity;
-import co.kr.order.model.entity.OrderEntity;
-import co.kr.order.model.entity.OrderItemEntity;
-import co.kr.order.model.entity.PaymentEntity;
+import co.kr.order.model.entity.*;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
@@ -59,6 +56,7 @@ class OrderControllerTest {
     @Autowired OrderItemJpaRepository orderItemRepository;
     @Autowired CartJpaRepository cartRepository;
     @Autowired PaymentJpaRepository paymentRepository;
+    @Autowired SettlementRepository settlementRepository;
 
     String setOrderCode = "TARGET-UUID-1234";
 
@@ -165,10 +163,8 @@ class OrderControllerTest {
                 .findFirst()
                 .orElseThrow();
 
-        // 실제 DB에 원하는 데이터가 들어갔는지 테스트
         // Order 테이블
         Assertions.assertThat(orderEntity.getUserIdx()).isEqualTo(1L);
-        // Service 로직에서 addressIdx, cardIdx 저장이 주석 처리되었으므로 null 이어야 함
         Assertions.assertThat(orderEntity.getAddressIdx()).isNull();
         Assertions.assertThat(orderEntity.getCardIdx()).isNull();
         Assertions.assertThat(orderEntity.getOrderCode()).isNotNull();
@@ -240,6 +236,10 @@ class OrderControllerTest {
         Assertions.assertThat(paymentEntity.getOrdersIdx()).isEqualTo(orderEntity.getId());
         Assertions.assertThat(paymentEntity.getType()).isEqualTo(PaymentType.DEPOSIT);
         Assertions.assertThat(paymentEntity.getAmount()).isEqualByComparingTo("30000.00");
+
+        // settlement 테이블
+        SettlementHistoryEntity setEntity = settlementRepository.findBySellerIdxAndPaymentIdx(1L, paymentEntity.getPaymentIdx());
+        Assertions.assertThat(setEntity.getAmount()).isEqualByComparingTo("30000.00");
     }
 
 
@@ -289,12 +289,14 @@ class OrderControllerTest {
 
         // Order 테이블
         Assertions.assertThat(orderEntity.getUserIdx()).isEqualTo(1L);
-        Assertions.assertThat(orderEntity.getAddressIdx()).isNull(); // Service 주석 처리 반영
         Assertions.assertThat(orderEntity.getStatus()).isEqualTo(OrderStatus.PAID);
 
         // Payment 테이블
         Assertions.assertThat(paymentEntity.getType()).isEqualTo(PaymentType.CARD);
         Assertions.assertThat(paymentEntity.getAmount()).isEqualByComparingTo("30000.00");
+
+        SettlementHistoryEntity setEntity = settlementRepository.findBySellerIdxAndPaymentIdx(1L, paymentEntity.getPaymentIdx());
+        Assertions.assertThat(setEntity.getAmount()).isEqualByComparingTo("30000.00");
     }
 
     @Test
@@ -322,7 +324,6 @@ class OrderControllerTest {
                 .build();
         cartRepository.save(cartItem2);
 
-        // UserData 없이 요청 생성
         OrderCartRequest body = new OrderCartRequest(
                 PaymentType.DEPOSIT,
                 null // tossKey
@@ -338,7 +339,7 @@ class OrderControllerTest {
                 )
                 .andDo(print());
 
-        // 실제 상품 데이터로 결제가 진행
+        // 실제 상품 데이터로 결제가 진행 (카트 정보로 x)
         // 상품A(10000 * 2) + 상품B(15000 * 3)
         resultActions.andExpect(status().isCreated())
                 .andExpect(handler().handlerType(OrderController.class))

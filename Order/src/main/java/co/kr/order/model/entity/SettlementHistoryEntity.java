@@ -3,6 +3,7 @@ package co.kr.order.model.entity;
 import co.kr.order.model.vo.SettlementType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,6 +57,7 @@ public class SettlementHistoryEntity {
     private LocalDateTime createdAt;
 
     @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
     private boolean del;
 
     @Builder

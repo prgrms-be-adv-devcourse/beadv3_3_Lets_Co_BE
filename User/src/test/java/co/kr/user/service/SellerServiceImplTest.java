@@ -43,9 +43,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class SellerServiceTest {
+class SellerServiceImplTest {
 
-    @InjectMocks SellerService sellerService;
+    @InjectMocks SellerServiceImpl sellerService;
 
     @Mock UserRepository userRepository;
     @Mock SellerRepository sellerRepository;

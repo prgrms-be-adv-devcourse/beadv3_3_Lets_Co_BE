@@ -3,7 +3,10 @@ package co.kr.order.model.entity;
 import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,12 +45,8 @@ public class PaymentEntity {
     @Column(name = "Payment_Key")
     private String paymentKey;
 
-
     @Column(name = "Created_at", nullable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "Del", nullable = false)
-    private boolean del;
 
     @Builder
     public PaymentEntity(
@@ -67,7 +66,6 @@ public class PaymentEntity {
         this.cardIdx = cardIdx;
         this.paymentKey = paymentKey;
         this.createdAt = LocalDateTime.now();
-        this.del = false;
     }
 
 }

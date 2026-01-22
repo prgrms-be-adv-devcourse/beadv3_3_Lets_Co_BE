@@ -9,5 +9,6 @@ import java.util.List;
  */
 public record OrderResponse(
         List<OrderItemResponse> itemList,
+        String orderCode,
         BigDecimal itemsAmount
 ) {}

@@ -108,7 +108,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.data.cartItemList[1].quantity").value(3))
                 .andExpect(jsonPath("$.data.cartItemList[1].amount").value("36000.0"));
 
-        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
+        CartEntity entity = cartRepository.findCartEntity(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(2);
         Assertions.assertThat(entity.getPrice()).isEqualByComparingTo("20000.00");
     }
@@ -142,7 +142,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.data.quantity").value(1))
                 .andExpect(jsonPath("$.data.amount").value("13000.0"));
 
-        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 102L, 12L).get();
+        CartEntity entity = cartRepository.findCartEntity(1L, 102L, 12L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(1);
         Assertions.assertThat(entity.getPrice()).isEqualByComparingTo("13000.00");
     }
@@ -172,7 +172,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.data.quantity").value(3))
                 .andExpect(jsonPath("$.data.amount").value("30000.0"));
 
-        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
+        CartEntity entity = cartRepository.findCartEntity(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(3);
     }
 
@@ -201,7 +201,7 @@ class CartControllerTest {
                 .andExpect(jsonPath("$.data.quantity").value(1))
                 .andExpect(jsonPath("$.data.amount").value("10000.0"));
 
-        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L).get();
+        CartEntity entity = cartRepository.findCartEntity(1L, 100L, 10L).get();
         Assertions.assertThat(entity.getQuantity()).isEqualTo(1);
     }
 
@@ -227,7 +227,7 @@ class CartControllerTest {
                 .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
-        Optional<CartEntity> entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(1L, 100L, 10L);
+        Optional<CartEntity> entity = cartRepository.findCartEntity(1L, 100L, 10L);
         Assertions.assertThat(entity).isEmpty();
     }
 }

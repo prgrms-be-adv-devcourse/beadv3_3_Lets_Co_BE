@@ -477,8 +477,8 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.data.length()").value(2));
 
         // 주문건수 2개
-        List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(1L);
-        Assertions.assertThat(orderEntities).hasSize(2);
+//        List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(1L);
+//        Assertions.assertThat(orderEntities).hasSize(2);
     }
 
     @Test

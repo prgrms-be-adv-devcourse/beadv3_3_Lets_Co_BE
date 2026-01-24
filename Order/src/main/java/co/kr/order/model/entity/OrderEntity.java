@@ -5,9 +5,11 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +24,9 @@ public class OrderEntity {
     @Column(name = "Orders_IDX")
     private Long id;
 
-    @OneToMany(mappedBy = "order")
-    private List<OrderItemEntity> orderItems = new ArrayList<>(); // null 방지 초기화
+    @BatchSize(size = 100)  // N+1 방지
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<OrderItemEntity> orderItems = new ArrayList<>();
 
     @Column(name = "Users_IDX", nullable = false)
     private Long userIdx;
@@ -56,6 +59,9 @@ public class OrderEntity {
     @Column(name = "Del", nullable = false)
     @ColumnDefault("0")
     private Boolean del;
+
+    @Column(name = "Created_at")
+    LocalDateTime createdAt;
 
     @Builder
     public OrderEntity(Long userIdx, Long addressIdx, Long cardIdx, String orderCode,

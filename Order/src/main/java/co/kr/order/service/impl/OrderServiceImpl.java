@@ -24,6 +24,8 @@ import co.kr.order.service.SettlementService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -383,10 +385,44 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OrderResponse> findOrderList(Long userIdx) {
+    public Page<OrderResponse> findOrderList(Long userIdx, Pageable pageable) {
 
-        List<OrderResponse> responseOrderList = new ArrayList<>();
+        Page<OrderEntity> orderPage = orderRepository.findAllByUserIdx(userIdx, pageable);
 
+        return orderPage.map(orderEntity -> {
+
+            List<OrderItemResponse> responseItemList = new ArrayList<>();
+            BigDecimal itemsAmount = BigDecimal.ZERO;
+
+            List<OrderItemEntity> itemEntities = orderEntity.getOrderItems();
+            for (OrderItemEntity itemEntity : itemEntities) {
+
+                BigDecimal amount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
+                itemsAmount = itemsAmount.add(amount);
+
+                responseItemList.add(
+                        new OrderItemResponse(
+                                new ItemInfo(
+                                        itemEntity.getProductIdx(),
+                                        itemEntity.getOptionIdx(),
+                                        itemEntity.getProductName(),
+                                        itemEntity.getOptionName(),
+                                        itemEntity.getPrice()
+                                ),
+                                itemEntity.getQuantity(),
+                                amount
+                        )
+                );
+            }
+
+            return new OrderResponse(
+                    responseItemList,
+                    orderEntity.getOrderCode(),
+                    itemsAmount
+            );
+        });
+
+        /*  [이전 N+1 발생 코드]
         List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
         for(OrderEntity orderEntity : orderEntities) {
 
@@ -421,8 +457,7 @@ public class OrderServiceImpl implements OrderService {
                     )
             );
         }
-
-        return responseOrderList;
+        */
     }
 
     @Transactional(readOnly = true)
@@ -469,9 +504,9 @@ public class OrderServiceImpl implements OrderService {
             return "예치금으로 충전할 수 없습니다.";
         }
 
+        // 결제하는 로직 (토스로)
 
-        // 결제하는 로직 (토스)
-
+        // 지금은 트리거로 작동되어서 charge로 payment 찍으면 알아서 예치금 올라감
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
                 .status(PaymentStatus.CHARGE)
@@ -488,7 +523,7 @@ public class OrderServiceImpl implements OrderService {
 
 
 
-    /**
+    /*
      * 주문 완료 처리 (일단 보류)
      * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
      * - 주문 상태를 COMPLETED로 변경

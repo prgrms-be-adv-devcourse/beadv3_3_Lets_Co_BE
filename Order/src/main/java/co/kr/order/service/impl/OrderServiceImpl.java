@@ -234,7 +234,7 @@ public class OrderServiceImpl implements OrderService {
             productMap.put(key, info);
         }
 
-        // 4. 데이터 가공 및 정산 금액 합산 준비
+        // 데이터 가공 및 정산 금액 합산 준비
         List<OrderItemEntity> orderItemsToSave = new ArrayList<>();
         List<DeductStock> stockRequests = new ArrayList<>();
         List<OrderItemResponse> responseList = new ArrayList<>();
@@ -307,25 +307,14 @@ public class OrderServiceImpl implements OrderService {
         // 결제 처리
         PaymentResponse pay;
         if (request.paymentType() == PaymentType.TOSS_PAY) {
-            // TOSS_PAY
-            pay = paymentService.confirmTossPayment(
-                    userIdx,
-                    new PaymentTossConfirmRequest(
-                            orderCode,
-                            request.tossKey(),
-                            itemsAmount
-                    )
-            );
+            pay = paymentService.confirmTossPayment(userIdx, new PaymentTossConfirmRequest(orderCode, request.tossKey(), itemsAmount));
         } else {
-            // 일반 결제
-            pay = paymentService.pay(
-                    userIdx,
-                    new PaymentRequest(
-                            orderCode,
-                            request.paymentType()
-                    )
-            );
+            // pay() 메서드 내부에서 이미 order의 상태를 PAID로 변경하고 저장합니다.
+            pay = paymentService.pay(userIdx, new PaymentRequest(orderCode, request.paymentType()));
         }
+
+        orderEntity.setStatus(OrderStatus.PAID);
+        orderRepository.saveAndFlush(orderEntity);  // 즉시반영
 
         // 판매자별 정산 내역 저장 (Loop)
         for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {

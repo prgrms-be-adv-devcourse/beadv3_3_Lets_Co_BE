@@ -31,6 +31,12 @@ public class SettlementHistoryEntity {
     private Long sellerIdx;
 
     /**
+     * 결제 ID (Payment 테이블 FK)
+     */
+    @Column(name = "Payment_IDX", nullable = false)
+    private Long paymentIdx;
+
+    /**
      * 정산 유형
      * - SALE: 판매 정산
      * - REFUND: 환불 차감
@@ -38,12 +44,6 @@ public class SettlementHistoryEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "Type", nullable = false, length = 30)
     private SettlementType type;
-
-    /**
-     * 결제 ID (Payment 테이블 FK)
-     */
-    @Column(name = "Payment_IDX", nullable = false)
-    private Long paymentIdx;
 
     /**
      * 정산 금액
@@ -61,10 +61,10 @@ public class SettlementHistoryEntity {
     private boolean del;
 
     @Builder
-    public SettlementHistoryEntity(Long sellerIdx, SettlementType type, Long paymentIdx, BigDecimal amount) {
+    public SettlementHistoryEntity(Long sellerIdx, Long paymentIdx, SettlementType type, BigDecimal amount) {
         this.sellerIdx = sellerIdx;
-        this.type = type;
         this.paymentIdx = paymentIdx;
+        this.type = type;
         this.amount = amount;
         this.createdAt = LocalDateTime.now();
         this.del = false;

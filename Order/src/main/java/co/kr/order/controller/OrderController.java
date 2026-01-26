@@ -9,11 +9,13 @@ import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -68,16 +70,20 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<List<OrderResponse>>> getOrderList (
-            HttpServletRequest servletRequest
+    public ResponseEntity<BaseResponse<Page<OrderResponse>>> getOrderList (
+            HttpServletRequest servletRequest,
+            @PageableDefault(
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        List<OrderResponse> info = orderService.findOrderList(userIdx);
+        Page<OrderResponse> info = orderService.findOrderList(userIdx, pageable);
 
-        BaseResponse<List<OrderResponse>> body = new BaseResponse<>("ok", info);
+        BaseResponse<Page<OrderResponse>> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }
 

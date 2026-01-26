@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 
@@ -37,6 +38,7 @@ public class CartEntity {
     private Integer quantity = 0;
 
     @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
     Boolean del;
 
 

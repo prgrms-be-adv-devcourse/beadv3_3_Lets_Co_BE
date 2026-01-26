@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 
@@ -44,6 +45,7 @@ public class OrderItemEntity {
     private Integer quantity;
 
     @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
     private Boolean del;
 
     @Builder

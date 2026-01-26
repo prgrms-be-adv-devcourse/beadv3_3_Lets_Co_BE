@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface OrderItemJpaRepository extends JpaRepository<OrderItemEntity, Long> {
-    List<OrderItemEntity> findAllByOrderIn(List<OrderEntity> orders);
+
     List<OrderItemEntity> findAllByOrder(OrderEntity order);
 }

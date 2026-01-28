@@ -41,7 +41,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional
     public AdminNoticeDetailResponse addNotice(Long userId, NoticeUpsertRequest request){
 
-        String role = authServiceClient.getUserRole(userId);
+        String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }
@@ -90,7 +90,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     public NoticeListResponse getNoticeList(Long userId, Pageable pageable){
 
         // 1. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId);
+        String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }
@@ -128,7 +128,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     public AdminNoticeDetailResponse getNoticeDetail(Long userId, String noticeCode){
 
         // 0. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId);
+        String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }
@@ -155,7 +155,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional
     public AdminNoticeDetailResponse updateNotice(Long userId, String noticeCode,NoticeUpsertRequest request){
         // 1. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId);
+        String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }
@@ -190,7 +190,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional
     public ResultResponse deleteNotice(Long userId, String noticeCode){
         // 1. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId);
+        String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }

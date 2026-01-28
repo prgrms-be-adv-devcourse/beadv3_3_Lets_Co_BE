@@ -7,15 +7,17 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "Product", url = "http://product-service:8080")
+// @FeignClient(name = "Product", url = "http://product-service:8080")
+@FeignClient(name = "product-service" , url = "http://product-service:8080")
 public interface ProductServiceClient {
-    @PostMapping("/product/byIdx")
-    List<ProductInfoResponse> getProductInfo(ProductIdxsRequest request);
+    @PostMapping("/products/byIdx")
+    List<ProductInfoResponse> getProductInfo(@RequestBody ProductIdxsRequest request);
 
-    @GetMapping("/product/getSeller/{productsIdx}")
+    @GetMapping("/products/getSeller/{productsIdx}")
     ProductSellerResponse getSellerIdx(@PathVariable("productsIdx") Long productsIdx);
 
 }

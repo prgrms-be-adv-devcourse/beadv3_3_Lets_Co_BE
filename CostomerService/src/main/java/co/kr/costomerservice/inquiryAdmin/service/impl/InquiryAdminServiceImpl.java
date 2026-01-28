@@ -68,6 +68,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 .isPrivate(request.isPrivate())
                 .isPinned(false)
                 .usersIdx(userId)
+                .username(request.name())
                 .build();
 
         // 2.1 저장
@@ -78,7 +79,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 .detailCode(UUID.randomUUID().toString())
                 .usersIdx(userId)
                 // .Parent_IDX의 경우 해당 엔티티가 부모의 입장이 되므로 생략하는거로
-
+                .userName(request.name())
                 // customerService : 위에서 저장을 진행했으므로 idx에 값이 들어감. 이를 받아옴
                 .customerService(requestEntity)
                 .content(request.content())

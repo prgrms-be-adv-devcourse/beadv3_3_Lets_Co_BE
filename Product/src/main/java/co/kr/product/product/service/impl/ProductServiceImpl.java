@@ -1,6 +1,7 @@
 package co.kr.product.product.service.impl;
 
 import co.kr.product.product.dto.request.DeductStockRequest;
+import co.kr.product.product.dto.request.ProductIdxsRequest;
 import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
 import co.kr.product.product.dto.response.*;
 import co.kr.product.product.entity.ProductEntity;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
@@ -227,6 +229,41 @@ public class ProductServiceImpl implements ProductService {
                         ProductEntity::getSellerIdx
                 ));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductInfoResponse> getProductInfoForBoard(ProductIdxsRequest request){
+        List<ProductEntity> productInfoEntities = productRepository.findAllByProductsIdxInAndDelFalse(request.productIdxs());
+
+        List<ProductImageEntity> thumbnails = productImageRepository.findAllByProduct_ProductsIdxInAndIsThumbnailTrueAndDelFalse(request.productIdxs());
+
+        // 3. 조회를 빠르게 하기 위해 Map으로 변환 (Key: 상품IDX, Value: 이미지URL)
+        Map<Long, String> imageUrlMap = thumbnails.stream()
+                .collect(Collectors.toMap(
+                        img -> img.getProduct().getProductsIdx(), // ProductImageEntity -> ProductEntity -> IDX
+                        ProductImageEntity::getUrl,
+                        (existing, replacement) -> existing // 혹시 중복이 있다면 첫 번째 것 유지
+                ));
+        return productInfoEntities.stream()
+                .map(entity -> new ProductInfoResponse(
+                        entity.getProductsIdx(), // 필드명은 엔티티 설정에 맞춰 확인 필요 (예: getProductIdx)
+                        entity.getProductsCode(),
+                        entity.getProductsName(),
+                        imageUrlMap.get(entity.getProductsIdx())
+                ))
+                .toList();
+
+
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductSellerResponse getSellerIdx(Long productsIdx){
+        ProductEntity product = productRepository.findByProductsIdxAndDelFalse(productsIdx)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
+        return new ProductSellerResponse(product.getSellerIdx());
+    };
 }
 
 

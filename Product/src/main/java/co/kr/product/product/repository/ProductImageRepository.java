@@ -14,6 +14,8 @@ public interface ProductImageRepository extends JpaRepository<ProductImageEntity
     ProductImageEntity findAllByProduct(ProductEntity product);
 
     List<ProductImageEntity> findByProductAndDelFalse(ProductEntity product);
+
+    List<ProductImageEntity> findAllByProduct_ProductsIdxInAndIsThumbnailTrueAndDelFalse(List<Long> longs);
 }
 
 

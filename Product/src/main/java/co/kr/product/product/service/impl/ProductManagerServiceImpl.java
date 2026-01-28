@@ -51,7 +51,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
 
         // 2. 본인확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
             throw new RuntimeException("판매자 권한이 없습니다.");
         }
@@ -115,7 +115,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductDetailResponse getManagerProductDetail(Long usersIdx, String code){
 
         // 본인 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
             throw new RuntimeException("권한이 없습니다.");
         }
@@ -155,7 +155,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             UpsertProductRequest request){
 
         // 본인 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
             throw new RuntimeException("권한이 없습니다.");
         }
@@ -261,7 +261,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public void deleteProduct(Long usersIdx, String code){
 
         // 본인 확인
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
             throw new RuntimeException("권한이 없습니다.");
         }
@@ -300,7 +300,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductListResponse getListsBySeller(Long usersIdx, Pageable pageable, ProductListRequest requests){
 
 
-        String role = authServiceClient.getUserRole(usersIdx);
+        String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role)) {
             throw new RuntimeException("판매자가 아닙니다.");
         }

@@ -425,44 +425,44 @@ public class OrderServiceImpl implements OrderService {
                     itemsAmount
             );
         });
+    }
 
-        /*  [이전 N+1 발생 코드]
-        List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
-        for(OrderEntity orderEntity : orderEntities) {
+    /*  [이전 N+1 발생 코드]
+    List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
+    for(OrderEntity orderEntity : orderEntities) {
 
-            List<OrderItemResponse> responseItemList = new ArrayList<>();
+        List<OrderItemResponse> responseItemList = new ArrayList<>();
 
-            BigDecimal itemsAmount = BigDecimal.ZERO;
-            List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
-            for(OrderItemEntity itemEntity : itemEntities) {
+        BigDecimal itemsAmount = BigDecimal.ZERO;
+        List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
+        for(OrderItemEntity itemEntity : itemEntities) {
 
-                BigDecimal amount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
-                itemsAmount = itemsAmount.add(amount);
-                responseItemList.add(
-                        new OrderItemResponse(
-                                new ItemInfo(
-                                        itemEntity.getProductIdx(),
-                                        itemEntity.getOptionIdx(),
-                                        itemEntity.getProductName(),
-                                        itemEntity.getOptionName(),
-                                        itemEntity.getPrice()
-                                ),
-                                itemEntity.getQuantity(),
-                                amount
-                        )
-                );
-            }
-
-            responseOrderList.add(
-                    new OrderResponse(
-                            responseItemList,
-                            orderEntity.getOrderCode(),
-                            itemsAmount
+            BigDecimal amount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
+            itemsAmount = itemsAmount.add(amount);
+            responseItemList.add(
+                    new OrderItemResponse(
+                            new ItemInfo(
+                                    itemEntity.getProductIdx(),
+                                    itemEntity.getOptionIdx(),
+                                    itemEntity.getProductName(),
+                                    itemEntity.getOptionName(),
+                                    itemEntity.getPrice()
+                            ),
+                            itemEntity.getQuantity(),
+                            amount
                     )
             );
         }
-        */
+
+        responseOrderList.add(
+                new OrderResponse(
+                        responseItemList,
+                        orderEntity.getOrderCode(),
+                        itemsAmount
+                )
+        );
     }
+    */
 
     @Transactional(readOnly = true)
     @Override
@@ -506,10 +506,6 @@ public class OrderServiceImpl implements OrderService {
         paymentClient.charge(userIdx, request);
         return "정상적으로 처리되었습니다.";
     }
-
-
-
-
 
     /*
      * 주문 완료 처리 (일단 보류)

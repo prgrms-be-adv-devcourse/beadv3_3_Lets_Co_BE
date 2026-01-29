@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+</head>
+<body>
+<div class="box_section" style="padding: 40px 30px 50px 30px; margin-top: 30px; margin-bottom: 50px">
+    <div id="payment-method"></div>
+    <div id="agreement"></div>
+    <div class="result wrapper">
+        <button class="button" id="payment-button" style="margin-top: 30px">
+            결제하기
+        </button>
+    </div>
+</div>
+<script th:inline="javascript">
+    main();
+
+    async function main() {
+
+        const accountCode = [[ ${accountCode} ]];
+
+        const button = document.getElementById("payment-button");
+
+        const amount = {
+            currency: "KRW",
+            value: [[ ${description.totalPrice} ]],
+        };
+
+        const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+        const tossPayments = TossPayments(clientKey);
+
+        const widgets = tossPayments.widgets({
+            "customerKey": accountCode,
+        });
+
+        await widgets.setAmount(amount);
+        await widgets.renderPaymentMethods({
+            selector: "#payment-method",
+            variantKey: "DEFAULT",
+        });
+
+        await widgets.renderAgreement({selector: "#agreement", variantKey: "AGREEMENT"});
+
+        button.addEventListener("click", async function () {
+            const cartItems = [[ ${description.items} ]];
+            const cartItemCodes = cartItems.map(cartItem => cartItem.code);
+
+            await fetch("/orders" , {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    cartItemCodes
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                widgets.requestPayment({
+                    orderId: data.data.orderCode,
+                    orderName: data.data.orderItems[0].productName,
+                    successUrl: window.location.origin + "/payment/view/payments/success",
+                    failUrl: window.location.origin + "/payment/view/payments/fail",
+                })
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            }
+            )
+
+        });
+    }
+
+</script>
+</body>
+</html>

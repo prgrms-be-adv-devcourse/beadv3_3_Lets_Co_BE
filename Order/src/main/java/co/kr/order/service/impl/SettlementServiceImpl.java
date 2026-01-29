@@ -1,14 +1,14 @@
 package co.kr.order.service.impl;
 
+import co.kr.order.client.PaymentClient;
 import co.kr.order.client.ProductClient;
 import co.kr.order.model.dto.SettlementInfo;
+import co.kr.order.model.dto.response.PaymentResponse;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
-import co.kr.order.model.entity.PaymentEntity;
 import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.SettlementType;
 import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.repository.PaymentJpaRepository;
 import co.kr.order.repository.SettlementRepository;
 import co.kr.order.service.SettlementService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class SettlementServiceImpl implements SettlementService {
 
     private final SettlementRepository settlementRepository;
     private final OrderJpaRepository orderRepository;
-    private final PaymentJpaRepository paymentRepository;
+    private final PaymentClient paymentClient;
     private final ProductClient productClient;
 
     /**
@@ -47,8 +47,7 @@ public class SettlementServiceImpl implements SettlementService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
 
-        PaymentEntity payment = paymentRepository.findByOrdersIdx(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("결제 내역을 찾을 수 없습니다. orderId=" + orderId));
+        PaymentResponse payment = paymentClient.findByOrdersIdx(orderId);
 
         List<OrderItemEntity> orderItems = order.getOrderItems();
         if (orderItems.isEmpty()) {
@@ -80,13 +79,13 @@ public class SettlementServiceImpl implements SettlementService {
             SettlementHistoryEntity settlement = SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
                     .type(SettlementType.Orders_CONFIRMED)
-                    .paymentIdx(payment.getPaymentIdx())
+                    .paymentIdx(payment.paymentIdx())
                     .amount(entry.getValue())
                     .build();
 
             settlementRepository.save(settlement);
             log.info("정산 생성 완료: sellerIdx={}, amount={}, paymentIdx={}",
-                    entry.getKey(), entry.getValue(), payment.getPaymentIdx());
+                    entry.getKey(), entry.getValue(), payment.paymentIdx());
         }
     }
 
@@ -124,7 +123,8 @@ public class SettlementServiceImpl implements SettlementService {
         Set<Long> sellerIds = new HashSet<>(productSellerMap.values());
 
         for (Long sellerIdx : sellerIds) {
-            SettlementHistoryEntity settlementEntity = settlementRepository.findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
+            SettlementHistoryEntity settlementEntity = settlementRepository
+            .findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
 
             if (settlementEntity != null) {
                 // SETTLE_PAYOUT 환불 시 에러 로그 및 수동 처리 필요
@@ -155,7 +155,8 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     public List<SettlementInfo> getSettlementList(Long sellerIdx) {
 
-        List<SettlementHistoryEntity> entities = settlementRepository.findAllBySellerIdx(sellerIdx);
+        List<SettlementHistoryEntity> entities = settlementRepository
+        .findAllBySellerIdx(sellerIdx);
 
         List<SettlementInfo> returnSettlementList = new ArrayList<>();
 
@@ -179,7 +180,8 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     public SettlementInfo getSettlement(Long sellerIdx, Long paymentIdx) {
 
-        SettlementHistoryEntity entity = settlementRepository.findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
+        SettlementHistoryEntity entity = settlementRepository
+        .findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
 
         return new SettlementInfo(
                 entity.getSettlementIdx(),

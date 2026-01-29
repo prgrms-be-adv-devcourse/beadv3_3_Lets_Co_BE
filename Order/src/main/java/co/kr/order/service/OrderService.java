@@ -27,4 +27,9 @@ public interface OrderService {
     void completeOrder(Long orderId);
 
     String charge(Long userIdx, ChargeRequest request);
+
+    /**
+     * 주문 상태 변경 (Payment에서 콜백)
+     */
+    void updateOrderStatus(String orderCode, String status);
 }

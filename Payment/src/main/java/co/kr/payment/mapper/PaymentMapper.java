@@ -1,7 +1,7 @@
-package co.kr.order.mapper;
+package co.kr.payment.mapper;
 
-import co.kr.order.model.dto.response.PaymentResponse;
-import co.kr.order.model.entity.PaymentEntity;
+import co.kr.payment.model.dto.response.PaymentResponse;
+import co.kr.payment.model.entity.PaymentEntity;
 
 public class PaymentMapper {
     public static PaymentResponse toResponse(PaymentEntity payment) {

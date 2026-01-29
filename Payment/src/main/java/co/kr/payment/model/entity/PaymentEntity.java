@@ -1,7 +1,7 @@
-package co.kr.order.model.entity;
+package co.kr.payment.model.entity;
 
-import co.kr.order.model.vo.PaymentStatus;
-import co.kr.order.model.vo.PaymentType;
+import co.kr.payment.model.vo.PaymentStatus;
+import co.kr.payment.model.vo.PaymentType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

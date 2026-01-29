@@ -1,5 +1,6 @@
 package co.kr.order.service.impl;
 
+import co.kr.order.client.PaymentClient;
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
@@ -15,7 +16,6 @@ import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.model.dto.response.PaymentResponse;
 import co.kr.order.model.entity.*;
 import co.kr.order.model.vo.OrderStatus;
-import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
 import co.kr.order.model.vo.SettlementType;
 import co.kr.order.repository.*;
@@ -38,9 +38,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderJpaRepository orderRepository;
     private final OrderItemJpaRepository orderItemRepository;
     private final CartJpaRepository cartRepository;
-    private final PaymentJpaRepository paymentRepository;
 
-    private final PaymentServiceImpl paymentService;
+    private final PaymentClient paymentClient;
 
     private final ProductClient productClient;
     private final UserClient userClient;
@@ -107,17 +106,18 @@ public class OrderServiceImpl implements OrderService {
         PaymentResponse pay;
         if (!request.paymentType().equals(PaymentType.TOSS_PAY)) {
             // 일반 결제 (CARD, DEPOSIT 등) 처리
-            pay = paymentService.pay(
+            pay = paymentClient.processPayment(
                     userIdx,
                     new PaymentRequest(
                             orderCode,
-                            request.paymentType()
+                            request.paymentType(),
+                            amount
                     )
             );
         }
         else {
             // TOSS_PAY 처리
-            pay = paymentService.confirmTossPayment(
+            pay = paymentClient.confirmTossPayment(
                     userIdx,
                     new PaymentTossConfirmRequest(
                             orderCode,
@@ -147,7 +147,7 @@ public class OrderServiceImpl implements OrderService {
             // TOSS_PAY는 아직 결제 전이므로 주문 상태만 취소로 변경 (혹은 삭제)
             if (request.paymentType() != PaymentType.TOSS_PAY) {
                 // 이미 돈이 나간 경우에만 환불 처리
-                paymentService.refund(userIdx, orderCode);
+                paymentClient.refundPayment(userIdx, orderCode);
             }
 
             // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
@@ -306,7 +306,7 @@ public class OrderServiceImpl implements OrderService {
         PaymentResponse pay;
         if (request.paymentType() == PaymentType.TOSS_PAY) {
             // TOSS_PAY
-            pay = paymentService.confirmTossPayment(
+            pay = paymentClient.confirmTossPayment(
                     userIdx,
                     new PaymentTossConfirmRequest(
                             orderCode,
@@ -316,11 +316,12 @@ public class OrderServiceImpl implements OrderService {
             );
         } else {
             // 일반 결제
-            pay = paymentService.pay(
+            pay = paymentClient.processPayment(
                     userIdx,
                     new PaymentRequest(
                             orderCode,
-                            request.paymentType()
+                            request.paymentType(),
+                            itemsAmount
                     )
             );
         }
@@ -341,11 +342,11 @@ public class OrderServiceImpl implements OrderService {
             // TOSS_PAY는 승인이 완료된 상태이므로 취소 필요
             // 다른 결제 수단도 돈이 나갔다면 환불 처리
             if (request.paymentType() != PaymentType.TOSS_PAY) {
-                paymentService.refund(userIdx, orderCode);
+                paymentClient.refundPayment(userIdx, orderCode);
             } else {
                 // Toss 결제도 승인 후 실패 시 환불(취소) 처리 필요
                 // (Toss는 승인 API 호출 성공 시 돈이 나간 상태임)
-                paymentService.refund(userIdx, orderCode);
+                paymentClient.refundPayment(userIdx, orderCode);
             }
 
             throw e;
@@ -375,7 +376,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
 
-        paymentService.refund(userIdx, orderCode);
+        paymentClient.refundPayment(userIdx, orderCode);
         orderEntity.setStatus(OrderStatus.REFUNDED);
 
         return "환불처리가 완료 되었습니다.";
@@ -464,23 +465,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public String charge(Long userIdx, ChargeRequest request) {
-
-        if(request.paymentType().equals(PaymentType.DEPOSIT)) {
-            return "예치금으로 충전할 수 없습니다.";
-        }
-
-
-        // 결제하는 로직 (토스)
-
-        PaymentEntity payment = PaymentEntity.builder()
-                .usersIdx(userIdx)
-                .status(PaymentStatus.CHARGE)
-                .type(request.paymentType())
-                .amount(request.amount())
-                .paymentKey(UUID.randomUUID().toString())
-                .build();
-        paymentRepository.save(payment);
-
+        paymentClient.charge(userIdx, request);
         return "정상적으로 처리되었습니다.";
     }
 
@@ -511,5 +496,16 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
         log.info("주문 완료 처리: orderId={}", orderId);
+    }
+
+    @Transactional
+    @Override
+    public void updateOrderStatus(String orderCode, String status) {
+        OrderEntity order = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+        order.setStatus(OrderStatus.valueOf(status));
+        orderRepository.save(order);
+        log.info("주문 상태 변경: orderCode={}, status={}", orderCode, status);
     }
 }

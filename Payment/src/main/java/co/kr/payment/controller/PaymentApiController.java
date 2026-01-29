@@ -1,10 +1,11 @@
-package co.kr.order.controller;
+package co.kr.payment.controller;
 
-import co.kr.order.model.dto.response.PaymentResponse;
-import co.kr.order.model.dto.request.PaymentRequest;
-import co.kr.order.model.dto.request.PaymentTossConfirmRequest;
-import co.kr.order.model.dto.response.BaseResponse;
-import co.kr.order.service.PaymentService;
+import co.kr.payment.model.dto.request.ChargeRequest;
+import co.kr.payment.model.dto.response.PaymentResponse;
+import co.kr.payment.model.dto.request.PaymentRequest;
+import co.kr.payment.model.dto.request.PaymentTossConfirmRequest;
+import co.kr.payment.model.dto.response.BaseResponse;
+import co.kr.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,4 +61,35 @@ public class PaymentApiController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/refund")
+    public ResponseEntity<BaseResponse<PaymentResponse>> refundPayment(
+            @RequestHeader("X-User-Idx") Long userIdx,
+            @RequestParam String orderCode
+    ) {
+        PaymentResponse description = paymentService.refund(userIdx, orderCode);
+        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/charge")
+    public ResponseEntity<BaseResponse<PaymentResponse>> charge(
+            @RequestHeader("X-User-Idx") Long userIdx,
+            @RequestBody ChargeRequest request
+    ) {
+        PaymentResponse description = paymentService.charge(userIdx, request);
+        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/by-order/{ordersIdx}")
+    public ResponseEntity<BaseResponse<PaymentResponse>> findByOrdersIdx(
+            @PathVariable Long ordersIdx
+    ) {
+        PaymentResponse description = paymentService.findByOrdersIdx(ordersIdx);
+        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
+
+        return ResponseEntity.ok(response);
+    }
 }

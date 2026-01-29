@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    Success
+    <script>
+
+        process();
+
+        async function process() {
+
+            const searchParams = new URLSearchParams(window.location.search);
+
+            const orderCode = searchParams.get('orderId');
+            const paymentKey = searchParams.get('paymentKey');
+            const amount = searchParams.get('amount');
+
+            await fetch('/payments/toss/confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Idx': '1'
+                },
+                body: JSON.stringify({
+                    orderCode,
+                    paymentKey,
+                    amount: Number(amount)
+                })
+            }).then(response => response.json())
+                .then(data => {
+                    console.log('결제 승인 완료:', data);
+                    document.body.innerHTML += '<p>결제 승인 완료: ' + JSON.stringify(data) + '</p>';
+                })
+                .catch(error => {
+                    console.error('결제 승인 실패:', error);
+                    document.body.innerHTML += '<p>결제 승인 실패: ' + error + '</p>';
+                })
+
+
+        }
+
+    </script>
+</body>
+</html>

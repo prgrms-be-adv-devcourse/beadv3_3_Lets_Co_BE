@@ -1,4 +1,4 @@
-package co.kr.order.exception;
+package co.kr.payment.exception;
 
 public class PaymentFailedException extends RuntimeException {
     private final ErrorCode errorCode;

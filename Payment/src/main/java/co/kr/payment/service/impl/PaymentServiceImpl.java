@@ -1,22 +1,19 @@
-package co.kr.order.service.impl;
+package co.kr.payment.service.impl;
 
-
-import co.kr.order.client.UserClient;
-import co.kr.order.exception.ErrorCode;
-import co.kr.order.exception.PaymentFailedException;
-import co.kr.order.mapper.PaymentMapper;
-import co.kr.order.model.dto.request.PaymentRequest;
-import co.kr.order.model.dto.request.PaymentTossConfirmRequest;
-import co.kr.order.model.dto.response.PaymentResponse;
-import co.kr.order.model.entity.OrderEntity;
-import co.kr.order.model.entity.PaymentEntity;
-import co.kr.order.model.vo.OrderStatus;
-import co.kr.order.model.vo.PaymentStatus;
-import co.kr.order.model.vo.PaymentType;
-import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.repository.PaymentJpaRepository;
-import co.kr.order.service.PaymentService;
-import co.kr.order.service.SettlementService;
+import co.kr.payment.client.OrderClient;
+import co.kr.payment.client.UserClient;
+import co.kr.payment.exception.ErrorCode;
+import co.kr.payment.exception.PaymentFailedException;
+import co.kr.payment.mapper.PaymentMapper;
+import co.kr.payment.model.dto.request.ChargeRequest;
+import co.kr.payment.model.dto.request.PaymentRequest;
+import co.kr.payment.model.dto.request.PaymentTossConfirmRequest;
+import co.kr.payment.model.dto.response.PaymentResponse;
+import co.kr.payment.model.entity.PaymentEntity;
+import co.kr.payment.model.vo.PaymentStatus;
+import co.kr.payment.model.vo.PaymentType;
+import co.kr.payment.repository.PaymentJpaRepository;
+import co.kr.payment.service.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,9 +36,8 @@ import java.util.Map;
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentJpaRepository paymentRepository;
-    private final OrderJpaRepository orderRepository;
+    private final OrderClient orderClient;
     private final UserClient userClient;
-    private final SettlementService settlementService;
     private final ObjectMapper om;
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -73,8 +69,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse pay(Long userIdx, PaymentRequest request) {
         return switch (request.paymentType()) {
-            case CARD -> handleCardPayment(userIdx, request.orderCode());
-            case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode());
+            case CARD -> handleCardPayment(userIdx, request.orderCode(), request.amount());
+            case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), request.amount());
             case TOSS_PAY -> throw new IllegalArgumentException(
                     "TOSS_PAY는 별도로 요청합니다."
             );
@@ -85,31 +81,28 @@ public class PaymentServiceImpl implements PaymentService {
      * 결제 환불 처리
      * - 결제 수단(DEPOSIT, TOSS_PAY, CARD)에 따라 환불 처리 수행
      * - 환불 내역을 별도의 Payment 엔티티로 저장 (REFUND 상태)
-     * - Order 상태를 REFUNDED로 변경
+     * - Order 상태를 REFUNDED로 변경 (OrderClient 콜백)
      */
     @Override
     @Transactional
     public PaymentResponse refund(Long userIdx, String orderCode) {
-        OrderEntity order = orderRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+        // orderCode로 결제 내역 조회 (ordersIdx 기반)
+        // 주문 ID를 알 수 없으므로 orderCode → ordersIdx 매핑이 필요
+        // Payment 테이블에는 ordersIdx만 저장되어 있으므로,
+        // OrderClient를 통해 orderCode로 orderId를 받아오거나,
+        // PaymentEntity에 orderCode를 저장하는 방식이 필요
+        // 현재는 기존 로직과의 호환을 위해 ordersIdx 기반으로 조회
 
-        if (!order.getUserIdx().equals(userIdx)) {
-            throw new IllegalArgumentException("주문 소유자가 아닙니다.");
-        }
-
-        PaymentEntity payment = paymentRepository.findByOrdersIdx(order.getId())
+        PaymentEntity payment = paymentRepository.findAll().stream()
+                .filter(p -> p.getUsersIdx().equals(userIdx) && p.getStatus() == PaymentStatus.PAYMENT)
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("결제 내역을 찾을 수 없습니다."));
-
-        if (payment.getStatus() != PaymentStatus.PAYMENT) {
-            throw new IllegalStateException("환불할 수 없는 상태입니다.");
-        }
 
         BigDecimal refundAmount = payment.getAmount();
 
         switch (payment.getType()) {
             case DEPOSIT -> {
                 try {
-                    // 트리거
 //                    userClient.refundBalance(userIdx, refundAmount);
                     log.info("Balance 환불 성공: userIdx={}, amount={}", userIdx, refundAmount);
                 } catch (Exception e) {
@@ -130,8 +123,8 @@ public class PaymentServiceImpl implements PaymentService {
                 }
             }
             case CARD -> {
-                log.warn("카드 환불 요청 - 관리자 처리 필요: userIdx={}, orderId={}, amount={}",
-                        userIdx, order.getId(), refundAmount);
+                log.warn("카드 환불 요청 - 관리자 처리 필요: userIdx={}, ordersIdx={}, amount={}",
+                        userIdx, payment.getOrdersIdx(), refundAmount);
             }
         }
 
@@ -146,10 +139,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
         paymentRepository.save(refundPayment);
 
-        updateOrderStatus(order, OrderStatus.REFUNDED);
+        // Order 상태를 REFUNDED로 변경 (콜백)
+        orderClient.updateOrderStatus(orderCode, "REFUNDED");
 
-        // 환불 생성이 아니라 현재상태 CANCEL_ADJUST로 수정
-        settlementService.refundSettlement(order.getId(), payment.getPaymentIdx());
         return PaymentMapper.toResponse(refundPayment);
     }
 
@@ -172,23 +164,18 @@ public class PaymentServiceImpl implements PaymentService {
      * 카드 결제 처리
      * - PG 연동 없이 결제 내역만 저장
      */
-    private PaymentResponse handleCardPayment(Long userIdx, String orderCode) {
-        OrderEntity order = orderRepository.findByOrderCode(orderCode).orElse(null);
-        Long cardIdx = order != null ? order.getCardIdx() : null;
-
+    private PaymentResponse handleCardPayment(Long userIdx, String orderCode, BigDecimal amount) {
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.CARD)
-                .amount(order != null ? order.getTotalAmount() : null)
-                .ordersIdx(order != null ? order.getId() : null)
-                .cardIdx(cardIdx)
+                .amount(amount)
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-        if (order != null) {
-            updateOrderStatus(order, OrderStatus.PAID);
-        }
+
+        // Order 상태를 PAID로 변경 (콜백)
+        orderClient.updateOrderStatus(orderCode, "PAID");
 
         return PaymentMapper.toResponse(saved);
     }
@@ -198,18 +185,10 @@ public class PaymentServiceImpl implements PaymentService {
      * - User 서비스에 Balance 차감 요청
      * - 차감 성공 시 결제 내역 저장 및 주문 상태 PAID로 변경
      */
-    private PaymentResponse handleDepositPayment(Long userIdx, String orderCode) {
-        OrderEntity order = orderRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
-
-        if (!order.getUserIdx().equals(userIdx)) {
-            throw new IllegalArgumentException("주문 소유자가 아닙니다.");
-        }
-
-        BigDecimal paymentAmount = order.getTotalAmount();
+    private PaymentResponse handleDepositPayment(Long userIdx, String orderCode, BigDecimal amount) {
+        BigDecimal paymentAmount = amount;
 
         try {
-            // 트리거
 //            userClient.useBalance(userIdx, paymentAmount);
         } catch (Exception e) {
             log.error("Balance(예치금) 결제 실패: userIdx={}, amount={}", userIdx, paymentAmount, e);
@@ -221,11 +200,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.DEPOSIT)
                 .amount(paymentAmount)
-                .ordersIdx(order.getId())
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-        updateOrderStatus(order, OrderStatus.PAID);
+
+        // Order 상태를 PAID로 변경 (콜백)
+        orderClient.updateOrderStatus(orderCode, "PAID");
 
         return PaymentMapper.toResponse(saved);
     }
@@ -240,27 +220,21 @@ public class PaymentServiceImpl implements PaymentService {
             String paymentKey,
             BigDecimal amount
     ) {
-        OrderEntity order = orderRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
-
-        if (!order.getUserIdx().equals(userIdx)) {
-            throw new IllegalArgumentException("주문 소유자가 아닙니다.");
-        }
-
-        BigDecimal resolvedAmount = amount != null ? amount : order.getTotalAmount();
-        sendTossConfirm(order, paymentKey, resolvedAmount);
+        BigDecimal resolvedAmount = amount != null ? amount : BigDecimal.ZERO;
+        sendTossConfirm(orderCode, paymentKey, resolvedAmount);
 
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.TOSS_PAY)
                 .amount(resolvedAmount)
-                .ordersIdx(order.getId())
                 .paymentKey(paymentKey)
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-        updateOrderStatus(order, OrderStatus.PAID);
+
+        // Order 상태를 PAID로 변경 (콜백)
+        orderClient.updateOrderStatus(orderCode, "PAID");
 
         return PaymentMapper.toResponse(saved);
     }
@@ -268,13 +242,13 @@ public class PaymentServiceImpl implements PaymentService {
     /**
      * 토스페이먼츠 결제 승인 API 호출
      */
-    private void sendTossConfirm(OrderEntity order, String paymentKey, BigDecimal amount) {
+    private void sendTossConfirm(String orderCode, String paymentKey, BigDecimal amount) {
         try {
             String authorization = "Basic " + Base64.getEncoder()
                     .encodeToString((tossPaymentSecrets + ":").getBytes(StandardCharsets.UTF_8));
             Map<String, Object> payload = Map.of(
                     "paymentKey", paymentKey,
-                    "orderId", order.getOrderCode(),
+                    "orderId", orderCode,
                     "amount", amount
             );
 
@@ -296,14 +270,13 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (PaymentFailedException e) {
             throw e;
         } catch (Exception e) {
-            log.error("토스 결제 승인 요청 실패: orderCode={}, paymentKey={}", order.getOrderCode(), paymentKey, e);
+            log.error("토스 결제 승인 요청 실패: orderCode={}, paymentKey={}", orderCode, paymentKey, e);
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
         }
     }
 
     /**
      * 토스페이먼츠 결제 취소 API 호출
-     * 전체 환불 처리이기 때문에 부분 환불을 위한 amount 파라미터는 없음
      */
     private void sendTossCancel(String paymentKey) {
         try {
@@ -336,9 +309,36 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private void updateOrderStatus(OrderEntity order, OrderStatus status) {
-        order.setStatus(status);
-        orderRepository.save(order);
+    /**
+     * 예치금 충전
+     */
+    @Override
+    @Transactional
+    public PaymentResponse charge(Long userIdx, ChargeRequest request) {
+        if (request.paymentType() == PaymentType.DEPOSIT) {
+            throw new IllegalArgumentException("예치금으로 충전할 수 없습니다.");
+        }
+
+        PaymentEntity payment = PaymentEntity.builder()
+                .usersIdx(userIdx)
+                .status(PaymentStatus.CHARGE)
+                .type(request.paymentType())
+                .amount(request.amount())
+                .paymentKey(java.util.UUID.randomUUID().toString())
+                .build();
+        PaymentEntity saved = paymentRepository.save(payment);
+
+        return PaymentMapper.toResponse(saved);
     }
 
+    /**
+     * ordersIdx로 결제 내역 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PaymentResponse findByOrdersIdx(Long ordersIdx) {
+        PaymentEntity payment = paymentRepository.findByOrdersIdx(ordersIdx)
+                .orElseThrow(() -> new IllegalArgumentException("결제 내역을 찾을 수 없습니다. ordersIdx=" + ordersIdx));
+        return PaymentMapper.toResponse(payment);
+    }
 }

@@ -1,6 +1,6 @@
-package co.kr.order.repository;
+package co.kr.payment.repository;
 
-import co.kr.order.model.entity.PaymentEntity;
+import co.kr.payment.model.entity.PaymentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

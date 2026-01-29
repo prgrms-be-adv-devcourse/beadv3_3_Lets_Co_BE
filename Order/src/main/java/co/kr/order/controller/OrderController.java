@@ -115,13 +115,27 @@ public class OrderController {
     /**
      * 주문 완료 처리 (배송 완료 후 호출) (일단 보류)
      * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
-     * - 주문 상태를 COMPLETED로 변경하고 정산 생성
+     * - 주문 상태를 COMPLETED로 변경
      *
      * @param orderId 주문 ID
      */
     @PostMapping("/{orderId}/complete")
     public ResponseEntity<BaseResponse<Void>> completeOrder(@PathVariable Long orderId) {
         orderService.completeOrder(orderId);
+        BaseResponse<Void> body = new BaseResponse<>("ok", null);
+        return ResponseEntity.ok(body);
+    }
+
+    /**
+     * 주문 상태 변경 (Payment에서 호출)
+     * - 결제 완료/환불 시 Order 상태를 변경
+     */
+    @PatchMapping("/{orderCode}/status")
+    public ResponseEntity<BaseResponse<Void>> updateOrderStatus(
+            @PathVariable String orderCode,
+            @RequestParam String status
+    ) {
+        orderService.updateOrderStatus(orderCode, status);
         BaseResponse<Void> body = new BaseResponse<>("ok", null);
         return ResponseEntity.ok(body);
     }

@@ -1,6 +1,6 @@
-package co.kr.order.model.dto.request;
+package co.kr.payment.model.dto.request;
 
-import co.kr.order.model.vo.PaymentType;
+import co.kr.payment.model.vo.PaymentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

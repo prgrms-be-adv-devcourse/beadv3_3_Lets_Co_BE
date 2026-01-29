@@ -25,6 +25,12 @@ public class PaymentEntity {
     @Column(name = "Users_IDX", nullable = false)
     private Long usersIdx;
 
+    @Column(name = "Orders_IDX")
+    private Long ordersIdx;
+
+    @Column(name = "Card_IDX")
+    private Long cardIdx;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", nullable = false, length = 10)
     private PaymentStatus status;
@@ -36,12 +42,6 @@ public class PaymentEntity {
     @Column(name = "Amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "Orders_IDX")
-    private Long ordersIdx;
-
-    @Column(name = "Card_IDX")
-    private Long cardIdx;
-
     @Column(name = "Payment_Key")
     private String paymentKey;
 
@@ -51,19 +51,19 @@ public class PaymentEntity {
     @Builder
     public PaymentEntity(
             Long usersIdx,
+            Long ordersIdx,
+            Long cardIdx,
             PaymentStatus status,
             PaymentType type,
             BigDecimal amount,
-            Long ordersIdx,
-            Long cardIdx,
             String paymentKey
     ) {
         this.usersIdx = usersIdx;
+        this.ordersIdx = ordersIdx;
+        this.cardIdx = cardIdx;
         this.status = status;
         this.type = type;
         this.amount = amount;
-        this.ordersIdx = ordersIdx;
-        this.cardIdx = cardIdx;
         this.paymentKey = paymentKey;
         this.createdAt = LocalDateTime.now();
     }

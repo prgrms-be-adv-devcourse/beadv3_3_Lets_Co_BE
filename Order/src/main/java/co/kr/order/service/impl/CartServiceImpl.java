@@ -45,7 +45,7 @@ public class CartServiceImpl implements CartService {
         }
 
         // userIdx, productIdx, optionIdx가 같은 컬럼 찾기
-        Optional<CartEntity> existCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx());
+        Optional<CartEntity> existCart = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx());
 
         if (existCart.isPresent()) {
             // 장바구니에서 상품을 + 했을 경우 (existCart가 존재할 경우)
@@ -91,7 +91,7 @@ public class CartServiceImpl implements CartService {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx());
 
         if (existingCart.isPresent()) {
             // 장바구니에서 상품을 - 했을 경우 (existCart가 존재할 경우)
@@ -200,7 +200,7 @@ public class CartServiceImpl implements CartService {
     public CartItemResponse getCartItem(Long userIdx, ProductRequest request) {
 
         // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
-        CartEntity entity = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, request.productIdx(), request.optionIdx())
+        CartEntity entity = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx())
                 .orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
@@ -238,7 +238,7 @@ public class CartServiceImpl implements CartService {
     public void deleteCartItem(Long userIdx, ProductRequest productRequest) {
 
         // 삭제할 장바구니 아이템 조회
-        Optional<CartEntity> existingCart = cartRepository.findByUserIdxAndProductIdxAndOptionIdx(userIdx, productRequest.productIdx(), productRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, productRequest.productIdx(), productRequest.optionIdx());
 
         if (existingCart.isPresent()) {
             // 상품이 존재하면 DB 데이터 삭제

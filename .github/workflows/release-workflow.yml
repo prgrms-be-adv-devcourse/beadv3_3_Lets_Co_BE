@@ -73,8 +73,10 @@ jobs: # 실제 수행할 작업들을 정의합니다.
       # [중요] Secrets에 저장된 설정 내용을 실제 파일로 만드는 과정
       - name: Create application.yml
         run: | # 여러 줄의 명령어를 실행
-          mkdir -p ./${{ inputs.service-dir }}/src/main/resources # 리소스 폴더 생성
-          echo "${{ secrets.APPLICATION_YML }}" > ./${{ inputs.service-dir }}/src/main/resources/application.yml # Secrets 내용을 파일로 저장
+          mkdir -p ./${{ inputs.service-dir }}/src/main/resources
+          cat << 'EOF' > ./${{ inputs.service-dir }}/src/main/resources/application.yml
+          ${{ secrets.APPLICATION_YML }}
+          EOF
 
       # - name: Setup Java 21 # 자바 환경 설정
       #   uses: actions/setup-java@v5

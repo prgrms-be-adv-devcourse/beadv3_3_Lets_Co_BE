@@ -1,9 +1,9 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductOptionsResponse;
-import co.kr.product.product.dto.response.ProductResponse;
+import co.kr.product.product.dto.response.ProductDetailRes;
+import co.kr.product.product.dto.response.ProductListRes;
+import co.kr.product.product.dto.response.ProductOptionsRes;
+import co.kr.product.product.dto.response.ProductRes;
 import co.kr.product.product.dto.vo.ProductStatus;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
@@ -52,7 +52,7 @@ class ProductControllerTest {
      */
 
     // Given
-    ProductResponse product1 = new ProductResponse(
+    ProductRes product1 = new ProductRes(
             1L,
             productCode1,
             "삼성 노트북",
@@ -61,7 +61,7 @@ class ProductControllerTest {
             200L
     );
 
-    ProductOptionsResponse option1_1 = new ProductOptionsResponse(
+    ProductOptionsRes option1_1 = new ProductOptionsRes(
             1L,
             UUID.randomUUID().toString(),
             "노트북-노랑",
@@ -72,7 +72,7 @@ class ProductControllerTest {
             ProductStatus.ON_SALE.name()
     );
 
-    ProductOptionsResponse option1_2 = new ProductOptionsResponse(
+    ProductOptionsRes option1_2 = new ProductOptionsRes(
             2L,
             UUID.randomUUID().toString(),
             "노트북-파랑",
@@ -83,7 +83,7 @@ class ProductControllerTest {
             ProductStatus.ON_SALE.name()
     );
 
-    ProductResponse product2 = new ProductResponse(
+    ProductRes product2 = new ProductRes(
             2L,
             productCode2,
             "맥북",
@@ -92,7 +92,7 @@ class ProductControllerTest {
             100L
     );
 
-    ProductOptionsResponse option2_1 = new ProductOptionsResponse(
+    ProductOptionsRes option2_1 = new ProductOptionsRes(
             20L,
             UUID.randomUUID().toString(),
             "스페이스 그레이 / M3 Pro",
@@ -103,7 +103,7 @@ class ProductControllerTest {
             ProductStatus.ON_SALE.name()
     );
 
-    ProductResponse product3 = new ProductResponse(
+    ProductRes product3 = new ProductRes(
             3L,
             UUID.randomUUID().toString(),
             "삼성 핸드폰",
@@ -112,7 +112,7 @@ class ProductControllerTest {
             120L
     );
 
-    ProductOptionsResponse option3_1 = new ProductOptionsResponse(
+    ProductOptionsRes option3_1 = new ProductOptionsRes(
             30L,
             UUID.randomUUID().toString(),
             "팬텀 블랙 / 512GB",
@@ -126,7 +126,7 @@ class ProductControllerTest {
     // ---------------------------------------------------------
     // Case 4: 품절된 상품 (SOLD_OUT)
     // ---------------------------------------------------------
-    ProductResponse product4 = new ProductResponse(
+    ProductRes product4 = new ProductRes(
             4L,
             UUID.randomUUID().toString(),
             "LG 그램 2025",
@@ -136,7 +136,7 @@ class ProductControllerTest {
     );
 
     // 재고 0개, 상태 SOLD_OUT
-    ProductOptionsResponse option4_1 = new ProductOptionsResponse(
+    ProductOptionsRes option4_1 = new ProductOptionsRes(
             10L,
             UUID.randomUUID().toString(),
             "16인치-화이트",
@@ -150,7 +150,7 @@ class ProductControllerTest {
     // ---------------------------------------------------------
     // Case 5: 판매자가 판매 중지한 상품 (STOPPED)
     // ---------------------------------------------------------
-    ProductResponse product5 = new ProductResponse(
+    ProductRes product5 = new ProductRes(
             5L,
             UUID.randomUUID().toString(),
             "게이밍 의자",
@@ -159,7 +159,7 @@ class ProductControllerTest {
             10L
     );
 
-    ProductOptionsResponse option5_1 = new ProductOptionsResponse(
+    ProductOptionsRes option5_1 = new ProductOptionsRes(
             11L,
             UUID.randomUUID().toString(),
             "레드-가죽",
@@ -173,7 +173,7 @@ class ProductControllerTest {
     // ---------------------------------------------------------
     // Case 6: 관리자에 의해 차단된 상품 (BLOCKED)
     // ---------------------------------------------------------
-    ProductResponse product6 = new ProductResponse(
+    ProductRes product6 = new ProductRes(
             6L,
             UUID.randomUUID().toString(),
             "위험한 레이저 포인터",
@@ -182,7 +182,7 @@ class ProductControllerTest {
             1200L
     );
 
-    ProductOptionsResponse option6_1 = new ProductOptionsResponse(
+    ProductOptionsRes option6_1 = new ProductOptionsRes(
             12L,
             UUID.randomUUID().toString(),
             "기본",
@@ -196,7 +196,7 @@ class ProductControllerTest {
     // ---------------------------------------------------------
     // Case 7: 옵션이 여러 개인 베스트 셀러
     // ---------------------------------------------------------
-    ProductResponse product7 = new ProductResponse(
+    ProductRes product7 = new ProductRes(
             7L,
             UUID.randomUUID().toString(),
             "아이폰 15 Pro",
@@ -205,7 +205,7 @@ class ProductControllerTest {
             9999L // 높은 조회수
     );
 
-    ProductOptionsResponse option7_1 = new ProductOptionsResponse(
+    ProductOptionsRes option7_1 = new ProductOptionsRes(
             13L,
             UUID.randomUUID().toString(),
             "내추럴 티타늄-256GB",
@@ -216,7 +216,7 @@ class ProductControllerTest {
             ProductStatus.ON_SALE.name()
     );
 
-    ProductOptionsResponse option7_2 = new ProductOptionsResponse(
+    ProductOptionsRes option7_2 = new ProductOptionsRes(
             14L,
             UUID.randomUUID().toString(),
             "블루 티타늄-512GB",
@@ -227,7 +227,7 @@ class ProductControllerTest {
             ProductStatus.ON_SALE.name()
     );
 
-    ProductOptionsResponse option7_3 = new ProductOptionsResponse(
+    ProductOptionsRes option7_3 = new ProductOptionsRes(
             15L,
             UUID.randomUUID().toString(),
             "화이트 티타늄-1TB",
@@ -247,7 +247,7 @@ class ProductControllerTest {
     @Test
     void 상품_목록_조회 () throws Exception {
 
-        ProductListResponse fakeResponse = new ProductListResponse(
+        ProductListRes fakeResponse = new ProductListRes(
                 "ok",
                 List.of(product1, product2, product3, product5, product6, product7)
         );
@@ -293,7 +293,7 @@ class ProductControllerTest {
     @Test
     void 상품_상세_조회 () throws Exception {
 
-        ProductOptionsResponse optionsResponse1 = new ProductOptionsResponse(
+        ProductOptionsRes optionsResponse1 = new ProductOptionsRes(
                 option1_1.optionGroupIdx(),
                 option1_1.code(),
                 option1_1.name(),
@@ -304,7 +304,7 @@ class ProductControllerTest {
                 option1_1.status()
         );
 
-        ProductOptionsResponse optionsResponse2 = new ProductOptionsResponse(
+        ProductOptionsRes optionsResponse2 = new ProductOptionsRes(
                 option1_2.optionGroupIdx(),
                 option1_2.code(),
                 option1_2.name(),
@@ -315,7 +315,7 @@ class ProductControllerTest {
                 option1_2.status()
         );
 
-        ProductDetailResponse fakeResponse = new ProductDetailResponse(
+        ProductDetailRes fakeResponse = new ProductDetailRes(
                 "ok",
                 product1.productsIdx(),
                 product1.productsCode(),

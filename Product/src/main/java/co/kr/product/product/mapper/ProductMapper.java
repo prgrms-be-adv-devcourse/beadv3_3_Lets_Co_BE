@@ -1,9 +1,8 @@
 package co.kr.product.product.mapper;
 
-import co.kr.product.product.dto.response.ProductImageResponse;
-import co.kr.product.product.dto.response.ProductOptionsResponse;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductResponse;
+import co.kr.product.product.dto.response.ProductImageRes;
+import co.kr.product.product.dto.response.ProductOptionsRes;
+import co.kr.product.product.dto.response.ProductDetailRes;
 import co.kr.product.product.entity.ProductEntity;
 import co.kr.product.product.entity.ProductImageEntity;
 import co.kr.product.product.entity.ProductOptionEntity;
@@ -12,13 +11,13 @@ import java.util.List;
 
 public class ProductMapper {
 
-    public static ProductDetailResponse toProductDetail(
+    public static ProductDetailRes toProductDetail(
              String resultCode, ProductEntity product,
              List<ProductOptionEntity> options,
              List<ProductImageEntity> images) {
 
 
-        return new ProductDetailResponse(
+        return new ProductDetailRes(
                 resultCode,
                 product.getProductsIdx(),
                 product.getProductsCode(),
@@ -41,8 +40,8 @@ public class ProductMapper {
 
     }
 
-    public static ProductOptionsResponse toOptMapper(ProductOptionEntity options){
-        return new ProductOptionsResponse(
+    public static ProductOptionsRes toOptMapper(ProductOptionEntity options){
+        return new ProductOptionsRes(
                 options.getOptionGroupIdx(),
                 options.getOptionCode(),
                 options.getOptionName(),
@@ -55,8 +54,8 @@ public class ProductMapper {
         );
     }
 
-    public static ProductImageResponse toImageMapper(ProductImageEntity image) {
-        return new ProductImageResponse(
+    public static ProductImageRes toImageMapper(ProductImageEntity image) {
+        return new ProductImageRes(
                 image.getImageIdx(),
                 image.getUrl(),
                 image.getSortOrders(),

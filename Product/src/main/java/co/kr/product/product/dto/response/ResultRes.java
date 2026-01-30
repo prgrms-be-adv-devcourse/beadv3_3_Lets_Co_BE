@@ -1,6 +1,6 @@
 package co.kr.product.product.dto.response;
 
-public record ResultResponse(
+public record ResultRes(
         String resultCode
 ) {
 }

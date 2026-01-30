@@ -1,6 +1,6 @@
 package co.kr.product.product.dto.response;
 
-public record OptionCheckStockResponse(
+public record OptionCheckStockRes(
 
         String optionCode,
 

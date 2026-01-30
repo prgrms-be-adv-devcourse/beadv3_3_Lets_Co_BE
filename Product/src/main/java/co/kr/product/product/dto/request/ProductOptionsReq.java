@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
-public record ProductOptionsRequest(
+public record ProductOptionsReq(
 
         // 추가 시 code를 안 받음
         @Size(max = 50, message = "옵션 코드는 50자를 넘을 수 없습니다.")

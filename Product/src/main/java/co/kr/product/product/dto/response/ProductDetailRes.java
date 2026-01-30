@@ -3,7 +3,7 @@ package co.kr.product.product.dto.response;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record ProductDetailResponse(
+public record ProductDetailRes(
 
         String resultCode,
 
@@ -16,8 +16,8 @@ public record ProductDetailResponse(
         Long viewCount,
         Integer stock,
         co.kr.product.product.dto.vo.ProductStatus status,
-        List<ProductOptionsResponse> options,
-        List<ProductImageResponse> images
+        List<ProductOptionsRes> options,
+        List<ProductImageRes> images
 
 ) {
 }

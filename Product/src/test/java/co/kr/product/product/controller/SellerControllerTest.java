@@ -1,10 +1,10 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductResponse;
+import co.kr.product.product.dto.request.ProductListReq;
+import co.kr.product.product.dto.request.UpsertProductReq;
+import co.kr.product.product.dto.response.ProductDetailRes;
+import co.kr.product.product.dto.response.ProductListRes;
+import co.kr.product.product.dto.response.ProductRes;
 import co.kr.product.product.dto.vo.ProductStatus;
 import co.kr.product.product.service.ProductManagerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,12 +48,12 @@ class SellerControllerTest {
      * Given 데이터 추가
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
      */
-    ProductResponse product1 = new ProductResponse(
+    ProductRes product1 = new ProductRes(
             100L, productCode1, "판매자 상품 1",
             new BigDecimal("50000.00"), new BigDecimal("45000.00"), 10L
     );
 
-    UpsertProductRequest createReq = new UpsertProductRequest(
+    UpsertProductReq createReq = new UpsertProductReq(
             null,
             "신규 등록 상품",
             "아주 좋은 상품입니다.",
@@ -65,7 +65,7 @@ class SellerControllerTest {
             Collections.emptyList()
     );
 
-    ProductDetailResponse createRes = new ProductDetailResponse(
+    ProductDetailRes createRes = new ProductDetailRes(
             "ok",
             200L, "NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"), new BigDecimal("29000.00"), 0L,
@@ -82,8 +82,8 @@ class SellerControllerTest {
     @Test
     void 판매자_상품_목록_조회() throws Exception {
         // Given
-        ProductListResponse fakeResponse = new ProductListResponse("ok", List.of(product1));
-        given(productManagerService.getListsBySeller(eq(sellerUserIdx), any(Pageable.class), any(ProductListRequest.class)))
+        ProductListRes fakeResponse = new ProductListRes("ok", List.of(product1));
+        given(productManagerService.getListsBySeller(eq(sellerUserIdx), any(Pageable.class), any(ProductListReq.class)))
                 .willReturn(fakeResponse);
 
         // When
@@ -106,7 +106,7 @@ class SellerControllerTest {
     @Test
     void 판매자_상품_등록() throws Exception {
         // Given
-        given(productManagerService.addProduct(eq(sellerUserIdx), any(UpsertProductRequest.class)))
+        given(productManagerService.addProduct(eq(sellerUserIdx), any(UpsertProductReq.class)))
                 .willReturn(createRes);
 
         // When
@@ -152,7 +152,7 @@ class SellerControllerTest {
     void 판매자_상품_수정() throws Exception {
         // Given
         String targetCode = "NEW_CODE_123";
-        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductRequest.class)))
+        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductReq.class)))
                 .willReturn(createRes); // 수정된 결과 리턴
 
         // When

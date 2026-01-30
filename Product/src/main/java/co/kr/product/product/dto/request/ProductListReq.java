@@ -2,7 +2,7 @@ package co.kr.product.product.dto.request;
 
 import jakarta.validation.constraints.Size;
 
-public record ProductListRequest(
+public record ProductListReq(
         // String filter,
 
         // 검색어는 없을 수 도 있기에 nullable

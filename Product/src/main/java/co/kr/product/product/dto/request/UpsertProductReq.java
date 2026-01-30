@@ -7,7 +7,7 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record UpsertProductRequest(
+public record UpsertProductReq(
 
         // 추가 시 idx를 안 받음
         @Positive(message = "상품 ID는 양수여야 합니다.")
@@ -39,10 +39,10 @@ public record UpsertProductRequest(
         // Valid 붙여야 내부 값 까지 확인
         @Valid
         @NotNull(message = "옵션 리스트는 null일 수 없습니다. (빈 리스트는 허용)")
-        List<ProductOptionsRequest> options,
+        List<ProductOptionsReq> options,
 
         @Valid
         @NotNull(message = "이미지 리스트는 null일 수 없습니다. (빈 리스트는 허용)")
-        List<ProductImagesRequest> images
+        List<ProductImagesReq> images
         ) {
 }

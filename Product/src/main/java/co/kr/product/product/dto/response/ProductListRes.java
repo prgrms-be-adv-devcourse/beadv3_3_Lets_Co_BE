@@ -2,9 +2,9 @@ package co.kr.product.product.dto.response;
 
 import java.util.List;
 
-public record ProductListResponse(
+public record ProductListRes(
         String resultCode,
-        List<ProductResponse> items
+        List<ProductRes> items
 ) {
 
 }

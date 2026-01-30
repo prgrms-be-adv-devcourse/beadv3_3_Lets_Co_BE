@@ -3,13 +3,13 @@ package co.kr.product.product.service.impl;
 
 import co.kr.product.product.client.AuthServiceClient;
 import co.kr.product.product.document.ProductDocument;
-import co.kr.product.product.dto.request.ProductImagesRequest;
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.ProductOptionsRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductResponse;
+import co.kr.product.product.dto.request.ProductImagesReq;
+import co.kr.product.product.dto.request.ProductListReq;
+import co.kr.product.product.dto.request.ProductOptionsReq;
+import co.kr.product.product.dto.request.UpsertProductReq;
+import co.kr.product.product.dto.response.ProductDetailRes;
+import co.kr.product.product.dto.response.ProductListRes;
+import co.kr.product.product.dto.response.ProductRes;
 import co.kr.product.product.entity.ProductEntity;
 import co.kr.product.product.entity.ProductImageEntity;
 import co.kr.product.product.entity.ProductOptionEntity;
@@ -47,7 +47,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     @Override
     @Transactional
-    public ProductDetailResponse addProduct(Long usersIdx, UpsertProductRequest request){
+    public ProductDetailRes addProduct(Long usersIdx, UpsertProductReq request){
 
 
         // 2. 본인확인
@@ -101,7 +101,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         List<ProductImageEntity> savedImg = imageRepository.saveAll(images);
 
         // 반환 데이터 생성
-        ProductDetailResponse result = toProductDetail(
+        ProductDetailRes result = toProductDetail(
                 "ok",
                         savedItem,
                         savedOpt,
@@ -112,7 +112,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     @Override
     @Transactional
-    public ProductDetailResponse getManagerProductDetail(Long usersIdx, String code){
+    public ProductDetailRes getManagerProductDetail(Long usersIdx, String code){
 
         // 본인 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
@@ -149,10 +149,10 @@ public class ProductManagerServiceImpl implements ProductManagerService {
      */
     @Override
     @Transactional
-    public ProductDetailResponse updateProduct(
+    public ProductDetailRes updateProduct(
             Long usersIdx,
             String code,
-            UpsertProductRequest request){
+            UpsertProductReq request){
 
         // 본인 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
@@ -180,7 +180,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 옵션 update 진행
         // 추가 된 옵션, 삭제 된 옵션, 수정 된 옵션 전부 처리
-        for(ProductOptionsRequest dto : request.options()){
+        for(ProductOptionsReq dto : request.options()){
             // 추가 된 옵션
             if(dto.code() == null){
                 newOptions.add( ProductOptionEntity.builder()
@@ -235,7 +235,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         }
         if (request.images() != null) {
             // 추가
-            for (ProductImagesRequest imageDto : request.images()) {
+            for (ProductImagesReq imageDto : request.images()) {
                 newImages.add(ProductImageEntity.builder()
                         .product(product)
                         .url(imageDto.url())
@@ -297,7 +297,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductListResponse getListsBySeller(Long usersIdx, Pageable pageable, ProductListRequest requests){
+    public ProductListRes getListsBySeller(Long usersIdx, Pageable pageable, ProductListReq requests){
 
 
         String role = authServiceClient.getUserRole(usersIdx).getBody();
@@ -311,8 +311,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(usersIdx,requests.search() ,pageable);
         
         // 2. Document -> Response DTO 변환
-        List<ProductResponse> items = pageResult.stream()
-                .map(doc -> new ProductResponse(
+        List<ProductRes> items = pageResult.stream()
+                .map(doc -> new ProductRes(
                         doc.getProductsIdx(),
                         doc.getProductsCode(),
                         doc.getProductsName(),
@@ -321,7 +321,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                         doc.getViewCount()
                 ))
                 .toList();
-        return new ProductListResponse(
+        return new ProductListRes(
                 "ok",items
 
         );

@@ -1,10 +1,10 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ResultResponse;
+import co.kr.product.product.dto.request.ProductListReq;
+import co.kr.product.product.dto.request.UpsertProductReq;
+import co.kr.product.product.dto.response.ProductDetailRes;
+import co.kr.product.product.dto.response.ProductListRes;
+import co.kr.product.product.dto.response.ResultRes;
 import co.kr.product.product.service.ProductManagerService;
 import co.kr.product.product.service.ProductSearchService;
 import jakarta.validation.Valid;
@@ -31,6 +31,7 @@ public class AdminController {
         return ResponseEntity.ok(test);
     }*/
 
+    
     /**
      * 상품 목록 조회 (관리자용)
      * @param pageable  page,size,sort
@@ -38,13 +39,14 @@ public class AdminController {
      * @return 상품 리스트
      */
     @GetMapping("/products")
-    public ResponseEntity<ProductListResponse> getProductList(
+    public ResponseEntity<ProductListRes> getProductList(
             @PageableDefault Pageable pageable,
-            @ModelAttribute @Valid ProductListRequest requests
+            @ModelAttribute @Valid ProductListReq requests
             ){
 
 
-        return ResponseEntity.ok(productSearchService.getProductsList(pageable,requests.search()));
+        return ResponseEntity.ok(
+                productSearchService.getProductsList(pageable,requests.search()));
 
     }
 
@@ -55,13 +57,13 @@ public class AdminController {
      * @return 상품 상세 정보
      */
     @GetMapping("/products/{code}")
-    public ResponseEntity<ProductDetailResponse> getProductDetail(
+    public ResponseEntity<ProductDetailRes> getProductDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode){
 
-        
-        ProductDetailResponse result = productManagerService.getManagerProductDetail(usersIdx, productCode);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.getManagerProductDetail(usersIdx, productCode));
     }
 
     /**
@@ -73,15 +75,16 @@ public class AdminController {
      */
 
     @PutMapping("/products/{code}")
-    public ResponseEntity<ProductDetailResponse> updateProduct(
+    public ResponseEntity<ProductDetailRes> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
 
-            @RequestBody @Valid UpsertProductRequest request,
+            @RequestBody @Valid UpsertProductReq request,
             @PathVariable("code") String productCode){
 
-        ProductDetailResponse result = productManagerService.updateProduct(usersIdx, productCode, request);
 
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.updateProduct(usersIdx, productCode, request));
 
     }
 
@@ -92,7 +95,7 @@ public class AdminController {
      * @return resultCode
      */
     @DeleteMapping("/products/{code}")
-    public ResponseEntity<ResultResponse> deleteProduct(
+    public ResponseEntity<ResultRes> deleteProduct(
 
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode){
@@ -101,7 +104,7 @@ public class AdminController {
 
         productManagerService.deleteProduct(usersIdx, productCode);
 
-        return ResponseEntity.ok(new ResultResponse("ok"));
+        return ResponseEntity.ok(new ResultRes("ok"));
 
     }
 

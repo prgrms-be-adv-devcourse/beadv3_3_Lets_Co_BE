@@ -1,8 +1,8 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.DeductStockRequest;
-import co.kr.product.product.dto.request.ProductIdxsRequest;
-import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
+import co.kr.product.product.dto.request.DeductStockReq;
+import co.kr.product.product.dto.request.ProductIdxsReq;
+import co.kr.product.product.dto.request.ProductInfoToOrderReq;
 import co.kr.product.product.dto.response.*;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
@@ -31,7 +31,7 @@ public class ProductController {
      * 상품 목록 검색, ElasticSearch에 연결
      */
     @GetMapping
-    public ProductListResponse getProducts(
+    public ProductListRes getProducts(
             @PageableDefault(size = 20) Pageable pageable,
             // @ModelAttribute ProductListRequest requests
             @RequestParam(name = "search") String search) {
@@ -47,7 +47,7 @@ public class ProductController {
      *  상품 코드를 통한 상품 정보 조회
      */
     @GetMapping("/{productsCode}")
-    public ProductDetailResponse getProductDetail(@PathVariable String productsCode) {
+    public ProductDetailRes getProductDetail(@PathVariable String productsCode) {
         return productService.getProductDetail(productsCode);
     }
 
@@ -58,7 +58,7 @@ public class ProductController {
      * 상품 재고 여부 확인 후 boolean 반환
      */
     @GetMapping("/{productsCode}/checkStock")
-    public ProductCheckStockResponse getCheckStock(
+    public ProductCheckStockRes getCheckStock(
             @PathVariable String productsCode){
 
         return productService.getCheckStock(productsCode);
@@ -66,20 +66,20 @@ public class ProductController {
 
     @PostMapping("deductStock")
     public void deductStock(
-            @RequestBody @Valid DeductStockRequest deductStockRequest
+            @RequestBody @Valid DeductStockReq deductStockReq
     ) {
-        productService.deductStock(deductStockRequest);
+        productService.deductStock(deductStockReq);
     }
 
     @PostMapping("deductStocks")
     public void deductStockList(
-            @RequestBody @Valid List<DeductStockRequest> deductStockRequest
+            @RequestBody @Valid List<DeductStockReq> deductStockReq
     ) {
-        productService.deductStocks(deductStockRequest);
+        productService.deductStocks(deductStockReq);
     }
 
     @GetMapping("/{productsIdx}/{optionIdx}")
-    public ProductInfoToOrderResponse getProductInfo(
+    public ProductInfoToOrderRes getProductInfo(
             @PathVariable("productsIdx") Long productsIdx,
             @PathVariable("optionIdx") Long optionIdx
     ) {
@@ -88,24 +88,30 @@ public class ProductController {
 
 
     @GetMapping("/bulk")
-    public List<ProductInfoToOrderResponse> getProductInfoList(
-            @RequestBody @Valid List<ProductInfoToOrderRequest> requests
+    public List<ProductInfoToOrderRes> getProductInfoList(
+            @RequestBody @Valid List<ProductInfoToOrderReq> requests
     ) {
         return productService.getProductInfoList(requests);
     }
 
     @GetMapping("/sellers")
-    public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
+    public Map<Long, Long> getSellersByProductIds(
+            @RequestParam List<Long> productIds
+    ) {
         return productService.getSellersByProductIds(productIds);
     }
 
     @PostMapping("/byIdx")
-    public List<ProductInfoResponse> getProductInfo(@RequestBody ProductIdxsRequest request){
+    public List<ProductInfoRes> getProductInfo(
+            @RequestBody ProductIdxsReq request
+    ){
         return productService.getProductInfoForBoard(request);
     };
 
     @GetMapping("/getSeller/{productsIdx}")
-    public ProductSellerResponse getSellerIdx(@PathVariable("productsIdx") Long productsIdx){
+    public ProductSellerRes getSellerIdx(
+            @PathVariable("productsIdx") Long productsIdx
+    ){
         return productService.getSellerIdx(productsIdx);
     };
 

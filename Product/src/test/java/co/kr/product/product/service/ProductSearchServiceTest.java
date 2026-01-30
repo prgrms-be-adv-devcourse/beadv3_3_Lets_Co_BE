@@ -1,7 +1,7 @@
 package co.kr.product.product.service;
 
 import co.kr.product.product.document.ProductDocument;
-import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.dto.response.ProductListRes;
 import co.kr.product.product.repository.ProductEsRepository;
 import co.kr.product.product.service.impl.ProductSearchServiceImpl;
 import org.assertj.core.api.Assertions;
@@ -48,7 +48,7 @@ class ProductSearchServiceTest {
 
         // When
             // 실제로 pageable 하고 search 넣어봄
-        ProductListResponse response = productSearchService.getProductsList(pageable, search);
+        ProductListRes response = productSearchService.getProductsList(pageable, search);
 
         // then
             // 실제로 findAll 했는지?
@@ -73,7 +73,7 @@ class ProductSearchServiceTest {
                 .willReturn(mockPage);
 
         // When
-        ProductListResponse response = productSearchService.getProductsList(pageable, search);
+        ProductListRes response = productSearchService.getProductsList(pageable, search);
 
         // Then
         verify(productEsRepository).findByProductsNameAndDelFalse(eq(search), any(Pageable.class));

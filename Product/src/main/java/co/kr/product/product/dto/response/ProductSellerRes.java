@@ -1,6 +1,6 @@
 package co.kr.product.product.dto.response;
 
-public record ProductSellerResponse(
+public record ProductSellerRes(
         Long sellerIdx
 ) {
 }

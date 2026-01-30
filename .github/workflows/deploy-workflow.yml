@@ -29,7 +29,7 @@ jobs:
         run: |
           # kubectl set image 명령어로 실행 중인 컨테이너의 이미지를 새 버전으로 교체
           kubectl set image deployment.apps/${{ inputs.service-name }} \
-            ${{ inputs.service-name }}=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.image-tag }}
+            ${{ inputs.service-name }}=${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.image-tag }}
 
       - name: Wait for rollout # 배포가 완료될 때까지 대기
         run: |

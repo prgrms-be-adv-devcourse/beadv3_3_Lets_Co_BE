@@ -1,6 +1,6 @@
 package co.kr.product.product.dto.response;
 
-public record ProductInfoResponse(
+public record ProductInfoRes(
         Long productIdx,
         String productCode,
         String name,

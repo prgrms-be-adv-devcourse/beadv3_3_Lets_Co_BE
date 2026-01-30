@@ -95,17 +95,23 @@ public class ProductController {
     }
 
     @GetMapping("/sellers")
-    public Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds) {
+    public Map<Long, Long> getSellersByProductIds(
+            @RequestParam List<Long> productIds
+    ) {
         return productService.getSellersByProductIds(productIds);
     }
 
     @PostMapping("/byIdx")
-    public List<ProductInfoRes> getProductInfo(@RequestBody ProductIdxsReq request){
+    public List<ProductInfoRes> getProductInfo(
+            @RequestBody ProductIdxsReq request
+    ){
         return productService.getProductInfoForBoard(request);
     };
 
     @GetMapping("/getSeller/{productsIdx}")
-    public ProductSellerRes getSellerIdx(@PathVariable("productsIdx") Long productsIdx){
+    public ProductSellerRes getSellerIdx(
+            @PathVariable("productsIdx") Long productsIdx
+    ){
         return productService.getSellerIdx(productsIdx);
     };
 

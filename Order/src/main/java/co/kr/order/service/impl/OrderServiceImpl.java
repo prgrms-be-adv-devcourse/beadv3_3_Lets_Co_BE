@@ -24,6 +24,8 @@ import co.kr.order.service.SettlementService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -232,7 +234,7 @@ public class OrderServiceImpl implements OrderService {
             productMap.put(key, info);
         }
 
-        // 4. 데이터 가공 및 정산 금액 합산 준비
+        // 데이터 가공 및 정산 금액 합산 준비
         List<OrderItemEntity> orderItemsToSave = new ArrayList<>();
         List<DeductStock> stockRequests = new ArrayList<>();
         List<OrderItemResponse> responseList = new ArrayList<>();
@@ -326,6 +328,9 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
+        orderEntity.setStatus(OrderStatus.PAID);
+        orderRepository.saveAndFlush(orderEntity);  // 즉시반영
+
         // 판매자별 정산 내역 저장 (Loop)
         for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
             saveSettlementHistory(entry.getKey(), pay.paymentIdx(), entry.getValue());
@@ -384,21 +389,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OrderResponse> findOrderList(Long userIdx) {
+    public Page<OrderResponse> findOrderList(Long userIdx, Pageable pageable) {
 
-        List<OrderResponse> responseOrderList = new ArrayList<>();
+        Page<OrderEntity> orderPage = orderRepository.findAllByUserIdx(userIdx, pageable);
 
-        List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
-        for(OrderEntity orderEntity : orderEntities) {
+        return orderPage.map(orderEntity -> {
 
             List<OrderItemResponse> responseItemList = new ArrayList<>();
-
             BigDecimal itemsAmount = BigDecimal.ZERO;
-            List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
-            for(OrderItemEntity itemEntity : itemEntities) {
+
+            List<OrderItemEntity> itemEntities = orderEntity.getOrderItems();
+            for (OrderItemEntity itemEntity : itemEntities) {
 
                 BigDecimal amount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
                 itemsAmount = itemsAmount.add(amount);
+
                 responseItemList.add(
                         new OrderItemResponse(
                                 new ItemInfo(
@@ -414,17 +419,50 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
-            responseOrderList.add(
-                    new OrderResponse(
-                            responseItemList,
-                            orderEntity.getOrderCode(),
-                            itemsAmount
+            return new OrderResponse(
+                    responseItemList,
+                    orderEntity.getOrderCode(),
+                    itemsAmount
+            );
+        });
+    }
+
+    /*  [이전 N+1 발생 코드]
+    List<OrderEntity> orderEntities = orderRepository.findAllByUserIdx(userIdx);
+    for(OrderEntity orderEntity : orderEntities) {
+
+        List<OrderItemResponse> responseItemList = new ArrayList<>();
+
+        BigDecimal itemsAmount = BigDecimal.ZERO;
+        List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
+        for(OrderItemEntity itemEntity : itemEntities) {
+
+            BigDecimal amount = itemEntity.getPrice().multiply(BigDecimal.valueOf(itemEntity.getQuantity()));
+            itemsAmount = itemsAmount.add(amount);
+            responseItemList.add(
+                    new OrderItemResponse(
+                            new ItemInfo(
+                                    itemEntity.getProductIdx(),
+                                    itemEntity.getOptionIdx(),
+                                    itemEntity.getProductName(),
+                                    itemEntity.getOptionName(),
+                                    itemEntity.getPrice()
+                            ),
+                            itemEntity.getQuantity(),
+                            amount
                     )
             );
         }
 
-        return responseOrderList;
+        responseOrderList.add(
+                new OrderResponse(
+                        responseItemList,
+                        orderEntity.getOrderCode(),
+                        itemsAmount
+                )
+        );
     }
+    */
 
     @Transactional(readOnly = true)
     @Override
@@ -469,11 +507,7 @@ public class OrderServiceImpl implements OrderService {
         return "정상적으로 처리되었습니다.";
     }
 
-
-
-
-
-    /**
+    /*
      * 주문 완료 처리 (일단 보류)
      * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
      * - 주문 상태를 COMPLETED로 변경

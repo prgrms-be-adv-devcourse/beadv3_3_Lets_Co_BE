@@ -1,9 +1,9 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.model.dto.request.DeductStockRequest;
-import co.kr.product.product.model.dto.request.ProductInfoToOrderRequest;
-import co.kr.product.product.model.dto.response.ProductDetailResponse;
-import co.kr.product.product.model.dto.response.ProductInfoToOrderResponse;
+import co.kr.product.product.model.dto.request.DeductStockReq;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.ProductInfoToOrderRes;
 import co.kr.product.product.model.vo.ProductStatus;
 import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductImageEntity;
@@ -119,7 +119,7 @@ class ProductServiceTest {
                 .willReturn(options);
 
         // When
-        ProductDetailResponse response = productService.getProductDetail(productCode);
+        ProductDetailRes response = productService.getProductDetail(productCode);
 
         // Then
         assertThat(response.productsCode()).isEqualTo(productCode);
@@ -186,7 +186,7 @@ class ProductServiceTest {
     void 상품_재고_감소_단일 () {
 
         // Given
-        DeductStockRequest request = new DeductStockRequest(1L,1L,20);
+        DeductStockReq request = new DeductStockReq(1L,1L,20);
 
         given(productOptionRepository.decreaseStock(request.optionIdx(), request.quantity())).willReturn(1);
 
@@ -199,10 +199,10 @@ class ProductServiceTest {
     void 상품_재고_감소_리스트 () {
 
         // Given
-        DeductStockRequest product1 = new DeductStockRequest(1L, 1L, 2);
-        DeductStockRequest product2 = new DeductStockRequest(2L, 3L, 10);
-        DeductStockRequest product3 = new DeductStockRequest(3L, 4L, 7);
-        List<DeductStockRequest> requests = List.of(product1, product2, product3);
+        DeductStockReq product1 = new DeductStockReq(1L, 1L, 2);
+        DeductStockReq product2 = new DeductStockReq(2L, 3L, 10);
+        DeductStockReq product3 = new DeductStockReq(3L, 4L, 7);
+        List<DeductStockReq> requests = List.of(product1, product2, product3);
 
         given(productOptionRepository.decreaseStock(product1.optionIdx(), product1.quantity())).willReturn(1);
         given(productOptionRepository.decreaseStock(product2.optionIdx(), product2.quantity())).willReturn(1);
@@ -218,10 +218,10 @@ class ProductServiceTest {
     void 상품_재고_감소_리스트_재고부족() {
 
         // Given
-        DeductStockRequest product1 = new DeductStockRequest(1L, 1L, 2);
-        DeductStockRequest product2 = new DeductStockRequest(2L, 3L, 999999);
-        DeductStockRequest product3 = new DeductStockRequest(3L, 4L, 7);
-        List<DeductStockRequest> request = List.of(product1, product2, product3);
+        DeductStockReq product1 = new DeductStockReq(1L, 1L, 2);
+        DeductStockReq product2 = new DeductStockReq(2L, 3L, 999999);
+        DeductStockReq product3 = new DeductStockReq(3L, 4L, 7);
+        List<DeductStockReq> request = List.of(product1, product2, product3);
 
         given(productOptionRepository.decreaseStock(product1.optionIdx(), product1.quantity())).willReturn(1);
         given(productOptionRepository.decreaseStock(product2.optionIdx(), product2.quantity())).willReturn(0);
@@ -240,15 +240,15 @@ class ProductServiceTest {
     void 상품_정보_리스트_요청 () {
 
         // Given
-        ProductInfoToOrderRequest productRequest1 = new ProductInfoToOrderRequest(1L, 1L);
-        ProductInfoToOrderRequest productRequest2 = new ProductInfoToOrderRequest(2L, 2L);
-        List<ProductInfoToOrderRequest> request = List.of(productRequest1, productRequest2);
+        ProductInfoToOrderReq productRequest1 = new ProductInfoToOrderReq(1L, 1L);
+        ProductInfoToOrderReq productRequest2 = new ProductInfoToOrderReq(2L, 2L);
+        List<ProductInfoToOrderReq> request = List.of(productRequest1, productRequest2);
 
         ReflectionTestUtils.setField(product, "productsIdx", 1L);
         ReflectionTestUtils.setField(option1, "optionGroupIdx", 1L);
         ReflectionTestUtils.setField(option1, "product", product);
 
-        ProductInfoToOrderResponse productResponse1 = new ProductInfoToOrderResponse(
+        ProductInfoToOrderRes productResponse1 = new ProductInfoToOrderRes(
                 productRequest1.productIdx(),
                 productRequest1.optionIdx(),
                 product.getSellerIdx(),
@@ -283,7 +283,7 @@ class ProductServiceTest {
 
         ReflectionTestUtils.setField(option3, "optionGroupIdx", 2L);
 
-        ProductInfoToOrderResponse productResponse2 = new ProductInfoToOrderResponse(
+        ProductInfoToOrderRes productResponse2 = new ProductInfoToOrderRes(
                 productRequest2.productIdx(),
                 productRequest2.optionIdx(),
                 product2.getSellerIdx(),
@@ -298,7 +298,7 @@ class ProductServiceTest {
                 .willReturn(List.of(option1, option3));
 
         // When
-        List<ProductInfoToOrderResponse> result = productService.getProductInfoList(request);
+        List<ProductInfoToOrderRes> result = productService.getProductInfoList(request);
 
         // Then
         Assertions.assertThat(result.get(0)).isEqualTo(productResponse1);

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record UpsertProductRequest(
+public record UpsertProductReq(
 
         @NotBlank(message = "상품명은 필수입니다.")
         @Size(max = 200, message = "상품명은 200자를 초과할 수 없습니다.")
@@ -35,10 +35,10 @@ public record UpsertProductRequest(
         // Valid 붙여야 내부 값 까지 확인
         @Valid
         @NotNull(message = "옵션 리스트는 null일 수 없습니다. (빈 리스트는 허용)")
-        List<ProductOptionsRequest> options,
+        List<ProductOptionsReq> options,
 
         @Valid
         @NotNull(message = "이미지 리스트는 null일 수 없습니다. (빈 리스트는 허용)")
-        List<ProductImagesRequest> images
+        List<ProductImagesReq> images
         ) {
 }

@@ -2,7 +2,7 @@ package co.kr.product.product.model.dto.request;
 
 import jakarta.validation.constraints.*;
 
-public record ProductImagesRequest(
+public record ProductImagesReq(
 
         // 추가 시 idx 안받음
         @Positive(message = "이미지 ID는 양수여야 합니다.")

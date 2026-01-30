@@ -2,7 +2,7 @@ package co.kr.product.product.model.dto.request;
 
 import java.util.List;
 
-public record ProductIdxsRequest(
+public record ProductIdxsReq(
         List<Long> productIdxs
 
 ) {

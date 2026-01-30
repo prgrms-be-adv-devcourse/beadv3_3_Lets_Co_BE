@@ -1,10 +1,10 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.model.dto.request.ProductListRequest;
-import co.kr.product.product.model.dto.request.UpsertProductRequest;
-import co.kr.product.product.model.dto.response.ProductDetailResponse;
-import co.kr.product.product.model.dto.response.ProductListResponse;
-import co.kr.product.product.model.dto.response.ResultResponse;
+import co.kr.product.product.model.dto.request.ProductListReq;
+import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.ProductListRes;
+import co.kr.product.product.model.dto.response.ResultRes;
 import co.kr.product.product.service.ProductManagerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +29,10 @@ public class SellerController {
      * @return 판매자가 올린 상품 리스트 반환
      */
     @GetMapping("/products")
-    public ResponseEntity<ProductListResponse> getLists(
+    public ResponseEntity<ProductListRes> getLists(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable,
-            @ModelAttribute @Valid ProductListRequest requests
+            @ModelAttribute @Valid ProductListReq requests
             ){
 
         return ResponseEntity.ok(
@@ -47,9 +47,9 @@ public class SellerController {
      * @return 등록 된 상품의 상세 정보
      */
     @PostMapping("/products")
-    public  ResponseEntity<ProductDetailResponse> addProduct(
+    public  ResponseEntity<ProductDetailRes> addProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-            @RequestBody @Valid UpsertProductRequest request
+            @RequestBody @Valid UpsertProductReq request
             ){
 
 
@@ -64,7 +64,7 @@ public class SellerController {
      * @return 상품 상세 정보
      */
     @GetMapping("/products/{code}")
-    public ResponseEntity<ProductDetailResponse> getProductDetail(
+    public ResponseEntity<ProductDetailRes> getProductDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode
     ){
@@ -82,10 +82,10 @@ public class SellerController {
      * @return 상품 상세 정보
      */
     @PutMapping("/products/{code}")
-    public ResponseEntity<ProductDetailResponse> updateProduct(
+    public ResponseEntity<ProductDetailRes> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode,
-            @RequestBody @Valid UpsertProductRequest request
+            @RequestBody @Valid UpsertProductReq request
     ){
 
         return ResponseEntity.ok(
@@ -99,12 +99,12 @@ public class SellerController {
      * @return resultCode
      */
     @DeleteMapping("/products/{code}")
-    public ResponseEntity<ResultResponse> deleteProduct(
+    public ResponseEntity<ResultRes> deleteProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode
     ){
         
         productManagerService.deleteProduct(usersIdx,productCode);
-        return ResponseEntity.ok(new ResultResponse("ok"));
+        return ResponseEntity.ok(new ResultRes("ok"));
     }
 }

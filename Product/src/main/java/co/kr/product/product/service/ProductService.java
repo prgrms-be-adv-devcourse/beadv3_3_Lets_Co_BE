@@ -1,8 +1,8 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.model.dto.request.DeductStockRequest;
-import co.kr.product.product.model.dto.request.ProductIdxsRequest;
-import co.kr.product.product.model.dto.request.ProductInfoToOrderRequest;
+import co.kr.product.product.model.dto.request.DeductStockReq;
+import co.kr.product.product.model.dto.request.ProductIdxsReq;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
 import co.kr.product.product.model.dto.response.*;
 import org.springframework.data.domain.Pageable;
 
@@ -10,25 +10,25 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProductService {
-    ProductListResponse getProducts(Pageable pageable);
+    ProductListRes getProducts(Pageable pageable);
 
 
-    ProductDetailResponse getProductDetail(String productsCode);
+    ProductDetailRes getProductDetail(String productsCode);
 
 
-    ProductCheckStockResponse getCheckStock(String productsCode);
+    ProductCheckStockRes getCheckStock(String productsCode);
 
-    void deductStock(DeductStockRequest deductStockRequest);
+    void deductStock(DeductStockReq deductStockReq);
 
-    void deductStocks(List<DeductStockRequest> deductStockRequest);
+    void deductStocks(List<DeductStockReq> deductStockReq);
 
-    ProductInfoToOrderResponse getProductInfo(Long productsIdx, Long optionIdx);
+    ProductInfoToOrderRes getProductInfo(Long productsIdx, Long optionIdx);
 
-    List<ProductInfoToOrderResponse> getProductInfoList(List<ProductInfoToOrderRequest> requests);
+    List<ProductInfoToOrderRes> getProductInfoList(List<ProductInfoToOrderReq> requests);
 
     Map<Long, Long> getSellersByProductIds(List<Long> productIds) ;
 
-    List<ProductInfoResponse> getProductInfoForBoard(ProductIdxsRequest request);
+    List<ProductInfoRes> getProductInfoForBoard(ProductIdxsReq request);
 
-    ProductSellerResponse getSellerIdx(Long productsIdx);
+    ProductSellerRes getSellerIdx(Long productsIdx);
 }

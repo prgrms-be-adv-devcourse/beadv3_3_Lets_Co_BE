@@ -1,6 +1,6 @@
 package co.kr.product.product.model.dto.response;
 
-public record ProductImageResponse(
+public record ProductImageRes(
 
     Long imageIdx,
     String url,

@@ -2,7 +2,7 @@ package co.kr.product.product.model.dto.response;
 
 import java.math.BigDecimal;
 
-public record ProductInfoToOrderResponse(
+public record ProductInfoToOrderRes(
         Long productIdx,
         Long optionIdx,
         Long sellerIdx,

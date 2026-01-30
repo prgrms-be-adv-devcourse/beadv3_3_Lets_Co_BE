@@ -1,9 +1,9 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.model.dto.request.UpsertProductRequest;
-import co.kr.product.product.model.dto.response.ProductDetailResponse;
-import co.kr.product.product.model.dto.response.ProductListResponse;
-import co.kr.product.product.model.dto.response.ProductResponse;
+import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.ProductListRes;
+import co.kr.product.product.model.dto.response.ProductRes;
 import co.kr.product.product.model.vo.ProductStatus;
 import co.kr.product.product.service.ProductManagerService;
 import co.kr.product.product.service.ProductSearchService;
@@ -50,13 +50,13 @@ class AdminControllerTest {
      */
 
     // 목록 조회용 Response
-    ProductResponse productRes1 = new ProductResponse(
+    ProductRes productRes1 = new ProductRes(
             1L, productCode1, "관리자용 상품 A",
             new BigDecimal("10000.00"), new BigDecimal("9000.00"), 50L
     );
 
     // 상세 조회 및 수정 결과용 Response
-    ProductDetailResponse detailRes1 = new ProductDetailResponse(
+    ProductDetailRes detailRes1 = new ProductDetailRes(
             "ok",
             1L, productCode1, "관리자용 상품 A", "관리자만 볼 수 있는 상세",
             new BigDecimal("10000.00"), new BigDecimal("9000.00"), 50L,
@@ -65,7 +65,7 @@ class AdminControllerTest {
     );
 
     // 상품 수정 요청 DTO
-    UpsertProductRequest updateReq = new UpsertProductRequest(
+    UpsertProductReq updateReq = new UpsertProductReq(
             1L, "수정된 상품명", "수정된 설명",
             new BigDecimal("20000.00"), new BigDecimal("18000.00"),
             200, ProductStatus.STOPPED,
@@ -81,7 +81,7 @@ class AdminControllerTest {
     @Test
     void 관리자_상품_목록_조회() throws Exception {
         // Given
-        ProductListResponse fakeResponse = new ProductListResponse("ok", List.of(productRes1));
+        ProductListRes fakeResponse = new ProductListRes("ok", List.of(productRes1));
         given(productSearchService.getProductsList(any(Pageable.class), anyString())).willReturn(fakeResponse);
 
         // When
@@ -129,14 +129,14 @@ class AdminControllerTest {
     void 관리자_상품_수정() throws Exception {
         // Given
         // 수정 후 반환될 응답 (예시로 detailRes1 재사용하되 이름만 변경되었다고 가정 가능)
-        ProductDetailResponse updatedRes = new ProductDetailResponse(
+        ProductDetailRes updatedRes = new ProductDetailRes(
                 "ok", 1L, productCode1, "수정된 상품명", "수정된 설명",
                 new BigDecimal("20000.00"), new BigDecimal("18000.00"), 50L,
                 200, ProductStatus.STOPPED,
                 Collections.emptyList(), Collections.emptyList()
         );
 
-        given(productManagerService.updateProduct(eq(adminUserIdx), eq(productCode1), any(UpsertProductRequest.class)))
+        given(productManagerService.updateProduct(eq(adminUserIdx), eq(productCode1), any(UpsertProductReq.class)))
                 .willReturn(updatedRes);
 
         // When

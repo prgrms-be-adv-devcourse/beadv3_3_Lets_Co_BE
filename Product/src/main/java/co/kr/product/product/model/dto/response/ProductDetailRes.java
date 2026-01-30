@@ -5,7 +5,7 @@ import co.kr.product.product.model.vo.ProductStatus;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record ProductDetailResponse(
+public record ProductDetailRes(
         Long productsIDX,
         String productsCode,
         String name,
@@ -15,8 +15,8 @@ public record ProductDetailResponse(
         Long viewCount,
         Integer stock,
         ProductStatus status,
-        List<ProductOptionsResponse> options,
-        List<ProductImageResponse> images
+        List<ProductOptionsRes> options,
+        List<ProductImageRes> images
 
 ) {
 }

@@ -2,9 +2,9 @@ package co.kr.product.product.model.dto.response;
 
 import java.util.List;
 
-public record ProductCheckStockResponse(
+public record ProductCheckStockRes(
         Integer productStock,
 
-        List<OptionCheckStockResponse> optionStocks
+        List<OptionCheckStockRes> optionStocks
 ) {
 }

@@ -1,8 +1,8 @@
 package co.kr.product.product.service.impl;
 
-import co.kr.product.product.model.dto.request.DeductStockRequest;
-import co.kr.product.product.model.dto.request.ProductIdxsRequest;
-import co.kr.product.product.model.dto.request.ProductInfoToOrderRequest;
+import co.kr.product.product.model.dto.request.DeductStockReq;
+import co.kr.product.product.model.dto.request.ProductIdxsReq;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
 import co.kr.product.product.model.dto.response.*;
 import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductImageEntity;
@@ -38,11 +38,11 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ProductListResponse getProducts(Pageable pageable) {
+    public ProductListRes getProducts(Pageable pageable) {
         Page<ProductEntity> page = productRepository.findByDelFalse(pageable);
 
-        List<ProductResponse> items = page.getContent().stream()
-                .map(p -> new ProductResponse(
+        List<ProductRes> items = page.getContent().stream()
+                .map(p -> new ProductRes(
                         p.getProductsIdx(),
                         p.getProductsCode(),
                         p.getProductsName(),
@@ -52,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
                 ))
                 .toList();
 
-        return new ProductListResponse("SUCCESS", items);
+        return new ProductListRes("SUCCESS", items);
     }
 
     /**
@@ -62,7 +62,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ProductDetailResponse getProductDetail(String productsCode) {
+    public ProductDetailRes getProductDetail(String productsCode) {
 
         ProductEntity productEntity = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productsCode));
@@ -105,7 +105,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ProductCheckStockResponse getCheckStock(String productsCode) {
+    public ProductCheckStockRes getCheckStock(String productsCode) {
 
         // TODO : option id or code 를 받아오는것이 훨 좋음
 
@@ -114,14 +114,14 @@ public class ProductServiceImpl implements ProductService {
 
         List<ProductOptionEntity> options = productOptionRepository.findByProductAndDelFalse(product);
 
-        List<OptionCheckStockResponse> optionStockResponses = options.stream().map(
-                option -> new OptionCheckStockResponse(
+        List<OptionCheckStockRes> optionStockResponses = options.stream().map(
+                option -> new OptionCheckStockRes(
                         option.getOptionCode(),
                         option.getStock())
 
         ).toList();
 
-        return new ProductCheckStockResponse(
+        return new ProductCheckStockRes(
                 "Success",
                 product.getStock(),
                 optionStockResponses
@@ -131,7 +131,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void deductStock(DeductStockRequest request){
+    public void deductStock(DeductStockReq request){
 
         // 쿼리문에서 남은 개수 확인 및 수정까지
         // kafka를 쓰더라도 컨슈머의 개수를 늘리면 동시 접속 문제가 생길 수도 있음.
@@ -146,10 +146,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void deductStocks(List<DeductStockRequest> requests){
+    public void deductStocks(List<DeductStockReq> requests){
 
 
-        for (DeductStockRequest request : requests) {
+        for (DeductStockReq request : requests) {
 
 
             int affectedRows = productOptionRepository.decreaseStock(
@@ -166,7 +166,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductInfoToOrderResponse getProductInfo(Long productsIdx, Long optionIdx){
+    public ProductInfoToOrderRes getProductInfo(Long productsIdx, Long optionIdx){
         ProductEntity product = productRepository.findByProductsIdxAndDelFalse(productsIdx)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
 
@@ -176,7 +176,7 @@ public class ProductServiceImpl implements ProductService {
 
         // List<ProductImageEntity> image = productImageRepository.findByProductAndDelFalse(product)
 
-        return new ProductInfoToOrderResponse(
+        return new ProductInfoToOrderRes(
                 productsIdx,
                 optionIdx,
                 product.getSellerIdx(),
@@ -190,7 +190,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductInfoToOrderResponse> getProductInfoList(List<ProductInfoToOrderRequest> requests){
+    public List<ProductInfoToOrderRes> getProductInfoList(List<ProductInfoToOrderReq> requests){
 
         // ** for문을 돌려 List의 길이만큼 select를 사용하는것은 좋지 않음
         // 1) IN 쿼리를 사용해서 한번에 조회
@@ -200,13 +200,13 @@ public class ProductServiceImpl implements ProductService {
 
         // 1. List 내 optionIds 만 list 로 추출
         List<Long> optionIds = requests.stream()
-                .map(ProductInfoToOrderRequest::optionIdx).toList();
+                .map(ProductInfoToOrderReq::optionIdx).toList();
 
         // 2. 조회
         List<ProductOptionEntity> options = productOptionRepository.findAllWithOptions(optionIds);
 
         // 3. 반환
-        return options.stream().map(opt -> new ProductInfoToOrderResponse(
+        return options.stream().map(opt -> new ProductInfoToOrderRes(
                 opt.getProduct().getProductsIdx(), // 상품 정보도 이미 들어있음
                 opt.getOptionGroupIdx(),
                 opt.getProduct().getSellerIdx(),
@@ -231,7 +231,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductInfoResponse> getProductInfoForBoard(ProductIdxsRequest request){
+    public List<ProductInfoRes> getProductInfoForBoard(ProductIdxsReq request){
         List<ProductEntity> productInfoEntities = productRepository.findAllByProductsIdxInAndDelFalse(request.productIdxs());
 
         List<ProductImageEntity> thumbnails = productImageRepository.findAllByProduct_ProductsIdxInAndIsThumbnailTrueAndDelFalse(request.productIdxs());
@@ -244,7 +244,7 @@ public class ProductServiceImpl implements ProductService {
                         (existing, replacement) -> existing // 혹시 중복이 있다면 첫 번째 것 유지
                 ));
         return productInfoEntities.stream()
-                .map(entity -> new ProductInfoResponse(
+                .map(entity -> new ProductInfoRes(
                         entity.getProductsIdx(), // 필드명은 엔티티 설정에 맞춰 확인 필요 (예: getProductIdx)
                         entity.getProductsCode(),
                         entity.getProductsName(),
@@ -258,10 +258,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductSellerResponse getSellerIdx(Long productsIdx){
+    public ProductSellerRes getSellerIdx(Long productsIdx){
         ProductEntity product = productRepository.findByProductsIdxAndDelFalse(productsIdx)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
-        return new ProductSellerResponse(product.getSellerIdx());
+        return new ProductSellerRes(product.getSellerIdx());
     };
 }
 

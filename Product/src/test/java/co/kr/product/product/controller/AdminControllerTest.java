@@ -1,10 +1,10 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductResponse;
-import co.kr.product.product.dto.vo.ProductStatus;
+import co.kr.product.product.model.dto.request.UpsertProductRequest;
+import co.kr.product.product.model.dto.response.ProductDetailResponse;
+import co.kr.product.product.model.dto.response.ProductListResponse;
+import co.kr.product.product.model.dto.response.ProductResponse;
+import co.kr.product.product.model.vo.ProductStatus;
 import co.kr.product.product.service.ProductManagerService;
 import co.kr.product.product.service.ProductSearchService;
 import com.fasterxml.jackson.databind.ObjectMapper;

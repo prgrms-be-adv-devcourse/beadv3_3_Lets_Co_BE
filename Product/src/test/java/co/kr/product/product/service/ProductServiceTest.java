@@ -1,13 +1,13 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.dto.request.DeductStockRequest;
-import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductInfoToOrderResponse;
-import co.kr.product.product.dto.vo.ProductStatus;
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductImageEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.dto.request.DeductStockRequest;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderRequest;
+import co.kr.product.product.model.dto.response.ProductDetailResponse;
+import co.kr.product.product.model.dto.response.ProductInfoToOrderResponse;
+import co.kr.product.product.model.vo.ProductStatus;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductImageEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;

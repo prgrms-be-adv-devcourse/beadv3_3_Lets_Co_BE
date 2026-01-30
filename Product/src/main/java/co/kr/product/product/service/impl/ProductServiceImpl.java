@@ -1,12 +1,12 @@
 package co.kr.product.product.service.impl;
 
-import co.kr.product.product.dto.request.DeductStockRequest;
-import co.kr.product.product.dto.request.ProductIdxsRequest;
-import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
-import co.kr.product.product.dto.response.*;
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductImageEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.dto.request.DeductStockRequest;
+import co.kr.product.product.model.dto.request.ProductIdxsRequest;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderRequest;
+import co.kr.product.product.model.dto.response.*;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductImageEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;

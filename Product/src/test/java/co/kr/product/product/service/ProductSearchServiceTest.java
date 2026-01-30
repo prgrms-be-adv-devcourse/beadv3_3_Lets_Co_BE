@@ -1,7 +1,7 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.document.ProductDocument;
-import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.model.document.ProductDocument;
+import co.kr.product.product.model.dto.response.ProductListResponse;
 import co.kr.product.product.repository.ProductEsRepository;
 import co.kr.product.product.service.impl.ProductSearchServiceImpl;
 import org.assertj.core.api.Assertions;

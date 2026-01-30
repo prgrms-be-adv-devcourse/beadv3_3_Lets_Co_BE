@@ -1,7 +1,7 @@
 package co.kr.product.product.repository;
 
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

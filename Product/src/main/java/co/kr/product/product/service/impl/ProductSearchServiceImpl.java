@@ -1,8 +1,8 @@
 package co.kr.product.product.service.impl;
 
-import co.kr.product.product.document.ProductDocument;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductResponse;
+import co.kr.product.product.model.document.ProductDocument;
+import co.kr.product.product.model.dto.response.ProductListResponse;
+import co.kr.product.product.model.dto.response.ProductResponse;
 import co.kr.product.product.repository.ProductEsRepository;
 import co.kr.product.product.service.ProductSearchService;
 import lombok.RequiredArgsConstructor;

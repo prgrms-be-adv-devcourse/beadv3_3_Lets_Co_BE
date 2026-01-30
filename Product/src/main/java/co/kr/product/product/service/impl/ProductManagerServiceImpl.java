@@ -2,17 +2,17 @@ package co.kr.product.product.service.impl;
 
 
 import co.kr.product.product.client.AuthServiceClient;
-import co.kr.product.product.document.ProductDocument;
-import co.kr.product.product.dto.request.ProductImagesRequest;
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.ProductOptionsRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductResponse;
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductImageEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.document.ProductDocument;
+import co.kr.product.product.model.dto.request.ProductImagesRequest;
+import co.kr.product.product.model.dto.request.ProductListRequest;
+import co.kr.product.product.model.dto.request.ProductOptionsRequest;
+import co.kr.product.product.model.dto.request.UpsertProductRequest;
+import co.kr.product.product.model.dto.response.ProductDetailResponse;
+import co.kr.product.product.model.dto.response.ProductListResponse;
+import co.kr.product.product.model.dto.response.ProductResponse;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductImageEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductEsRepository;
 import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
@@ -102,7 +102,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 반환 데이터 생성
         ProductDetailResponse result = toProductDetail(
-                "ok",
                         savedItem,
                         savedOpt,
                         savedImg);
@@ -133,7 +132,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // mapper 사용
         return toProductDetail(
-                "ok",
                 product,
                 options,
                 images
@@ -248,7 +246,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // mapper 사용
         return toProductDetail(
-                "ok",
                 product,
                 options,
                 images
@@ -322,7 +319,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 ))
                 .toList();
         return new ProductListResponse(
-                "ok",items
+                items
 
         );
     }

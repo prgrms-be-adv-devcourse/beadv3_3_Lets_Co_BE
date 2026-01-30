@@ -1,10 +1,10 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ResultResponse;
+import co.kr.product.product.model.dto.request.ProductListRequest;
+import co.kr.product.product.model.dto.request.UpsertProductRequest;
+import co.kr.product.product.model.dto.response.ProductDetailResponse;
+import co.kr.product.product.model.dto.response.ProductListResponse;
+import co.kr.product.product.model.dto.response.ResultResponse;
 import co.kr.product.product.service.ProductManagerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +34,9 @@ public class SellerController {
             @PageableDefault Pageable pageable,
             @ModelAttribute @Valid ProductListRequest requests
             ){
-        ProductListResponse result = productManagerService.getListsBySeller(usersIdx, pageable, requests);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(
+                productManagerService.getListsBySeller(usersIdx, pageable, requests));
     }
 
 
@@ -50,11 +50,11 @@ public class SellerController {
     public  ResponseEntity<ProductDetailResponse> addProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @RequestBody @Valid UpsertProductRequest request
-
             ){
-        ProductDetailResponse result = productManagerService.addProduct(usersIdx,request);
 
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.addProduct(usersIdx,request));
     }
 
     /**
@@ -68,9 +68,10 @@ public class SellerController {
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode
     ){
-        ProductDetailResponse result = productManagerService.getManagerProductDetail(usersIdx,productCode);
 
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.getManagerProductDetail(usersIdx,productCode));
     }
 
     /**
@@ -86,8 +87,9 @@ public class SellerController {
             @PathVariable("code") String productCode,
             @RequestBody @Valid UpsertProductRequest request
     ){
-        ProductDetailResponse result = productManagerService.updateProduct(usersIdx,productCode, request);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.updateProduct(usersIdx,productCode, request));
     }
 
     /**
@@ -101,6 +103,7 @@ public class SellerController {
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode
     ){
+        
         productManagerService.deleteProduct(usersIdx,productCode);
         return ResponseEntity.ok(new ResultResponse("ok"));
     }

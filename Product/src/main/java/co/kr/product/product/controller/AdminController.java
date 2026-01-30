@@ -1,10 +1,11 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ResultResponse;
+import co.kr.product.common.BaseResponse;
+import co.kr.product.product.model.dto.request.ProductListRequest;
+import co.kr.product.product.model.dto.request.UpsertProductRequest;
+import co.kr.product.product.model.dto.response.ProductDetailResponse;
+import co.kr.product.product.model.dto.response.ProductListResponse;
+import co.kr.product.product.model.dto.response.ResultResponse;
 import co.kr.product.product.service.ProductManagerService;
 import co.kr.product.product.service.ProductSearchService;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +46,8 @@ public class AdminController {
             ){
 
 
-        return ResponseEntity.ok(productSearchService.getProductsList(pageable,requests.search()));
+        return ResponseEntity.ok(
+                productSearchService.getProductsList(pageable,requests.search()));
 
     }
 
@@ -59,9 +62,9 @@ public class AdminController {
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode){
 
-        
-        ProductDetailResponse result = productManagerService.getManagerProductDetail(usersIdx, productCode);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.getManagerProductDetail(usersIdx, productCode));
     }
 
     /**
@@ -79,9 +82,8 @@ public class AdminController {
             @RequestBody @Valid UpsertProductRequest request,
             @PathVariable("code") String productCode){
 
-        ProductDetailResponse result = productManagerService.updateProduct(usersIdx, productCode, request);
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(
+                productManagerService.updateProduct(usersIdx, productCode, request));
 
     }
 

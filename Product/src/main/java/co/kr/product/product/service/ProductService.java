@@ -1,9 +1,9 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.dto.request.DeductStockRequest;
-import co.kr.product.product.dto.request.ProductIdxsRequest;
-import co.kr.product.product.dto.request.ProductInfoToOrderRequest;
-import co.kr.product.product.dto.response.*;
+import co.kr.product.product.model.dto.request.DeductStockRequest;
+import co.kr.product.product.model.dto.request.ProductIdxsRequest;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderRequest;
+import co.kr.product.product.model.dto.response.*;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

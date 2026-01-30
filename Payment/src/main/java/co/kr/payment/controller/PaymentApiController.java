@@ -4,7 +4,6 @@ import co.kr.payment.model.dto.request.ChargeRequest;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.model.dto.request.PaymentRequest;
 import co.kr.payment.model.dto.request.PaymentTossConfirmRequest;
-import co.kr.payment.model.dto.response.BaseResponse;
 import co.kr.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,78 +17,57 @@ public class PaymentApiController {
     private final PaymentService paymentService;
 
     @PostMapping("/process")
-    public ResponseEntity<BaseResponse<PaymentResponse>> processPayment(
+    public ResponseEntity<PaymentResponse> processPayment(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestBody PaymentRequest request
     ) {
-        PaymentResponse description = paymentService.process(userIdx, request);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.process(userIdx, request));
     }
 
     @PostMapping("/card")
-    public ResponseEntity<BaseResponse<PaymentResponse>> cardPayment(
+    public ResponseEntity<PaymentResponse> cardPayment(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestBody PaymentRequest request
     ) {
-        PaymentResponse description = paymentService.pay(userIdx, request);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.pay(userIdx, request));
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<BaseResponse<PaymentResponse>> depositPayment(
+    public ResponseEntity<PaymentResponse> depositPayment(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestBody PaymentRequest request
     ) {
-        PaymentResponse description = paymentService.pay(userIdx, request);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.pay(userIdx, request));
     }
 
     @PostMapping("/toss/confirm")
-    public ResponseEntity<BaseResponse<PaymentResponse>> confirmTossPayment(
+    public ResponseEntity<PaymentResponse> confirmTossPayment(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestBody PaymentTossConfirmRequest request
     ) {
-        PaymentResponse description = paymentService.confirmTossPayment(userIdx, request);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.confirmTossPayment(userIdx, request));
     }
 
     @PostMapping("/refund")
-    public ResponseEntity<BaseResponse<PaymentResponse>> refundPayment(
+    public ResponseEntity<PaymentResponse> refundPayment(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestParam String orderCode
     ) {
-        PaymentResponse description = paymentService.refund(userIdx, orderCode);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.refund(userIdx, orderCode));
     }
 
     @PostMapping("/charge")
-    public ResponseEntity<BaseResponse<PaymentResponse>> charge(
+    public ResponseEntity<PaymentResponse> charge(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestBody ChargeRequest request
     ) {
-        PaymentResponse description = paymentService.charge(userIdx, request);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.charge(userIdx, request));
     }
 
-    @GetMapping("/by-order/{ordersIdx}")
-    public ResponseEntity<BaseResponse<PaymentResponse>> findByOrdersIdx(
+    @GetMapping("/order/{ordersIdx}")
+    public ResponseEntity<PaymentResponse> findByOrdersIdx(
             @PathVariable Long ordersIdx
     ) {
-        PaymentResponse description = paymentService.findByOrdersIdx(ordersIdx);
-        BaseResponse<PaymentResponse> response = new BaseResponse<>("ok", description);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.findByOrdersIdx(ordersIdx));
     }
 }

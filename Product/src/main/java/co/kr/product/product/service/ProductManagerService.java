@@ -1,20 +1,20 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductListResponse;
+import co.kr.product.product.dto.response.ProductDetailRes;
+import co.kr.product.product.dto.request.ProductListReq;
+import co.kr.product.product.dto.request.UpsertProductReq;
+import co.kr.product.product.dto.response.ProductListRes;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductManagerService {
 
-    ProductDetailResponse addProduct(Long usersIdx, UpsertProductRequest request);
+    ProductDetailRes addProduct(Long usersIdx, UpsertProductReq request);
 
-    ProductDetailResponse getManagerProductDetail(Long usersIdx, String code);
+    ProductDetailRes getManagerProductDetail(Long usersIdx, String code);
 
-    ProductDetailResponse updateProduct(Long usersIdx, String code, UpsertProductRequest request);
+    ProductDetailRes updateProduct(Long usersIdx, String code, UpsertProductReq request);
 
     void deleteProduct(Long usersIdx, String code);
 
-    ProductListResponse getListsBySeller(Long usersIdx, Pageable pageable, ProductListRequest requests);
+    ProductListRes getListsBySeller(Long usersIdx, Pageable pageable, ProductListReq requests);
 }

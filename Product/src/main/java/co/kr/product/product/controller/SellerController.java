@@ -102,6 +102,7 @@ public class SellerController {
             @PathVariable("code") String productCode
     ){
         productManagerService.deleteProduct(usersIdx,productCode);
+        
         return ResponseEntity.ok(new ResultResponse("ok"));
     }
 }

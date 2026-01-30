@@ -18,12 +18,12 @@ public class SettlementController {
     private final SettlementService settlementService;
 
     @GetMapping("/{sellerIdx}")
-    public List<SettlementInfo> getSettlement(@PathVariable("sellerIdx") Long sellerIdx) {
+    public List<SettlementInfo> getSettlementList(@PathVariable("sellerIdx") Long sellerIdx) {
         return settlementService.getSettlementList(sellerIdx);
     }
 
     @GetMapping("/{sellerIdx}/{paymentIdx}")
-    public SettlementInfo getSettlementList(
+    public SettlementInfo getSettlement(
             @PathVariable("sellerIdx") Long sellerIdx,
             @PathVariable("paymentIdx") Long paymentIdx
     ) {

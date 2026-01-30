@@ -69,7 +69,6 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse pay(Long userIdx, PaymentRequest request) {
         return switch (request.paymentType()) {
-            case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), request.amount());
             case CARD -> handleCardPayment(userIdx, request.orderCode(), request.ordersIdx(), request.amount());
             case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), request.ordersIdx(), request.amount());
             case TOSS_PAY -> throw new IllegalArgumentException(

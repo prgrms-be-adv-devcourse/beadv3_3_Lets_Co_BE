@@ -44,7 +44,8 @@ public class AdminController {
             ){
 
 
-        return ResponseEntity.ok(productSearchService.getProductsList(pageable,requests.search()));
+        return ResponseEntity.ok(
+                productSearchService.getProductsList(pageable,requests.search()));
 
     }
 
@@ -59,9 +60,9 @@ public class AdminController {
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("code") String productCode){
 
-        
-        ProductDetailRes result = productManagerService.getManagerProductDetail(usersIdx, productCode);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.getManagerProductDetail(usersIdx, productCode));
     }
 
     /**
@@ -79,9 +80,10 @@ public class AdminController {
             @RequestBody @Valid UpsertProductReq request,
             @PathVariable("code") String productCode){
 
-        ProductDetailRes result = productManagerService.updateProduct(usersIdx, productCode, request);
 
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(
+                productManagerService.updateProduct(usersIdx, productCode, request));
 
     }
 

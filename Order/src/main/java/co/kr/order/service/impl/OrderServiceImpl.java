@@ -112,6 +112,7 @@ public class OrderServiceImpl implements OrderService {
                     userIdx,
                     new PaymentRequest(
                             orderCode,
+                            orderEntity.getId(),
                             request.paymentType(),
                             amount
                     )
@@ -123,6 +124,7 @@ public class OrderServiceImpl implements OrderService {
                     userIdx,
                     new PaymentTossConfirmRequest(
                             orderCode,
+                            orderEntity.getId(),
                             request.tossKey(),
                             amount
                     )

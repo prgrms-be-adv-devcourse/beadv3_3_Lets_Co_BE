@@ -46,6 +46,6 @@ public interface PaymentClient {
             @RequestBody ChargeRequest request
     );
 
-    @GetMapping("/payments/by-order/{ordersIdx}")
+    @GetMapping("/payments/order/{ordersIdx}")
     PaymentResponse findByOrdersIdx(@PathVariable Long ordersIdx);
 }

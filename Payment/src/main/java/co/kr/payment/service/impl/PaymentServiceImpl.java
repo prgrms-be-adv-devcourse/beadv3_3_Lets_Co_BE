@@ -69,8 +69,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse pay(Long userIdx, PaymentRequest request) {
         return switch (request.paymentType()) {
-            case CARD -> handleCardPayment(userIdx, request.orderCode(), request.amount());
-            case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), request.amount());
+            case CARD -> handleCardPayment(userIdx, request.orderCode(), request.ordersIdx(), request.amount());
+            case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), request.ordersIdx(), request.amount());
             case TOSS_PAY -> throw new IllegalArgumentException(
                     "TOSS_PAY는 별도로 요청합니다."
             );
@@ -155,6 +155,7 @@ public class PaymentServiceImpl implements PaymentService {
         return handleTossPayPayment(
                 userIdx,
                 request.orderCode(),
+                request.ordersIdx(),
                 request.paymentKey(),
                 request.amount()
         );
@@ -164,9 +165,10 @@ public class PaymentServiceImpl implements PaymentService {
      * 카드 결제 처리
      * - PG 연동 없이 결제 내역만 저장
      */
-    private PaymentResponse handleCardPayment(Long userIdx, String orderCode, BigDecimal amount) {
+    private PaymentResponse handleCardPayment(Long userIdx, String orderCode, Long ordersIdx, BigDecimal amount) {
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
+                .ordersIdx(ordersIdx)
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.CARD)
                 .amount(amount)
@@ -185,7 +187,7 @@ public class PaymentServiceImpl implements PaymentService {
      * - User 서비스에 Balance 차감 요청
      * - 차감 성공 시 결제 내역 저장 및 주문 상태 PAID로 변경
      */
-    private PaymentResponse handleDepositPayment(Long userIdx, String orderCode, BigDecimal amount) {
+    private PaymentResponse handleDepositPayment(Long userIdx, String orderCode, Long ordersIdx, BigDecimal amount) {
         BigDecimal paymentAmount = amount;
 
         try {
@@ -197,6 +199,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
+                .ordersIdx(ordersIdx)
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.DEPOSIT)
                 .amount(paymentAmount)
@@ -217,6 +220,7 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentResponse handleTossPayPayment(
             Long userIdx,
             String orderCode,
+            Long ordersIdx,
             String paymentKey,
             BigDecimal amount
     ) {
@@ -225,6 +229,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentEntity payment = PaymentEntity.builder()
                 .usersIdx(userIdx)
+                .ordersIdx(ordersIdx)
                 .status(PaymentStatus.PAYMENT)
                 .type(PaymentType.TOSS_PAY)
                 .amount(resolvedAmount)

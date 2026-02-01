@@ -11,6 +11,9 @@ public record PaymentRequest(
         @NotBlank(message = "주문 코드는 필수입니다.")
         String orderCode,
 
+        @NotNull(message = "주문 IDX는 필수입니다.")
+        Long ordersIdx,
+
         @NotNull(message = "결제 타입은 필수입니다.")
         PaymentType paymentType,
 

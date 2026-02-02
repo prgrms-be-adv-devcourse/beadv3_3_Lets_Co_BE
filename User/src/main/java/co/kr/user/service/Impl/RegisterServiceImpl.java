@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
@@ -11,6 +11,7 @@ import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
+import co.kr.user.service.RegisterService;
 import co.kr.user.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

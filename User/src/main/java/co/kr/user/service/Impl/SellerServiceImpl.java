@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.SellerRepository;
 import co.kr.user.dao.UserInformationRepository;
@@ -14,6 +14,7 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
+import co.kr.user.service.SellerService;
 import co.kr.user.util.AesUtil;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;

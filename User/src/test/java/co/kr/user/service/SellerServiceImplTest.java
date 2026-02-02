@@ -15,6 +15,7 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
+import co.kr.user.service.Impl.SellerServiceImpl;
 import co.kr.user.util.AesUtil;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;
@@ -45,7 +46,8 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class SellerServiceImplTest {
 
-    @InjectMocks SellerServiceImpl sellerService;
+    @InjectMocks
+    SellerServiceImpl sellerService;
 
     @Mock UserRepository userRepository;
     @Mock SellerRepository sellerRepository;

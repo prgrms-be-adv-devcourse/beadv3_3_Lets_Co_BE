@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
@@ -9,6 +9,8 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
+import co.kr.user.service.AdminService;
+import co.kr.user.service.AuthService;
 import co.kr.user.util.AesUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +31,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AdminServiceImpl implements AdminService{
+public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final AuthService authService; // 권한 확인용 서비스
     private final UserInformationRepository userInformationRepository;

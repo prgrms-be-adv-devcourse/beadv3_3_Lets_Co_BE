@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserAddressRepository;
 import co.kr.user.dao.UserRepository;
@@ -6,6 +6,7 @@ import co.kr.user.model.dto.address.AddressListDTO;
 import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
+import co.kr.user.service.AddressService;
 import co.kr.user.util.AesUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-public class AddressServiceImpl implements AddressService{
+public class AddressServiceImpl implements AddressService {
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
 

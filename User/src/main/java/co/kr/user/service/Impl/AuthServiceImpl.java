@@ -1,11 +1,11 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserRepository;
 import co.kr.user.dao.UsersLoginRepository;
 import co.kr.user.model.dto.auth.TokenDto;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersLogin;
-import co.kr.user.model.vo.UsersRole;
+import co.kr.user.service.AuthService;
 import co.kr.user.util.JWTUtil;
 import co.kr.user.util.TokenUtil;
 import lombok.RequiredArgsConstructor;

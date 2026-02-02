@@ -1,16 +1,11 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserRepository;
-import co.kr.user.dao.UsersLoginRepository;
-import co.kr.user.model.dto.auth.TokenDto;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
-import co.kr.user.util.JWTUtil;
-import co.kr.user.util.TokenUtil;
+import co.kr.user.service.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 인증(Authentication) 및 권한(Authorization) 관련 공통 로직을 처리하는 서비스 클래스입니다.

@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
@@ -12,6 +12,7 @@ import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
+import co.kr.user.service.RetrieveService;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
@@ -29,7 +30,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 @Service
 @RequiredArgsConstructor
-public class RetrieveServiceImpl implements RetrieveService{
+public class RetrieveServiceImpl implements RetrieveService {
     private final UserRepository userRepository;
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;

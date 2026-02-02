@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserRepository;
 import co.kr.user.dao.UsersLoginRepository;
@@ -6,6 +6,7 @@ import co.kr.user.model.dto.login.LoginDTO;
 import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersLogin;
+import co.kr.user.service.LoginService;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class LoginServiceImpl implements LoginService{
+public class LoginServiceImpl implements LoginService {
     private final UserRepository userRepository;
     private final UsersLoginRepository usersLoginRepository;
 

@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.PaymentRepository;
 import co.kr.user.dao.UserRepository;
@@ -8,6 +8,7 @@ import co.kr.user.model.entity.Payment;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.vo.PaymentStatus;
 import co.kr.user.model.vo.PaymentType;
+import co.kr.user.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class PaymentServiceImpl implements PaymentService{
+public class PaymentServiceImpl implements PaymentService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
 

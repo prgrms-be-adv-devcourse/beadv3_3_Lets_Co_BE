@@ -15,6 +15,7 @@ import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
+import co.kr.user.service.Impl.UserServiceImpl;
 import co.kr.user.util.AesUtil;
 import co.kr.user.util.CookieUtil;
 import co.kr.user.util.MailUtil;
@@ -48,7 +49,8 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
-    @InjectMocks UserServiceImpl userService;
+    @InjectMocks
+    UserServiceImpl userService;
 
     @Mock AesUtil aesUtil;
     @Mock RandomCodeUtil randomCodeUtil;

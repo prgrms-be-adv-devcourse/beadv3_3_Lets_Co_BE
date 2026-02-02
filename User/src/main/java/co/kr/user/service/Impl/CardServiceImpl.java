@@ -1,4 +1,4 @@
-package co.kr.user.service;
+package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserCardRepository;
 import co.kr.user.dao.UserRepository;
@@ -6,6 +6,7 @@ import co.kr.user.model.dto.card.CardListDTO;
 import co.kr.user.model.dto.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
+import co.kr.user.service.CardService;
 import co.kr.user.util.AesUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-public class CardServiceImpl implements CardService{
+public class CardServiceImpl implements CardService {
     private final UserRepository userRepository;
     private final UserCardRepository userCardRepository;
 

@@ -1,6 +1,6 @@
 package co.kr.user.util;
 
-import co.kr.user.model.DTO.mail.EmailMessage;
+import co.kr.user.model.dto.mail.EmailMessage;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;

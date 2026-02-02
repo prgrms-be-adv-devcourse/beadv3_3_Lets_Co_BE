@@ -1,9 +1,9 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.PaymentRepository;
-import co.kr.user.DAO.UserRepository;
-import co.kr.user.model.DTO.Payment.PaymentReq;
-import co.kr.user.model.DTO.Payment.PaymentListDTO;
+import co.kr.user.dao.PaymentRepository;
+import co.kr.user.dao.UserRepository;
+import co.kr.user.model.dto.Payment.PaymentReq;
+import co.kr.user.model.dto.Payment.PaymentListDTO;
 import co.kr.user.model.entity.Payment;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.vo.PaymentStatus;

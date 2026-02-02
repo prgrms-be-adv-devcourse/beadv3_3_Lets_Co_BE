@@ -1,7 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.register.RegisterDTO;
-import co.kr.user.model.DTO.register.RegisterReq;
+import co.kr.user.model.dto.register.RegisterDTO;
+import co.kr.user.model.dto.register.RegisterReq;
 
 /**
  * 회원가입(Sign Up) 관련 비즈니스 로직을 정의하는 인터페이스입니다.

@@ -1,9 +1,9 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.UserAddressRepository;
-import co.kr.user.DAO.UserRepository;
-import co.kr.user.model.DTO.address.AddressListDTO;
-import co.kr.user.model.DTO.address.AddressRequestReq;
+import co.kr.user.dao.UserAddressRepository;
+import co.kr.user.dao.UserRepository;
+import co.kr.user.model.dto.address.AddressListDTO;
+import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.util.AesUtil;

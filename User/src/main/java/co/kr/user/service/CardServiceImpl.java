@@ -1,9 +1,9 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.UserCardRepository;
-import co.kr.user.DAO.UserRepository;
-import co.kr.user.model.DTO.card.CardListDTO;
-import co.kr.user.model.DTO.card.CardRequestReq;
+import co.kr.user.dao.UserCardRepository;
+import co.kr.user.dao.UserRepository;
+import co.kr.user.model.dto.card.CardListDTO;
+import co.kr.user.model.dto.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
 import co.kr.user.util.AesUtil;

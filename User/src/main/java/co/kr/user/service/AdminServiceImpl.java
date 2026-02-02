@@ -1,10 +1,10 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.UserInformationRepository;
-import co.kr.user.DAO.UserRepository;
-import co.kr.user.DAO.UsersLoginRepository;
-import co.kr.user.model.DTO.admin.AdminUserDetailDTO;
-import co.kr.user.model.DTO.admin.AdminUserListDTO;
+import co.kr.user.dao.UserInformationRepository;
+import co.kr.user.dao.UserRepository;
+import co.kr.user.dao.UsersLoginRepository;
+import co.kr.user.model.dto.admin.AdminUserDetailDTO;
+import co.kr.user.model.dto.admin.AdminUserListDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersLogin;

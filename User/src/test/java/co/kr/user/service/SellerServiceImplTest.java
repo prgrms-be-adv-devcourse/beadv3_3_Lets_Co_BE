@@ -1,13 +1,13 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.SellerRepository;
-import co.kr.user.DAO.UserInformationRepository;
-import co.kr.user.DAO.UserRepository;
-import co.kr.user.DAO.UserVerificationsRepository;
-import co.kr.user.model.DTO.mail.EmailMessage;
-import co.kr.user.model.DTO.my.UserAmendReq;
-import co.kr.user.model.DTO.seller.SellerRegisterDTO;
-import co.kr.user.model.DTO.seller.SellerRegisterReq;
+import co.kr.user.dao.SellerRepository;
+import co.kr.user.dao.UserInformationRepository;
+import co.kr.user.dao.UserRepository;
+import co.kr.user.dao.UserVerificationsRepository;
+import co.kr.user.model.dto.mail.EmailMessage;
+import co.kr.user.model.dto.my.UserAmendReq;
+import co.kr.user.model.dto.seller.SellerRegisterDTO;
+import co.kr.user.model.dto.seller.SellerRegisterReq;
 import co.kr.user.model.entity.Seller;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;

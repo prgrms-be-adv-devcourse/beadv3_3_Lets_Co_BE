@@ -1,9 +1,9 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.my.UserAmendReq;
-import co.kr.user.model.DTO.my.UserDTO;
-import co.kr.user.model.DTO.my.UserDeleteDTO;
-import co.kr.user.model.DTO.my.UserProfileDTO;
+import co.kr.user.model.dto.my.UserAmendReq;
+import co.kr.user.model.dto.my.UserDTO;
+import co.kr.user.model.dto.my.UserDeleteDTO;
+import co.kr.user.model.dto.my.UserProfileDTO;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**

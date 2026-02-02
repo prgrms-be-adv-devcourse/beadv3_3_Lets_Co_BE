@@ -1,7 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.admin.AdminUserDetailDTO;
-import co.kr.user.model.DTO.admin.AdminUserListDTO;
+import co.kr.user.model.dto.admin.AdminUserDetailDTO;
+import co.kr.user.model.dto.admin.AdminUserListDTO;
 import co.kr.user.model.vo.UsersRole;
 
 import java.time.LocalDateTime;

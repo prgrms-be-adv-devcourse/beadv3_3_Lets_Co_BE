@@ -1,14 +1,14 @@
 package co.kr.user.service;
 
-import co.kr.user.DAO.UserInformationRepository;
-import co.kr.user.DAO.UserRepository;
-import co.kr.user.DAO.UserVerificationsRepository;
-import co.kr.user.DAO.UsersLoginRepository;
-import co.kr.user.model.DTO.mail.EmailMessage;
-import co.kr.user.model.DTO.my.UserAmendReq;
-import co.kr.user.model.DTO.my.UserDeleteDTO;
-import co.kr.user.model.DTO.my.UserProfileDTO;
-import co.kr.user.model.DTO.my.UserDTO;
+import co.kr.user.dao.UserInformationRepository;
+import co.kr.user.dao.UserRepository;
+import co.kr.user.dao.UserVerificationsRepository;
+import co.kr.user.dao.UsersLoginRepository;
+import co.kr.user.model.dto.mail.EmailMessage;
+import co.kr.user.model.dto.my.UserAmendReq;
+import co.kr.user.model.dto.my.UserDeleteDTO;
+import co.kr.user.model.dto.my.UserProfileDTO;
+import co.kr.user.model.dto.my.UserDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersLogin;

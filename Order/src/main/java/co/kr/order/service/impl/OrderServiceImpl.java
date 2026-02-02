@@ -314,6 +314,7 @@ public class OrderServiceImpl implements OrderService {
                     userIdx,
                     new PaymentTossConfirmRequest(
                             orderCode,
+                            orderEntity.getId(),
                             request.tossKey(),
                             itemsAmount
                     )
@@ -324,6 +325,7 @@ public class OrderServiceImpl implements OrderService {
                     userIdx,
                     new PaymentRequest(
                             orderCode,
+                            orderEntity.getId(),
                             request.paymentType(),
                             itemsAmount
                     )
@@ -501,12 +503,6 @@ public class OrderServiceImpl implements OrderService {
                 orderEntity.getOrderCode(),
                 itemsAmount
         );
-    }
-
-    @Override
-    public String charge(Long userIdx, ChargeRequest request) {
-        paymentClient.charge(userIdx, request);
-        return "정상적으로 처리되었습니다.";
     }
 
     /*

@@ -1,6 +1,5 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.ChargeRequest;
 import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.response.BaseResponse;
@@ -99,21 +98,6 @@ public class OrderController {
         OrderResponse info = orderService.findOrder(userIdx, orderCode);
 
         BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
-        return ResponseEntity.ok(body);
-    }
-
-
-    @PostMapping("/deposit")
-    public ResponseEntity<BaseResponse<String>> charge (
-            HttpServletRequest servletRequest,
-            @Valid @RequestBody ChargeRequest request
-    ) {
-        String headerValue = servletRequest.getHeader("X-USERS-IDX");
-        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
-
-        String msg = orderService.charge(userIdx, request);
-        BaseResponse<String> body = new BaseResponse<>("ok", msg);
-
         return ResponseEntity.ok(body);
     }
 

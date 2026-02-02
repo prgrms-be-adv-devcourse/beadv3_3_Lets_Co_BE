@@ -1,6 +1,5 @@
 package co.kr.order.client;
 
-import co.kr.order.model.dto.request.ChargeRequest;
 import co.kr.order.model.dto.request.PaymentRequest;
 import co.kr.order.model.dto.request.PaymentTossConfirmRequest;
 import co.kr.order.model.dto.response.PaymentResponse;
@@ -38,12 +37,6 @@ public interface PaymentClient {
     PaymentResponse refundPayment(
             @RequestHeader("X-User-Idx") Long userIdx,
             @RequestParam String orderCode
-    );
-
-    @PostMapping("/payments/charge")
-    PaymentResponse charge(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody ChargeRequest request
     );
 
     @GetMapping("/payments/order/{ordersIdx}")

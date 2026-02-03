@@ -8,6 +8,7 @@ on: # 트리거 조건
   push:
     branches:
       - main # main 브랜치에 푸시될 때
+      - dev
     paths:
       - "User/**" # User 폴더 내의 파일이 변경되었을 때만 실행
 

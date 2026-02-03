@@ -1,11 +1,12 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListReq;
-import co.kr.product.product.dto.request.UpsertProductReq;
-import co.kr.product.product.dto.response.ProductDetailRes;
-import co.kr.product.product.dto.response.ProductListRes;
-import co.kr.product.product.dto.response.ProductRes;
-import co.kr.product.product.dto.vo.ProductStatus;
+import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.model.dto.request.ProductListReq;
+import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.ProductListRes;
+import co.kr.product.product.model.dto.response.ProductRes;
+import co.kr.product.product.model.vo.ProductStatus;
 import co.kr.product.product.service.ProductManagerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -49,12 +50,11 @@ class SellerControllerTest {
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
      */
     ProductRes product1 = new ProductRes(
-            100L, productCode1, "판매자 상품 1",
+            productCode1, "판매자 상품 1",
             new BigDecimal("50000.00"), new BigDecimal("45000.00"), 10L
     );
 
     UpsertProductReq createReq = new UpsertProductReq(
-            null,
             "신규 등록 상품",
             "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"),
@@ -65,9 +65,7 @@ class SellerControllerTest {
             Collections.emptyList()
     );
 
-    ProductDetailRes createRes = new ProductDetailRes(
-            "ok",
-            200L, "NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
+    ProductDetailRes createRes = new ProductDetailRes("NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"), new BigDecimal("29000.00"), 0L,
             100, ProductStatus.ON_SALE,
             Collections.emptyList(), Collections.emptyList()
@@ -82,7 +80,7 @@ class SellerControllerTest {
     @Test
     void 판매자_상품_목록_조회() throws Exception {
         // Given
-        ProductListRes fakeResponse = new ProductListRes("ok", List.of(product1));
+        ProductListRes fakeResponse = new ProductListRes( List.of(product1));
         given(productManagerService.getListsBySeller(eq(sellerUserIdx), any(Pageable.class), any(ProductListReq.class)))
                 .willReturn(fakeResponse);
 
@@ -99,7 +97,6 @@ class SellerControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(SellerController.class))
                 .andExpect(handler().methodName("getLists"))
-                .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.items[0].name").value("판매자 상품 1"));
     }
 
@@ -152,7 +149,7 @@ class SellerControllerTest {
     void 판매자_상품_수정() throws Exception {
         // Given
         String targetCode = "NEW_CODE_123";
-        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductReq.class)))
+        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductReq.class), eq(UserRole.SELLER)))
                 .willReturn(createRes); // 수정된 결과 리턴
 
         // When
@@ -188,6 +185,6 @@ class SellerControllerTest {
                 .andExpect(handler().methodName("deleteProduct"))
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
-        verify(productManagerService).deleteProduct(eq(sellerUserIdx), eq(targetCode));
+        verify(productManagerService).deleteProduct(eq(sellerUserIdx), eq(targetCode), eq(UserRole.SELLER));
     }
 }

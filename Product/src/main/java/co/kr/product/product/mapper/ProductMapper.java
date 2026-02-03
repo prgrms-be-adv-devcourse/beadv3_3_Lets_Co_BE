@@ -1,25 +1,23 @@
 package co.kr.product.product.mapper;
 
-import co.kr.product.product.dto.response.ProductImageRes;
-import co.kr.product.product.dto.response.ProductOptionsRes;
-import co.kr.product.product.dto.response.ProductDetailRes;
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductImageEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.dto.response.ProductImageRes;
+import co.kr.product.product.model.dto.response.ProductOptionsRes;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductImageEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 
 import java.util.List;
 
 public class ProductMapper {
 
     public static ProductDetailRes toProductDetail(
-             String resultCode, ProductEntity product,
+             ProductEntity product,
              List<ProductOptionEntity> options,
              List<ProductImageEntity> images) {
 
 
         return new ProductDetailRes(
-                resultCode,
-                product.getProductsIdx(),
                 product.getProductsCode(),
                 product.getProductsName(),
                 product.getDescription(),

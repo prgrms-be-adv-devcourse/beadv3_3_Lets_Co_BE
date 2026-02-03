@@ -1,10 +1,11 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListReq;
-import co.kr.product.product.dto.request.UpsertProductReq;
-import co.kr.product.product.dto.response.ProductDetailRes;
-import co.kr.product.product.dto.response.ProductListRes;
-import co.kr.product.product.dto.response.ResultRes;
+import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.model.dto.request.ProductListReq;
+import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.ProductListRes;
+import co.kr.product.product.model.dto.response.ResultRes;
 import co.kr.product.product.service.ProductManagerService;
 import co.kr.product.product.service.ProductSearchService;
 import jakarta.validation.Valid;
@@ -31,7 +32,6 @@ public class AdminController {
         return ResponseEntity.ok(test);
     }*/
 
-    
     /**
      * 상품 목록 조회 (관리자용)
      * @param pageable  page,size,sort
@@ -46,7 +46,7 @@ public class AdminController {
 
 
         return ResponseEntity.ok(
-                productSearchService.getProductsList(pageable,requests.search()));
+                productSearchService.getProductsList(pageable,requests));
 
     }
 
@@ -77,14 +77,12 @@ public class AdminController {
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailRes> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-
-            @RequestBody @Valid UpsertProductReq request,
-            @PathVariable("code") String productCode){
-
-
+            @PathVariable("code") String productCode,
+            @RequestBody @Valid UpsertProductReq request
+            ){
 
         return ResponseEntity.ok(
-                productManagerService.updateProduct(usersIdx, productCode, request));
+                productManagerService.updateProduct(usersIdx, productCode, request, UserRole.ADMIN));
 
     }
 
@@ -102,7 +100,7 @@ public class AdminController {
         
 
 
-        productManagerService.deleteProduct(usersIdx, productCode);
+        productManagerService.deleteProduct(usersIdx, productCode, UserRole.ADMIN);
 
         return ResponseEntity.ok(new ResultRes("ok"));
 

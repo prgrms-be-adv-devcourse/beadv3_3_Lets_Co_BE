@@ -8,6 +8,7 @@ on: # 트리거 조건
   push:
     branches:
       - main
+      - dev
       #- feat/CD_lyh # 임시
     paths:
       - "Product/**" # Product 폴더 내의 파일이 변경되었을 때만 실행

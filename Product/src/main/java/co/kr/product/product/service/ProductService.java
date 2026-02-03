@@ -1,9 +1,9 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.dto.request.DeductStockReq;
-import co.kr.product.product.dto.request.ProductIdxsReq;
-import co.kr.product.product.dto.request.ProductInfoToOrderReq;
-import co.kr.product.product.dto.response.*;
+import co.kr.product.product.model.dto.request.DeductStockReq;
+import co.kr.product.product.model.dto.request.ProductIdxsReq;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
+import co.kr.product.product.model.dto.response.*;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -31,4 +31,6 @@ public interface ProductService {
     List<ProductInfoRes> getProductInfoForBoard(ProductIdxsReq request);
 
     ProductSellerRes getSellerIdx(Long productsIdx);
+
+    Long getProductIdxByCode(String productCode);
 }

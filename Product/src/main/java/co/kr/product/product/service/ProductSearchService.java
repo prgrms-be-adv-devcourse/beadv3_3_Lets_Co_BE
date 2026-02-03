@@ -1,9 +1,10 @@
 package co.kr.product.product.service;
 
-import co.kr.product.product.dto.response.ProductListRes;
+import co.kr.product.product.model.dto.request.ProductListReq;
+import co.kr.product.product.model.dto.response.ProductListRes;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductSearchService {
 
-    ProductListRes getProductsList(Pageable pageable, String search);
+    ProductListRes getProductsList(Pageable pageable, ProductListReq request);
 }

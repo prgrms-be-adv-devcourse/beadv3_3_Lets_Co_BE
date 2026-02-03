@@ -54,6 +54,11 @@ spec:
               secretKeyRef:
                 name: zipkin-secret
                 key: ZIPKIN_ENDPOINT 
+          - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
+            valueFrom: 
+              secretKeyRef:
+                name: zipkin-secret
+                key: ZIPKIN_ENDPOINT 
 
           - name: PAYMENTS_TOSS_KEY
             valueFrom: 

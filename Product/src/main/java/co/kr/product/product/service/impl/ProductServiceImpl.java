@@ -1,12 +1,12 @@
 package co.kr.product.product.service.impl;
 
-import co.kr.product.product.dto.request.DeductStockReq;
-import co.kr.product.product.dto.request.ProductIdxsReq;
-import co.kr.product.product.dto.request.ProductInfoToOrderReq;
-import co.kr.product.product.dto.response.*;
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductImageEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.dto.request.DeductStockReq;
+import co.kr.product.product.model.dto.request.ProductIdxsReq;
+import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
+import co.kr.product.product.model.dto.response.*;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductImageEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
@@ -43,7 +44,6 @@ public class ProductServiceImpl implements ProductService {
 
         List<ProductRes> items = page.getContent().stream()
                 .map(p -> new ProductRes(
-                        p.getProductsIdx(),
                         p.getProductsCode(),
                         p.getProductsName(),
                         p.getPrice(),
@@ -52,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
                 ))
                 .toList();
 
-        return new ProductListRes("SUCCESS", items);
+        return new ProductListRes(items);
     }
 
     /**
@@ -90,7 +90,6 @@ public class ProductServiceImpl implements ProductService {
                 .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
 
         return toProductDetail(
-                "success",
                 productEntity,
                 options,
                 images
@@ -110,7 +109,7 @@ public class ProductServiceImpl implements ProductService {
         // TODO : option id or code 를 받아오는것이 훨 좋음
 
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
         List<ProductOptionEntity> options = productOptionRepository.findByProductAndDelFalse(product);
 
@@ -122,7 +121,6 @@ public class ProductServiceImpl implements ProductService {
         ).toList();
 
         return new ProductCheckStockRes(
-                "Success",
                 product.getStock(),
                 optionStockResponses
         );
@@ -263,6 +261,16 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
         return new ProductSellerRes(product.getSellerIdx());
     };
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long getProductIdxByCode(String productCode){
+
+        ProductEntity byProductsCode = productRepository.findByProductsCode(productCode)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다.: " +productCode ));
+
+        return byProductsCode.getProductsIdx();
+    }
 }
 
 

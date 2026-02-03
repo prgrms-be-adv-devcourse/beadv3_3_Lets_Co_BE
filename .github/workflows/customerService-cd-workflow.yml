@@ -10,7 +10,7 @@ on: # 트리거 조건
       - main # main 브랜치에 푸시될 때
       - dev
     paths:
-      - "CostomerService/**" # CostomerService 폴더 내의 파일이 변경되었을 때만 실행
+      - "customerService/**" # customerService 폴더 내의 파일이 변경되었을 때만 실행
   workflow_dispatch: # 수동으로 실행 버튼을 눌러서 시작할 수도 있음
 
   # 👇 [여기 추가] 이 권한 설정이 반드시 필요합니다!
@@ -26,10 +26,10 @@ jobs:
     secrets: # 필요한 시크릿 전달
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      APPLICATION_YML: ${{ secrets.CUSTOMERSERVICE_PROD_YML }} # CostomerService 전용 YML 전달
+      APPLICATION_YML: ${{ secrets.CUSTOMERSERVICE_PROD_YML }} # customerService 전용 YML 전달
     with: # 필요한 파라미터 전달
       service-name: customerservice-service
-      service-dir: CostomerService
+      service-dir: customerService
       file-name: Dockerfile
       tag-prefix: "v" # v1.0.0 형식으로 생성됨
 

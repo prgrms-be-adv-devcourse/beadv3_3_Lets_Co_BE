@@ -1,4 +1,4 @@
-name: CostomerService 서비스 CI 스크립트
+name: customerService 서비스 CI 스크립트
 
 on:
   pull_request:
@@ -6,11 +6,11 @@ on:
       - main
       - dev
     paths:
-      - "CostomerService/**"
+      - "customerService/**"
 
 jobs:
   execute-test:
     uses: ./.github/workflows/ci-workflow.yml
     secrets: inherit
     with:
-      service-name: CostomerService
+      service-name: customerService

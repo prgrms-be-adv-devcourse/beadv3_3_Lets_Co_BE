@@ -1,5 +1,6 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.common.vo.UserRole;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.request.UpsertProductReq;
 import co.kr.product.product.model.dto.response.ProductDetailRes;
@@ -45,7 +46,7 @@ public class AdminController {
 
 
         return ResponseEntity.ok(
-                productSearchService.getProductsList(pageable,requests.search()));
+                productSearchService.getProductsList(pageable,requests));
 
     }
 
@@ -76,12 +77,12 @@ public class AdminController {
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailRes> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-
-            @RequestBody @Valid UpsertProductReq request,
-            @PathVariable("code") String productCode){
+            @PathVariable("code") String productCode,
+            @RequestBody @Valid UpsertProductReq request
+            ){
 
         return ResponseEntity.ok(
-                productManagerService.updateProduct(usersIdx, productCode, request));
+                productManagerService.updateProduct(usersIdx, productCode, request, UserRole.ADMIN));
 
     }
 
@@ -99,7 +100,7 @@ public class AdminController {
         
 
 
-        productManagerService.deleteProduct(usersIdx, productCode);
+        productManagerService.deleteProduct(usersIdx, productCode, UserRole.ADMIN);
 
         return ResponseEntity.ok(new ResultRes("ok"));
 

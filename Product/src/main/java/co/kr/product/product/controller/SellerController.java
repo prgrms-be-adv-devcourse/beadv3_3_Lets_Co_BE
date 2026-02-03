@@ -1,5 +1,6 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.common.vo.UserRole;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.request.UpsertProductReq;
 import co.kr.product.product.model.dto.response.ProductDetailRes;
@@ -89,7 +90,7 @@ public class SellerController {
     ){
 
         return ResponseEntity.ok(
-                productManagerService.updateProduct(usersIdx,productCode, request));
+                productManagerService.updateProduct(usersIdx,productCode, request, UserRole.SELLER ));
     }
 
     /**
@@ -104,7 +105,7 @@ public class SellerController {
             @PathVariable("code") String productCode
     ){
         
-        productManagerService.deleteProduct(usersIdx,productCode);
+        productManagerService.deleteProduct(usersIdx,productCode, UserRole.SELLER);
         return ResponseEntity.ok(new ResultRes("ok"));
     }
 }

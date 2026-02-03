@@ -1,6 +1,7 @@
 package co.kr.product.product.service;
 
 import co.kr.product.product.model.document.ProductDocument;
+import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.repository.ProductEsRepository;
 import co.kr.product.product.service.impl.ProductSearchServiceImpl;
@@ -35,6 +36,7 @@ class ProductSearchServiceTest {
 
         // Given
         Pageable pageable = PageRequest.of(0, 10);
+        ProductListReq request = new ProductListReq(null);
         String search = null;
 
             // ProductDocument 생성
@@ -48,7 +50,7 @@ class ProductSearchServiceTest {
 
         // When
             // 실제로 pageable 하고 search 넣어봄
-        ProductListRes response = productSearchService.getProductsList(pageable, search);
+        ProductListRes response = productSearchService.getProductsList(pageable, request);
 
         // then
             // 실제로 findAll 했는지?
@@ -63,9 +65,10 @@ class ProductSearchServiceTest {
     @Test
     void 제품_리스트_검색O_findBy() {
         // Given
-        String search = "노트북";
         Pageable pageable = PageRequest.of(0, 10);
 
+        ProductListReq request = new ProductListReq("노트북");
+        String search =  request.search();
         ProductDocument doc1 = createDocument(10L, "삼성 노트북");
         Page<ProductDocument> mockPage = new PageImpl<>(List.of(doc1));
 
@@ -73,7 +76,7 @@ class ProductSearchServiceTest {
                 .willReturn(mockPage);
 
         // When
-        ProductListRes response = productSearchService.getProductsList(pageable, search);
+        ProductListRes response = productSearchService.getProductsList(pageable, request);
 
         // Then
         verify(productEsRepository).findByProductsNameAndDelFalse(eq(search), any(Pageable.class));

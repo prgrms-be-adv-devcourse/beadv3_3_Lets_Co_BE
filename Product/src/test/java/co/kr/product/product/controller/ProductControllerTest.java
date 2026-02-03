@@ -1,5 +1,6 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.ProductDetailRes;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.model.dto.response.ProductOptionsRes;
@@ -248,11 +249,12 @@ class ProductControllerTest {
     void 상품_목록_조회 () throws Exception {
 
         ProductListRes fakeResponse = new ProductListRes(
-                "ok",
                 List.of(product1, product2, product3, product5, product6, product7)
         );
 
-        given(productSearchService.getProductsList(any(Pageable.class), eq(searchKeyword))).willReturn(fakeResponse);
+        ProductListReq request = new ProductListReq("search");
+
+        given(productSearchService.getProductsList(any(Pageable.class), request)).willReturn(fakeResponse);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -316,7 +318,6 @@ class ProductControllerTest {
         );
 
         ProductDetailRes fakeResponse = new ProductDetailRes(
-                "ok",
                 product1.productsIdx(),
                 product1.productsCode(),
                 product1.name(),

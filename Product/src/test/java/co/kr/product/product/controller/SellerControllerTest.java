@@ -1,5 +1,6 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.common.vo.UserRole;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.request.UpsertProductReq;
 import co.kr.product.product.model.dto.response.ProductDetailRes;
@@ -54,7 +55,6 @@ class SellerControllerTest {
     );
 
     UpsertProductReq createReq = new UpsertProductReq(
-            null,
             "신규 등록 상품",
             "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"),
@@ -66,7 +66,6 @@ class SellerControllerTest {
     );
 
     ProductDetailRes createRes = new ProductDetailRes(
-            "ok",
             200L, "NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"), new BigDecimal("29000.00"), 0L,
             100, ProductStatus.ON_SALE,
@@ -82,7 +81,7 @@ class SellerControllerTest {
     @Test
     void 판매자_상품_목록_조회() throws Exception {
         // Given
-        ProductListRes fakeResponse = new ProductListRes("ok", List.of(product1));
+        ProductListRes fakeResponse = new ProductListRes( List.of(product1));
         given(productManagerService.getListsBySeller(eq(sellerUserIdx), any(Pageable.class), any(ProductListReq.class)))
                 .willReturn(fakeResponse);
 
@@ -152,7 +151,7 @@ class SellerControllerTest {
     void 판매자_상품_수정() throws Exception {
         // Given
         String targetCode = "NEW_CODE_123";
-        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductReq.class)))
+        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductReq.class), UserRole.SELLER))
                 .willReturn(createRes); // 수정된 결과 리턴
 
         // When
@@ -188,6 +187,6 @@ class SellerControllerTest {
                 .andExpect(handler().methodName("deleteProduct"))
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
-        verify(productManagerService).deleteProduct(eq(sellerUserIdx), eq(targetCode));
+        verify(productManagerService).deleteProduct(eq(sellerUserIdx), eq(targetCode), UserRole.SELLER);
     }
 }

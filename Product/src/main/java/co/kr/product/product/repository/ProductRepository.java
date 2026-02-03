@@ -21,6 +21,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     List<ProductEntity> findByProductsIdxInAndDelFalse(List<Long> productIds);
 
     List<ProductEntity> findAllByProductsIdxInAndDelFalse(List<Long> productsIdx);
+
+    Optional<ProductEntity> findByProductsCode(String productCode);
 }
 
 

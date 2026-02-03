@@ -3,6 +3,7 @@ package co.kr.product.product.controller;
 import co.kr.product.product.model.dto.request.DeductStockReq;
 import co.kr.product.product.model.dto.request.ProductIdxsReq;
 import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
+import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.*;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
@@ -28,19 +29,18 @@ public class ProductController {
     /**
      * 상품 목록 조회 (비회원/회원)
      * @param pageable
-     * @param search
      * 상품 목록 검색, ElasticSearch에 연결
      */
     @GetMapping
     public ResponseEntity<ProductListRes> getProducts(
             @PageableDefault(size = 20) Pageable pageable,
             // @ModelAttribute ProductListRequest requests
-            @RequestParam(name = "search") String search) {
+            @RequestBody ProductListReq request) {
 
         //return productService.getProducts(pageable);
 
         return ResponseEntity.ok(
-                productSearchService.getProductsList(pageable,search));
+                productSearchService.getProductsList(pageable,request));
     }
 
 
@@ -71,63 +71,6 @@ public class ProductController {
         return productService.getCheckStock(productsCode);
     }
 
-/*
-
-    @PostMapping("deductStock")
-    public void deductStock(
-            @RequestBody @Valid DeductStockRequest deductStockRequest
-    ) {
-        productService.deductStock(deductStockRequest);
-    }
-*/
-    // 상품 재고 차감
-    @PostMapping("deductStocks")
-    public void deductStockList(
-            @RequestBody @Valid List<DeductStockReq> deductStockReq
-    ) {
-        productService.deductStocks(deductStockReq);
-    }
-
-
-    // order에 보내 줄 상품 정보
-    @GetMapping("/{productsIdx}/{optionIdx}")
-    public ProductInfoToOrderRes getProductInfo(
-            @PathVariable("productsIdx") Long productsIdx,
-            @PathVariable("optionIdx") Long optionIdx
-    ) {
-        return productService.getProductInfo(productsIdx, optionIdx);
-    }
-
-    // order에 보내 줄 상품 정보 리스트
-    @GetMapping("/bulk")
-    public List<ProductInfoToOrderRes> getProductInfoList(
-            @RequestBody @Valid List<ProductInfoToOrderReq> requests
-    ) {
-        return productService.getProductInfoList(requests);
-    }
-
-
-    // board에 보내 줄 상품 정보
-    @PostMapping("/byIdx")
-    public List<ProductInfoRes> getProductInfo(
-            @RequestBody ProductIdxsReq request){
-
-        return productService.getProductInfoForBoard(request);
-    };
-
-    // 상품의 판매자 단일 조회
-    @GetMapping("/sellers/{productsIdx}")
-    public ProductSellerRes getSellerIdx(
-            @PathVariable("productsIdx") Long productsIdx){
-
-        return productService.getSellerIdx(productsIdx);
-    };
-
-    // 상품의 판매자 다중 조회
-    @GetMapping("/sellers")
-    public Map<Long, Long> getSellersByProductIdxs(@RequestParam List<Long> productIds) {
-        return productService.getSellersByProductIds(productIds);
-    }
 
 
 }

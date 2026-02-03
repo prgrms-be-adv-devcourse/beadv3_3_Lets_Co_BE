@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
@@ -52,7 +53,7 @@ public class ProductServiceImpl implements ProductService {
                 ))
                 .toList();
 
-        return new ProductListRes("SUCCESS", items);
+        return new ProductListRes(items);
     }
 
     /**
@@ -90,7 +91,6 @@ public class ProductServiceImpl implements ProductService {
                 .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
 
         return toProductDetail(
-                "success",
                 productEntity,
                 options,
                 images
@@ -110,7 +110,7 @@ public class ProductServiceImpl implements ProductService {
         // TODO : option id or code 를 받아오는것이 훨 좋음
 
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
         List<ProductOptionEntity> options = productOptionRepository.findByProductAndDelFalse(product);
 
@@ -122,7 +122,6 @@ public class ProductServiceImpl implements ProductService {
         ).toList();
 
         return new ProductCheckStockRes(
-                "Success",
                 product.getStock(),
                 optionStockResponses
         );
@@ -263,6 +262,16 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
         return new ProductSellerRes(product.getSellerIdx());
     };
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long getProductIdxByCode(String productCode){
+
+        ProductEntity byProductsCode = productRepository.findByProductsCode(productCode)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다.: " +productCode ));
+
+        return byProductsCode.getProductsIdx();
+    }
 }
 
 

@@ -31,4 +31,6 @@ public interface ProductService {
     List<ProductInfoRes> getProductInfoForBoard(ProductIdxsReq request);
 
     ProductSellerRes getSellerIdx(Long productsIdx);
+
+    Long getProductIdxByCode(String productCode);
 }

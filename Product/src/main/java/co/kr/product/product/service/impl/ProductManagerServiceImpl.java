@@ -1,6 +1,8 @@
 package co.kr.product.product.service.impl;
 
 
+import co.kr.product.common.exceptionHandler.ForbiddenException;
+import co.kr.product.common.vo.UserRole;
 import co.kr.product.product.client.AuthServiceClient;
 import co.kr.product.product.model.document.ProductDocument;
 import co.kr.product.product.model.dto.request.ProductImagesReq;
@@ -18,6 +20,7 @@ import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductManagerService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -53,7 +56,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 2. 본인확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
-            throw new RuntimeException("판매자 권한이 없습니다.");
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 3. 상품 저장
@@ -116,12 +119,12 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 본인 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 상품 조회
         ProductEntity product =  productRepository.findByProductsCodeAndDelFalse(code)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
         
         // 이미지/옵션 조회
         List<ProductImageEntity> images = imageRepository
@@ -150,18 +153,26 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductDetailRes updateProduct(
             Long usersIdx,
             String code,
-            UpsertProductReq request){
+            UpsertProductReq request,
+            UserRole inputRole
+            ){
 
-        // 본인 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
-            throw new RuntimeException("권한이 없습니다.");
+        // 권한 확인
+        String userRole = authServiceClient.getUserRole(usersIdx).getBody();
+        if (!UserRole.ADMIN.toString().equals(userRole) && !UserRole.SELLER.toString().equals(userRole) ) {
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // Entity 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
+        // 판매자 본인인지 확인(판매자일 경우, 관리자의 경우 스킵)
+        if(!usersIdx.equals(product.getSellerIdx()) && inputRole.equals(UserRole.SELLER)){
+            throw new ForbiddenException("해당 상품의 판매자 본인이 아닙니다.");
+        }
+
+        // option 가져오기
         List<ProductOptionEntity> options = optionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product);
 
         Map<String, ProductOptionEntity> optionMap = options.stream()
@@ -253,41 +264,52 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     }
 
 
+
+
+
     @Override
     @Transactional
-    public void deleteProduct(Long usersIdx, String code){
+    public void deleteProduct(Long usersIdx, String code, UserRole inputRole){
 
-        // 본인 확인
+        // 1. 본인 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
-            throw new RuntimeException("권한이 없습니다.");
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
-        // 엔티티 가져오기
+        // 2.1 엔티티 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 상품입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
+
+        // 2.2 판매자 본인인지 확인(판매자일 경우, 관리자의 경우 스킵)
+        if (!product.getSellerIdx().equals(usersIdx) && inputRole.equals(UserRole.SELLER) ){
+            throw new ForbiddenException("판매자 본인이 아닙니다.");
+        }
+
+        // 2.3  옵션 및 이미지 가져오기
         List<ProductOptionEntity> options = optionRepository.findByProductAndDelFalse(product);
         List<ProductImageEntity> images = imageRepository.findByProductAndDelFalse(product);
 
-        if(product.getDel())
-        {
-            log.info("이미 삭제된 상품입니다 productCode:" + code);
-        }
-        else{
+        // 3. 삭제 시도
+        try{
             product.delete();
+        } catch (Exception e){
+            throw new IllegalArgumentException("상품 삭제 과정 중 문제가 발생했습니다.");
         }
+
+
         // 옵션 삭제
         try{
             options.forEach(ProductOptionEntity::delete);
         } catch (Exception e) {
-            throw new IllegalArgumentException("옵션 삭제 실패.");
+            throw new IllegalArgumentException("옵션 삭제 과정 중 문제가 발생했습니다.");
         }
 
         // 이미지 삭제
         try{
             images.forEach(ProductImageEntity::delete);
         } catch (Exception e) {
-            throw new IllegalArgumentException("이미지 삭제 실패.");
+            throw new IllegalArgumentException("이미지 삭제 과정 중 문제가 발생했습니다.");
         }
 
     }
@@ -299,7 +321,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"SELLER".equals(role)) {
-            throw new RuntimeException("판매자가 아닙니다.");
+            throw new ForbiddenException("판매자가 아닙니다.");
         }
 
         // 검색어 존재 시 검색 진행

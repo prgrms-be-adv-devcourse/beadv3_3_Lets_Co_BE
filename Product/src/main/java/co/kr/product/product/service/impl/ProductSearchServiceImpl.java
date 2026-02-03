@@ -1,6 +1,7 @@
 package co.kr.product.product.service.impl;
 
 import co.kr.product.product.model.document.ProductDocument;
+import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.model.dto.response.ProductRes;
 import co.kr.product.product.repository.ProductEsRepository;
@@ -22,8 +23,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
 
     // 상품 리스트 전체/검색
     @Transactional(readOnly = true)
-    public ProductListRes getProductsList(Pageable pageable, String search){
-        
+    public ProductListRes getProductsList(Pageable pageable, ProductListReq request){
+
+        String search = request.search();
+
         // 1. 검색 (search 없을 시 전체 리스트 반환)
         Page<ProductDocument> pageResult = (search == null || search.isBlank())
                 ? productEsRepository.findAll(pageable)
@@ -42,7 +45,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                 .toList();
 
         return new ProductListRes(
-                "ok",items
+                items
 
         );
     }

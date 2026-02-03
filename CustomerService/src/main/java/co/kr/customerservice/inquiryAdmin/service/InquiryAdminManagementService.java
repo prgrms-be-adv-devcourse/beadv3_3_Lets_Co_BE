@@ -1,0 +1,21 @@
+package co.kr.customerservice.inquiryAdmin.service;
+
+import co.kr.customerservice.common.model.dto.response.ResultResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteRequest;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertRequest;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
+import org.springframework.data.domain.Pageable;
+
+public interface InquiryAdminManagementService {
+    InquiryListResponse getInquiryList(Pageable pageable, Long usersIdx);
+
+    InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request, Long usersIdx);
+
+    ResultResponse deleteInquiry(String inquiryCode, Long usersIdx);
+
+    InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request);
+
+    ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request, Long usersIdx);
+}

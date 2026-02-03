@@ -8,7 +8,6 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import java.time.LocalDateTime;
 
 public record NoticeRes(
-        Long Idx,
         String Code,
         CustomerServiceCategory Category,
         String title,

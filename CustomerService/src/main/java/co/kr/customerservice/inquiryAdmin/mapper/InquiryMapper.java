@@ -10,13 +10,11 @@ import java.util.List;
 
 public class InquiryMapper {
     public static InquiryDetailRes toDetailResponse(
-            String resultCode,
             boolean isOwner,
             CustomerServiceEntity csEntity,
             List<CustomerServiceDetailEntity> csDetailEntities
     ){
         return new InquiryDetailRes(
-                resultCode,
                 isOwner,
                 new InquiryDTO(
                         csEntity.getCode(),

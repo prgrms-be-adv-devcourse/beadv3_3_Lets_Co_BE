@@ -9,6 +9,7 @@ import co.kr.customerservice.notice.model.dto.response.NoticeDetailRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeRes;
 import co.kr.customerservice.notice.service.UserNoticeService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +37,6 @@ public class UserNoticeServiceImpl implements UserNoticeService {
         List<NoticeRes> result = noticeEntityPage.stream()
                 .map(doc -> new NoticeRes(
 
-                        doc.getIdx(),
                         doc.getCode(),
                         doc.getCategory(),
                         doc.getTitle(),
@@ -51,7 +51,6 @@ public class UserNoticeServiceImpl implements UserNoticeService {
                 .toList();
 
         return new NoticeListRes(
-                "success",
                 result
         );
     }
@@ -62,17 +61,16 @@ public class UserNoticeServiceImpl implements UserNoticeService {
 
         // entity 조회 및 유효성 검사
         CustomerServiceEntity noticeEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지입니다."));
 
         if(noticeEntity.getType() != CustomerServiceType.NOTICE){
             throw new IllegalArgumentException("해당 게시글은 공지사항이 아닙니다.");
         }
         CustomerServiceDetailEntity result = customerServiceDetailRepository.findByCustomerServiceAndDelFalse(noticeEntity)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지 내용입니다."));
 
         // 반환, 한 번 밖에 안 쓰일거 같아서 mapper처리 x
         return new NoticeDetailRes(
-                "success",
                 noticeEntity.getCategory(),
                 noticeEntity.getTitle(),
                 result.getContent(),

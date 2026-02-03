@@ -1,6 +1,7 @@
 package co.kr.customerservice.inquiryAdmin.service.impl;
 
 import co.kr.customerservice.client.AuthServiceClient;
+import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
 import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
@@ -16,6 +17,7 @@ import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
 import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
 import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import co.kr.customerservice.inquiryAdmin.service.InquiryAdminManagementService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +45,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("관리자 권한이 없습니다.");
+            throw new ForbiddenException("관리자 권한이 없습니다.");
         }
 
         // 2. 엔티티 조회
@@ -63,7 +65,6 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
 
         // 4, 반환
         return new InquiryListRes(
-                "success",
                 result
         );
     }
@@ -77,11 +78,11 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         //1. 권한 확인
         String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("관리자 권한이 없습니다.");
+            throw new ForbiddenException("관리자 권한이 없습니다.");
         }
         // 2. entity 조회
         CustomerServiceEntity foundInquiry = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2.1 detail Entity 조회
         List<CustomerServiceDetailEntity> foundInquiryDetailList = customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(foundInquiry);
@@ -89,7 +90,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         CustomerServiceDetailEntity foundInquiryDetail = foundInquiryDetailList.stream()
                 .filter(detail -> request.detailCode().equals(detail.getDetailCode()))
                 .findFirst()  // 첫 번째 발견된 것 가져오기
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 내용입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 내용입니다."));
 
         // 3. detail 객체 생성
         CustomerServiceDetailEntity requestDetailEntity = CustomerServiceDetailEntity.builder()
@@ -112,7 +113,6 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
 
         // 6. 문의 상세 내용 반환
         return InquiryMapper.toDetailResponse(
-                "success",
                 true,
                 foundInquiry,
                 foundInquiryDetailList
@@ -127,12 +127,12 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("관리자 권한이 없습니다.");
+            throw new ForbiddenException("관리자 권한이 없습니다.");
         }
 
         // 엔티티 조회
         CustomerServiceDetailEntity byDetailCodeAndDelFalse = customerServiceDetailRepository.findByDetailCodeAndDelFalse(request.detailCode())
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 답변입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 답변입니다."));
 
         byDetailCodeAndDelFalse.delete();
 
@@ -155,12 +155,12 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("관리자 권한이 없습니다.");
+            throw new ForbiddenException("관리자 권한이 없습니다.");
         }
 
         // 2. 엔티티 조회'및 유효성 검사
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
             throw new IllegalArgumentException("해당 게시글은 문의가 아닙니다.");
@@ -188,7 +188,6 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
 
         // 4. 반환
         return InquiryMapper.toDetailResponse(
-                "success",
                 true,
                 inquiryEntity,
                 inquiryDetailEntity
@@ -203,13 +202,13 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("관리자 권한이 없습니다.");
+            throw new ForbiddenException("관리자 권한이 없습니다.");
         }
 
 
         // 2. 엔티티 조회'및 유효성 검사
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
             throw new IllegalArgumentException("해당 게시글은 문의가 아닙니다.");

@@ -1,5 +1,6 @@
 package co.kr.customerservice.inquiryAdmin.service.impl;
 
+import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
 import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
@@ -13,6 +14,7 @@ import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
 import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
 import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import co.kr.customerservice.inquiryAdmin.service.InquiryAdminService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,7 +50,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 .toList();
 
         return new InquiryListRes(
-                "success",
                 result
         );
     }
@@ -89,7 +90,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         // 4 반환
         return InquiryMapper.toDetailResponse(
-                "success",
                 true,
                 requestEntity,
                 List.of(requestDetailEntity)
@@ -102,7 +102,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     public InquiryDetailRes getInquiryDetail(Long userId, String inquiryCode){
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
         // 2. 유효성 검사
         // 2.1 작성자인가 확인 후 비밀글인지 확인
         boolean isOwner = Objects.equals(inquiryEntity.getUsersIdx(), userId);
@@ -118,7 +118,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         // 3. 반환
         return InquiryMapper.toDetailResponse(
-                "success",
                 isOwner,
                 inquiryEntity,
                 inquiryDetailEntity
@@ -134,13 +133,13 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2. 유효성 검사
         // 2.1 작성자인가?
         boolean isOwner = Objects.equals(inquiryEntity.getUsersIdx(), userId);
         if(!isOwner){
-            throw new IllegalArgumentException("해당 문의의 작성자가 아닙니다.");
+            throw new ForbiddenException("해당 문의의 작성자가 아닙니다.");
         }
 
         // 2.2 타입이 문의 인가?
@@ -169,7 +168,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
         CustomerServiceDetailEntity willUpdate = inquiryDetailEntity.stream()
                 .filter(detail -> inquiryCode.equals(detail.getDetailCode()))
                 .findFirst()  // 첫 번째 발견된 것 가져오기
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 내용입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 내용입니다."));
 
         // 4. request 기반 update 진행
         inquiryEntity.update(
@@ -184,7 +183,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         // 5. 반환
         return InquiryMapper.toDetailResponse(
-                "success",
                 isOwner,
                 inquiryEntity,
                 inquiryDetailEntity
@@ -197,7 +195,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     public ResultResponse deleteInquiry(Long userId, String inquiryCode){
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2. 유효성 검사
         if(inquiryEntity.getType() != CustomerServiceType.QNA_ADMIN){
@@ -205,7 +203,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
         }
 
         if(!Objects.equals(inquiryEntity.getUsersIdx(), userId)){
-            throw new IllegalArgumentException("해당 문의의 작성자가 아닙니다.");
+            throw new ForbiddenException("해당 문의의 작성자가 아닙니다.");
         }
 
         List<CustomerServiceDetailEntity> inquiryDetailEntity = customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(inquiryEntity);
@@ -242,7 +240,6 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 .toList();
 
         return new InquiryListRes(
-                "success",
                 result
         );
     }

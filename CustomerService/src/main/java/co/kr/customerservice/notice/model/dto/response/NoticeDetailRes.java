@@ -5,8 +5,6 @@ import co.kr.customerservice.common.model.vo.CustomerServiceCategory;
 import java.time.LocalDateTime;
 
 public record NoticeDetailRes(
-        String resultCode,
-
         CustomerServiceCategory category,
         String title,
         String content,

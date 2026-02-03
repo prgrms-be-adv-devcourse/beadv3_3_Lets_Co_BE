@@ -6,7 +6,6 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import java.time.LocalDateTime;
 
 public record AdminNoticeDetailRes(
-        String resultCode,
 
         String csCode,
         String csDetailCode,

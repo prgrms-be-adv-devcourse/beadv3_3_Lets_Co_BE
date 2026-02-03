@@ -3,6 +3,7 @@ package co.kr.customerservice.qnaProduct.service.impl;
 
 import co.kr.customerservice.client.AuthServiceClient;
 import co.kr.customerservice.client.ProductServiceClient;
+import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.request.ProductIdxsRequest;
 import co.kr.customerservice.common.model.dto.response.ProductInfoResponse;
 import co.kr.customerservice.common.model.dto.response.ProductSellerResponse;
@@ -16,6 +17,7 @@ import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
 import co.kr.customerservice.qnaProduct.model.request.QnaAnswerUpsertReq;
 import co.kr.customerservice.qnaProduct.model.response.*;
 import co.kr.customerservice.qnaProduct.service.QnaSellerService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,7 +46,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
         // 1. 유저 확인
         String role = authServiceClient.getUserRole(userIdx).getBody();
         if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
-            throw new RuntimeException("판매자 권한이 없습니다.");
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 2. 엔티티 조회
@@ -124,7 +126,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2. 유효성 검사
 
@@ -137,7 +139,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
         ProductSellerResponse sellerIdxDto = productServiceClient.getSellerIdx(questionEntity.getProductsIdx());
 
         if (!Objects.equals(userIdx, sellerIdxDto.sellerIdx())){
-            throw new IllegalArgumentException("해당 상품의 판매자가 아닙니다.");
+            throw new ForbiddenException("해당 상품의 판매자가 아닙니다.");
         }
 
         // 3. DetailEntity 가져오기
@@ -147,7 +149,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
         CustomerServiceDetailEntity parentEntity = qnaDetailEntity.stream()
                 .filter(detail -> request.parentCode().equals(detail.getDetailCode()))
                 .findFirst()  // 첫 번째 발견된 것 가져오기
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 내용입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 내용입니다."));
 
         // 4. detailEntity 생성
         CustomerServiceDetailEntity requestDetailEntity = CustomerServiceDetailEntity.builder()

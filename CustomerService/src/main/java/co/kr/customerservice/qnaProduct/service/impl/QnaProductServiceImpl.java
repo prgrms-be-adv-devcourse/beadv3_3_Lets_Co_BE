@@ -2,6 +2,7 @@ package co.kr.customerservice.qnaProduct.service.impl;
 
 
 import co.kr.customerservice.client.ProductServiceClient;
+import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.request.ProductIdxsRequest;
 import co.kr.customerservice.common.model.dto.response.ProductInfoResponse;
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
@@ -15,6 +16,7 @@ import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
 import co.kr.customerservice.qnaProduct.model.request.QnaProductUpsertReq;
 import co.kr.customerservice.qnaProduct.model.response.*;
 import co.kr.customerservice.qnaProduct.service.QnaProductService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -69,7 +71,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2. 유효성 검사
         // 2.1 해당 글이 비밀글인데 본인이 아닌경우
@@ -144,12 +146,12 @@ public class QnaProductServiceImpl implements QnaProductService {
 
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2. 유효성 검사
         // 2.1  본인이 아닌경우
         if (!Objects.equals(questionEntity.getUsersIdx(), userIdx)){
-            throw new IllegalArgumentException("본인 만 수정 가능합니다.");
+            throw new ForbiddenException("본인 만 수정 가능합니다.");
         }
         // 2.2 상품 문의가 아닌경우
         if(questionEntity.getType() != CustomerServiceType.QNA_PRODUCT){
@@ -167,7 +169,7 @@ public class QnaProductServiceImpl implements QnaProductService {
         CustomerServiceDetailEntity willUpdate = qnaDetailEntity.stream()
                 .filter(detail -> request.detailCode().equals(detail.getDetailCode()))
                 .findFirst()  // 첫 번째 발견된 것 가져오기
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 내용입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 내용입니다."));
 
 
         // 4. request 기반 update 진행
@@ -193,7 +195,7 @@ public class QnaProductServiceImpl implements QnaProductService {
     public ResultResponse deleteQna(String qnaCode, Long userIdx){
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
 
         // 2. 유효성 검사
         // 2.1  본인이 아닌경우

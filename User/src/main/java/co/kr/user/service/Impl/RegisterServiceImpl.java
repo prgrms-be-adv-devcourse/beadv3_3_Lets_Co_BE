@@ -33,7 +33,7 @@ public class RegisterServiceImpl implements RegisterService {
     private final UserVerificationsRepository userVerificationsRepository;
 
     private final BCryptUtil bCryptUtil; // 비밀번호 해싱(단방향 암호화)
-    private final AesUtil aesUtil; // 개인정보 양방향 암호화
+    private final AESUtil aesUtil; // 개인정보 양방향 암호화
     private final RandomCodeUtil randomCodeUtil; // 인증코드 생성
     private final MailUtil mailUtil; // 이메일 발송
 
@@ -45,7 +45,7 @@ public class RegisterServiceImpl implements RegisterService {
      */
     @Transactional(readOnly = true)
     public String checkDuplicate(String email) {
-        boolean isDuplicate = userRepository.existsByID(email);
+        boolean isDuplicate = userRepository.existsByIdAndDel(email, 0);
 
         if (isDuplicate) {
             return "이메일 사용이 불가능합니다";
@@ -65,7 +65,7 @@ public class RegisterServiceImpl implements RegisterService {
     @Transactional
     public RegisterDTO signup(RegisterReq registerReq) {
         // 중복 가입 방지
-        boolean isDuplicate = userRepository.existsByID(registerReq.getID());
+        boolean isDuplicate = userRepository.existsByIdAndDel(registerReq.getId(), 0);
         if (isDuplicate) {
             throw new IllegalStateException("이미 가입된 이메일입니다.");
         }
@@ -79,18 +79,15 @@ public class RegisterServiceImpl implements RegisterService {
         }
 
         // 비밀번호 해싱 및 개인정보 암호화
-        registerReq.setPW(bCryptUtil.encode(registerReq.getPW()));
+        registerReq.setPw(bCryptUtil.encode(registerReq.getPw()));
         registerReq.setName(aesUtil.encrypt(registerReq.getName()));
         registerReq.setPhoneNumber(aesUtil.encrypt(registerReq.getPhoneNumber()));
         registerReq.setBirth(aesUtil.encrypt(registerReq.getBirth()));
 
         // Users 엔티티 생성 및 저장 (기본 상태: 미인증)
         Users user = Users.builder()
-                .ID(registerReq.getID())
-                .PW(registerReq.getPW())
-                .agreeTermsAt(LocalDateTime.now())
-                .agreePrivacyAt(LocalDateTime.now())
-                .agreeMarketingAt(registerReq.getAgreeMarketingAt())
+                .id(registerReq.getId())
+                .pw(registerReq.getPw())
                 .build();
 
         Users savedUser = userRepository.save(user);
@@ -98,9 +95,11 @@ public class RegisterServiceImpl implements RegisterService {
         // UsersInformation 엔티티 생성 및 저장
         UsersInformation usersInformation = UsersInformation.builder()
                 .usersIdx(savedUser.getUsersIdx())
+                .gender(registerReq.getGender())
                 .name(registerReq.getName())
                 .phoneNumber(registerReq.getPhoneNumber())
                 .birth(registerReq.getBirth())
+                .agreeMarketingAt(registerReq.getAgreeMarketingAt())
                 .build();
 
         userInformationRepository.save(usersInformation);
@@ -156,7 +155,7 @@ public class RegisterServiceImpl implements RegisterService {
         String finalContent = htmlTemplate.formatted(savedUserVerifications.getCode());
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(savedUser.getID())
+                .to(savedUser.getId())
                 .subject("[GutJJeu] 회원가입 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
@@ -169,7 +168,7 @@ public class RegisterServiceImpl implements RegisterService {
         });
 
         RegisterDTO registerDTO = new RegisterDTO();
-        registerDTO.setID(savedUser.getID());
+        registerDTO.setID(savedUser.getId());
         registerDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
         return registerDTO;
@@ -208,7 +207,7 @@ public class RegisterServiceImpl implements RegisterService {
         Users user = userRepository.findById(usersVerifications.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("가입된 회원 정보를 찾을 수 없습니다."));
 
-        user.confirmVerification();
+        user.activateUsers();
 
         return "인증 완료";
     }

@@ -10,8 +10,8 @@ import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AdminService;
-import co.kr.user.service.AuthService;
-import co.kr.user.util.AesUtil;
+import co.kr.user.service.ClientService;
+import co.kr.user.util.AESUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,11 +33,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
-    private final AuthService authService; // 권한 확인용 서비스
+    private final ClientService clientService; // 권한 확인용 서비스
     private final UserInformationRepository userInformationRepository;
+    private final AESUtil aesUtil; // 개인정보 복호화 유틸리티
     private final UsersLoginRepository usersLoginRepository;
-
-    private final AesUtil aesUtil; // 개인정보 복호화 유틸리티
 
     /**
      * 전체 회원 목록을 조회하는 메서드입니다.
@@ -61,7 +60,7 @@ public class AdminServiceImpl implements AdminService {
         }
 
         // 권한 검증 (ADMIN 여부 확인)
-        UsersRole role = authService.getRole(users.getUsersIdx());
+        UsersRole role = clientService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
@@ -69,7 +68,7 @@ public class AdminServiceImpl implements AdminService {
 
         // 전체 회원 및 상세 정보 조회
         List<Users> usersList = userRepository.findAllByDelOrderByCreatedAtDesc(0);
-        List<UsersInformation> usersInformationList = userInformationRepository.findAllByDel(0);
+        List<UsersInformation> usersInformationList = userInformationRepository.findAll();
 
         // 상세 정보를 UserIdx를 키로 하는 Map으로 변환 (O(N) 접근을 위해)
         Map<Long, UsersInformation> userInfoMap = usersInformationList.stream()
@@ -79,7 +78,7 @@ public class AdminServiceImpl implements AdminService {
         return usersList.stream()
                 .map(user -> {
                     AdminUserListDTO dto = new AdminUserListDTO();
-                    dto.setID(user.getID());
+                    dto.setID(user.getId());
                     dto.setRole(user.getRole());
                     dto.setLockedUntil(user.getLockedUntil());
                     dto.setCreatedAt(user.getCreatedAt());
@@ -119,27 +118,25 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        UsersRole role = authService.getRole(users.getUsersIdx());
+        UsersRole role = clientService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
 
         // 대상 회원 조회
-        Users usersDetail = userRepository.findByIDAndDel(id, 0)
+        Users usersDetail = userRepository.findByIdAndDel(id, 0)
                 .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
-        UsersInformation usersInformationDetail = userInformationRepository.findByUsersIdxAndDel(usersDetail.getUsersIdx(), 0)
+        UsersInformation usersInformationDetail = userInformationRepository.findByUsersIdx(usersDetail.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다."));
 
         // DTO 생성 및 데이터 주입 (개인정보 복호화)
         AdminUserDetailDTO dto = new AdminUserDetailDTO();
-        dto.setID(usersDetail.getID());
+        dto.setID(usersDetail.getId());
         dto.setLockedUntil(usersDetail.getLockedUntil());
         dto.setRole(usersDetail.getRole());
-        dto.setBalance(usersDetail.getBalance());
         dto.setAgreeTermsAt(usersDetail.getAgreeTermsAt());
         dto.setAgreePrivacyAt(usersDetail.getAgreePrivacyAt());
-        dto.setAgreeMarketingAt(usersDetail.getAgreeMarketingAt());
         dto.setName(aesUtil.decrypt(usersInformationDetail.getName()));
         dto.setPhoneNumber(aesUtil.decrypt(usersInformationDetail.getPhoneNumber()));
         dto.setBirth(aesUtil.decrypt(usersInformationDetail.getBirth()));
@@ -171,19 +168,19 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        UsersRole role = authService.getRole(users.getUsersIdx());
+        UsersRole role = clientService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
 
         // 대상 회원 조회 및 권한 변경
-        Users userData = userRepository.findByIDAndDel(id, 0)
+        Users userData = userRepository.findByIdAndDel(id, 0)
                 .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
 
-        userData.setRole(changeRole);
+        userData.assignRole(changeRole);
 
-        return userData.getID() + "의 권한이 " + changeRole + "으로 변경되었습니다.";
+        return userData.getId() + "의 권한이 " + changeRole + "으로 변경되었습니다.";
     }
 
     /**
@@ -209,7 +206,7 @@ public class AdminServiceImpl implements AdminService {
         }
 
         log.info("1");
-        UsersRole role = authService.getRole(users.getUsersIdx());
+        UsersRole role = clientService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
@@ -222,12 +219,12 @@ public class AdminServiceImpl implements AdminService {
         }
         log.info("3");
 
-        Users userData = userRepository.findByIDAndDel(id, 0)
+        Users userData = userRepository.findByIdAndDel(id, 0)
                 .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
 
         log.info("4");
         // 계정 잠금 처리
-        userData.AdminLockUser(lockedUntil);
+        userData.suspendUser(lockedUntil);
 
         log.info("5");
         // 토큰 강제 만료 처리 (로그아웃 효과)
@@ -246,7 +243,7 @@ public class AdminServiceImpl implements AdminService {
             }
         }
 
-        return userData.getID() + "의 계정이 " + lockedUntil + "까지 정지되었습니다.";
+        return userData.getId() + "의 계정이 " + lockedUntil + "까지 정지되었습니다.";
     }
 
     /**
@@ -270,17 +267,17 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        UsersRole role = authService.getRole(users.getUsersIdx());
+        UsersRole role = clientService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
 
-        Users userData = userRepository.findByIDAndDel(id, 0)
+        Users userData = userRepository.findByIdAndDel(id, 0)
                 .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
 
         // 강제 탈퇴 처리
-        userData.AdminUserDel();
+        userData.withdrawUser();
 
         // 토큰 폐기 처리
         UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((userData.getUsersIdx()));
@@ -291,6 +288,6 @@ public class AdminServiceImpl implements AdminService {
             }
         }
 
-        return userData.getID() + "의 계정이 삭제되었습니다.";
+        return userData.getId() + "의 계정이 삭제되었습니다.";
     }
 }

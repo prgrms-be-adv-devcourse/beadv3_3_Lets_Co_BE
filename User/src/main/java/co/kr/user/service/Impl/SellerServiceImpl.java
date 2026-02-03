@@ -15,7 +15,7 @@ import co.kr.user.model.vo.UsersRole;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.SellerService;
-import co.kr.user.util.AesUtil;
+import co.kr.user.util.AESUtil;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
@@ -42,7 +42,7 @@ public class SellerServiceImpl implements SellerService {
 
     private final MailUtil mailUtil; // 이메일 발송 유틸
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸
-    private final AesUtil aesUtil; // 양방향 암호화 (이름 복호화용)
+    private final AESUtil aesUtil; // 양방향 암호화 (이름 복호화용)
     private final BCryptUtil bCryptUtil; // 단방향 암호화 (계좌 토큰용)
 
     /**
@@ -131,7 +131,7 @@ public class SellerServiceImpl implements SellerService {
         String finalContent = htmlTemplate.formatted(savedUserVerifications.getCode());
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getID())
+                .to(users.getId())
                 .subject("[GutJJeu] 판매자 등록 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
@@ -145,7 +145,7 @@ public class SellerServiceImpl implements SellerService {
         });
 
         SellerRegisterDTO sellerRegisterDTO = new SellerRegisterDTO();
-        sellerRegisterDTO.setID(users.getID());
+        sellerRegisterDTO.setID(users.getId());
         sellerRegisterDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
         return sellerRegisterDTO;
@@ -207,9 +207,9 @@ public class SellerServiceImpl implements SellerService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
         // 사용자 권한을 SELLER로 변경
-        users.setRole(UsersRole.SELLER);
+        users.assignRole(UsersRole.SELLER);
 
-        seller.confirmVerification();
+        seller.activateSeller();
 
         // 승인 완료 이메일 발송을 위해 사용자 이름 조회(복호화 필요)
         UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
@@ -254,7 +254,7 @@ public class SellerServiceImpl implements SellerService {
         String finalContent = htmlTemplate.formatted(aesUtil.decrypt(usersInformation.getName()));
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getID())
+                .to(users.getId())
                 .subject("[GutJJeu] 판매자 등록 승인 안내해 드립니다.")
                 .message(finalContent)
                 .build();

@@ -50,7 +50,7 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Transactional
     public FindPWFirstStepDTO findPwFirst(FindPWFirstStepReq findPWFirstStepReq) {
         // 사용자 조회
-        Users users = userRepository.findByID(findPWFirstStepReq.getID())
+        Users users = userRepository.findById(findPWFirstStepReq.getID())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
         // 계정 상태 검증
@@ -112,7 +112,7 @@ public class RetrieveServiceImpl implements RetrieveService {
         String finalContent = passwordResetTemplate.formatted(savedUserVerifications.getCode());
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getID())
+                .to(users.getId())
                 .subject("[GutJJeu] 비밀번호 재설정 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
@@ -127,7 +127,7 @@ public class RetrieveServiceImpl implements RetrieveService {
 
         // 결과 반환
         FindPWFirstStepDTO retrieveDTO = new FindPWFirstStepDTO();
-        retrieveDTO.setID(users.getID());
+        retrieveDTO.setID(users.getId());
         retrieveDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
         return retrieveDTO;
@@ -144,7 +144,7 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Transactional
     public String findPwSecond(FindPWSecondStepReq findPWSecondStepReq) {
         // 사용자 조회
-        Users users = userRepository.findByID(findPWSecondStepReq.getID())
+        Users users = userRepository.findById(findPWSecondStepReq.getID())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
         // 계정 상태 검증
@@ -184,10 +184,10 @@ public class RetrieveServiceImpl implements RetrieveService {
         // 기존 비밀번호 백업 (UsersInformation 테이블)
         UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
                 .orElseThrow();
-        usersInformation.lastPassword(users.getPW());
+        usersInformation.updatePrePW(users.getPw());
 
         // 새 비밀번호 암호화 및 저장
-        users.setPW(bCryptUtil.encode(findPWSecondStepReq.getNewPW()));
+        users.changePassword(bCryptUtil.encode(findPWSecondStepReq.getNewPW()));
 
         // 인증 상태 완료로 변경
         verification.confirmVerification();

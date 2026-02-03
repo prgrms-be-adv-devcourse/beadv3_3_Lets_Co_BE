@@ -1,5 +1,6 @@
 package co.kr.user.model.dto.my;
 
+import co.kr.user.model.vo.UsersMembership;
 import co.kr.user.model.vo.UsersRole;
 import lombok.*;
 
@@ -9,9 +10,9 @@ import java.time.LocalDateTime;
 @Data
 public class UserDTO {
 
-    private String ID;
+    private String id;
     private UsersRole role;
-    private BigDecimal balance;
+    private UsersMembership membership;
     private LocalDateTime createdAt;
 
 

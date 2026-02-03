@@ -1,7 +1,10 @@
 package co.kr.user.service.Impl;
 
+import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
+import co.kr.user.model.dto.balance.BalanceReq;
 import co.kr.user.model.entity.Users;
+import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.ClientService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ClientServiceImpl implements ClientService {
     private final UserRepository userRepository;
+    private final UserInformationRepository userInformationRepository;
 
     /**
      * 사용자의 권한(Role)을 조회하는 메서드입니다.
@@ -29,5 +33,21 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         return users.getRole();
+    }
+
+    @Override
+    public String Balance(Long userIdx, BalanceReq balanceReq) {
+//        Users users = userRepository.findById(userIdx)
+//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+//        if (users.getDel() == 1) {
+//            throw new IllegalStateException("탈퇴한 회원입니다.");
+//        }
+//        else if (users.getDel() == 2) {
+//            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+//        }
+//
+//        UsersInformation usersInformation = UserInformat(userIdx);
+
+        return "";
     }
 }

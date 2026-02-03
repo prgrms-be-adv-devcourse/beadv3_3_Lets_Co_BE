@@ -11,14 +11,8 @@ import java.util.Optional;
  * JpaRepository를 상속받아 기본적인 저장, 조회, 수정, 삭제 메서드를 자동으로 제공합니다.
  */
 public interface UserRepository extends JpaRepository<Users, Long> {
-    /**
-     * 아이디(이메일) 중복 여부를 확인하는 메서드입니다.
-     * 회원가입 시 이미 존재하는 아이디인지 검증하기 위해 사용됩니다.
-     *
-     * @param ID 중복 확인할 사용자 아이디(이메일)
-     * @return true: 이미 존재함, false: 사용 가능함
-     */
-    boolean existsByID(String ID);
+
+    boolean existsByIdAndDel(String id, int del);
 
     /**
      * 아이디(이메일)를 기준으로 사용자 정보를 조회하는 메서드입니다.
@@ -27,7 +21,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
      * @param ID 조회할 사용자 아이디
      * @return 조회된 Users 객체를 감싼 Optional (존재하지 않을 경우 empty)
      */
-    Optional<Users> findByID(String ID);
+    Optional<Users> findById(String id);
 
     /**
      * 삭제(탈퇴)되지 않은 모든 사용자를 생성일 역순(최신순)으로 조회하는 메서드입니다.
@@ -46,5 +40,5 @@ public interface UserRepository extends JpaRepository<Users, Long> {
      * @param del 삭제 상태 플래그
      * @return 조건에 맞는 Users 객체를 감싼 Optional
      */
-    Optional<Users> findByIDAndDel(String ID, int del);
+    Optional<Users> findByIdAndDel(String id, int del);
 }

@@ -16,7 +16,7 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.UserService;
-import co.kr.user.util.AesUtil;
+import co.kr.user.util.AESUtil;
 import co.kr.user.util.CookieUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     private final UserVerificationsRepository userVerificationsRepository;
     private final UsersLoginRepository usersLoginRepository;
 
-    private final AesUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
+    private final AESUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸리티
     private final MailUtil mailUtil; // 이메일 발송 유틸리티
 
@@ -67,9 +67,9 @@ public class UserServiceImpl implements UserService {
 
         // DTO 변환 및 반환
         UserDTO userDTO = new UserDTO();
-        userDTO.setID(users.getID());
+        userDTO.setId(users.getId());
         userDTO.setRole(users.getRole());
-        userDTO.setBalance(users.getBalance());
+        userDTO.setMembership(users.getMembership());
         userDTO.setCreatedAt(users.getCreatedAt());
 
         return userDTO;
@@ -98,16 +98,14 @@ public class UserServiceImpl implements UserService {
         UsersInformation userInfo = userInformationRepository.findById(userIdx)
                 .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + userIdx));
 
-        if (userInfo.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-
         // 암호화된 데이터를 복호화하여 DTO에 설정
         UserProfileDTO userProfileDTO = new UserProfileDTO();
+        userProfileDTO.setGender(userInfo.getGender());
+        userProfileDTO.setBalance(userInfo.getBalance());
         userProfileDTO.setName(aesUtil.decrypt(userInfo.getName()));
         userProfileDTO.setPhoneNumber(aesUtil.decrypt(userInfo.getPhoneNumber()));
         userProfileDTO.setBirth(aesUtil.decrypt(userInfo.getBirth()));
-        userProfileDTO.setGrade("STANDARD"); // 등급은 현재 고정값 사용
+        userProfileDTO.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
 
         return userProfileDTO;
     }
@@ -183,7 +181,7 @@ public class UserServiceImpl implements UserService {
         String finalContent = accountDeletionTemplate.formatted(savedUserVerifications.getCode());
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getID())
+                .to(users.getId())
                 .subject("[GutJJeu] 회원탈퇴 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
@@ -197,7 +195,7 @@ public class UserServiceImpl implements UserService {
         });
 
         UserDeleteDTO userDeleteDTO = new UserDeleteDTO();
-        userDeleteDTO.setID(users.getID());
+        userDeleteDTO.setID(users.getId());
         userDeleteDTO.setCertificationTime(LocalDateTime.now());
 
         return userDeleteDTO;
@@ -249,7 +247,7 @@ public class UserServiceImpl implements UserService {
         verification.confirmVerification();
 
         // 회원 탈퇴 처리 (Del = 1)
-        users.del();
+        users.deleteUsers();
 
         // 토큰 폐기 처리
         UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((users.getUsersIdx()));
@@ -295,18 +293,18 @@ public class UserServiceImpl implements UserService {
         UsersInformation userInfo = userInformationRepository.findById(userIdx)
                 .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + userIdx));
 
-        if (userInfo.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-
         // 기존 정보로 DTO 초기화
         UserAmendReq amend = new UserAmendReq();
+        amend.setGender(userInfo.getGender());
         amend.setName(userInfo.getName());
         amend.setPhoneNumber(userInfo.getPhoneNumber());
         amend.setBirth(userInfo.getBirth());
-        amend.setGrade("STANDARD");
+        amend.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
 
         // 입력된 값이 있는 경우에만 암호화하여 수정 객체에 반영
+        if (!userAmendReq.getGender().equals(userInfo.getGender())) {
+            amend.setGender(userAmendReq.getGender());
+        }
         if (!userAmendReq.getName().isEmpty()) {
             amend.setName(aesUtil.encrypt(userAmendReq.getName()));
         }
@@ -318,7 +316,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 엔티티 업데이트
-        userInfo.amend(amend.getName(), amend.getPhoneNumber(), amend.getBirth());
+        userInfo.updateInformation(amend.getGender(), amend.getName(), amend.getPhoneNumber(), amend.getBirth());
 
         return amend;
     }

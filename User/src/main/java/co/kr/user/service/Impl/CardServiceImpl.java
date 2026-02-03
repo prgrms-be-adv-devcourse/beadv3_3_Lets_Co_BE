@@ -7,7 +7,7 @@ import co.kr.user.model.dto.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
 import co.kr.user.service.CardService;
-import co.kr.user.util.AesUtil;
+import co.kr.user.util.AESUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class CardServiceImpl implements CardService {
     private final UserRepository userRepository;
     private final UserCardRepository userCardRepository;
 
-    private final AesUtil aesUtil; // 암호화 유틸리티
+    private final AESUtil aesUtil; // 암호화 유틸리티
 
     /**
      * 사용자의 기본 결제 카드를 조회하고 유효성을 검증하는 메서드입니다.
@@ -50,7 +50,7 @@ public class CardServiceImpl implements CardService {
         }
 
         // 기본 카드 조회
-        UserCard userCard = userCardRepository.findFirstByUsersIdxAndDefaultCardAndDelOrderByCardIdxDesc(users.getUsersIdx(), 1, 0)
+        UserCard userCard = userCardRepository.findFirstByUsersIdxAndDelOrderByCardIdxDesc(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("Default 카드가 없습니다."));
 
         // 유효기간 검증 (현재 날짜와 비교)
@@ -130,7 +130,6 @@ public class CardServiceImpl implements CardService {
                 .map(card -> {
                     CardListDTO dto = new CardListDTO();
                     dto.setCardCode(card.getCardCode());
-                    dto.setDefaultCard(card.getDefaultCard());
                     dto.setCardBrand(aesUtil.decrypt(card.getCardBrand()));
                     dto.setCardName(aesUtil.decrypt(card.getCardName()));
                     dto.setCardToken(aesUtil.decrypt(card.getCardToken()));
@@ -166,7 +165,6 @@ public class CardServiceImpl implements CardService {
         UserCard userCard = UserCard.builder()
                 .usersIdx(users.getUsersIdx())
                 .cardCode(UUID.randomUUID().toString()) // 고유 식별 코드 생성
-                .defaultCard(cardRequestReq.getDefaultCard())
                 .cardBrand(aesUtil.encrypt(cardRequestReq.getCardBrand()))
                 .cardName(aesUtil.encrypt(cardRequestReq.getCardName()))
                 .cardToken(aesUtil.encrypt(cardRequestReq.getCardToken())) // Billing Key 암호화
@@ -262,7 +260,6 @@ public class CardServiceImpl implements CardService {
 
         // 엔티티 업데이트 수행
         userCard.updateCard(
-                dto.getDefaultCard(),
                 dto.getCardBrand(),
                 dto.getCardName(),
                 dto.getCardToken(),
@@ -304,7 +301,7 @@ public class CardServiceImpl implements CardService {
         }
 
         // 삭제 처리 (Soft Delete)
-        userCard.del();
+        userCard.deleteCard();
 
         return "카드가 삭제되었습니다.";
     }

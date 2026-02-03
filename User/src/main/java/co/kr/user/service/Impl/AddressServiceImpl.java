@@ -7,7 +7,7 @@ import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.service.AddressService;
-import co.kr.user.util.AesUtil;
+import co.kr.user.util.AESUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class AddressServiceImpl implements AddressService {
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
 
-    private final AesUtil aesUtil; // 개인정보 양방향 암호화 유틸리티
+    private final AESUtil aesUtil; // 개인정보 양방향 암호화 유틸리티
 
     /**
      * 사용자의 기본 배송지 식별자(PK)를 조회하는 메서드입니다.
@@ -50,7 +50,7 @@ public class AddressServiceImpl implements AddressService {
         }
 
         // 기본 배송지(DefaultAddress=1)이면서 삭제되지 않은(Del=0) 주소 조회
-        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndDefaultAddressAndDelOrderByAddressIdxDesc(users.getUsersIdx(), 1, 0)
+        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndDelOrderByAddressIdxDesc(users.getUsersIdx(),  0)
                 .orElseThrow(null); // 없을 경우 null 예외 발생 (적절한 예외 처리 필요)
 
         return usersAddress.getAddressIdx();
@@ -114,7 +114,6 @@ public class AddressServiceImpl implements AddressService {
                 .map(address -> {
                     AddressListDTO dto = new AddressListDTO();
                     dto.setAddressCode(address.getAddressCode());
-                    dto.setDefaultAddress(address.getDefaultAddress());
                     dto.setRecipient(aesUtil.decrypt(address.getRecipient()));
                     dto.setAddress(aesUtil.decrypt(address.getAddress()));
                     dto.setAddressDetail(aesUtil.decrypt(address.getAddressDetail()));
@@ -149,7 +148,6 @@ public class AddressServiceImpl implements AddressService {
         UsersAddress usersAddress = UsersAddress.builder()
                 .usersIdx(users.getUsersIdx())
                 .addressCode(UUID.randomUUID().toString())
-                .defaultAddress(addressRequestReq.getDefaultAddress())
                 .recipient(aesUtil.encrypt(addressRequestReq.getRecipient()))
                 .address(aesUtil.encrypt(addressRequestReq.getAddress()))
                 .addressDetail(aesUtil.encrypt(addressRequestReq.getAddressDetail()))
@@ -235,7 +233,6 @@ public class AddressServiceImpl implements AddressService {
 
         // 엔티티 업데이트 수행
         usersAddress.updateAddress(
-                dto.getDefaultAddress(),
                 dto.getRecipient(),
                 dto.getAddress(),
                 dto.getAddressDetail(),
@@ -276,7 +273,7 @@ public class AddressServiceImpl implements AddressService {
         }
 
         // 삭제 처리 (Soft Delete)
-        usersAddress.del();
+        usersAddress.deleteAddress();
 
         return "주소가 삭제되었습니다.";
     }

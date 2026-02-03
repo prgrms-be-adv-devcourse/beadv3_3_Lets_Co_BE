@@ -20,7 +20,7 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
      * @param del 삭제 상태 플래그 (0: 정상)
      * @return 조건에 맞는 기본 카드 정보 (Optional)
      */
-    Optional<UserCard> findFirstByUsersIdxAndDefaultCardAndDelOrderByCardIdxDesc(Long usersIdx, int defaultCard, int del);
+    Optional<UserCard> findFirstByUsersIdxAndDelOrderByCardIdxDesc(Long usersIdx, int del);
 
     /**
      * 카드 코드(CardCode)를 이용하여 특정 사용자의 카드 정보를 조회하는 메서드입니다.

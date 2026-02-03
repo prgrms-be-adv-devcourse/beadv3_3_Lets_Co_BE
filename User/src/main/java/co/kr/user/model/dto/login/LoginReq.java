@@ -13,7 +13,7 @@ public class LoginReq {
     @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     @JsonProperty("ID")
-    private String ID;
+    private String id;
 
     @ToString.Exclude
     @NotBlank(message = "Password cannot be empty.")
@@ -21,5 +21,5 @@ public class LoginReq {
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",
             message = "Password must include at least one letter (lowercase or uppercase), one number, and one special character.")
     @JsonProperty("PW")
-    private String PW;
+    private String pw;
 }

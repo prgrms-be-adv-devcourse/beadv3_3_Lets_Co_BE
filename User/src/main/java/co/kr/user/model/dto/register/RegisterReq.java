@@ -1,5 +1,6 @@
 package co.kr.user.model.dto.register;
 
+import co.kr.user.model.vo.UsersInformationGender;
 import co.kr.user.util.validator.ValiDate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
@@ -13,7 +14,7 @@ public class RegisterReq {
     @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     @JsonProperty("ID")
-    private String ID;
+    private String id;
 
     @ToString.Exclude // [핵심] 로그에서 비밀번호 제외
     @NotBlank(message = "Password cannot be empty.")
@@ -21,7 +22,7 @@ public class RegisterReq {
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",
             message = "Password must include at least one letter (lowercase or uppercase), one number, and one special character.")
     @JsonProperty("PW")
-    private String PW;
+    private String pw;
 
     @NotNull(message = "이용약관 동의는 필수입니다.")
     private LocalDateTime agreeTermsAt;
@@ -29,7 +30,8 @@ public class RegisterReq {
     @NotNull(message = "이용약관 동의는 필수입니다.")
     private LocalDateTime agreePrivateAt;
 
-    private LocalDateTime agreeMarketingAt;
+    @NotNull(message = "성별 선택은 필수입니다.")
+    private UsersInformationGender gender;
 
     @ToString.Exclude
     @NotBlank(message = "Name cannot be empty.")
@@ -49,4 +51,6 @@ public class RegisterReq {
             message = "생년월일 형식이 올바르지 않습니다. (예: 1990-01-01)")
     @ValiDate
     private String birth;
+
+    private LocalDateTime agreeMarketingAt;
 }

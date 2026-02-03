@@ -1,6 +1,7 @@
 package co.kr.user.service;
 
 import co.kr.user.model.dto.auth.TokenDto;
+import co.kr.user.model.dto.balance.BalanceReq;
 import co.kr.user.model.vo.UsersRole;
 
 /**
@@ -18,4 +19,6 @@ public interface ClientService {
      * @return 사용자 권한 (UsersRole Enum)
      */
     UsersRole getRole(Long userIdx);
+
+    String Balance(Long userIdx, BalanceReq balanceReq);
 }

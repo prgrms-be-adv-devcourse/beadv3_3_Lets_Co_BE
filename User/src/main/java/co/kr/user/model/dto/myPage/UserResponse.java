@@ -34,9 +34,8 @@ public class UserResponse {
     public static UserResponse from(Users user) {
         return UserResponse.builder()
                 .userId(user.getUsersIdx())
-                .loginId(user.getID())
+                .loginId(user.getId())
                 .role(user.getRole().name()) // Enum 타입을 문자열로 변환
-                .balance(user.getBalance())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

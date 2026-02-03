@@ -1,7 +1,7 @@
 package co.kr.user.service.Impl;
 
-import co.kr.user.dao.UserRepository;
 import co.kr.user.dao.UsersLoginRepository;
+import co.kr.user.dao.UserRepository;
 import co.kr.user.model.dto.login.LoginDTO;
 import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.model.entity.Users;
@@ -38,7 +38,7 @@ public class LoginServiceImpl implements LoginService {
     @Transactional
     public LoginDTO login(LoginReq loginReq) {
         // 아이디로 사용자 조회 (존재하지 않으면 예외 발생)
-        Users users = userRepository.findByID(loginReq.getID())
+        Users users = userRepository.findById(loginReq.getId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
         // 계정 상태 검증 (탈퇴: 1, 미인증: 2)
@@ -51,7 +51,7 @@ public class LoginServiceImpl implements LoginService {
 
         // 로그인 실패 횟수 확인 (5회 이상이면 잠금 시도)
         if (users.getFailedLoginAttempts() >= 5) {
-            users.lockFor15Minutes(); // 15분간 잠금 처리
+            users.lockAccount(); // 15분간 잠금 처리
             throw new IllegalStateException("보안을 위해 계정이 일시 정지되었습니다. 15분 후에 다시 시도해주세요.");
         }
 
@@ -63,8 +63,8 @@ public class LoginServiceImpl implements LoginService {
         }
 
         // 비밀번호 일치 여부 확인
-        if (!bCryptUtil.check(loginReq.getPW(), users.getPW())) {
-            users.loginFail(); // 실패 횟수 증가
+        if (!bCryptUtil.check(loginReq.getPw(), users.getPw())) {
+            users.increaseLoginFailCount(); // 실패 횟수 증가
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
@@ -89,7 +89,7 @@ public class LoginServiceImpl implements LoginService {
         usersLoginRepository.save(usersLogin);
 
         // 로그인 성공 상태 업데이트 (실패 횟수 초기화 등)
-        users.loginSuccess();
+        users.completeLogin();
 
         return loginDTO;
     }

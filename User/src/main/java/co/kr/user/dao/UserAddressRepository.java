@@ -17,11 +17,11 @@ public interface UserAddressRepository extends JpaRepository<UsersAddress, Long>
      * 삭제된 주소(del=1)는 제외합니다.
      *
      * @param usersIdx 사용자 고유 식별자
-     * @param defaultAddress 기본 배송지 여부 (1: 기본, 0: 일반)
      * @param del 삭제 상태 플래그 (0: 정상)
      * @return 조건에 맞는 기본 배송지 정보 (Optional)
      */
-    Optional<UsersAddress> findFirstByUsersIdxAndDefaultAddressAndDelOrderByAddressIdxDesc(Long usersIdx, int defaultAddress, int del);
+    // 파라미터를 2개로 축소
+    Optional<UsersAddress> findFirstByUsersIdxAndDelOrderByAddressIdxDesc(Long usersIdx, int del);
 
     /**
      * 주소 코드(AddressCode)를 이용하여 특정 사용자의 배송지 상세 정보를 조회하는 메서드입니다.

@@ -24,18 +24,16 @@ public interface UserInformationRepository extends JpaRepository<UsersInformatio
      * 삭제 상태(Del)를 기준으로 모든 사용자 상세 정보를 조회하는 메서드입니다.
      * 탈퇴하지 않은 회원들의 상세 정보 목록 등을 추출할 때 사용됩니다.
      *
-     * @param del 삭제 상태 플래그 (0: 정상, 1: 삭제됨)
      * @return 조건에 맞는 사용자 상세 정보 리스트
      */
-    List<UsersInformation> findAllByDel(int del);
+    List<UsersInformation> findAll();
 
     /**
      * 사용자 식별자(userIdx)와 삭제 상태(del)를 조건으로 상세 정보를 조회하는 메서드입니다.
      * 특정 회원의 상세 정보를 조회하되, 탈퇴 여부까지 함께 검증할 때 유용합니다.
      *
      * @param usersIdx 사용자 고유 식별자
-     * @param del 삭제 상태 플래그
      * @return 조건에 맞는 상세 정보 객체 (Optional)
      */
-    Optional<UsersInformation> findByUsersIdxAndDel(Long usersIdx, int del);
+    Optional<UsersInformation> findByUsersIdx(Long usersIdx);
 }

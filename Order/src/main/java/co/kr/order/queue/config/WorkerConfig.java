@@ -11,16 +11,23 @@ public class WorkerConfig {
 
     private final QueueService queueService;
 
-    // 1초마다 대기열 유저 입장 처리
+    // [입장] 1초마다 10명씩 입장 (유량 제어)
     @Scheduled(fixedDelay = 1000)
-    public void workerOrder() {
-        queueService.allowUser(10);
+    public void workerEnter() {
+        queueService.allowEnterUser(10);
     }
 
-    // 1분마다 활동 없는 유저 정리 (TTL: 30분)
-    @Scheduled(fixedDelay = 60000) // 1분 주기
+    // [주문] 1초마다 빈 자리(50명 제한) 체크해서 입장
+    @Scheduled(fixedDelay = 1000)
+    public void workerOrder() {
+        // 최대 동시 주문 가능 인원을 50명으로 가정
+        queueService.allowOrderUser(50);
+    }
+
+    // [청소] 1분마다 잠수탄 주문 유저 정리
+    @Scheduled(fixedDelay = 60000)
     public void evictUsers() {
-        // 30분 = 30 * 60 * 1000 = 1,800,000 밀리초
-        queueService.evictInactiveUsers(1800000L);
+        // 10분(600,000ms) 동안 반응 없으면 주문 대기열에서 쫓아냄
+        queueService.evictInactiveUsers(600000L);
     }
 }

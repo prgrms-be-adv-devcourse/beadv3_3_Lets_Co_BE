@@ -18,7 +18,6 @@ public class ProductMapper {
 
 
         return new ProductDetailRes(
-                product.getProductsIdx(),
                 product.getProductsCode(),
                 product.getProductsName(),
                 product.getDescription(),

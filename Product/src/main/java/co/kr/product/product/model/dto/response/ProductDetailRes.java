@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record ProductDetailRes(
-        Long productsIDX,
         String productsCode,
         String name,
         String description,

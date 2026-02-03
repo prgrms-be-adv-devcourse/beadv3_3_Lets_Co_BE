@@ -35,7 +35,6 @@ public class ProductSearchServiceImpl implements ProductSearchService {
         // 2. Document -> Response DTO 변환
         List<ProductRes> items = pageResult.stream()
                 .map(doc -> new ProductRes(
-                        doc.getProductsIdx(),
                         doc.getProductsCode(),
                         doc.getProductsName(),
                         doc.getPrice(),

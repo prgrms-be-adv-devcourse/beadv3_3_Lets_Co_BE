@@ -44,7 +44,6 @@ public class ProductServiceImpl implements ProductService {
 
         List<ProductRes> items = page.getContent().stream()
                 .map(p -> new ProductRes(
-                        p.getProductsIdx(),
                         p.getProductsCode(),
                         p.getProductsName(),
                         p.getPrice(),

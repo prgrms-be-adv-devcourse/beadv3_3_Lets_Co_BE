@@ -1,21 +1,21 @@
 package co.kr.customerservice.inquiryAdmin.service;
 
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import org.springframework.data.domain.Pageable;
 
 public interface InquiryAdminManagementService {
-    InquiryListResponse getInquiryList(Pageable pageable, Long usersIdx);
+    InquiryListRes getInquiryList(Pageable pageable, Long usersIdx);
 
-    InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request, Long usersIdx);
+    InquiryDetailRes updateInquiry(String inquiryCode, InquiryUpsertReq request, Long usersIdx);
 
     ResultResponse deleteInquiry(String inquiryCode, Long usersIdx);
 
-    InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request);
+    InquiryDetailRes addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertReq request);
 
-    ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request, Long usersIdx);
+    ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteReq request, Long usersIdx);
 }

@@ -5,8 +5,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 
 import java.time.LocalDateTime;
 
-public record QnaAndProductInfoResponse(
-
+public record QnaProductForSellerRes(
         String code,
         CustomerServiceCategory category,
         CustomerServiceStatus status,
@@ -22,5 +21,4 @@ public record QnaAndProductInfoResponse(
 
         String imageUrl
 ) {
-
 }

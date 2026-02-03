@@ -1,11 +1,11 @@
 package co.kr.customerservice.inquiryAdmin.controller;
 
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import co.kr.customerservice.inquiryAdmin.service.InquiryAdminManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ public class InquiryAdminManagementController {
      * @return 문의 목록
      */
     @GetMapping
-    public ResponseEntity<InquiryListResponse> getInquiryList(
+    public ResponseEntity<InquiryListRes> getInquiryList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){
@@ -46,10 +46,10 @@ public class InquiryAdminManagementController {
      * @return 뮨의 상세 내용
      */
     @PostMapping("/{inquiryCode}")
-    public ResponseEntity<InquiryDetailResponse> addInquiryAnswer(
+    public ResponseEntity<InquiryDetailRes> addInquiryAnswer(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
-            @RequestBody  InquiryAnswerUpsertRequest request
+            @RequestBody InquiryAnswerUpsertReq request
     ){
 
         return ResponseEntity.ok(inquiryAdminManagementService.addInquiryAnswer(usersIdx, inquiryCode , request));
@@ -67,7 +67,7 @@ public class InquiryAdminManagementController {
     public ResponseEntity<ResultResponse> deleteInquiryAnswer(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
-            @RequestBody InquiryAnswerDeleteRequest request
+            @RequestBody InquiryAnswerDeleteReq request
             ){
 
         return ResponseEntity.ok(inquiryAdminManagementService.deleteInquiryAnswer(inquiryCode, request, usersIdx));
@@ -80,10 +80,10 @@ public class InquiryAdminManagementController {
      * @return 문의 상세 내용
      */
     @PutMapping("/{inquiryCode}")
-    public ResponseEntity<InquiryDetailResponse> updateInquiry(
+    public ResponseEntity<InquiryDetailRes> updateInquiry(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
-            @RequestBody  InquiryUpsertRequest request
+            @RequestBody InquiryUpsertReq request
     ){
 
         return ResponseEntity.ok(inquiryAdminManagementService.updateInquiry(inquiryCode ,request, usersIdx));

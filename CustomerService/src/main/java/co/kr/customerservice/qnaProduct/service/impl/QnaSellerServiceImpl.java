@@ -13,7 +13,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
-import co.kr.customerservice.qnaProduct.model.request.QnaAnswerUpsertRequest;
+import co.kr.customerservice.qnaProduct.model.request.QnaAnswerUpsertReq;
 import co.kr.customerservice.qnaProduct.model.response.*;
 import co.kr.customerservice.qnaProduct.service.QnaSellerService;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
     @Override
     @Transactional(readOnly = true)
-    public QnaAndProductInfoListResponse getMyQnaList(Long userIdx, Pageable pageable){
+    public QnaAndProductInfoListRes getMyQnaList(Long userIdx, Pageable pageable){
 
 
         // 1. 유저 확인
@@ -83,7 +83,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
         }
         
         // 4. List로 변환
-        List<QnaAndProductInfoResponse> result = qnaPage.stream()
+        List<QnaAndProductInfoRes> result = qnaPage.stream()
                 .map(entity -> {
 
                     // 위에서 가져온 상품 정보
@@ -93,7 +93,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
                     String productName = (productInfo != null) ? productInfo.name() : "없는 상품";
                     String productImg = (productInfo != null) ? productInfo.imageUrl() : "";
 
-                        return new QnaAndProductInfoResponse(
+                        return new QnaAndProductInfoRes(
                         entity.getCode(),
                         entity.getCategory(),
                         entity.getStatus(),
@@ -110,7 +110,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
                 .toList();
 
         // 5. 반환
-        return new QnaAndProductInfoListResponse(
+        return new QnaAndProductInfoListRes(
                 result
         );
 
@@ -119,7 +119,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
     // 상품 주인이 문의 답변하기
     @Override
     @Transactional
-    public QnaProductDetailResponse addAnswer(String qnaCode,Long userIdx, QnaAnswerUpsertRequest request){
+    public QnaProductDetailRes addAnswer(String qnaCode, Long userIdx, QnaAnswerUpsertReq request){
 
 
         // 1. entity 가져오기

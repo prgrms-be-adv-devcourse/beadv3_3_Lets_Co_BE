@@ -5,7 +5,7 @@ import co.kr.customerservice.qnaProduct.model.QnaProductQuestionDTO;
 
 import java.util.List;
 
-public record QnaProductDetailResponse(
+public record QnaProductDetailRes(
 
         QnaProductQuestionDTO questionDTO,
 

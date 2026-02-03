@@ -1,12 +1,12 @@
 package co.kr.customerservice.notice.service;
 
 
-import co.kr.customerservice.notice.model.dto.response.NoticeDetailResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeListResponse;
+import co.kr.customerservice.notice.model.dto.response.NoticeDetailRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import org.springframework.data.domain.Pageable;
 
 public interface UserNoticeService {
-    NoticeListResponse getNoticeList(Pageable pageable);
+    NoticeListRes getNoticeList(Pageable pageable);
 
-    NoticeDetailResponse getNoticeDetail(String noticeCode);
+    NoticeDetailRes getNoticeDetail(String noticeCode);
 }

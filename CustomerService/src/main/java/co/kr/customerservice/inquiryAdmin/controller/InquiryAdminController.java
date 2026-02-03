@@ -1,9 +1,9 @@
 package co.kr.customerservice.inquiryAdmin.controller;
 
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import co.kr.customerservice.inquiryAdmin.service.InquiryAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +25,7 @@ public class InquiryAdminController {
      * @return 문의 목록
      */
     @GetMapping
-    public ResponseEntity<InquiryListResponse> getInquiryList(
+    public ResponseEntity<InquiryListRes> getInquiryList(
             @PageableDefault Pageable pageable
             ){
 
@@ -38,9 +38,9 @@ public class InquiryAdminController {
      * @return 문의 상세 내용
      */
     @PostMapping
-    public ResponseEntity<InquiryDetailResponse> addInquiry(
+    public ResponseEntity<InquiryDetailRes> addInquiry(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-            @RequestBody InquiryUpsertRequest request
+            @RequestBody InquiryUpsertReq request
     ){
         return ResponseEntity.ok(inquiryAdminService.addInquiry(usersIdx, request));
     }
@@ -51,7 +51,7 @@ public class InquiryAdminController {
      * @return 문의 상세 내용
      */
     @GetMapping("/{inquiryCode}")
-    public ResponseEntity<InquiryDetailResponse> getInquiryDetail(
+    public ResponseEntity<InquiryDetailRes> getInquiryDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode
     ){
@@ -67,10 +67,10 @@ public class InquiryAdminController {
      * @return 문의 상세 내용
      */
     @PutMapping("/{inquiryCode}")
-    public ResponseEntity<InquiryDetailResponse> updateInquiry(
+    public ResponseEntity<InquiryDetailRes> updateInquiry(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("inquiryCode") String inquiryCode,
-            @RequestBody  InquiryUpsertRequest request
+            @RequestBody InquiryUpsertReq request
     ){
         return ResponseEntity.ok(inquiryAdminService.updateInquiry(usersIdx, inquiryCode ,request));
     }
@@ -96,7 +96,7 @@ public class InquiryAdminController {
      * @return
      */
     @GetMapping("/me")
-    public ResponseEntity<InquiryListResponse> getMyInquiryList(
+    public ResponseEntity<InquiryListRes> getMyInquiryList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){

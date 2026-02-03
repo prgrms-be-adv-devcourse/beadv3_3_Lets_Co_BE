@@ -2,9 +2,9 @@ package co.kr.customerservice.notice.model.dto.response;
 
 import java.util.List;
 
-public record NoticeListResponse(
+public record NoticeListRes(
         String resultCode,
-        List<NoticeResponse> items
+        List<NoticeRes> items
 ) {
 
 

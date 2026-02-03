@@ -4,7 +4,7 @@ import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDTO;
 
 import java.util.List;
 
-public record InquiryListResponse(
+public record InquiryListRes(
         String resultCode,
         List<InquiryDTO> list
 ) {

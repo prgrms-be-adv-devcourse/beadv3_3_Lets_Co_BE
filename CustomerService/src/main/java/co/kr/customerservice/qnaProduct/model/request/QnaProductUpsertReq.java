@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record QnaProductUpsertRequest(
+public record QnaProductUpsertReq(
 
         @NotNull(message = "카테고리는 필수입니다.")
         CustomerServiceCategory category,

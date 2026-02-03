@@ -4,7 +4,7 @@ import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.qnaProduct.model.QnaProductDetailDTO;
 import co.kr.customerservice.qnaProduct.model.QnaProductQuestionDTO;
-import co.kr.customerservice.qnaProduct.model.response.QnaProductDetailResponse;
+import co.kr.customerservice.qnaProduct.model.response.QnaProductDetailRes;
 
 import java.util.List;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class QnaMapper {
 
-    public static QnaProductDetailResponse toDetail(
+    public static QnaProductDetailRes toDetail(
             CustomerServiceEntity csEntity,
             List<CustomerServiceDetailEntity> csDetailEntities) {
 
@@ -21,7 +21,7 @@ public class QnaMapper {
                         CustomerServiceDetailEntity::getDetailIdx,
                         CustomerServiceDetailEntity::getDetailCode
                 ));
-        return new QnaProductDetailResponse(
+        return new QnaProductDetailRes(
                 new QnaProductQuestionDTO(
                         csEntity.getCode(),
                         csEntity.getCategory(),

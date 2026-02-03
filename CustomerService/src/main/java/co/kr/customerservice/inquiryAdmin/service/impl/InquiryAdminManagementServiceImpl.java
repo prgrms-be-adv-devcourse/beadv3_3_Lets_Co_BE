@@ -10,11 +10,11 @@ import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.inquiryAdmin.mapper.InquiryMapper;
 import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDTO;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import co.kr.customerservice.inquiryAdmin.service.InquiryAdminManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,7 +38,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public InquiryListResponse getInquiryList(Pageable pageable, Long usersIdx){
+    public InquiryListRes getInquiryList(Pageable pageable, Long usersIdx){
 
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
@@ -62,7 +62,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
                 .toList();
 
         // 4, 반환
-        return new InquiryListResponse(
+        return new InquiryListRes(
                 "success",
                 result
         );
@@ -72,7 +72,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 답변 추가
     @Override
     @Transactional
-    public InquiryDetailResponse addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertRequest request) {
+    public InquiryDetailRes addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertReq request) {
 
         //1. 권한 확인
         String role = authServiceClient.getUserRole(userId).getBody();
@@ -122,7 +122,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 답변 삭제
     @Override
     @Transactional
-    public ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteRequest request, Long usersIdx){
+    public ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteReq request, Long usersIdx){
 
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();
@@ -150,7 +150,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     // 문의 내용 수정
     @Override
     @Transactional
-    public InquiryDetailResponse updateInquiry(String inquiryCode, InquiryUpsertRequest request, Long usersIdx){
+    public InquiryDetailRes updateInquiry(String inquiryCode, InquiryUpsertReq request, Long usersIdx){
 
         // 1. 관리자 권환 확인
         String role = authServiceClient.getUserRole(usersIdx).getBody();

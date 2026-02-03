@@ -9,10 +9,10 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
-import co.kr.customerservice.notice.model.dto.request.NoticeUpsertRequest;
-import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeListResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeResponse;
+import co.kr.customerservice.notice.model.dto.request.NoticeUpsertReq;
+import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeRes;
 import co.kr.customerservice.notice.service.AdminNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,7 +39,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     // 공지 추가
     @Override
     @Transactional
-    public AdminNoticeDetailResponse addNotice(Long userId, NoticeUpsertRequest request){
+    public AdminNoticeDetailRes addNotice(Long userId, NoticeUpsertReq request){
 
         String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {
@@ -87,7 +87,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     // 공지 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public NoticeListResponse getNoticeList(Long userId, Pageable pageable){
+    public NoticeListRes getNoticeList(Long userId, Pageable pageable){
 
         // 1. 관리자 권한 확인
         String role = authServiceClient.getUserRole(userId).getBody();
@@ -98,8 +98,8 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
         Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
 
         // 3. Page 객체를 List로 변환
-        List<NoticeResponse> result = noticeEntityPage.stream()
-                .map(doc -> new NoticeResponse(
+        List<NoticeRes> result = noticeEntityPage.stream()
+                .map(doc -> new NoticeRes(
 
                         doc.getIdx(),
                         doc.getCode(),
@@ -115,7 +115,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
                 ))
                 .toList();
 
-        return new NoticeListResponse(
+        return new NoticeListRes(
                 "success",
                 result
         );
@@ -125,7 +125,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     // 공지 상세 조회
     @Override
     @Transactional(readOnly = true)
-    public AdminNoticeDetailResponse getNoticeDetail(Long userId, String noticeCode){
+    public AdminNoticeDetailRes getNoticeDetail(Long userId, String noticeCode){
 
         // 0. 관리자 권한 확인
         String role = authServiceClient.getUserRole(userId).getBody();
@@ -153,7 +153,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     // 공지 수정
     @Override
     @Transactional
-    public AdminNoticeDetailResponse updateNotice(Long userId, String noticeCode,NoticeUpsertRequest request){
+    public AdminNoticeDetailRes updateNotice(Long userId, String noticeCode, NoticeUpsertReq request){
         // 1. 관리자 권한 확인
         String role = authServiceClient.getUserRole(userId).getBody();
         if (!"ADMIN".equals(role)) {

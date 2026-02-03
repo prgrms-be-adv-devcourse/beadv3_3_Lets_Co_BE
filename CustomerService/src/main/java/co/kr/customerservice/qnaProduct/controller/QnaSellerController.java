@@ -1,9 +1,9 @@
 package co.kr.customerservice.qnaProduct.controller;
 
 
-import co.kr.customerservice.qnaProduct.model.request.QnaAnswerUpsertRequest;
-import co.kr.customerservice.qnaProduct.model.response.QnaAndProductInfoListResponse;
-import co.kr.customerservice.qnaProduct.model.response.QnaProductDetailResponse;
+import co.kr.customerservice.qnaProduct.model.request.QnaAnswerUpsertReq;
+import co.kr.customerservice.qnaProduct.model.response.QnaAndProductInfoListRes;
+import co.kr.customerservice.qnaProduct.model.response.QnaProductDetailRes;
 import co.kr.customerservice.qnaProduct.service.QnaSellerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +19,7 @@ public class QnaSellerController {
 
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
     @GetMapping
-    public ResponseEntity<QnaAndProductInfoListResponse> getMyQnaList(
+    public ResponseEntity<QnaAndProductInfoListRes> getMyQnaList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
             ){
@@ -31,10 +31,10 @@ public class QnaSellerController {
 
     // 본인 상품에 온 문의에 대한 답변
     @PostMapping("/{qnaCode}")
-    public ResponseEntity<QnaProductDetailResponse> addAnswer(
+    public ResponseEntity<QnaProductDetailRes> addAnswer(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("qnaCode") String qnaCode,
-            @RequestBody QnaAnswerUpsertRequest request
+            @RequestBody QnaAnswerUpsertReq request
             ){
 
         return ResponseEntity.ok(

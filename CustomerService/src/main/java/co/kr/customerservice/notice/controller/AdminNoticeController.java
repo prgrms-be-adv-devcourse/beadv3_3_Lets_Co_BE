@@ -2,9 +2,9 @@ package co.kr.customerservice.notice.controller;
 
 
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
-import co.kr.customerservice.notice.model.dto.request.NoticeUpsertRequest;
-import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeListResponse;
+import co.kr.customerservice.notice.model.dto.request.NoticeUpsertReq;
+import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import co.kr.customerservice.notice.service.AdminNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +25,9 @@ public class AdminNoticeController {
      * @return 공지 상세 정보
      */
     @PostMapping
-    public ResponseEntity<AdminNoticeDetailResponse> addNotice(
+    public ResponseEntity<AdminNoticeDetailRes> addNotice(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-            @RequestBody NoticeUpsertRequest request
+            @RequestBody NoticeUpsertReq request
     ){
 
         return ResponseEntity.ok(
@@ -42,7 +42,7 @@ public class AdminNoticeController {
      * @return 공지 리스트
      */
     @GetMapping
-    public ResponseEntity<NoticeListResponse> getNoticeList(
+    public ResponseEntity<NoticeListRes> getNoticeList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable){
 
@@ -58,7 +58,7 @@ public class AdminNoticeController {
      * @return 공지 상세 정보
      */
     @GetMapping("/{noticeCode}")
-    public ResponseEntity<AdminNoticeDetailResponse> getNoticeDetail(
+    public ResponseEntity<AdminNoticeDetailRes> getNoticeDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("noticeCode") String noticeCode
     ){
@@ -76,10 +76,10 @@ public class AdminNoticeController {
      * @return 공지 상세 정보
      */
     @PutMapping("/{noticeCode}")
-    public ResponseEntity<AdminNoticeDetailResponse> updateNotice(
+    public ResponseEntity<AdminNoticeDetailRes> updateNotice(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("noticeCode") String noticeCode,
-            @RequestBody NoticeUpsertRequest request
+            @RequestBody NoticeUpsertReq request
     ){
 
         return ResponseEntity.ok(

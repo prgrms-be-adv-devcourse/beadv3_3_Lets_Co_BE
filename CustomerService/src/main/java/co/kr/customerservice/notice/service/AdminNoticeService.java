@@ -2,19 +2,19 @@ package co.kr.customerservice.notice.service;
 
 
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
-import co.kr.customerservice.notice.model.dto.request.NoticeUpsertRequest;
-import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeListResponse;
+import co.kr.customerservice.notice.model.dto.request.NoticeUpsertReq;
+import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import org.springframework.data.domain.Pageable;
 
 public interface AdminNoticeService {
-    AdminNoticeDetailResponse addNotice(Long userId, NoticeUpsertRequest request);
+    AdminNoticeDetailRes addNotice(Long userId, NoticeUpsertReq request);
 
-    NoticeListResponse getNoticeList(Long userId, Pageable pageable);
+    NoticeListRes getNoticeList(Long userId, Pageable pageable);
 
-    AdminNoticeDetailResponse getNoticeDetail(Long userId, String noticeCode);
+    AdminNoticeDetailRes getNoticeDetail(Long userId, String noticeCode);
 
-    AdminNoticeDetailResponse updateNotice(Long userId, String noticeCode,NoticeUpsertRequest request);
+    AdminNoticeDetailRes updateNotice(Long userId, String noticeCode, NoticeUpsertReq request);
 
     ResultResponse deleteNotice(Long userId, String noticeCode);
 }

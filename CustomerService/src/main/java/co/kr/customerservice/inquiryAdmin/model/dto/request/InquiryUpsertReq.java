@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record InquiryUpsertRequest(
+public record InquiryUpsertReq(
 
         @Size(max = 64, message = "유효하지 않은 식별자 코드입니다.")
         String detailCode,

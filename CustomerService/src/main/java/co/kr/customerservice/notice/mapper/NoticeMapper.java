@@ -2,7 +2,7 @@ package co.kr.customerservice.notice.mapper;
 
 import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
-import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailResponse;
+import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailRes;
 
 public class NoticeMapper {
 
@@ -13,12 +13,12 @@ public class NoticeMapper {
      * @param csDetailEntity
      * @return AdminNoticeDetailResponse
      */
-    public static AdminNoticeDetailResponse toDetailMapper(
+    public static AdminNoticeDetailRes toDetailMapper(
             String resultCode,
             CustomerServiceEntity csEntity,
             CustomerServiceDetailEntity csDetailEntity
     ){
-        return new AdminNoticeDetailResponse(
+        return new AdminNoticeDetailRes(
                 resultCode,
                 csEntity.getCode(),
                 csDetailEntity.getDetailCode(),

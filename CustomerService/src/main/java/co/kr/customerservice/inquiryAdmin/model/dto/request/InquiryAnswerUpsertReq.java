@@ -3,7 +3,7 @@ package co.kr.customerservice.inquiryAdmin.model.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record InquiryAnswerUpsertRequest(
+public record InquiryAnswerUpsertReq(
         // 추가 할 때에는 안받음
         @Size(max = 64)
         String detailCode,

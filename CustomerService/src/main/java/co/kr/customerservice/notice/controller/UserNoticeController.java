@@ -1,8 +1,8 @@
 package co.kr.customerservice.notice.controller;
 
 
-import co.kr.customerservice.notice.model.dto.response.NoticeDetailResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeListResponse;
+import co.kr.customerservice.notice.model.dto.response.NoticeDetailRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import co.kr.customerservice.notice.service.UserNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,7 @@ public class UserNoticeController {
      * @return 공지 목록 리스트
      */
     @GetMapping
-    public ResponseEntity<NoticeListResponse> getNoticeList(
+    public ResponseEntity<NoticeListRes> getNoticeList(
             @PageableDefault Pageable pageable
             ){
         return ResponseEntity.ok(userNoticeService.getNoticeList(pageable));
@@ -38,7 +38,7 @@ public class UserNoticeController {
      * @return 공지 상세 정보
      */
     @GetMapping("/{noticeCode}")
-    public ResponseEntity<NoticeDetailResponse> getNoticeDetail(
+    public ResponseEntity<NoticeDetailRes> getNoticeDetail(
         @PathVariable("noticeCode") String noticeCode
     ){
         return ResponseEntity.ok(userNoticeService.getNoticeDetail(noticeCode));

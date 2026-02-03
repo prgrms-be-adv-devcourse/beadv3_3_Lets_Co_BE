@@ -1,10 +1,10 @@
 package co.kr.customerservice.qnaProduct.controller;
 
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
-import co.kr.customerservice.qnaProduct.model.request.QnaProductUpsertRequest;
-import co.kr.customerservice.qnaProduct.model.response.QnaAndProductInfoListResponse;
-import co.kr.customerservice.qnaProduct.model.response.QnaProductDetailResponse;
-import co.kr.customerservice.qnaProduct.model.response.QnaProductListResponse;
+import co.kr.customerservice.qnaProduct.model.request.QnaProductUpsertReq;
+import co.kr.customerservice.qnaProduct.model.response.QnaAndProductInfoListRes;
+import co.kr.customerservice.qnaProduct.model.response.QnaProductDetailRes;
+import co.kr.customerservice.qnaProduct.model.response.QnaProductListRes;
 import co.kr.customerservice.qnaProduct.service.QnaProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,7 @@ public class QnaProductController {
      * @return
      */
     @GetMapping("/products/{productsCode}")
-    public ResponseEntity<QnaProductListResponse> getProductQnaList(
+    public ResponseEntity<QnaProductListRes> getProductQnaList(
             @PageableDefault Pageable pageable,
             @PathVariable("productsCode") String productsCode
             ){
@@ -42,7 +42,7 @@ public class QnaProductController {
      * @return
      */
     @GetMapping("/{qnaCode}")
-    public ResponseEntity<QnaProductDetailResponse> getProductQnaDetail(
+    public ResponseEntity<QnaProductDetailRes> getProductQnaDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             //@PathVariable("productsCode") String productsCode,
             @PathVariable("qnaCode") String qnaCode
@@ -55,11 +55,11 @@ public class QnaProductController {
 
     // 상품 문의 추가
     @PostMapping("/products/{productsCode}")
-    public ResponseEntity<QnaProductDetailResponse> addProductQna(
+    public ResponseEntity<QnaProductDetailRes> addProductQna(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
 
             @PathVariable("productsCode") String productsCode,
-            @RequestBody QnaProductUpsertRequest request
+            @RequestBody QnaProductUpsertReq request
     ){
 
         return  ResponseEntity.ok(
@@ -68,11 +68,11 @@ public class QnaProductController {
 
     // 상품문의 수정
     @PutMapping("/{qnaCode}")
-    public ResponseEntity<QnaProductDetailResponse> updateQna(
+    public ResponseEntity<QnaProductDetailRes> updateQna(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             //@PathVariable("productsCode") String productsCode
             @PathVariable("qnaCode") String qnaCode,
-            @RequestBody QnaProductUpsertRequest request
+            @RequestBody QnaProductUpsertReq request
     ){
 
         return  ResponseEntity.ok(
@@ -91,7 +91,7 @@ public class QnaProductController {
 
     // 본인 문의 내역 조회
     @GetMapping("/me")
-    public ResponseEntity<QnaAndProductInfoListResponse> getMyProductQnaList(
+    public ResponseEntity<QnaAndProductInfoListRes> getMyProductQnaList(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){

@@ -5,7 +5,7 @@ import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDetailDTO;
 
 import java.util.List;
 
-public record InquiryDetailResponse(
+public record InquiryDetailRes(
         String resultCode,
 
         boolean isOwner,

@@ -5,7 +5,8 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 
 import java.time.LocalDateTime;
 
-public record QnaProductForSellerResponse(
+public record QnaProductRes(
+
         String code,
         CustomerServiceCategory category,
         CustomerServiceStatus status,
@@ -13,12 +14,8 @@ public record QnaProductForSellerResponse(
         Long viewCount,
         LocalDateTime createdAt,
 
-        String userName,
+        String userName
 
-        // 간단한 상품 정보
-        String productCode,
-        String name,
-
-        String imageUrl
 ) {
+
 }

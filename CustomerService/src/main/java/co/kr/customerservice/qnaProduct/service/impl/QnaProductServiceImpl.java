@@ -12,7 +12,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
-import co.kr.customerservice.qnaProduct.model.request.QnaProductUpsertRequest;
+import co.kr.customerservice.qnaProduct.model.request.QnaProductUpsertReq;
 import co.kr.customerservice.qnaProduct.model.response.*;
 import co.kr.customerservice.qnaProduct.service.QnaProductService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public QnaProductListResponse getProductQnaList(String productsCode, Pageable pageable) {
+    public QnaProductListRes getProductQnaList(String productsCode, Pageable pageable) {
 
         // productsIdx 요청
         Long productsIdx = productServiceClient.getIdxByCode(productsCode);
@@ -43,8 +43,8 @@ public class QnaProductServiceImpl implements QnaProductService {
         // productsIdx 기반 해당 상품의 qna 리스트 조회
         Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_PRODUCT,productsIdx ,pageable);
 
-        List<QnaProductResponse> result = qnaPage.stream()
-                .map(entity -> new QnaProductResponse(
+        List<QnaProductRes> result = qnaPage.stream()
+                .map(entity -> new QnaProductRes(
                         entity.getCode(),
                         entity.getCategory(),
                         entity.getStatus(),
@@ -57,7 +57,7 @@ public class QnaProductServiceImpl implements QnaProductService {
                 ) )
                 .toList();
 
-        return new QnaProductListResponse(
+        return new QnaProductListRes(
                 result
         );
 
@@ -65,7 +65,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public QnaProductDetailResponse getProductQnaDetail(String qnaCode, Long userIdx){
+    public QnaProductDetailRes getProductQnaDetail(String qnaCode, Long userIdx){
 
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
@@ -95,7 +95,7 @@ public class QnaProductServiceImpl implements QnaProductService {
     @Override
     @Transactional
     // 상품 문의 등록
-    public QnaProductDetailResponse addProductQna(String productsCode, QnaProductUpsertRequest request, Long userIdx){
+    public QnaProductDetailRes addProductQna(String productsCode, QnaProductUpsertReq request, Long userIdx){
 
         // TODO 유저 idx 기반 name 받아오기
         // 우선은 받아온 이름만 사용하는거로
@@ -140,7 +140,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     @Override
     @Transactional
-    public QnaProductDetailResponse updateQna(String qnaCode ,QnaProductUpsertRequest request, Long userIdx){
+    public QnaProductDetailRes updateQna(String qnaCode , QnaProductUpsertReq request, Long userIdx){
 
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
@@ -221,7 +221,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public QnaAndProductInfoListResponse getMyProductQnaList(Long userIdx, Pageable pageable){
+    public QnaAndProductInfoListRes getMyProductQnaList(Long userIdx, Pageable pageable){
         // 1. entity 조회
         Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType.QNA_PRODUCT,userIdx ,pageable);
 
@@ -256,7 +256,7 @@ public class QnaProductServiceImpl implements QnaProductService {
         }
 
         // 2. 반환 데이터 생성
-        List<QnaAndProductInfoResponse> result = qnaPage.stream()
+        List<QnaAndProductInfoRes> result = qnaPage.stream()
                 .map(entity -> {
                     // 위에서 가져온 상품 정보
                     ProductInfoResponse productInfo = productMap.get(entity.getProductsIdx());
@@ -265,7 +265,7 @@ public class QnaProductServiceImpl implements QnaProductService {
                     String productName = (productInfo != null) ? productInfo.name() : "없는 상품";
                     String productImg = (productInfo != null) ? productInfo.imageUrl() : "";
 
-                    return new QnaAndProductInfoResponse(
+                    return new QnaAndProductInfoRes(
                         entity.getCode(),
                         entity.getCategory(),
                         entity.getStatus(),
@@ -282,7 +282,7 @@ public class QnaProductServiceImpl implements QnaProductService {
                 .toList();
 
         // 3. 반환
-        return new QnaAndProductInfoListResponse(
+        return new QnaAndProductInfoListRes(
                 result
         );
 

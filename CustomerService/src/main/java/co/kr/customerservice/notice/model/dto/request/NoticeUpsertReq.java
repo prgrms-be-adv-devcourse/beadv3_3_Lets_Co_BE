@@ -6,7 +6,7 @@ import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 
-public record NoticeUpsertRequest(
+public record NoticeUpsertReq(
         @NotNull(message = "카테고리는 필수입니다.")
         CustomerServiceCategory category,
 

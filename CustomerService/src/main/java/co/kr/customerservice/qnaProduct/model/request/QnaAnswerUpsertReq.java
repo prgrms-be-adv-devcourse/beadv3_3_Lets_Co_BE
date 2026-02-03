@@ -3,7 +3,7 @@ package co.kr.customerservice.qnaProduct.model.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record QnaAnswerUpsertRequest(
+public record QnaAnswerUpsertReq(
 
         // 필수로 받아야 하나?
         @Size(max = 50)

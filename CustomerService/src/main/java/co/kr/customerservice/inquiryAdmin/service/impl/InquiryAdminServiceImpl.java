@@ -9,9 +9,9 @@ import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.inquiryAdmin.mapper.InquiryMapper;
 import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDTO;
-import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryListRes;
 import co.kr.customerservice.inquiryAdmin.service.InquiryAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,7 +32,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public InquiryListResponse getInquiryList(Pageable pageable){
+    public InquiryListRes getInquiryList(Pageable pageable){
 
         Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_ADMIN, pageable);
 
@@ -47,7 +47,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 ) )
                 .toList();
 
-        return new InquiryListResponse(
+        return new InquiryListRes(
                 "success",
                 result
         );
@@ -56,7 +56,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     // 문의 생성
     @Override
     @Transactional
-    public InquiryDetailResponse addInquiry(Long userId, InquiryUpsertRequest request){
+    public InquiryDetailRes addInquiry(Long userId, InquiryUpsertReq request){
         // 2. 새로운 entity 객체 생성
         CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
                 .code(UUID.randomUUID().toString())
@@ -99,7 +99,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     // 문의 상세 보기
     @Override
     @Transactional(readOnly = true)
-    public InquiryDetailResponse getInquiryDetail(Long userId, String inquiryCode){
+    public InquiryDetailRes getInquiryDetail(Long userId, String inquiryCode){
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 문의입니다."));
@@ -130,7 +130,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     // 문의 내용 수정
     @Override
     @Transactional
-    public InquiryDetailResponse updateInquiry(Long userId,String inquiryCode, InquiryUpsertRequest request){
+    public InquiryDetailRes updateInquiry(Long userId, String inquiryCode, InquiryUpsertReq request){
 
         // 1. 엔티티 조회
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
@@ -226,7 +226,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     // 본인 문의 내역 목록 조회
     @Override
     @Transactional
-    public InquiryListResponse getMyInquiryList(Long userId, Pageable pageable){
+    public InquiryListRes getMyInquiryList(Long userId, Pageable pageable){
 
         Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType.QNA_ADMIN,userId ,pageable);
 
@@ -241,7 +241,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
                 ) )
                 .toList();
 
-        return new InquiryListResponse(
+        return new InquiryListRes(
                 "success",
                 result
         );

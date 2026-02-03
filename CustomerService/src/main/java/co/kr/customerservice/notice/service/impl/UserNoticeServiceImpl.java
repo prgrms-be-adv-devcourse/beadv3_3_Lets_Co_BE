@@ -5,9 +5,9 @@ import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
-import co.kr.customerservice.notice.model.dto.response.NoticeDetailResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeListResponse;
-import co.kr.customerservice.notice.model.dto.response.NoticeResponse;
+import co.kr.customerservice.notice.model.dto.response.NoticeDetailRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
+import co.kr.customerservice.notice.model.dto.response.NoticeRes;
 import co.kr.customerservice.notice.service.UserNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,14 +27,14 @@ public class UserNoticeServiceImpl implements UserNoticeService {
 
     @Override
     @Transactional(readOnly = true)
-    public NoticeListResponse getNoticeList(Pageable pageable){
+    public NoticeListRes getNoticeList(Pageable pageable){
 
         // 1. NOTICE 타입 데이터 검색
         Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
 
         // 2. Page > List
-        List<NoticeResponse> result = noticeEntityPage.stream()
-                .map(doc -> new NoticeResponse(
+        List<NoticeRes> result = noticeEntityPage.stream()
+                .map(doc -> new NoticeRes(
 
                         doc.getIdx(),
                         doc.getCode(),
@@ -50,7 +50,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
                 ))
                 .toList();
 
-        return new NoticeListResponse(
+        return new NoticeListRes(
                 "success",
                 result
         );
@@ -58,7 +58,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
 
     @Override
     @Transactional(readOnly = true)
-    public NoticeDetailResponse getNoticeDetail(String noticeCode){
+    public NoticeDetailRes getNoticeDetail(String noticeCode){
 
         // entity 조회 및 유효성 검사
         CustomerServiceEntity noticeEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
@@ -71,7 +71,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
                 .orElseThrow(() -> new IllegalArgumentException("존재 하지 않는 공지입니다."));
 
         // 반환, 한 번 밖에 안 쓰일거 같아서 mapper처리 x
-        return new NoticeDetailResponse(
+        return new NoticeDetailRes(
                 "success",
                 noticeEntity.getCategory(),
                 noticeEntity.getTitle(),

@@ -4,18 +4,18 @@ import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDTO;
 import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDetailDTO;
-import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
+import co.kr.customerservice.inquiryAdmin.model.dto.response.InquiryDetailRes;
 
 import java.util.List;
 
 public class InquiryMapper {
-    public static InquiryDetailResponse toDetailResponse(
+    public static InquiryDetailRes toDetailResponse(
             String resultCode,
             boolean isOwner,
             CustomerServiceEntity csEntity,
             List<CustomerServiceDetailEntity> csDetailEntities
     ){
-        return new InquiryDetailResponse(
+        return new InquiryDetailRes(
                 resultCode,
                 isOwner,
                 new InquiryDTO(

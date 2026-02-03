@@ -1,15 +1,12 @@
 package co.kr.costomerservice.qnaProduct.model.request;
 
-import co.kr.costomerservice.common.vo.CustomerServiceCategory;
+import co.kr.costomerservice.common.model.vo.CustomerServiceCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record QnaProductUpsertRequest(
-
-        @Positive(message = "유효하지 않은 상품 ID입니다.")
-        Long productsIdx,
 
         @NotNull(message = "카테고리는 필수입니다.")
         CustomerServiceCategory category,

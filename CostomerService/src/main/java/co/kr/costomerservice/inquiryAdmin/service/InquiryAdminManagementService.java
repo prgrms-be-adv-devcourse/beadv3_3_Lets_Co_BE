@@ -1,11 +1,11 @@
 package co.kr.costomerservice.inquiryAdmin.service;
 
-import co.kr.costomerservice.common.dto.response.ResultResponse;
-import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryAnswerDeleteRequest;
-import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryAnswerUpsertRequest;
-import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryUpsertRequest;
-import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryDetailResponse;
-import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryListResponse;
+import co.kr.costomerservice.common.model.dto.response.ResultResponse;
+import co.kr.costomerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteRequest;
+import co.kr.costomerservice.inquiryAdmin.model.dto.request.InquiryAnswerUpsertRequest;
+import co.kr.costomerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
+import co.kr.costomerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
+import co.kr.costomerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface InquiryAdminManagementService {

@@ -1,14 +1,14 @@
 package co.kr.costomerservice.notice.service.impl;
 
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.costomerservice.notice.model.dto.response.NoticeDetailResponse;
 import co.kr.costomerservice.notice.model.dto.response.NoticeListResponse;
 import co.kr.costomerservice.notice.model.dto.response.NoticeResponse;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
 import co.kr.costomerservice.notice.service.UserNoticeService;
-import co.kr.costomerservice.common.vo.CustomerServiceType;
+import co.kr.costomerservice.common.model.vo.CustomerServiceType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

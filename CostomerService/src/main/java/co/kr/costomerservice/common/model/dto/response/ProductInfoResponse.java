@@ -1,4 +1,4 @@
-package co.kr.costomerservice.common.dto.response;
+package co.kr.costomerservice.common.model.dto.response;
 
 public record ProductInfoResponse(
         Long productIdx,

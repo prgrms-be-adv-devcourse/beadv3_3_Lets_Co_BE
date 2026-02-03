@@ -1,7 +1,7 @@
 package co.kr.costomerservice.common.repository;
 
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -4,7 +4,7 @@ package co.kr.costomerservice.notice.controller;
 import co.kr.costomerservice.notice.model.dto.request.NoticeUpsertRequest;
 import co.kr.costomerservice.notice.model.dto.response.AdminNoticeDetailResponse;
 import co.kr.costomerservice.notice.model.dto.response.NoticeListResponse;
-import co.kr.costomerservice.common.dto.response.ResultResponse;
+import co.kr.costomerservice.common.model.dto.response.ResultResponse;
 import co.kr.costomerservice.notice.service.AdminNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -27,9 +27,10 @@ public class AdminNoticeController {
     @PostMapping
     public ResponseEntity<AdminNoticeDetailResponse> addNotice(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
-            @RequestBody NoticeUpsertRequest request){
-        return ResponseEntity.ok(
+            @RequestBody NoticeUpsertRequest request
+    ){
 
+        return ResponseEntity.ok(
                 adminNoticeService.addNotice(usersIdx,request)
         );
     }

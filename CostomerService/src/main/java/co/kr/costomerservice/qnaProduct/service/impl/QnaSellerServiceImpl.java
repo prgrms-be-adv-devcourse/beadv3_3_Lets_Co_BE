@@ -3,15 +3,15 @@ package co.kr.costomerservice.qnaProduct.service.impl;
 
 import co.kr.costomerservice.client.AuthServiceClient;
 import co.kr.costomerservice.client.ProductServiceClient;
-import co.kr.costomerservice.common.dto.request.ProductIdxsRequest;
-import co.kr.costomerservice.common.dto.response.ProductInfoResponse;
-import co.kr.costomerservice.common.dto.response.ProductSellerResponse;
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.dto.request.ProductIdxsRequest;
+import co.kr.costomerservice.common.model.dto.response.ProductInfoResponse;
+import co.kr.costomerservice.common.model.dto.response.ProductSellerResponse;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
-import co.kr.costomerservice.common.vo.CustomerServiceStatus;
-import co.kr.costomerservice.common.vo.CustomerServiceType;
+import co.kr.costomerservice.common.model.vo.CustomerServiceStatus;
+import co.kr.costomerservice.common.model.vo.CustomerServiceType;
 import co.kr.costomerservice.qnaProduct.mapper.QnaMapper;
 import co.kr.costomerservice.qnaProduct.model.request.QnaAnswerUpsertRequest;
 import co.kr.costomerservice.qnaProduct.model.response.*;
@@ -111,7 +111,6 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
         // 5. 반환
         return new QnaAndProductInfoListResponse(
-                "success",
                 result
         );
 
@@ -169,7 +168,6 @@ public class QnaSellerServiceImpl implements QnaSellerService {
         qnaDetailEntity.add(requestDetailEntity);
 
         return QnaMapper.toDetail(
-                "success",
                 questionEntity,
                 qnaDetailEntity
         );

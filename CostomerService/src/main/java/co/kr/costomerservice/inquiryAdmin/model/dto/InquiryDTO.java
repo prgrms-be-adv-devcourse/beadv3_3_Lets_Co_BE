@@ -1,7 +1,7 @@
-package co.kr.costomerservice.inquiryAdmin.dto;
+package co.kr.costomerservice.inquiryAdmin.model.dto;
 
-import co.kr.costomerservice.common.vo.CustomerServiceCategory;
-import co.kr.costomerservice.common.vo.CustomerServiceStatus;
+import co.kr.costomerservice.common.model.vo.CustomerServiceCategory;
+import co.kr.costomerservice.common.model.vo.CustomerServiceStatus;
 
 import java.time.LocalDateTime;
 

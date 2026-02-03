@@ -1,7 +1,7 @@
 package co.kr.costomerservice.qnaProduct.mapper;
 
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.costomerservice.qnaProduct.model.QnaProductDetailDTO;
 import co.kr.costomerservice.qnaProduct.model.QnaProductQuestionDTO;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductDetailResponse;
@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 public class QnaMapper {
 
     public static QnaProductDetailResponse toDetail(
-            String resultCode,
             CustomerServiceEntity csEntity,
             List<CustomerServiceDetailEntity> csDetailEntities) {
 
@@ -23,7 +22,6 @@ public class QnaMapper {
                         CustomerServiceDetailEntity::getDetailCode
                 ));
         return new QnaProductDetailResponse(
-                resultCode,
                 new QnaProductQuestionDTO(
                         csEntity.getCode(),
                         csEntity.getCategory(),

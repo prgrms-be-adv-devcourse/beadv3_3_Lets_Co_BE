@@ -1,8 +1,8 @@
-package co.kr.costomerservice.common.entity;
+package co.kr.costomerservice.common.model.entity;
 
-import co.kr.costomerservice.common.vo.CustomerServiceCategory;
-import co.kr.costomerservice.common.vo.CustomerServiceStatus;
-import co.kr.costomerservice.common.vo.CustomerServiceType;
+import co.kr.costomerservice.common.model.vo.CustomerServiceCategory;
+import co.kr.costomerservice.common.model.vo.CustomerServiceStatus;
+import co.kr.costomerservice.common.model.vo.CustomerServiceType;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;

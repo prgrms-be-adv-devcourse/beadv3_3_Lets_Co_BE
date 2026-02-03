@@ -1,7 +1,6 @@
 package co.kr.costomerservice.qnaProduct.controller;
 
-import co.kr.costomerservice.common.dto.response.ResultResponse;
-import co.kr.costomerservice.qnaProduct.model.request.QnaProductListRequest;
+import co.kr.costomerservice.common.model.dto.response.ResultResponse;
 import co.kr.costomerservice.qnaProduct.model.request.QnaProductUpsertRequest;
 import co.kr.costomerservice.qnaProduct.model.response.QnaAndProductInfoListResponse;
 import co.kr.costomerservice.qnaProduct.model.response.QnaProductDetailResponse;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/qna/products")
+@RequestMapping("/qna")
 public class QnaProductController {
 
     private final QnaProductService qnaProductService;
@@ -23,19 +22,17 @@ public class QnaProductController {
     /**
      * 공개되어 있는 qna 리스트 조회
      * @param pageable
-     * @param request
+     * @param
      * @return
      */
-    @GetMapping("/{productsCode}")
+    @GetMapping("/products/{productsCode}")
     public ResponseEntity<QnaProductListResponse> getProductQnaList(
             @PageableDefault Pageable pageable,
-            //@PathVariable("productsCode") String productsCode
-            @RequestBody QnaProductListRequest request
+            @PathVariable("productsCode") String productsCode
             ){
-        // 상품 상세 페이지에서 상품 idx를 들고있기에 RequestBody로 idx를 받아오는 방법을 택함
-        // 이는 후에 문제가 있다고 판단되면 product 서비스에 요청을 보내서 idx 받아오는 방법으로 고쳐볼것
 
-        return ResponseEntity.ok(qnaProductService.getProductQnaList(request.productsIdx(), pageable));
+        return ResponseEntity.ok(
+                qnaProductService.getProductQnaList(productsCode, pageable));
     }
 
 
@@ -44,27 +41,33 @@ public class QnaProductController {
      * @param qnaCode
      * @return
      */
-    @GetMapping("/{productsCode}/{qnaCode}")
+    @GetMapping("/{qnaCode}")
     public ResponseEntity<QnaProductDetailResponse> getProductQnaDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             //@PathVariable("productsCode") String productsCode,
             @PathVariable("qnaCode") String qnaCode
     ){
-        return ResponseEntity.ok(qnaProductService.getProductQnaDetail(qnaCode,usersIdx ));
+
+        return ResponseEntity.ok(
+                qnaProductService.getProductQnaDetail(qnaCode,usersIdx ));
     }
 
 
-    @PostMapping("/{productsCode}")
+    // 상품 문의 추가
+    @PostMapping("/products/{productsCode}")
     public ResponseEntity<QnaProductDetailResponse> addProductQna(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
 
-            //@PathVariable("productsCode") String productsCode
+            @PathVariable("productsCode") String productsCode,
             @RequestBody QnaProductUpsertRequest request
     ){
-        return  ResponseEntity.ok(qnaProductService.addProductQna(request,usersIdx));
+
+        return  ResponseEntity.ok(
+                qnaProductService.addProductQna(productsCode,request,usersIdx));
     }
 
-    @PutMapping("/{productsCode}/{qnaCode}")
+    // 상품문의 수정
+    @PutMapping("/{qnaCode}")
     public ResponseEntity<QnaProductDetailResponse> updateQna(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             //@PathVariable("productsCode") String productsCode
@@ -72,15 +75,18 @@ public class QnaProductController {
             @RequestBody QnaProductUpsertRequest request
     ){
 
-        return  ResponseEntity.ok(qnaProductService.updateQna(qnaCode ,request,usersIdx ));
+        return  ResponseEntity.ok(
+                qnaProductService.updateQna(qnaCode ,request,usersIdx ));
     }
 
-    @DeleteMapping("/{productsCode}/{qnaCode}")
+    // 상품 문의 제거
+    @DeleteMapping("/{qnaCode}")
     public ResponseEntity<ResultResponse> deleteQna(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("qnaCode") String qnaCode
     ){
-        return  ResponseEntity.ok(qnaProductService.deleteQna(qnaCode,usersIdx ));
+        return  ResponseEntity.ok(
+                qnaProductService.deleteQna(qnaCode,usersIdx ));
     }
 
     // 본인 문의 내역 조회
@@ -89,6 +95,7 @@ public class QnaProductController {
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
     ){
-        return ResponseEntity.ok(qnaProductService.getMyProductQnaList(usersIdx, pageable ));
+        return ResponseEntity.ok(
+                qnaProductService.getMyProductQnaList(usersIdx, pageable ));
     }
 }

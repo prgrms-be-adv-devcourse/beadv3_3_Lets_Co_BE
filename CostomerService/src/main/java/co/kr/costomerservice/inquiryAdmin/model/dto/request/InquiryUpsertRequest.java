@@ -1,6 +1,6 @@
-package co.kr.costomerservice.inquiryAdmin.dto.request;
+package co.kr.costomerservice.inquiryAdmin.model.dto.request;
 
-import co.kr.costomerservice.common.vo.CustomerServiceCategory;
+import co.kr.costomerservice.common.model.vo.CustomerServiceCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

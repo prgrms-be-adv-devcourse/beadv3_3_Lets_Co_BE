@@ -2,15 +2,15 @@ package co.kr.costomerservice.qnaProduct.service.impl;
 
 
 import co.kr.costomerservice.client.ProductServiceClient;
-import co.kr.costomerservice.common.dto.request.ProductIdxsRequest;
-import co.kr.costomerservice.common.dto.response.ProductInfoResponse;
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.dto.request.ProductIdxsRequest;
+import co.kr.costomerservice.common.model.dto.response.ProductInfoResponse;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
-import co.kr.costomerservice.common.dto.response.ResultResponse;
-import co.kr.costomerservice.common.vo.CustomerServiceStatus;
-import co.kr.costomerservice.common.vo.CustomerServiceType;
+import co.kr.costomerservice.common.model.dto.response.ResultResponse;
+import co.kr.costomerservice.common.model.vo.CustomerServiceStatus;
+import co.kr.costomerservice.common.model.vo.CustomerServiceType;
 import co.kr.costomerservice.qnaProduct.mapper.QnaMapper;
 import co.kr.costomerservice.qnaProduct.model.request.QnaProductUpsertRequest;
 import co.kr.costomerservice.qnaProduct.model.response.*;
@@ -35,10 +35,13 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public QnaProductListResponse getProductQnaList(Long productsIDX, Pageable pageable) {
+    public QnaProductListResponse getProductQnaList(String productsCode, Pageable pageable) {
 
+        // productsIdx 요청
+        Long productsIdx = productServiceClient.getIdxByCode(productsCode);
 
-        Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_PRODUCT,productsIDX ,pageable);
+        // productsIdx 기반 해당 상품의 qna 리스트 조회
+        Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_PRODUCT,productsIdx ,pageable);
 
         List<QnaProductResponse> result = qnaPage.stream()
                 .map(entity -> new QnaProductResponse(
@@ -55,7 +58,6 @@ public class QnaProductServiceImpl implements QnaProductService {
                 .toList();
 
         return new QnaProductListResponse(
-                "success",
                 result
         );
 
@@ -83,7 +85,6 @@ public class QnaProductServiceImpl implements QnaProductService {
         List<CustomerServiceDetailEntity> qnaDetailEntity = customerServiceDetailRepository.findAllByCustomerServiceAndDelFalse(questionEntity);
 
         return QnaMapper.toDetail(
-                "success",
                 questionEntity,
                 qnaDetailEntity
         );
@@ -94,11 +95,13 @@ public class QnaProductServiceImpl implements QnaProductService {
     @Override
     @Transactional
     // 상품 문의 등록
-    public QnaProductDetailResponse addProductQna(QnaProductUpsertRequest request, Long userIdx){
+    public QnaProductDetailResponse addProductQna(String productsCode, QnaProductUpsertRequest request, Long userIdx){
 
         // TODO 유저 idx 기반 name 받아오기
         // 우선은 받아온 이름만 사용하는거로
-
+        
+        // 1. productsIdx 요청
+        Long ProductsIdx = productServiceClient.getIdxByCode(productsCode);
 
         // 2. new entity 생성
         CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
@@ -111,7 +114,7 @@ public class QnaProductServiceImpl implements QnaProductService {
                 .isPinned(false)
                 .usersIdx(userIdx)
                 .username(request.name())
-                .productsIdx(request.productsIdx())
+                .productsIdx(ProductsIdx)
                 .build();
 
         // 2.1 저장
@@ -130,7 +133,6 @@ public class QnaProductServiceImpl implements QnaProductService {
         customerServiceDetailRepository.save(requestDetailEntity);
 
         return QnaMapper.toDetail(
-                "success",
                 requestEntity,
                 List.of(requestDetailEntity)
         );
@@ -180,7 +182,6 @@ public class QnaProductServiceImpl implements QnaProductService {
         willUpdate.update(request.content());
 
         return QnaMapper.toDetail(
-                "success",
                 questionEntity,
                 qnaDetailEntity
         );
@@ -282,7 +283,6 @@ public class QnaProductServiceImpl implements QnaProductService {
 
         // 3. 반환
         return new QnaAndProductInfoListResponse(
-                "success",
                 result
         );
 

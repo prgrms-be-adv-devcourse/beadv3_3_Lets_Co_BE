@@ -1,7 +1,7 @@
 package co.kr.costomerservice.notice.model.dto.request;
 
-import co.kr.costomerservice.common.vo.CustomerServiceCategory;
-import co.kr.costomerservice.common.vo.CustomerServiceStatus;
+import co.kr.costomerservice.common.model.vo.CustomerServiceCategory;
+import co.kr.costomerservice.common.model.vo.CustomerServiceStatus;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;

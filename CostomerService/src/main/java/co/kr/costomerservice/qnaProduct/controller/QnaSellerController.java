@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/seller/product_qna")
+@RequestMapping("/seller/qna")
 public class QnaSellerController {
     private final QnaSellerService qnaSellerService;
 
@@ -25,17 +25,22 @@ public class QnaSellerController {
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PageableDefault Pageable pageable
             ){
-        return ResponseEntity.ok(qnaSellerService.getMyQnaList(usersIdx, pageable));
+
+        return ResponseEntity.ok(
+                qnaSellerService.getMyQnaList(usersIdx, pageable));
 
     }
 
+    // 본인 상품에 온 문의에 대한 답변
     @PostMapping("/{qnaCode}")
     public ResponseEntity<QnaProductDetailResponse> addAnswer(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("qnaCode") String qnaCode,
             @RequestBody QnaAnswerUpsertRequest request
             ){
-        return ResponseEntity.ok(qnaSellerService.addAnswer(qnaCode,usersIdx, request));
+
+        return ResponseEntity.ok(
+                qnaSellerService.addAnswer(qnaCode,usersIdx, request));
     }
 
 }

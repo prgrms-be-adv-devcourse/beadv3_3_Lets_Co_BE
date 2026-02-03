@@ -1,4 +1,4 @@
-package co.kr.costomerservice.inquiryAdmin.dto.request;
+package co.kr.costomerservice.inquiryAdmin.model.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

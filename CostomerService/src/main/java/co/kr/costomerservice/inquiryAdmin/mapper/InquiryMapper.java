@@ -1,10 +1,10 @@
 package co.kr.costomerservice.inquiryAdmin.mapper;
 
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
-import co.kr.costomerservice.inquiryAdmin.dto.InquiryDTO;
-import co.kr.costomerservice.inquiryAdmin.dto.InquiryDetailDTO;
-import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryDetailResponse;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
+import co.kr.costomerservice.inquiryAdmin.model.dto.InquiryDTO;
+import co.kr.costomerservice.inquiryAdmin.model.dto.InquiryDetailDTO;
+import co.kr.costomerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
 
 import java.util.List;
 

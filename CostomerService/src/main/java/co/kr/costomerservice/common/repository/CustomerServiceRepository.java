@@ -1,8 +1,8 @@
 package co.kr.costomerservice.common.repository;
 
 
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
-import co.kr.costomerservice.common.vo.CustomerServiceType;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.vo.CustomerServiceType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

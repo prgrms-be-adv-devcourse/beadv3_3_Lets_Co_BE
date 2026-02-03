@@ -6,7 +6,6 @@ import co.kr.costomerservice.qnaProduct.model.QnaProductQuestionDTO;
 import java.util.List;
 
 public record QnaProductDetailResponse(
-        String resultCode,
 
         QnaProductQuestionDTO questionDTO,
 

@@ -1,4 +1,4 @@
-package co.kr.costomerservice.inquiryAdmin.dto;
+package co.kr.costomerservice.inquiryAdmin.model.dto;
 
 import java.time.LocalDateTime;
 

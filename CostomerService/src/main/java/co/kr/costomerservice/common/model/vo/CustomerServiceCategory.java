@@ -1,4 +1,4 @@
-package co.kr.costomerservice.common.vo;
+package co.kr.costomerservice.common.model.vo;
 
 public enum CustomerServiceCategory {
     ORDER,      //주문

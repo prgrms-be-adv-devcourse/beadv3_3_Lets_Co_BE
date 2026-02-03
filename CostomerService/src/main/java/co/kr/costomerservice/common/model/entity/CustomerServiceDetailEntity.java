@@ -1,4 +1,4 @@
-package co.kr.costomerservice.common.entity;
+package co.kr.costomerservice.common.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Builder;

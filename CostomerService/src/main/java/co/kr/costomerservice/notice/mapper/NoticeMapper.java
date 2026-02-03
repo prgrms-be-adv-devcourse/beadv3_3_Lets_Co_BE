@@ -1,7 +1,7 @@
 package co.kr.costomerservice.notice.mapper;
 
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.costomerservice.notice.model.dto.response.AdminNoticeDetailResponse;
 
 public class NoticeMapper {

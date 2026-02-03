@@ -1,16 +1,16 @@
 package co.kr.costomerservice.inquiryAdmin.service.impl;
 
-import co.kr.costomerservice.common.entity.CustomerServiceDetailEntity;
-import co.kr.costomerservice.common.entity.CustomerServiceEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceDetailEntity;
+import co.kr.costomerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.costomerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.costomerservice.common.repository.CustomerServiceRepository;
-import co.kr.costomerservice.common.dto.response.ResultResponse;
-import co.kr.costomerservice.common.vo.CustomerServiceStatus;
-import co.kr.costomerservice.common.vo.CustomerServiceType;
-import co.kr.costomerservice.inquiryAdmin.dto.InquiryDTO;
-import co.kr.costomerservice.inquiryAdmin.dto.request.InquiryUpsertRequest;
-import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryDetailResponse;
-import co.kr.costomerservice.inquiryAdmin.dto.response.InquiryListResponse;
+import co.kr.costomerservice.common.model.dto.response.ResultResponse;
+import co.kr.costomerservice.common.model.vo.CustomerServiceStatus;
+import co.kr.costomerservice.common.model.vo.CustomerServiceType;
+import co.kr.costomerservice.inquiryAdmin.model.dto.InquiryDTO;
+import co.kr.costomerservice.inquiryAdmin.model.dto.request.InquiryUpsertRequest;
+import co.kr.costomerservice.inquiryAdmin.model.dto.response.InquiryDetailResponse;
+import co.kr.costomerservice.inquiryAdmin.model.dto.response.InquiryListResponse;
 import co.kr.costomerservice.inquiryAdmin.mapper.InquiryMapper;
 import co.kr.costomerservice.inquiryAdmin.service.InquiryAdminService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service

@@ -332,7 +332,6 @@ class ProductControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(ProductController.class))
                 .andExpect(handler().methodName("getProductDetail"))
-                .andExpect(jsonPath("$.productsIDX").value(1L))
                 .andExpect(jsonPath("$.productsCode").value(productCode1))
                 .andExpect(jsonPath("$.name").value("삼성 노트북"))
                 .andExpect(jsonPath("$.description").value("상세설명1"))

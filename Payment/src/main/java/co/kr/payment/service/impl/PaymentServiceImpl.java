@@ -7,7 +7,6 @@ import co.kr.payment.exception.PaymentFailedException;
 import co.kr.payment.mapper.PaymentMapper;
 import co.kr.payment.model.dto.request.ChargeRequest;
 import co.kr.payment.model.dto.request.PaymentRequest;
-import co.kr.payment.model.dto.request.PaymentTossConfirmRequest;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.model.entity.PaymentEntity;
 import co.kr.payment.model.vo.PaymentStatus;
@@ -44,6 +43,9 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${custom.payments.toss.secrets}")
     private String tossPaymentSecrets;
 
+    @Value("${custom.payments.toss.confirm-secrets}")
+    private String tossPaymentConfirmSecrets;
+
     @Value("${custom.payments.toss.confirm-url}")
     private String tossPaymentConfirmUrl;
 
@@ -51,29 +53,33 @@ public class PaymentServiceImpl implements PaymentService {
     private String tossPaymentCancelUrl;
 
     /**
-     * 결제 처리 (process와 동일)
+     * 결제 수단별 결제 처리 (통합)
+     * - CARD: 카드 결제 (연동없이 기록만 저장)
+     * - DEPOSIT: 예치금 결제 (User 서비스 연동)
+     * - TOSS_PAY: 토스페이먼츠 결제 승인
      */
     @Override
     @Transactional
     public PaymentResponse process(Long userIdx, PaymentRequest request) {
-        return pay(userIdx, request);
-    }
-
-    /**
-     * 결제 수단별 결제 처리
-     * - CARD: 카드 결제 (연동없이 기록만 저장)
-     * - DEPOSIT: 예치금 결제 (User 서비스 연동)
-     * - TOSS_PAY: 토스페이먼츠는 /payment/toss/confirm 엔드포인트 사용
-     */
-    @Override
-    @Transactional
-    public PaymentResponse pay(Long userIdx, PaymentRequest request) {
         return switch (request.paymentType()) {
             case CARD -> handleCardPayment(userIdx, request.orderCode(), request.ordersIdx(), request.amount());
             case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), request.ordersIdx(), request.amount());
-            case TOSS_PAY -> throw new IllegalArgumentException(
-                    "TOSS_PAY는 별도로 요청합니다."
-            );
+            case TOSS_PAY -> {
+                if (request.paymentKey() == null || request.paymentKey().isBlank()) {
+                    throw new IllegalArgumentException("TOSS_PAY 결제 시 paymentKey는 필수입니다.");
+                }
+                Long ordersIdx = request.ordersIdx();
+                // 수동 테스트용 fallback: ordersIdx가 없으면 Order 서비스에서 조회
+                // 실제 운영 흐름에서는 Order 서비스가 ordersIdx를 포함하여 호출하므로 이 분기에 진입하지 않음
+                if (ordersIdx == null && request.orderCode() != null) {
+                    Map<String, Object> orderResponse = orderClient.getOrder(request.orderCode(), userIdx);
+                    Map<String, Object> data = (Map<String, Object>) orderResponse.get("data");
+                    if (data != null && data.get("ordersIdx") != null) {
+                        ordersIdx = ((Number) data.get("ordersIdx")).longValue();
+                    }
+                }
+                yield handleTossPayPayment(userIdx, request.orderCode(), ordersIdx, request.paymentKey(), request.amount());
+            }
         };
     }
 
@@ -143,22 +149,6 @@ public class PaymentServiceImpl implements PaymentService {
         orderClient.updateOrderStatus(orderCode, "REFUNDED");
 
         return PaymentMapper.toResponse(refundPayment);
-    }
-
-    /**
-     * 토스페이먼츠 결제 승인 처리
-     * - 클라이언트에서 받은 paymentKey와 amount로 토스 API에 승인 요청
-     */
-    @Override
-    @Transactional
-    public PaymentResponse confirmTossPayment(Long userIdx, PaymentTossConfirmRequest request) {
-        return handleTossPayPayment(
-                userIdx,
-                request.orderCode(),
-                request.ordersIdx(),
-                request.paymentKey(),
-                request.amount()
-        );
     }
 
     /**
@@ -250,7 +240,7 @@ public class PaymentServiceImpl implements PaymentService {
     private void sendTossConfirm(String orderCode, String paymentKey, BigDecimal amount) {
         try {
             String authorization = "Basic " + Base64.getEncoder()
-                    .encodeToString((tossPaymentSecrets + ":").getBytes(StandardCharsets.UTF_8));
+                    .encodeToString((tossPaymentConfirmSecrets + ":").getBytes(StandardCharsets.UTF_8));
             Map<String, Object> payload = Map.of(
                     "paymentKey", paymentKey,
                     "orderId", orderCode,

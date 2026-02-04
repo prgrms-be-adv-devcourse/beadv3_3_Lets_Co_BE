@@ -3,7 +3,6 @@ package co.kr.payment.controller;
 import co.kr.payment.model.dto.request.ChargeRequest;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.model.dto.request.PaymentRequest;
-import co.kr.payment.model.dto.request.PaymentTossConfirmRequest;
 import co.kr.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,30 +21,6 @@ public class PaymentApiController {
             @RequestBody PaymentRequest request
     ) {
         return ResponseEntity.ok(paymentService.process(userIdx, request));
-    }
-
-    @PostMapping("/card")
-    public ResponseEntity<PaymentResponse> cardPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody PaymentRequest request
-    ) {
-        return ResponseEntity.ok(paymentService.pay(userIdx, request));
-    }
-
-    @PostMapping("/deposit")
-    public ResponseEntity<PaymentResponse> depositPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody PaymentRequest request
-    ) {
-        return ResponseEntity.ok(paymentService.pay(userIdx, request));
-    }
-
-    @PostMapping("/toss/confirm")
-    public ResponseEntity<PaymentResponse> confirmTossPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody PaymentTossConfirmRequest request
-    ) {
-        return ResponseEntity.ok(paymentService.confirmTossPayment(userIdx, request));
     }
 
     @PostMapping("/refund")

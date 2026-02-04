@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "http://localhost:8081", allowedHeaders = "*")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/orders")
@@ -120,7 +121,7 @@ public class OrderController {
      * 주문 상태 변경 (Payment에서 호출)
      * - 결제 완료/환불 시 Order 상태를 변경
      */
-    @PatchMapping("/{orderCode}/status")
+    @PostMapping("/{orderCode}/status")
     public ResponseEntity<BaseResponse<Void>> updateOrderStatus(
             @PathVariable String orderCode,
             @RequestParam String status

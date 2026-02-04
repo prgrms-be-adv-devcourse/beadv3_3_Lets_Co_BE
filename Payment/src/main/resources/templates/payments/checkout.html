@@ -11,8 +11,18 @@
 <div class="box_section" style="padding: 40px 30px 50px 30px; margin-top: 30px; margin-bottom: 50px">
     <div id="payment-method"></div>
     <div id="agreement"></div>
-    <div class="result wrapper">
-        <button class="button" id="payment-button" style="margin-top: 30px">
+    <div class="result wrapper" style="margin-top: 30px">
+        <button id="payment-button" style="
+            padding: 11px 22px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3282f6;
+            color: #f9fcff;
+            font-weight: 600;
+            font-size: 17px;
+            cursor: pointer;
+            width: 100%;
+        ">
             결제하기
         </button>
     </div>
@@ -35,7 +45,7 @@
         const tossPayments = TossPayments(clientKey);
 
         const widgets = tossPayments.widgets({
-            "customerKey": accountCode,
+            "customerKey": "JkMzRlPQ9lUQBiMvYR9ve",
         });
 
         await widgets.setAmount(amount);
@@ -47,33 +57,13 @@
         await widgets.renderAgreement({selector: "#agreement", variantKey: "AGREEMENT"});
 
         button.addEventListener("click", async function () {
-            const cartItems = [[ ${description.items} ]];
-            const cartItemCodes = cartItems.map(cartItem => cartItem.code);
 
-            await fetch("/orders" , {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    cartItemCodes
-                }),
+            widgets.requestPayment({
+                orderId: "ORD_DEMO_013", //테스트 할 임시 Order_Code 삽입
+                orderName: "테스트 상품", 
+                successUrl: window.location.origin + "/payment/view/payments/success",
+                failUrl: window.location.origin + "/payment/view/payments/fail",
             })
-            .then(response => response.json())
-            .then(data => {
-
-                widgets.requestPayment({
-                    orderId: data.data.orderCode,
-                    orderName: data.data.orderItems[0].productName,
-                    successUrl: window.location.origin + "/payment/view/payments/success",
-                    failUrl: window.location.origin + "/payment/view/payments/fail",
-                })
-
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            }
-            )
 
         });
     }

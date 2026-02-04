@@ -105,31 +105,16 @@ public class OrderServiceImpl implements OrderService {
                 .build();
         orderItemRepository.save(itemEntity);
 
-        PaymentResponse pay;
-        if (!request.paymentType().equals(PaymentType.TOSS_PAY)) {
-            // 일반 결제 (CARD, DEPOSIT 등) 처리
-            pay = paymentClient.processPayment(
-                    userIdx,
-                    new PaymentRequest(
-                            orderCode,
-                            orderEntity.getId(),
-                            request.paymentType(),
-                            amount
-                    )
-            );
-        }
-        else {
-            // TOSS_PAY 처리
-            pay = paymentClient.confirmTossPayment(
-                    userIdx,
-                    new PaymentTossConfirmRequest(
-                            orderCode,
-                            orderEntity.getId(),
-                            request.tossKey(),
-                            amount
-                    )
-            );
-        }
+        PaymentResponse pay = paymentClient.processPayment(
+                userIdx,
+                new PaymentRequest(
+                        orderCode,
+                        orderEntity.getId(),
+                        request.paymentType(),
+                        amount,
+                        request.tossKey() // CARD/DEPOSIT은 null, TOSS_PAY는 paymentKey
+                )
+        );
 
         saveSettlementHistory(productInfo.sellerIdx(), pay.paymentIdx(), amount);
 
@@ -172,6 +157,7 @@ public class OrderServiceImpl implements OrderService {
         );
 
         return new OrderResponse(
+                orderEntity.getId(),
                 List.of(itemInfo),
                 orderEntity.getOrderCode(),
                 amount
@@ -307,30 +293,16 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(orderEntity);
 
         // 결제 처리
-        PaymentResponse pay;
-        if (request.paymentType() == PaymentType.TOSS_PAY) {
-            // TOSS_PAY
-            pay = paymentClient.confirmTossPayment(
-                    userIdx,
-                    new PaymentTossConfirmRequest(
-                            orderCode,
-                            orderEntity.getId(),
-                            request.tossKey(),
-                            itemsAmount
-                    )
-            );
-        } else {
-            // 일반 결제
-            pay = paymentClient.processPayment(
-                    userIdx,
-                    new PaymentRequest(
-                            orderCode,
-                            orderEntity.getId(),
-                            request.paymentType(),
-                            itemsAmount
-                    )
-            );
-        }
+        PaymentResponse pay = paymentClient.processPayment(
+                userIdx,
+                new PaymentRequest(
+                        orderCode,
+                        orderEntity.getId(),
+                        request.paymentType(),
+                        itemsAmount,
+                        request.tossKey() // CARD/DEPOSIT은 null, TOSS_PAY는 paymentKey
+                )
+        );
 
         orderEntity.setStatus(OrderStatus.PAID);
         orderRepository.saveAndFlush(orderEntity);  // 즉시반영
@@ -362,6 +334,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return new OrderResponse(
+                orderEntity.getId(),
                 responseList,
                 orderEntity.getOrderCode(),
                 itemsAmount);
@@ -424,6 +397,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             return new OrderResponse(
+                    orderEntity.getId(),
                     responseItemList,
                     orderEntity.getOrderCode(),
                     itemsAmount
@@ -460,6 +434,7 @@ public class OrderServiceImpl implements OrderService {
 
         responseOrderList.add(
                 new OrderResponse(
+                        orderEntity.getId(),
                         responseItemList,
                         orderEntity.getOrderCode(),
                         itemsAmount
@@ -499,6 +474,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return new OrderResponse(
+                orderEntity.getId(),
                 responseItemList,
                 orderEntity.getOrderCode(),
                 itemsAmount

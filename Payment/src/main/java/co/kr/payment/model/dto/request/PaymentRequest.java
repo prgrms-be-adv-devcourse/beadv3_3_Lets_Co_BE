@@ -18,5 +18,8 @@ public record PaymentRequest(
         PaymentType paymentType,
 
         @NotNull(message = "결제 금액은 필수입니다.")
-        BigDecimal amount
+        BigDecimal amount,
+
+        // TOSS_PAY일 때만 사용, CARD/DEPOSIT은 null
+        String paymentKey
 ) {}

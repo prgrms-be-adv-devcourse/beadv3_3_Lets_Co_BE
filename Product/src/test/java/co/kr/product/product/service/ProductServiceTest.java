@@ -6,9 +6,7 @@ import co.kr.product.product.model.dto.response.ProductDetailRes;
 import co.kr.product.product.model.dto.response.ProductInfoToOrderRes;
 import co.kr.product.product.model.vo.ProductStatus;
 import co.kr.product.product.model.entity.ProductEntity;
-import co.kr.product.product.model.entity.ProductImageEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
-import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.impl.ProductServiceImpl;
@@ -40,7 +38,6 @@ import static org.mockito.Mockito.*;
 class ProductServiceTest {
 
     @Mock ProductRepository productRepository;
-    @Mock ProductImageRepository productImageRepository;
     @Mock ProductOptionRepository productOptionRepository;
 
     // 테스트 대상 서비스 주입
@@ -99,11 +96,7 @@ class ProductServiceTest {
     @DisplayName("상품 상세 조회 성공 - 조회수 증가 및 데이터 반환 확인")
     void 상품_상세_조회() {
 
-        // Given
-        // 가짜 이미지 리스트
-        List<ProductImageEntity> images = List.of(
-                ProductImageEntity.builder().url("img1.jpg").sortOrders(1).isThumbnail(true).build()
-        );
+
 
         // 가짜 옵션 리스트
         List<ProductOptionEntity> options = List.of(option1, option2);
@@ -112,8 +105,6 @@ class ProductServiceTest {
         given(productRepository.findByProductsCodeAndDelFalse(productCode))
                 .willReturn(Optional.of(product));
 
-        given(productImageRepository.findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(product))
-                .willReturn(images);
 
         given(productOptionRepository.findByProductAndDelFalseOrderBySortOrdersAsc(product))
                 .willReturn(options);
@@ -127,9 +118,6 @@ class ProductServiceTest {
         // 조회수가 0에서 1로 증가했는지 검증
         assertThat(response.viewCount()).isEqualTo(1L);
 
-        // 이미지가 잘 매핑되었는지
-        assertThat(response.images()).hasSize(1);
-        assertThat(response.images().get(0).url()).isEqualTo("img1.jpg");
 
 
         /*
@@ -141,7 +129,6 @@ class ProductServiceTest {
 
         // "상품/이미지 조회 repository는 정확히 1번 호출되어야 해"
         verify(productRepository, times(1)).findByProductsCodeAndDelFalse(productCode);
-        verify(productImageRepository, times(1)).findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(any());
 
         // "옵션 조회도 최소 1번은 호출되어야 해" (1번 이상이면 통과)
         verify(productOptionRepository, atLeastOnce()).findByProductAndDelFalseOrderBySortOrdersAsc(any());
@@ -149,12 +136,8 @@ class ProductServiceTest {
         // "삭제(Delete) 관련 메서드는 절대 호출되면 안 돼!"
         verify(productRepository, never()).delete(any());
 
-        // "반드시 상품을 먼저 조회하고, 그 다음에 이미지를 조회해야 해" (inOrder 안에 순서 바뀌어도 됨)
-        InOrder inOrder = inOrder(productRepository, productImageRepository);
-
         // 여기부터 순서 틀리면 에러
-        inOrder.verify(productRepository).findByProductsCodeAndDelFalse(productCode);
-        inOrder.verify(productImageRepository).findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(any());
+        verify(productRepository).findByProductsCodeAndDelFalse(productCode);
 
         // "위에서 검증한 것들 외에, productRepository를 몰래 더 건드린 거 없어?"
         verifyNoMoreInteractions(productRepository);

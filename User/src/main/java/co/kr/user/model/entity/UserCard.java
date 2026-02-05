@@ -34,7 +34,7 @@ public class UserCard {
     @Column(name = "Card_Token", nullable = false, length = 512)
     private String cardToken;
 
-    @Column(name = "Exp_Month", nullable = false, columnDefinition = "TINYINT")
+    @Column(name = "Exp_Month", nullable = false, columnDefinition = "TINYINT UNSIGNED")
     private int expMonth;
 
     @Column(name = "Exp_Year", nullable = false, columnDefinition = "SMALLINT UNSIGNED")

@@ -133,7 +133,7 @@ public class UserServiceImpl implements UserService {
         // 탈퇴용 인증번호 생성 및 저장
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(users.getUsersIdx())
-                .purPose(UsersVerificationsPurPose.DELETE_ACCOUNT) // 목적: 회원 탈퇴
+                .purpose(UsersVerificationsPurPose.DELETE_ACCOUNT) // 목적: 회원 탈퇴
                 .code(randomCodeUtil.getCode())
                 .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효기간 30분
                 .status(UsersVerificationsStatus.PENDING)
@@ -227,7 +227,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 인증 목적 및 만료 시간, 코드 일치 여부 검증
-        if (verification.getPurPose() != UsersVerificationsPurPose.DELETE_ACCOUNT) {
+        if (verification.getPurpose() != UsersVerificationsPurPose.DELETE_ACCOUNT) {
             throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
         }
 

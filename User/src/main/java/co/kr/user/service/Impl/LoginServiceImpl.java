@@ -5,13 +5,16 @@ import co.kr.user.dao.UserRepository;
 import co.kr.user.model.dto.login.LoginDTO;
 import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.service.LoginService;
 import co.kr.user.util.BCryptUtil;
+import co.kr.user.util.CookieUtil;
 import co.kr.user.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
 
 /**
  * 로그인 및 로그아웃 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -21,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LoginServiceImpl implements LoginService {
     private final UserRepository userRepository;
-    private final UsersLoginRepository usersLoginRepository;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private final BCryptUtil bCryptUtil; // 비밀번호 검증 유틸리티
     private final JWTUtil jwtUtil; // JWT 생성 및 검증 유틸리티
@@ -68,29 +72,22 @@ public class LoginServiceImpl implements LoginService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 로그인 성공 처리 (DTO 생성)
-        LoginDTO loginDTO = new LoginDTO();
-
-        // Access Token 생성 (유효기간 짧음, 인증용)
+        // 3. 토큰 생성
         String accessToken = jwtUtil.createAccessToken(users.getUsersIdx(), users.getCreatedAt(), users.getUpdatedAt());
-        // Refresh Token 생성 (유효기간 김, 갱신용)
         String refreshToken = jwtUtil.createRefreshToken(users.getUsersIdx());
 
+        // 4. Redis에 Refresh Token 저장 (RT:userIdx)
+        // Key는 RT:유저식별자, 만료 시간은 7일로 설정합니다.
+        redisTemplate.opsForValue().set(
+                "RT:" + users.getUsersIdx(),
+                refreshToken
+        );
+
+        LoginDTO loginDTO = new LoginDTO();
         loginDTO.setAccessToken(accessToken);
         loginDTO.setRefreshToken(refreshToken);
 
-        // Refresh Token DB 저장 (로그아웃 처리 및 토큰 탈취 대응을 위함)
-        UsersLogin usersLogin = UsersLogin.builder()
-                .usersIdx(users.getUsersIdx())
-                .token(refreshToken)
-                .lastUsedAt(null)
-                .build();
-
-        usersLoginRepository.save(usersLogin);
-
-        // 로그인 성공 상태 업데이트 (실패 횟수 초기화 등)
         users.completeLogin();
-
         return loginDTO;
     }
 
@@ -101,15 +98,24 @@ public class LoginServiceImpl implements LoginService {
      * @param refreshToken 클라이언트 쿠키에 저장되어 있던 Refresh Token
      * @return 로그아웃 결과 메시지
      */
+// LoginServiceImpl.java 수정 제안
     @Override
     @Transactional
     public String logout(String refreshToken) {
-        return usersLoginRepository.findFirstByTokenOrderByLoginIdxDesc(refreshToken)
-                .map(loginRecord -> {
-                    // 해당 토큰 레코드를 찾아 로그아웃 상태(Revoked)로 변경
-                    loginRecord.logout();
-                    return "로그아웃 되었습니다.";
-                })
-                .orElseThrow(() -> new IllegalArgumentException("로그아웃에 실패했습니다. 유효하지 않은 토큰입니다."));
+        if (refreshToken == null) {
+            throw new IllegalArgumentException("로그아웃할 토큰이 없습니다.");
+        }
+
+        // 1. 토큰에서 사용자 식별자 추출 (RT 삭제를 위함)
+        String userIdx = jwtUtil.getRefreshTokenClaims(refreshToken).getSubject();
+
+        // 2. Redis의 RT(Refresh Token) 삭제
+        redisTemplate.delete("RT:" + userIdx);
+
+        // 3. Redis의 BL(Blacklist)에 해당 refreshToken 영구 저장
+        // TTL을 설정하지 않아 영구 보관됩니다.
+        redisTemplate.opsForValue().set("BL:" + refreshToken, "logout");
+
+        return "로그아웃 되었습니다.";
     }
 }

@@ -82,7 +82,7 @@ public class SellerServiceImpl implements SellerService {
         // 인증 코드 생성 및 저장 (목적: SELLER_SIGNUP)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(users.getUsersIdx())
-                .purPose(UsersVerificationsPurPose.SELLER_SIGNUP)
+                .purpose(UsersVerificationsPurPose.SELLER_SIGNUP)
                 .code(randomCodeUtil.getCode())
                 .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효기간 30분
                 .status(UsersVerificationsStatus.PENDING)
@@ -183,7 +183,7 @@ public class SellerServiceImpl implements SellerService {
         }
 
         // 인증 목적, 만료 시간, 코드 일치 여부 검증
-        if (verification.getPurPose() != UsersVerificationsPurPose.SELLER_SIGNUP) {
+        if (verification.getPurpose() != UsersVerificationsPurPose.SELLER_SIGNUP) {
             throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
         }
 

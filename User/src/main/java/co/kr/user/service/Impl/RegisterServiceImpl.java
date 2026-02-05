@@ -107,7 +107,7 @@ public class RegisterServiceImpl implements RegisterService {
         // 인증 코드 생성 및 저장 (목적: SIGNUP)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(savedUser.getUsersIdx())
-                .purPose(UsersVerificationsPurPose.SIGNUP)
+                .purpose(UsersVerificationsPurPose.SIGNUP)
                 .code(randomCodeUtil.getCode())
                 .expiresAt(LocalDateTime.now().plusMinutes(30))
                 .status(UsersVerificationsStatus.PENDING)
@@ -192,7 +192,7 @@ public class RegisterServiceImpl implements RegisterService {
             return "인증 시간이 만료되었습니다.";
         }
 
-        if (usersVerifications.getPurPose() != UsersVerificationsPurPose.SIGNUP) {
+        if (usersVerifications.getPurpose() != UsersVerificationsPurPose.SIGNUP) {
             throw new IllegalArgumentException("회원가입 인증 코드가 아닙니다.");
         }
 

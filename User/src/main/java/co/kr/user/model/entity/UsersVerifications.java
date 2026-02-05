@@ -26,7 +26,7 @@ public class UsersVerifications {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "Purpose", length = 20)
-    private UsersVerificationsPurPose purPose;
+    private UsersVerificationsPurPose purpose;
 
     @Column(name = "Code", length = 32)
     private String code;
@@ -34,10 +34,10 @@ public class UsersVerifications {
     @Column(name = "Created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "Expires_at", insertable = false, updatable = false)
+    @Column(name = "Expires_at")
     private LocalDateTime expiresAt;
 
-    @Column(name = "Verified_at", insertable = false, updatable = false)
+    @Column(name = "Verified_at", insertable = false)
     private LocalDateTime verifiedAt;
 
     @Enumerated(EnumType.STRING)
@@ -48,9 +48,9 @@ public class UsersVerifications {
     private int del;
 
     @Builder
-    public UsersVerifications(Long usersIdx, UsersVerificationsPurPose purPose, String code, LocalDateTime expiresAt, UsersVerificationsStatus status) {
+    public UsersVerifications(Long usersIdx, UsersVerificationsPurPose purpose, String code, LocalDateTime expiresAt, UsersVerificationsStatus status) {
         this.usersIdx = usersIdx;
-        this.purPose = purPose;
+        this.purpose = purpose;
         this.code = code;
         this.expiresAt = expiresAt;
         this.status = status;

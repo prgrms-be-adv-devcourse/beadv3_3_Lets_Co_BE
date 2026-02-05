@@ -64,7 +64,7 @@ public class RetrieveServiceImpl implements RetrieveService {
         // 인증 코드 생성 및 DB 저장 (목적: RESET_PW)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(users.getUsersIdx())
-                .purPose(UsersVerificationsPurPose.RESET_PW)
+                .purpose(UsersVerificationsPurPose.RESET_PW)
                 .code(randomCodeUtil.getCode())
                 .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효시간 30분
                 .status(UsersVerificationsStatus.PENDING)
@@ -160,7 +160,7 @@ public class RetrieveServiceImpl implements RetrieveService {
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 인증 내역 유효성 검사 (목적, 만료 시간, 코드 일치 여부)
-        if (verification.getPurPose() != UsersVerificationsPurPose.RESET_PW) {
+        if (verification.getPurpose() != UsersVerificationsPurPose.RESET_PW) {
             throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
         }
 

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class OrderEntity {
     @Column(name = "Users_IDX", nullable = false)
     private Long userIdx;
 
-    @Column(name = "Address_IDX", nullable = false)
+    @Column(name = "Address_IDX", nullable = true)
     private Long addressIdx;
 
     @Column(name = "Card_IDX", nullable = true)
@@ -52,6 +53,7 @@ public class OrderEntity {
     private BigDecimal totalAmount;
 
     @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
     private Boolean del;
 
     @Builder

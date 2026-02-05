@@ -22,7 +22,7 @@ public class CartController {
     /*
      * @param servletRequest : userIdx
      * @param request : productIdx와 optionIdx
-     * 장바구니에 단일상품 추가 (장바구니 페이지에서 상품 + 클릭)
+     * 장바구니에 단일상품 추가, 상품 수량 추가
      */
     @PostMapping("/add")
     public ResponseEntity<BaseResponse<CartItemResponse>> addCartItem(
@@ -42,7 +42,7 @@ public class CartController {
     /*
      * @param servletRequest : userIdx
      * @param request : productIdx와 optionIdx
-     * 장바구니 페이지에서 상품 - 클릭
+     * 장바구니 페이지에서 상품 수량 감소
      */
     @PostMapping("/subtract")
     public ResponseEntity<BaseResponse<CartItemResponse>> subtractCartItem(
@@ -76,13 +76,16 @@ public class CartController {
 
         return ResponseEntity.ok(body);
     }
+/*
 
-    /*
+    */
+/*
      * @param servletRequest : userIdx
      * @param request : productIdx와 optionIdx
      * 장바구니에 담겨 있는 단일 상품 정보 조회
-     */
-    @GetMapping("/item")
+     *//*
+
+    @PostMapping("/item")
     public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
             HttpServletRequest servletRequest,
             @Valid @RequestBody ProductRequest request
@@ -96,6 +99,7 @@ public class CartController {
 
         return ResponseEntity.ok(body);
     }
+*/
 
     /*
      * @param servletRequest : userIdx

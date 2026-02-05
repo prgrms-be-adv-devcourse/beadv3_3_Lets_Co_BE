@@ -1,5 +1,6 @@
 package co.kr.order.controller;
 
+import co.kr.order.model.dto.request.ChargeRequest;
 import co.kr.order.model.dto.request.OrderCartRequest;
 import co.kr.order.model.dto.request.OrderDirectRequest;
 import co.kr.order.model.dto.response.BaseResponse;
@@ -21,10 +22,6 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    /*
-     * @param servletRequest : userIdx
-     * @param request : productIdx, optionIdx, quantity
-     */
     @PostMapping
     public ResponseEntity<BaseResponse<OrderResponse>> directOrder (
             HttpServletRequest servletRequest,
@@ -40,10 +37,6 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-    /*
-     * @param servletRequest : userIdx
-     * @param request : productIdx, optionIdx, quantity
-     */
     @PostMapping("/cart")
     public ResponseEntity<BaseResponse<OrderResponse>> cartOrder (
             HttpServletRequest servletRequest,
@@ -60,7 +53,7 @@ public class OrderController {
     }
 
     @PostMapping("/refund/{orderCode}")
-    public ResponseEntity<BaseResponse<String>> refund(
+    public ResponseEntity<BaseResponse<String>> refund (
             @PathVariable("orderCode") String orderCode,
             HttpServletRequest servletRequest
     ) {
@@ -103,8 +96,24 @@ public class OrderController {
         return ResponseEntity.ok(body);
     }
 
+
+    @PostMapping("/deposit")
+    public ResponseEntity<BaseResponse<String>> charge (
+            HttpServletRequest servletRequest,
+            @Valid @RequestBody ChargeRequest request
+    ) {
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        String msg = orderService.charge(userIdx, request);
+        BaseResponse<String> body = new BaseResponse<>("ok", msg);
+
+        return ResponseEntity.ok(body);
+    }
+
+
     /**
-     * 주문 완료 처리 (배송 완료 후 호출)
+     * 주문 완료 처리 (배송 완료 후 호출) (일단 보류)
      * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
      * - 주문 상태를 COMPLETED로 변경하고 정산 생성
      *

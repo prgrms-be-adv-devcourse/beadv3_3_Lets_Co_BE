@@ -4,7 +4,6 @@ kind: Deployment
 
 metadata:
   name: customerservice-service
-  namespace: msa-project
   labels:
     app: customerservice-service
 
@@ -50,6 +49,12 @@ spec:
                 key: DB_PASSWORD 
 
           - name: ZIPKIN_ENDPOINT
+            valueFrom: 
+              secretKeyRef:
+                name: zipkin-secret
+                key: ZIPKIN_ENDPOINT 
+
+          - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
             valueFrom: 
               secretKeyRef:
                 name: zipkin-secret

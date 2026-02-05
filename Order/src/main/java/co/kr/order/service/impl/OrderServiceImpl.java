@@ -2,26 +2,23 @@ package co.kr.order.service.impl;
 
 import co.kr.order.client.ProductClient;
 import co.kr.order.client.UserClient;
-import co.kr.order.exception.*;
+import co.kr.order.exception.ErrorCode;
+import co.kr.order.exception.OrderNotFoundException;
+import co.kr.order.exception.OutOfStockException;
+import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.model.dto.DeductStock;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.UserData;
 import co.kr.order.model.dto.request.*;
 import co.kr.order.model.dto.response.OrderItemResponse;
 import co.kr.order.model.dto.response.OrderResponse;
 import co.kr.order.model.dto.response.PaymentResponse;
-import co.kr.order.model.entity.CartEntity;
-import co.kr.order.model.entity.OrderEntity;
-import co.kr.order.model.entity.OrderItemEntity;
-import co.kr.order.model.entity.SettlementHistoryEntity;
+import co.kr.order.model.entity.*;
 import co.kr.order.model.vo.OrderStatus;
+import co.kr.order.model.vo.PaymentStatus;
 import co.kr.order.model.vo.PaymentType;
 import co.kr.order.model.vo.SettlementType;
-import co.kr.order.repository.CartJpaRepository;
-import co.kr.order.repository.OrderItemJpaRepository;
-import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.repository.SettlementRepository;
+import co.kr.order.repository.*;
 import co.kr.order.service.OrderService;
 import co.kr.order.service.SettlementService;
 import feign.FeignException;
@@ -41,6 +38,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderJpaRepository orderRepository;
     private final OrderItemJpaRepository orderItemRepository;
     private final CartJpaRepository cartRepository;
+    private final PaymentJpaRepository paymentRepository;
 
     private final PaymentServiceImpl paymentService;
 
@@ -54,9 +52,9 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse directOrder(Long userIdx, OrderDirectRequest request) {
 
         // 주소 데이터 있는지 확인
-        if (request.userData().addressInfo() == null) {
-            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
-        }
+//        if (request.userData().addressInfo() == null) {
+//            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
+//        }
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ProductInfo productInfo;
@@ -74,8 +72,8 @@ public class OrderServiceImpl implements OrderService {
         // 가격*수량 해서 총 가격 측정
         BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(request.orderItem().quantity()));
 
-        // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인
-        UserData userData = userClient.getUserData(userIdx, request.userData());
+        // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인 (나중에)
+//        UserData userData = userClient.getUserData(userIdx, request.userData());
 
         // orderCode 생성
         String orderCode = UUID.randomUUID().toString();
@@ -83,8 +81,8 @@ public class OrderServiceImpl implements OrderService {
         // Order Table 세팅
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
-                .addressIdx(userData.addressInfo().addressIdx())
-                .cardIdx(userData.cardInfo().cardIdx())
+//                .addressIdx(userData.addressInfo().addressIdx())
+//                .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(orderCode)
                 .status(OrderStatus.CREATED)
                 .itemsAmount(amount)
@@ -171,6 +169,7 @@ public class OrderServiceImpl implements OrderService {
 
         return new OrderResponse(
                 List.of(itemInfo),
+                orderEntity.getOrderCode(),
                 amount
         );
     }
@@ -179,19 +178,19 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse cartOrder(Long userIdx, OrderCartRequest request) {
 
-        UserData userData = userClient.getUserData(userIdx, request.userData());
-
-        if (request.userData().addressInfo() == null) {
-            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
-        }
+//        UserData userData = userClient.getUserData(userIdx, request.userData());
+//
+//        if (request.userData().addressInfo() == null) {
+//            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
+//        }
 
         String orderCode = UUID.randomUUID().toString();
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
-                .addressIdx(userData.addressInfo().addressIdx())
-                .cardIdx(userData.cardInfo().cardIdx())
+//                .addressIdx(userData.addressInfo().addressIdx())
+//                .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(orderCode)
                 .status(OrderStatus.CREATED)
                 .itemsAmount(itemsAmount)
@@ -352,7 +351,10 @@ public class OrderServiceImpl implements OrderService {
             throw e;
         }
 
-        return new OrderResponse(responseList, itemsAmount);
+        return new OrderResponse(
+                responseList,
+                orderEntity.getOrderCode(),
+                itemsAmount);
     }
 
 
@@ -414,6 +416,7 @@ public class OrderServiceImpl implements OrderService {
             responseOrderList.add(
                     new OrderResponse(
                             responseItemList,
+                            orderEntity.getOrderCode(),
                             itemsAmount
                     )
             );
@@ -452,14 +455,43 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        return new OrderResponse(responseItemList, itemsAmount);
+        return new OrderResponse(
+                responseItemList,
+                orderEntity.getOrderCode(),
+                itemsAmount
+        );
     }
 
+    @Override
+    public String charge(Long userIdx, ChargeRequest request) {
+
+        if(request.paymentType().equals(PaymentType.DEPOSIT)) {
+            return "예치금으로 충전할 수 없습니다.";
+        }
+
+
+        // 결제하는 로직 (토스)
+
+        PaymentEntity payment = PaymentEntity.builder()
+                .usersIdx(userIdx)
+                .status(PaymentStatus.CHARGE)
+                .type(request.paymentType())
+                .amount(request.amount())
+                .paymentKey(UUID.randomUUID().toString())
+                .build();
+        paymentRepository.save(payment);
+
+        return "정상적으로 처리되었습니다.";
+    }
+
+
+
+
+
     /**
-     * 주문 완료 처리
+     * 주문 완료 처리 (일단 보류)
      * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
      * - 주문 상태를 COMPLETED로 변경
-     * - 정산 생성
      *
      * @param orderId 주문 ID
      */
@@ -479,8 +511,5 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
         log.info("주문 완료 처리: orderId={}", orderId);
-
-        // 4. 정산 생성
-        settlementService.createSettlement(orderId);
     }
 }

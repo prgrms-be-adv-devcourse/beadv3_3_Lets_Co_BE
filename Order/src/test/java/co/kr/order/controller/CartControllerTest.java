@@ -1,7 +1,6 @@
 package co.kr.order.controller;
 
 import co.kr.order.client.ProductClient;
-import co.kr.order.client.UserClient;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.request.ProductRequest;
 import co.kr.order.model.entity.CartEntity;
@@ -37,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class CartControllerTest {
 
-    @MockitoBean UserClient userClient;
     @MockitoBean ProductClient productClient;
 
     @Autowired MockMvc mvc;

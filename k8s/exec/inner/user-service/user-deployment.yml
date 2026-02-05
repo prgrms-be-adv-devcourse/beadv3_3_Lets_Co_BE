@@ -4,7 +4,6 @@ kind: Deployment
 
 metadata:
   name: user-service
-  namespace: msa-project
   labels:
     app: user-service
 
@@ -54,6 +53,12 @@ spec:
                 secretKeyRef:
                   name: zipkin-secret
                   key: ZIPKIN_ENDPOINT
+
+            - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
+              valueFrom: 
+                secretKeyRef:
+                  name: zipkin-secret
+                  key: ZIPKIN_ENDPOINT 
 
             - name: MAIL_HOST
               valueFrom:

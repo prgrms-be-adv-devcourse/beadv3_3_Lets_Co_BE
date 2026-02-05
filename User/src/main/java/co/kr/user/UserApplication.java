@@ -9,9 +9,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableJpaAuditing
 @SpringBootApplication
 public class UserApplication {
-
+ 
     public static void main(String[] args) {
         SpringApplication.run(UserApplication.class, args);
     }
 
-}
+}   

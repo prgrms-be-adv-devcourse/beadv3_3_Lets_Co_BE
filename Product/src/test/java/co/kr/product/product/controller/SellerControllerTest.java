@@ -1,11 +1,12 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.product.dto.request.ProductListRequest;
-import co.kr.product.product.dto.request.UpsertProductRequest;
-import co.kr.product.product.dto.response.ProductDetailResponse;
-import co.kr.product.product.dto.response.ProductListResponse;
-import co.kr.product.product.dto.response.ProductResponse;
-import co.kr.product.product.dto.vo.ProductStatus;
+import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.model.dto.request.ProductListReq;
+import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.ProductListRes;
+import co.kr.product.product.model.dto.response.ProductRes;
+import co.kr.product.product.model.vo.ProductStatus;
 import co.kr.product.product.service.ProductManagerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -48,13 +49,12 @@ class SellerControllerTest {
      * Given 데이터 추가
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
      */
-    ProductResponse product1 = new ProductResponse(
-            100L, productCode1, "판매자 상품 1",
+    ProductRes product1 = new ProductRes(
+            productCode1, "판매자 상품 1",
             new BigDecimal("50000.00"), new BigDecimal("45000.00"), 10L
     );
 
-    UpsertProductRequest createReq = new UpsertProductRequest(
-            null,
+    UpsertProductReq createReq = new UpsertProductReq(
             "신규 등록 상품",
             "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"),
@@ -65,12 +65,10 @@ class SellerControllerTest {
             Collections.emptyList()
     );
 
-    ProductDetailResponse createRes = new ProductDetailResponse(
-            "ok",
-            200L, "NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
+    ProductDetailRes createRes = new ProductDetailRes("NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"), new BigDecimal("29000.00"), 0L,
             100, ProductStatus.ON_SALE,
-            Collections.emptyList(), Collections.emptyList()
+            Collections.emptyList()
     );
 
     /**
@@ -82,8 +80,8 @@ class SellerControllerTest {
     @Test
     void 판매자_상품_목록_조회() throws Exception {
         // Given
-        ProductListResponse fakeResponse = new ProductListResponse("ok", List.of(product1));
-        given(productManagerService.getListsBySeller(eq(sellerUserIdx), any(Pageable.class), any(ProductListRequest.class)))
+        ProductListRes fakeResponse = new ProductListRes( List.of(product1));
+        given(productManagerService.getListsBySeller(eq(sellerUserIdx), any(Pageable.class), any(ProductListReq.class)))
                 .willReturn(fakeResponse);
 
         // When
@@ -99,14 +97,13 @@ class SellerControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(handler().handlerType(SellerController.class))
                 .andExpect(handler().methodName("getLists"))
-                .andExpect(jsonPath("$.resultCode").value("ok"))
                 .andExpect(jsonPath("$.items[0].name").value("판매자 상품 1"));
     }
 
     @Test
     void 판매자_상품_등록() throws Exception {
         // Given
-        given(productManagerService.addProduct(eq(sellerUserIdx), any(UpsertProductRequest.class)))
+        given(productManagerService.addProduct(eq(sellerUserIdx), any(UpsertProductReq.class)))
                 .willReturn(createRes);
 
         // When
@@ -152,7 +149,7 @@ class SellerControllerTest {
     void 판매자_상품_수정() throws Exception {
         // Given
         String targetCode = "NEW_CODE_123";
-        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductRequest.class)))
+        given(productManagerService.updateProduct(eq(sellerUserIdx), eq(targetCode), any(UpsertProductReq.class), eq(UserRole.SELLER)))
                 .willReturn(createRes); // 수정된 결과 리턴
 
         // When
@@ -188,6 +185,6 @@ class SellerControllerTest {
                 .andExpect(handler().methodName("deleteProduct"))
                 .andExpect(jsonPath("$.resultCode").value("ok"));
 
-        verify(productManagerService).deleteProduct(eq(sellerUserIdx), eq(targetCode));
+        verify(productManagerService).deleteProduct(eq(sellerUserIdx), eq(targetCode), eq(UserRole.SELLER));
     }
 }

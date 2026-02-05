@@ -2,18 +2,17 @@ package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
-import co.kr.user.dao.UsersLoginRepository;
 import co.kr.user.model.dto.admin.AdminUserDetailDTO;
 import co.kr.user.model.dto.admin.AdminUserListDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
-import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AdminService;
 import co.kr.user.service.ClientService;
 import co.kr.user.util.AESUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,8 @@ public class AdminServiceImpl implements AdminService {
     private final ClientService clientService; // 권한 확인용 서비스
     private final UserInformationRepository userInformationRepository;
     private final AESUtil aesUtil; // 개인정보 복호화 유틸리티
-    private final UsersLoginRepository usersLoginRepository;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 전체 회원 목록을 조회하는 메서드입니다.
@@ -205,42 +205,33 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
 
-        log.info("1");
         UsersRole role = clientService.getRole(users.getUsersIdx());
 
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
-        log.info("2");
 
         // 정지 날짜 유효성 검사
         if (lockedUntil.isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("정지 해제 일시는 현재 시간보다 이후여야 합니다.");
         }
-        log.info("3");
 
         Users userData = userRepository.findByIdAndDel(id, 0)
                 .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
 
-        log.info("4");
         // 계정 잠금 처리
         userData.suspendUser(lockedUntil);
 
-        log.info("5");
-        // 토큰 강제 만료 처리 (로그아웃 효과)
-        UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((userData.getUsersIdx()));
+        String rtKey = "RT:" + userData.getUsersIdx();
+        String refreshToken = (String) redisTemplate.opsForValue().get(rtKey);
 
-        log.info("6");
-        if (usersLogin != null) {
-
-            log.info("7");
-            if (usersLogin.getRevokedAt() == null && usersLogin.getRevokeReason() == null) {
-
-                log.info("8");
-                usersLogin.lockToken(LocalDateTime.now(), "LOCKED");
-
-                log.info("9");
-            }
+        // 3. RT가 있을 때만 삭제 및 블랙리스트 처리
+        if (refreshToken != null) {
+            redisTemplate.delete(rtKey); // 현재 세션 강제 종료
+            redisTemplate.opsForValue().set("BL:" + refreshToken, "BLOCK_BY_ADMIN"); // 기존 토큰 사용 차단
+            log.info("유저 {}의 활성 토큰을 폐기하고 블랙리스트에 등록했습니다.", id);
+        } else {
+            log.info("유저 {}는 현재 활성화된 세션(RT)이 없습니다. 계정만 정지 처리되었습니다.", id);
         }
 
         return userData.getId() + "의 계정이 " + lockedUntil + "까지 정지되었습니다.";
@@ -279,13 +270,21 @@ public class AdminServiceImpl implements AdminService {
         // 강제 탈퇴 처리
         userData.withdrawUser();
 
-        // 토큰 폐기 처리
-        UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((userData.getUsersIdx()));
+        // 4. Redis 토큰 강제 만료 처리
+        String rtKey = "RT:" + userData.getUsersIdx();
+        String refreshToken = (String) redisTemplate.opsForValue().get(rtKey);
 
-        if (usersLogin != null) {
-            if (usersLogin.getRevokedAt() == null && usersLogin.getRevokeReason() == null) {
-                usersLogin.lockToken(LocalDateTime.now(), "LOCKED");
-            }
+        // RT가 존재하는 경우(현재 로그인 중인 경우)에만 처리
+        if (refreshToken != null) {
+            // 현재 세션 삭제 (RT 삭제)
+            redisTemplate.delete(rtKey);
+
+            // 사용했던 토큰 블랙리스트 등록 (영구 저장하여 다시는 refresh 불가하게 함)
+            redisTemplate.opsForValue().set("BL:" + refreshToken, "DELETED_BY_ADMIN");
+
+            log.info("관리자(Idx: {})에 의해 유저 {}의 계정이 삭제되었으며, 활성 토큰이 폐기되었습니다.", userIdx, id);
+        } else {
+            log.info("관리자(Idx: {})에 의해 유저 {}의 계정이 삭제되었습니다. (활성 세션 없음)", userIdx, id);
         }
 
         return userData.getId() + "의 계정이 삭제되었습니다.";

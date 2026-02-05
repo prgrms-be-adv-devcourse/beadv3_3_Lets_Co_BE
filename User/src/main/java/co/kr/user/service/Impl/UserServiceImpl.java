@@ -3,7 +3,6 @@ package co.kr.user.service.Impl;
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
 import co.kr.user.dao.UserVerificationsRepository;
-import co.kr.user.dao.UsersLoginRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
 import co.kr.user.model.dto.my.UserAmendReq;
 import co.kr.user.model.dto.my.UserDeleteDTO;
@@ -11,7 +10,6 @@ import co.kr.user.model.dto.my.UserProfileDTO;
 import co.kr.user.model.dto.my.UserDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
-import co.kr.user.model.entity.UsersLogin;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
@@ -22,6 +20,7 @@ import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -39,11 +38,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
-    private final UsersLoginRepository usersLoginRepository;
 
     private final AESUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸리티
     private final MailUtil mailUtil; // 이메일 발송 유틸리티
+
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 내 정보 조회(기본 정보) 메서드입니다.
@@ -249,15 +250,18 @@ public class UserServiceImpl implements UserService {
         // 회원 탈퇴 처리 (Del = 1)
         users.deleteUsers();
 
-        // 토큰 폐기 처리
-        UsersLogin usersLogin = usersLoginRepository.findFirstByUsersIdxOrderByLoginIdxDesc((users.getUsersIdx()));
+        // 4. Redis 토큰 강제 만료 처리
+        String rtKey = "RT:" + users.getUsersIdx();
+        String refreshToken = (String) redisTemplate.opsForValue().get(rtKey);
 
-        if (usersLogin != null) {
-            if (usersLogin.getRevokedAt() == null && usersLogin.getRevokeReason() == null) {
-                usersLogin.lockToken(LocalDateTime.now(), "LOCKED");
-            }
+        // RT가 존재하는 경우(현재 로그인 중인 경우)에만 처리
+        if (refreshToken != null) {
+            // 현재 세션 삭제 (RT 삭제)
+            redisTemplate.delete(rtKey);
+
+            // 사용했던 토큰 블랙리스트 등록 (영구 저장하여 다시는 refresh 불가하게 함)
+            redisTemplate.opsForValue().set("BL:" + refreshToken, "DELETED_BY_ADMIN");
         }
-
 
         // 2. 클라이언트 브라우저에 저장된 Access Token 쿠키를 삭제합니다.
         //    (유효 시간을 0으로 설정한 쿠키를 덮어씌워 삭제 효과를 냅니다.)

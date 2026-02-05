@@ -1,7 +1,7 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.login.LoginDTO;
-import co.kr.user.model.DTO.login.LoginReq;
+import co.kr.user.model.dto.login.LoginDTO;
+import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.service.LoginService;
 import co.kr.user.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;

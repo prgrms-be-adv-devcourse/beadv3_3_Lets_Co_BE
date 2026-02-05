@@ -1,7 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.seller.SellerRegisterDTO;
-import co.kr.user.model.DTO.seller.SellerRegisterReq;
+import co.kr.user.model.dto.seller.SellerRegisterDTO;
+import co.kr.user.model.dto.seller.SellerRegisterReq;
 
 /**
  * 판매자(Seller) 등록 및 관리 비즈니스 로직을 정의하는 인터페이스입니다.

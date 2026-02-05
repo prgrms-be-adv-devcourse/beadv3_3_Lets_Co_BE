@@ -1,7 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.Payment.PaymentReq;
-import co.kr.user.model.DTO.Payment.PaymentListDTO;
+import co.kr.user.model.dto.Payment.PaymentReq;
+import co.kr.user.model.dto.Payment.PaymentListDTO;
 
 import java.util.List;
 

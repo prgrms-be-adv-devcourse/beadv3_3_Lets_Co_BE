@@ -1,7 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.address.AddressListDTO;
-import co.kr.user.model.DTO.address.AddressRequestReq;
+import co.kr.user.model.dto.address.AddressListDTO;
+import co.kr.user.model.dto.address.AddressRequestReq;
 
 import java.util.List;
 

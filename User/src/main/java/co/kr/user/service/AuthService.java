@@ -1,6 +1,6 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.auth.TokenDto;
+import co.kr.user.model.dto.auth.TokenDto;
 import co.kr.user.model.vo.UsersRole;
 
 /**
@@ -9,15 +9,6 @@ import co.kr.user.model.vo.UsersRole;
  * 구현체: AuthServiceImpl
  */
 public interface AuthService {
-
-    /**
-     * 사용자 권한 조회 메서드 정의입니다.
-     * 특정 사용자의 현재 권한(Role)을 확인합니다. (예: USER, SELLER, ADMIN)
-     *
-     * @param userIdx 사용자 고유 식별자
-     * @return 사용자 권한 (UsersRole Enum)
-     */
-    UsersRole getRole(Long userIdx);
 
     /**
      * 토큰 재발급(Refresh) 메서드 정의입니다.

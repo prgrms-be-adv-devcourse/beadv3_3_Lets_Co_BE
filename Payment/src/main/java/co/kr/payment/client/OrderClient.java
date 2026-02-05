@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
-@FeignClient(name = "Order")
+@FeignClient(name = "ORDER-SERVICE", path = "/client/orders")
 public interface OrderClient {
 
-    @PostMapping("/orders/{orderCode}/status")
+    @PostMapping("/{orderCode}/status")
     void updateOrderStatus(
             @PathVariable String orderCode,
             @RequestParam String status

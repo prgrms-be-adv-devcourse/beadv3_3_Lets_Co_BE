@@ -300,9 +300,7 @@ public class OrderServiceImpl implements OrderService {
                         request.tossKey() // CARD/DEPOSIT은 null, TOSS_PAY는 paymentKey
                 )
         );
-
         orderEntity.setStatus(OrderStatus.PAID);
-        orderRepository.saveAndFlush(orderEntity);  // 즉시반영
 
         // 판매자별 정산 내역 저장 (Loop)
         for (Map.Entry<Long, BigDecimal> entry : sellerAmountMap.entrySet()) {
@@ -331,9 +329,12 @@ public class OrderServiceImpl implements OrderService {
                         new ClientRefundReq(userIdx, orderCode)
                 );
             }
+            orderEntity.setStatus(OrderStatus.REFUNDED);
 
             throw e;
         }
+
+        orderRepository.save(orderEntity);
 
         return new OrderRes(
                 orderEntity.getId(),
@@ -365,6 +366,7 @@ public class OrderServiceImpl implements OrderService {
         );
 
         orderEntity.setStatus(OrderStatus.REFUNDED);
+        orderRepository.save(orderEntity);
 
         return "환불처리가 완료 되었습니다.";
     }

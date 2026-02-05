@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:8081", allowedHeaders = "*")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/orders")
@@ -56,8 +55,8 @@ public class OrderController {
 
     @PostMapping("/refund/{orderCode}")
     public ResponseEntity<BaseResponse<String>> refund (
-            @PathVariable("orderCode") String orderCode,
-            HttpServletRequest servletRequest
+            HttpServletRequest servletRequest,
+            @PathVariable("orderCode") String orderCode
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");

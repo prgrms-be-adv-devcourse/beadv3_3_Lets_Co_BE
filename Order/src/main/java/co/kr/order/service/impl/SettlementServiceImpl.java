@@ -42,16 +42,17 @@ public class SettlementServiceImpl implements SettlementService {
      */
     @Override
     @Transactional
-    public void createSettlement(Long orderId) {
+    public void createSettlement(Long orderIdx) {
 
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
+        OrderEntity order = orderRepository.findById(orderIdx)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderIdx=" + orderIdx));
 
-        ClientPaymentRes payment = paymentClient.findByOrdersIdx(orderId);
+        // 페인 클라이언트 통신은 try ~ catch 해주는게 좋음
+        ClientPaymentRes payment = paymentClient.getPayment(orderIdx);
 
         List<OrderItemEntity> orderItems = order.getOrderItems();
         if (orderItems.isEmpty()) {
-            log.warn("주문 상품이 없습니다. orderId={}", orderId);
+            log.warn("주문 상품이 없습니다. orderIdx={}", orderIdx);
             return;
         }
 

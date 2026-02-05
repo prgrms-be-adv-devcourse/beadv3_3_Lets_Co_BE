@@ -27,7 +27,7 @@ import java.util.*;
  * DB에 Cart 테이블 전부 삭제 예정 (Redis로 처리)
  * 로직 전부 바뀔 예정
  */
- @Service
+@Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 

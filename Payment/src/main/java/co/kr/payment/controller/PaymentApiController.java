@@ -1,8 +1,9 @@
 package co.kr.payment.controller;
 
-import co.kr.payment.model.dto.request.ChargeRequest;
+import co.kr.payment.model.dto.request.ChargeReq;
+import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
-import co.kr.payment.model.dto.request.PaymentRequest;
+import co.kr.payment.model.dto.request.PaymentReq;
 import co.kr.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,33 +11,30 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/payments")
+@RequestMapping("/client/payments")
 public class PaymentApiController {
 
     private final PaymentService paymentService;
 
     @PostMapping("/process")
     public ResponseEntity<PaymentResponse> processPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody PaymentRequest request
+            @RequestBody PaymentReq request
     ) {
-        return ResponseEntity.ok(paymentService.process(userIdx, request));
+        return ResponseEntity.ok(paymentService.process(request));
     }
 
     @PostMapping("/refund")
     public ResponseEntity<PaymentResponse> refundPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestParam String orderCode
+            @RequestBody RefundReq request
     ) {
-        return ResponseEntity.ok(paymentService.refund(userIdx, orderCode));
+        return ResponseEntity.ok(paymentService.refund(request));
     }
 
     @PostMapping("/charge")
     public ResponseEntity<PaymentResponse> charge(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody ChargeRequest request
+            @RequestBody ChargeReq request
     ) {
-        return ResponseEntity.ok(paymentService.charge(userIdx, request));
+        return ResponseEntity.ok(paymentService.charge(request));
     }
 
     @GetMapping("/order/{ordersIdx}")

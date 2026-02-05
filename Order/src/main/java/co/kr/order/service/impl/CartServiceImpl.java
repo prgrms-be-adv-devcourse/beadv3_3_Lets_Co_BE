@@ -6,10 +6,10 @@ import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.mapper.CartMapper;
 import co.kr.order.model.dto.ItemInfo;
-import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.request.ProductRequest;
-import co.kr.order.model.dto.response.CartItemResponse;
-import co.kr.order.model.dto.response.CartResponse;
+import co.kr.order.model.dto.response.ClientProductRes;
+import co.kr.order.model.dto.request.ClientProductReq;
+import co.kr.order.model.dto.response.CartItemRes;
+import co.kr.order.model.dto.response.CartRes;
 import co.kr.order.model.entity.CartEntity;
 import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.service.CartService;
@@ -34,12 +34,12 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional
-    public CartItemResponse addCartItem(Long userIdx, ProductRequest request) {
+    public CartItemRes addCartItem(Long userIdx, ClientProductReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo productInfo;
+        ClientProductRes clientProductRes;
         try {
-            productInfo = productClient.getProduct(request.productIdx(), request.optionIdx());
+            clientProductRes = productClient.getProduct(request.productIdx(), request.optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -52,7 +52,7 @@ public class CartServiceImpl implements CartService {
             // entity의 개수(quantity) 증가
             CartEntity entity = existCart.get();
             entity.plusQuantity();
-            entity.addPrice(productInfo.price());
+            entity.addPrice(clientProductRes.price());
 
             cartRepository.save(entity);
         }
@@ -64,7 +64,7 @@ public class CartServiceImpl implements CartService {
                     .productIdx(request.productIdx())
                     .optionIdx(request.optionIdx())
                     .quantity(1)
-                    .price(productInfo.price())
+                    .price(clientProductRes.price())
                     .del(false)
                     .build();
 
@@ -81,12 +81,12 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional
-    public CartItemResponse subtractCartItem(Long userIdx, ProductRequest request) {
+    public CartItemRes subtractCartItem(Long userIdx, ClientProductReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo productInfo;
+        ClientProductRes clientProductRes;
         try {
-            productInfo = productClient.getProduct(request.productIdx(), request.optionIdx());
+            clientProductRes = productClient.getProduct(request.productIdx(), request.optionIdx());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -101,7 +101,7 @@ public class CartServiceImpl implements CartService {
             // 개수(quantity)가 1 이상이면 동작하고
             if(entity.getQuantity() > 1) {
                 entity.minusQuantity();
-                entity.subtractPrice(productInfo.price());
+                entity.subtractPrice(clientProductRes.price());
                 cartRepository.save(entity);
             }
             else {
@@ -124,34 +124,34 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional(readOnly = true)
-    public CartResponse getCartList(Long userIdx) {
+    public CartRes getCartList(Long userIdx) {
 
         // useridx가 같은 entity 가져오기
         List<CartEntity> entities = cartRepository.findAllByUserIdx(userIdx);
-        List<CartItemResponse> cartList = new ArrayList<>();
+        List<CartItemRes> cartList = new ArrayList<>();
 
         // 장바구니가 비어있을 경우 바로 빈리스트 return
         if (entities.isEmpty()) {
             return CartMapper.toCartInfo(new ArrayList<>());
         }
 
-        List<ProductRequest> productList = new ArrayList<>();
+        List<ClientProductReq> productList = new ArrayList<>();
         for (CartEntity entity : entities) {
-            ProductRequest product = new ProductRequest(entity.getProductIdx(), entity.getOptionIdx());
+            ClientProductReq product = new ClientProductReq(entity.getProductIdx(), entity.getOptionIdx());
             productList.add(product);
         }
 
         // ProductInfo(상품 정보)를 가져오기 위한 Product-Service간의 동기 통신
-        List<ProductInfo> productInfos;
+        List<ClientProductRes> clientProductRespons;
         try {
-            productInfos = productClient.getProductList(productList);
+            clientProductRespons = productClient.getProductList(productList);
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 중복 방지를 위한 Map의 Key를 String(복합키)로
-        Map<String, ProductInfo> productMap = new HashMap<>();
-        for (ProductInfo info : productInfos) {
+        Map<String, ClientProductRes> productMap = new HashMap<>();
+        for (ClientProductRes info : clientProductRespons) {
             // key 생성 예: "10-1" (상품ID-옵션 내용)
             String key = info.productIdx() + "-" + info.optionIdx();
             productMap.put(key, info);
@@ -160,7 +160,7 @@ public class CartServiceImpl implements CartService {
         for (CartEntity entity : entities) {
 
             String key = entity.getProductIdx() + "-" + entity.getOptionIdx();
-            ProductInfo product = productMap.get(key);
+            ClientProductRes product = productMap.get(key);
 
             if (product == null) {
                 continue;
@@ -171,7 +171,7 @@ public class CartServiceImpl implements CartService {
             BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
 
             // 장바구니 아이템 Dto 생성
-            CartItemResponse cartItem = new CartItemResponse(
+            CartItemRes cartItem = new CartItemRes(
                     new ItemInfo(
                             product.productIdx(),
                             product.optionIdx(),
@@ -197,14 +197,14 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional(readOnly = true)
-    public CartItemResponse getCartItem(Long userIdx, ProductRequest request) {
+    public CartItemRes getCartItem(Long userIdx, ClientProductReq request) {
 
         // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
         CartEntity entity = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx())
                 .orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo product;
+        ClientProductRes product;
         try {
             product = productClient.getProduct(request.productIdx(), request.optionIdx());
         } catch (FeignException.NotFound e) {
@@ -216,7 +216,7 @@ public class CartServiceImpl implements CartService {
         BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
 
         // 응답 DTO 반환
-        return new CartItemResponse(
+        return new CartItemRes(
                 new ItemInfo(
                         product.productIdx(),
                         product.optionIdx(),
@@ -235,10 +235,10 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional
-    public void deleteCartItem(Long userIdx, ProductRequest productRequest) {
+    public void deleteCartItem(Long userIdx, ClientProductReq clientProductReq) {
 
         // 삭제할 장바구니 아이템 조회
-        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, productRequest.productIdx(), productRequest.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, clientProductReq.productIdx(), clientProductReq.optionIdx());
 
         if (existingCart.isPresent()) {
             // 상품이 존재하면 DB 데이터 삭제

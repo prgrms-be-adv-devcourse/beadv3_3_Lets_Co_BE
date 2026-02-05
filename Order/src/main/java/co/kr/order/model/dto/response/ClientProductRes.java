@@ -1,4 +1,4 @@
-package co.kr.order.model.dto;
+package co.kr.order.model.dto.response;
 
 import java.math.BigDecimal;
 
@@ -9,7 +9,7 @@ import java.math.BigDecimal;
  * @param price : 제품 가격
  * @param stock : 제품 개수
  */
-public record ProductInfo(
+public record ClientProductRes(
         Long productIdx,
         Long optionIdx,
         Long sellerIdx,

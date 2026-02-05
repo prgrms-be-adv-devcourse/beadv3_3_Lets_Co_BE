@@ -3,7 +3,7 @@ package co.kr.order.service.impl;
 import co.kr.order.client.PaymentClient;
 import co.kr.order.client.ProductClient;
 import co.kr.order.model.dto.SettlementInfo;
-import co.kr.order.model.dto.response.PaymentResponse;
+import co.kr.order.model.dto.response.ClientPaymentRes;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.entity.SettlementHistoryEntity;
@@ -47,7 +47,7 @@ public class SettlementServiceImpl implements SettlementService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. orderId=" + orderId));
 
-        PaymentResponse payment = paymentClient.findByOrdersIdx(orderId);
+        ClientPaymentRes payment = paymentClient.findByOrdersIdx(orderId);
 
         List<OrderItemEntity> orderItems = order.getOrderItems();
         if (orderItems.isEmpty()) {

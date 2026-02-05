@@ -1,18 +1,18 @@
 package co.kr.order.service;
 
-import co.kr.order.model.dto.request.OrderCartRequest;
-import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.response.OrderResponse;
+import co.kr.order.model.dto.request.OrderCartReq;
+import co.kr.order.model.dto.request.OrderDirectReq;
+import co.kr.order.model.dto.response.OrderRes;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
 
-    OrderResponse directOrder(Long userIdx, OrderDirectRequest request);
-    OrderResponse cartOrder(Long userIdx, OrderCartRequest request);
+    OrderRes directOrder(Long userIdx, OrderDirectReq request);
+    OrderRes cartOrder(Long userIdx, OrderCartReq request);
 
-    Page<OrderResponse> findOrderList(Long userIdx, Pageable pageable);
-    OrderResponse findOrder(Long userIdx, String orderCode);
+    Page<OrderRes> findOrderList(Long userIdx, Pageable pageable);
+    OrderRes findOrder(Long userIdx, String orderCode);
 
     String refund(Long userIdx, String orderCode);
 

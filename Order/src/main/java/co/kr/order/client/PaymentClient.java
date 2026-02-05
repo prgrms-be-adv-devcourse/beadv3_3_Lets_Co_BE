@@ -1,25 +1,24 @@
 package co.kr.order.client;
 
-import co.kr.order.model.dto.request.PaymentRequest;
-import co.kr.order.model.dto.response.PaymentResponse;
+import co.kr.order.model.dto.request.ClientPaymentReq;
+import co.kr.order.model.dto.request.ClientRefundReq;
+import co.kr.order.model.dto.response.ClientPaymentRes;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "Payment")
+@FeignClient(name = "PAYMENT-SERVICE", path = "/client/payments")
 public interface PaymentClient {
 
-    @PostMapping("/payments/process")
-    PaymentResponse processPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestBody PaymentRequest request
+    @PostMapping("/process")
+    ClientPaymentRes processPayment(
+            @RequestBody ClientPaymentReq paymentRequest
     );
 
-    @PostMapping("/payments/refund")
-    PaymentResponse refundPayment(
-            @RequestHeader("X-User-Idx") Long userIdx,
-            @RequestParam String orderCode
+    @PostMapping("/refund")
+    ClientPaymentRes refundPayment(
+            @RequestBody ClientRefundReq refundRequest
     );
 
-    @GetMapping("/payments/order/{ordersIdx}")
-    PaymentResponse findByOrdersIdx(@PathVariable Long ordersIdx);
+    @GetMapping("/order/{ordersIdx}")
+    ClientPaymentRes getPayment(@PathVariable Long ordersIdx);
 }

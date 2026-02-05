@@ -6,7 +6,10 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-public record PaymentRequest(
+public record ClientPaymentReq(
+
+        @NotBlank(message = "주문 코드는 필수입니다.")
+        Long userIdx,
 
         @NotBlank(message = "주문 코드는 필수입니다.")
         String orderCode,

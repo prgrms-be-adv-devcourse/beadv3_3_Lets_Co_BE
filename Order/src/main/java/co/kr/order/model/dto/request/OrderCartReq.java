@@ -4,7 +4,7 @@ import co.kr.order.model.vo.PaymentType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-public record OrderCartRequest (
+public record OrderCartReq(
 
 //    @Valid
 //    @NotNull(message = "사용자 정보(주소/카드)는 필수입니다.")

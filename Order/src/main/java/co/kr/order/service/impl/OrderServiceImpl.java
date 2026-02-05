@@ -7,13 +7,13 @@ import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.OrderNotFoundException;
 import co.kr.order.exception.OutOfStockException;
 import co.kr.order.exception.ProductNotFoundException;
-import co.kr.order.model.dto.DeductStock;
+import co.kr.order.model.dto.request.DeductStockReq;
 import co.kr.order.model.dto.ItemInfo;
-import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.dto.request.*;
-import co.kr.order.model.dto.response.OrderItemResponse;
-import co.kr.order.model.dto.response.OrderResponse;
-import co.kr.order.model.dto.response.PaymentResponse;
+import co.kr.order.model.dto.response.OrderItemRes;
+import co.kr.order.model.dto.response.OrderRes;
+import co.kr.order.model.dto.response.ClientPaymentRes;
 import co.kr.order.model.entity.*;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentType;
@@ -50,31 +50,24 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse directOrder(Long userIdx, OrderDirectRequest request) {
-
-        // 주소 데이터 있는지 확인
-//        if (request.userData().addressInfo() == null) {
-//            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
-//        }
+    public OrderRes directOrder(Long userIdx, OrderDirectReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ProductInfo productInfo;
+        ClientProductRes clientProductRes;
         try {
-            productInfo = productClient.getProduct(request.orderItem().productIdx(), request.orderItem().optionIdx());
+            clientProductRes = productClient.getProduct(request.orderReq().productCode(), request.orderReq().optionCode());
         } catch (FeignException.NotFound e) {
+            // 오류 받으면 error
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 재고 없으면 Error 던짐
-        if (productInfo.stock() < request.orderItem().quantity()) {
+        if (clientProductRes.stock() < request.orderReq().quantity()) {
             throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
         }
 
         // 가격*수량 해서 총 가격 측정
-        BigDecimal amount = productInfo.price().multiply(BigDecimal.valueOf(request.orderItem().quantity()));
-
-        // Member-Service에 동기통신 해서 userIdx, AddressIdx, CardIdx 가져온 후 값있는지 확인 (나중에)
-//        UserData userData = userClient.getUserData(userIdx, request.userData());
+        BigDecimal amount = clientProductRes.price().multiply(BigDecimal.valueOf(request.orderReq().quantity()));
 
         // orderCode 생성
         String orderCode = UUID.randomUUID().toString();
@@ -82,8 +75,6 @@ public class OrderServiceImpl implements OrderService {
         // Order Table 세팅
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
-//                .addressIdx(userData.addressInfo().addressIdx())
-//                .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(orderCode)
                 .status(OrderStatus.CREATED)
                 .itemsAmount(amount)
@@ -95,19 +86,19 @@ public class OrderServiceImpl implements OrderService {
         // OrderItem Table 세팅
         OrderItemEntity itemEntity = OrderItemEntity.builder()
                 .order(orderEntity)
-                .productIdx(productInfo.productIdx())
-                .optionIdx(request.orderItem().optionIdx())
-                .productName(productInfo.productName())
-                .optionName(productInfo.optionName())
-                .price(productInfo.price())
-                .quantity(request.orderItem().quantity())
+                .productIdx(clientProductRes.productIdx())
+                .optionIdx(clientProductRes.optionIdx())
+                .productName(clientProductRes.productName())
+                .optionName(clientProductRes.optionName())
+                .price(clientProductRes.price())
+                .quantity(request.orderReq().quantity())
                 .del(false)
                 .build();
         orderItemRepository.save(itemEntity);
 
-        PaymentResponse pay = paymentClient.processPayment(
+        ClientPaymentRes pay = paymentClient.processPayment(
                 userIdx,
-                new PaymentRequest(
+                new ClientPaymentReq(
                         orderCode,
                         orderEntity.getId(),
                         request.paymentType(),
@@ -115,19 +106,20 @@ public class OrderServiceImpl implements OrderService {
                         request.tossKey() // CARD/DEPOSIT은 null, TOSS_PAY는 paymentKey
                 )
         );
+        orderEntity.setStatus(OrderStatus.PAID);
 
-        saveSettlementHistory(productInfo.sellerIdx(), pay.paymentIdx(), amount);
+        saveSettlementHistory(clientProductRes.sellerIdx(), pay.paymentIdx(), amount);
 
         // Product-Service에 구매한 수량만큼 재고 감소 요청
-        DeductStock stockRequest = new DeductStock(
-                request.orderItem().productIdx(),
-                request.orderItem().optionIdx(),
-                request.orderItem().quantity()
+        DeductStockReq stockRequest = new DeductStockReq(
+                clientProductRes.productIdx(),
+                clientProductRes.optionIdx(),
+                request.orderReq().quantity()
         );
 
         try {
             // Product-Service에 구매한 수량만큼 재고 감소 요청
-            productClient.deductStock(stockRequest);
+            productClient.deductStocks(List.of(stockRequest));
 
         } catch (Exception e) {
             // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
@@ -137,6 +129,7 @@ public class OrderServiceImpl implements OrderService {
             if (request.paymentType() != PaymentType.TOSS_PAY) {
                 // 이미 돈이 나간 경우에만 환불 처리
                 paymentClient.refundPayment(userIdx, orderCode);
+                orderEntity.setStatus(OrderStatus.REFUNDED);
             }
 
             // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
@@ -144,19 +137,21 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 상품을 상세 내용
-        OrderItemResponse itemInfo = new OrderItemResponse(
+        OrderItemRes itemInfo = new OrderItemRes(
                 new ItemInfo(
-                        productInfo.productIdx(),
-                        productInfo.optionIdx(),
-                        productInfo.productName(),
-                        productInfo.optionName(),
-                        productInfo.price()
+                        clientProductRes.productIdx(),
+                        clientProductRes.optionIdx(),
+                        clientProductRes.productName(),
+                        clientProductRes.optionName(),
+                        clientProductRes.price()
                 ),
-                request.orderItem().quantity(),
+                request.orderReq().quantity(),
                 amount
         );
 
-        return new OrderResponse(
+        orderRepository.save(orderEntity);
+
+        return new OrderRes(
                 orderEntity.getId(),
                 List.of(itemInfo),
                 orderEntity.getOrderCode(),
@@ -166,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse cartOrder(Long userIdx, OrderCartRequest request) {
+    public OrderRes cartOrder(Long userIdx, OrderCartReq request) {
 
 //        UserData userData = userClient.getUserData(userIdx, request.userData());
 //
@@ -196,8 +191,8 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 상품 정보 및 판매자 정보 조회 (Bulk)
-        List<ProductRequest> productRequests = cartEntities.stream()
-                .map(cart -> new ProductRequest(cart.getProductIdx(), cart.getOptionIdx()))
+        List<ClientProductReq> clientProductReqs = cartEntities.stream()
+                .map(cart -> new ClientProductReq(cart.getProductIdx(), cart.getOptionIdx()))
                 .toList();
 
         List<Long> productIds = cartEntities.stream()
@@ -205,9 +200,9 @@ public class OrderServiceImpl implements OrderService {
                 .distinct()
                 .toList();
 
-        List<ProductInfo> productInfos;
+        List<ClientProductRes> clientProductRespons;
         try {
-            productInfos = productClient.getProductList(productRequests);
+            clientProductRespons = productClient.getProductList(clientProductReqs);
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -216,22 +211,22 @@ public class OrderServiceImpl implements OrderService {
         Map<Long, Long> productSellerMap = productClient.getSellersByProductIds(productIds);
 
         // 조회된 리스트를 Map으로 변환 (Key: "상품ID-옵션ID")
-        Map<String, ProductInfo> productMap = new HashMap<>();
-        for (ProductInfo info : productInfos) {
+        Map<String, ClientProductRes> productMap = new HashMap<>();
+        for (ClientProductRes info : clientProductRespons) {
             String key = info.productIdx() + "-" + info.optionIdx();
             productMap.put(key, info);
         }
 
         // 데이터 가공 및 정산 금액 합산 준비
         List<OrderItemEntity> orderItemsToSave = new ArrayList<>();
-        List<DeductStock> stockRequests = new ArrayList<>();
-        List<OrderItemResponse> responseList = new ArrayList<>();
+        List<DeductStockReq> stockRequests = new ArrayList<>();
+        List<OrderItemRes> responseList = new ArrayList<>();
         Map<Long, BigDecimal> sellerAmountMap = new HashMap<>(); // 판매자별 정산금 합산용
 
         for (CartEntity cartEntity : cartEntities) {
 
             String key = cartEntity.getProductIdx() + "-" + cartEntity.getOptionIdx();
-            ProductInfo product = productMap.get(key);
+            ClientProductRes product = productMap.get(key);
 
             if (product == null) {
                 throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
@@ -258,7 +253,7 @@ public class OrderServiceImpl implements OrderService {
             orderItemsToSave.add(orderItemEntity);
 
             // 응답 리스트 추가
-            responseList.add(new OrderItemResponse(
+            responseList.add(new OrderItemRes(
                     new ItemInfo(
                             product.productIdx(),
                             product.optionIdx(),
@@ -271,7 +266,7 @@ public class OrderServiceImpl implements OrderService {
             ));
 
             // 재고 차감 요청 리스트 추가
-            stockRequests.add(new DeductStock(
+            stockRequests.add(new DeductStockReq(
                     cartEntity.getProductIdx(),
                     cartEntity.getOptionIdx(),
                     cartEntity.getQuantity()
@@ -293,9 +288,9 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(orderEntity);
 
         // 결제 처리
-        PaymentResponse pay = paymentClient.processPayment(
+        ClientPaymentRes pay = paymentClient.processPayment(
                 userIdx,
-                new PaymentRequest(
+                new ClientPaymentReq(
                         orderCode,
                         orderEntity.getId(),
                         request.paymentType(),
@@ -333,7 +328,7 @@ public class OrderServiceImpl implements OrderService {
             throw e;
         }
 
-        return new OrderResponse(
+        return new OrderRes(
                 orderEntity.getId(),
                 responseList,
                 orderEntity.getOrderCode(),
@@ -366,13 +361,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<OrderResponse> findOrderList(Long userIdx, Pageable pageable) {
+    public Page<OrderRes> findOrderList(Long userIdx, Pageable pageable) {
 
         Page<OrderEntity> orderPage = orderRepository.findAllByUserIdx(userIdx, pageable);
 
         return orderPage.map(orderEntity -> {
 
-            List<OrderItemResponse> responseItemList = new ArrayList<>();
+            List<OrderItemRes> responseItemList = new ArrayList<>();
             BigDecimal itemsAmount = BigDecimal.ZERO;
 
             List<OrderItemEntity> itemEntities = orderEntity.getOrderItems();
@@ -382,7 +377,7 @@ public class OrderServiceImpl implements OrderService {
                 itemsAmount = itemsAmount.add(amount);
 
                 responseItemList.add(
-                        new OrderItemResponse(
+                        new OrderItemRes(
                                 new ItemInfo(
                                         itemEntity.getProductIdx(),
                                         itemEntity.getOptionIdx(),
@@ -396,7 +391,7 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
-            return new OrderResponse(
+            return new OrderRes(
                     orderEntity.getId(),
                     responseItemList,
                     orderEntity.getOrderCode(),
@@ -445,9 +440,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public OrderResponse findOrder(Long userIdx, String orderCode) {
+    public OrderRes findOrder(Long userIdx, String orderCode) {
 
-        List<OrderItemResponse> responseItemList = new ArrayList<>();
+        List<OrderItemRes> responseItemList = new ArrayList<>();
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
         OrderEntity orderEntity = orderRepository.findByUserIdxAndOrderCode(userIdx, orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
@@ -459,7 +454,7 @@ public class OrderServiceImpl implements OrderService {
             itemsAmount = itemsAmount.add(amount);
 
             responseItemList.add(
-                    new OrderItemResponse(
+                    new OrderItemRes(
                             new ItemInfo(
                                     entity.getProductIdx(),
                                     entity.getOptionIdx(),
@@ -473,7 +468,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        return new OrderResponse(
+        return new OrderRes(
                 orderEntity.getId(),
                 responseItemList,
                 orderEntity.getOrderCode(),

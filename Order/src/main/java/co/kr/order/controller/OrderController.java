@@ -1,9 +1,9 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.OrderCartRequest;
-import co.kr.order.model.dto.request.OrderDirectRequest;
+import co.kr.order.model.dto.request.OrderCartReq;
+import co.kr.order.model.dto.request.OrderDirectReq;
 import co.kr.order.model.dto.response.BaseResponse;
-import co.kr.order.model.dto.response.OrderResponse;
+import co.kr.order.model.dto.response.OrderRes;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,31 +25,31 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<BaseResponse<OrderResponse>> directOrder (
+    public ResponseEntity<BaseResponse<OrderRes>> directOrder (
             HttpServletRequest servletRequest,
-            @Valid @RequestBody OrderDirectRequest request
+            @Valid @RequestBody OrderDirectReq request
             ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderResponse info = orderService.directOrder(userIdx, request);
-        BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
+        OrderRes info = orderService.directOrder(userIdx, request);
+        BaseResponse<OrderRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     @PostMapping("/cart")
-    public ResponseEntity<BaseResponse<OrderResponse>> cartOrder (
+    public ResponseEntity<BaseResponse<OrderRes>> cartOrder (
             HttpServletRequest servletRequest,
-            @Valid @RequestBody OrderCartRequest request
+            @Valid @RequestBody OrderCartReq request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderResponse info = orderService.cartOrder(userIdx, request);
-        BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
+        OrderRes info = orderService.cartOrder(userIdx, request);
+        BaseResponse<OrderRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
@@ -70,7 +70,7 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<OrderResponse>>> getOrderList (
+    public ResponseEntity<BaseResponse<Page<OrderRes>>> getOrderList (
             HttpServletRequest servletRequest,
             @PageableDefault(
                     size = 10,
@@ -81,14 +81,14 @@ public class OrderController {
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        Page<OrderResponse> info = orderService.findOrderList(userIdx, pageable);
+        Page<OrderRes> info = orderService.findOrderList(userIdx, pageable);
 
-        BaseResponse<Page<OrderResponse>> body = new BaseResponse<>("ok", info);
+        BaseResponse<Page<OrderRes>> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }
 
     @GetMapping("/{orderCode}")
-    public ResponseEntity<BaseResponse<OrderResponse>> getOrderDetails (
+    public ResponseEntity<BaseResponse<OrderRes>> getOrderDetails (
             @PathVariable("orderCode") String orderCode,
             HttpServletRequest servletRequest
     ) {
@@ -96,9 +96,9 @@ public class OrderController {
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderResponse info = orderService.findOrder(userIdx, orderCode);
+        OrderRes info = orderService.findOrder(userIdx, orderCode);
 
-        BaseResponse<OrderResponse> body = new BaseResponse<>("ok", info);
+        BaseResponse<OrderRes> body = new BaseResponse<>("ok", info);
         return ResponseEntity.ok(body);
     }
 

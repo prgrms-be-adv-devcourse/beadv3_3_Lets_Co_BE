@@ -53,21 +53,21 @@ public class OrderServiceImpl implements OrderService {
     public OrderRes directOrder(Long userIdx, OrderDirectReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ClientProductRes clientProductRes;
+        ClientProductRes productResponse;
         try {
-            clientProductRes = productClient.getProduct(request.orderReq().productCode(), request.orderReq().optionCode());
+            productResponse = productClient.getProduct(request.orderReq().productCode(), request.orderReq().optionCode());
         } catch (FeignException.NotFound e) {
             // 오류 받으면 error
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 재고 없으면 Error 던짐
-        if (clientProductRes.stock() < request.orderReq().quantity()) {
+        if (productResponse.stock() < request.orderReq().quantity()) {
             throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
         }
 
         // 가격*수량 해서 총 가격 측정
-        BigDecimal amount = clientProductRes.price().multiply(BigDecimal.valueOf(request.orderReq().quantity()));
+        BigDecimal amount = productResponse.price().multiply(BigDecimal.valueOf(request.orderReq().quantity()));
 
         // orderCode 생성
         String orderCode = UUID.randomUUID().toString();
@@ -86,19 +86,19 @@ public class OrderServiceImpl implements OrderService {
         // OrderItem Table 세팅
         OrderItemEntity itemEntity = OrderItemEntity.builder()
                 .order(orderEntity)
-                .productIdx(clientProductRes.productIdx())
-                .optionIdx(clientProductRes.optionIdx())
-                .productName(clientProductRes.productName())
-                .optionName(clientProductRes.optionName())
-                .price(clientProductRes.price())
+                .productIdx(productResponse.productIdx())
+                .optionIdx(productResponse.optionIdx())
+                .productName(productResponse.productName())
+                .optionName(productResponse.optionName())
+                .price(productResponse.price())
                 .quantity(request.orderReq().quantity())
                 .del(false)
                 .build();
         orderItemRepository.save(itemEntity);
 
         ClientPaymentRes pay = paymentClient.processPayment(
-                userIdx,
                 new ClientPaymentReq(
+                        userIdx,
                         orderCode,
                         orderEntity.getId(),
                         request.paymentType(),
@@ -108,12 +108,12 @@ public class OrderServiceImpl implements OrderService {
         );
         orderEntity.setStatus(OrderStatus.PAID);
 
-        saveSettlementHistory(clientProductRes.sellerIdx(), pay.paymentIdx(), amount);
+        saveSettlementHistory(productResponse.sellerIdx(), pay.paymentIdx(), amount);
 
         // Product-Service에 구매한 수량만큼 재고 감소 요청
         DeductStockReq stockRequest = new DeductStockReq(
-                clientProductRes.productIdx(),
-                clientProductRes.optionIdx(),
+                productResponse.productIdx(),
+                productResponse.optionIdx(),
                 request.orderReq().quantity()
         );
 
@@ -128,7 +128,9 @@ public class OrderServiceImpl implements OrderService {
             // TOSS_PAY는 아직 결제 전이므로 주문 상태만 취소로 변경 (혹은 삭제)
             if (request.paymentType() != PaymentType.TOSS_PAY) {
                 // 이미 돈이 나간 경우에만 환불 처리
-                paymentClient.refundPayment(userIdx, orderCode);
+                paymentClient.refundPayment(
+                        new ClientRefundReq(userIdx, orderCode)
+                );
                 orderEntity.setStatus(OrderStatus.REFUNDED);
             }
 
@@ -139,11 +141,11 @@ public class OrderServiceImpl implements OrderService {
         // 상품을 상세 내용
         OrderItemRes itemInfo = new OrderItemRes(
                 new ItemInfo(
-                        clientProductRes.productIdx(),
-                        clientProductRes.optionIdx(),
-                        clientProductRes.productName(),
-                        clientProductRes.optionName(),
-                        clientProductRes.price()
+                        productResponse.productIdx(),
+                        productResponse.optionIdx(),
+                        productResponse.productName(),
+                        productResponse.optionName(),
+                        productResponse.price()
                 ),
                 request.orderReq().quantity(),
                 amount
@@ -191,7 +193,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 상품 정보 및 판매자 정보 조회 (Bulk)
-        List<ClientProductReq> clientProductReqs = cartEntities.stream()
+        List<ClientProductReq> cartReqest = cartEntities.stream()
                 .map(cart -> new ClientProductReq(cart.getProductIdx(), cart.getOptionIdx()))
                 .toList();
 
@@ -200,9 +202,9 @@ public class OrderServiceImpl implements OrderService {
                 .distinct()
                 .toList();
 
-        List<ClientProductRes> clientProductRespons;
+        List<ClientProductRes> productRespons;
         try {
-            clientProductRespons = productClient.getProductList(clientProductReqs);
+            productRespons = productClient.getProductList(cartReqest);
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -212,7 +214,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 조회된 리스트를 Map으로 변환 (Key: "상품ID-옵션ID")
         Map<String, ClientProductRes> productMap = new HashMap<>();
-        for (ClientProductRes info : clientProductRespons) {
+        for (ClientProductRes info : productRespons) {
             String key = info.productIdx() + "-" + info.optionIdx();
             productMap.put(key, info);
         }
@@ -289,8 +291,8 @@ public class OrderServiceImpl implements OrderService {
 
         // 결제 처리
         ClientPaymentRes pay = paymentClient.processPayment(
-                userIdx,
                 new ClientPaymentReq(
+                        userIdx,
                         orderCode,
                         orderEntity.getId(),
                         request.paymentType(),
@@ -318,11 +320,16 @@ public class OrderServiceImpl implements OrderService {
             // TOSS_PAY는 승인이 완료된 상태이므로 취소 필요
             // 다른 결제 수단도 돈이 나갔다면 환불 처리
             if (request.paymentType() != PaymentType.TOSS_PAY) {
-                paymentClient.refundPayment(userIdx, orderCode);
-            } else {
+                paymentClient.refundPayment(
+                        new ClientRefundReq(userIdx, orderCode)
+                );
+            }
+            else {
                 // Toss 결제도 승인 후 실패 시 환불(취소) 처리 필요
                 // (Toss는 승인 API 호출 성공 시 돈이 나간 상태임)
-                paymentClient.refundPayment(userIdx, orderCode);
+                paymentClient.refundPayment(
+                        new ClientRefundReq(userIdx, orderCode)
+                );
             }
 
             throw e;
@@ -353,7 +360,10 @@ public class OrderServiceImpl implements OrderService {
 
         OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
 
-        paymentClient.refundPayment(userIdx, orderCode);
+        paymentClient.refundPayment(
+                new ClientRefundReq(userIdx, orderCode)
+        );
+
         orderEntity.setStatus(OrderStatus.REFUNDED);
 
         return "환불처리가 완료 되었습니다.";

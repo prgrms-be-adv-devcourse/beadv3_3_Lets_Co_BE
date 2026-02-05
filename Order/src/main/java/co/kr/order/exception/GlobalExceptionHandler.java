@@ -1,6 +1,6 @@
 package co.kr.order.exception;
 
-import co.kr.order.model.dto.response.BaseResponse;
+import co.kr.order.common.BaseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

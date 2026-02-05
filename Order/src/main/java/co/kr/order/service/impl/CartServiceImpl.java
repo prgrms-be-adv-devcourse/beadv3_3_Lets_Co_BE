@@ -6,8 +6,9 @@ import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.mapper.CartMapper;
 import co.kr.order.model.dto.ItemInfo;
-import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.dto.request.ClientProductReq;
+import co.kr.order.model.dto.response.ClientProductRes;
+import co.kr.order.model.dto.request.CartReq;
 import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.model.dto.response.CartRes;
 import co.kr.order.model.entity.CartEntity;
@@ -21,38 +22,39 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.*;
 
-@Service
+/**
+ * todo.
+ * DB에 Cart 테이블 전부 삭제 예정 (Redis로 처리)
+ * 로직 전부 바뀔 예정
+ */
+ @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
     private final CartJpaRepository cartRepository;
     private final ProductClient productClient;
 
-    /*
-     * @param request : productIdx와 optionIdx
-     * 장바구니에 단일상품 추가 (장바구니 페이지에서 상품 + 클릭)
-     */
     @Override
     @Transactional
-    public CartItemRes addCartItem(Long userIdx, ClientProductReq request) {
+    public CartItemRes addCartItem(Long userIdx, CartReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ClientProductRes clientProductRes;
+        ClientProductRes productResponse;
         try {
-            clientProductRes = productClient.getProduct(request.productIdx(), request.optionIdx());
+            productResponse = productClient.getProduct(request.productCode(), request.optionCode());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // userIdx, productIdx, optionIdx가 같은 컬럼 찾기
-        Optional<CartEntity> existCart = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx());
+        Optional<CartEntity> existCart = cartRepository.findCartEntity(userIdx, productResponse.productIdx(), productResponse.optionIdx());
 
         if (existCart.isPresent()) {
             // 장바구니에서 상품을 + 했을 경우 (existCart가 존재할 경우)
             // entity의 개수(quantity) 증가
             CartEntity entity = existCart.get();
             entity.plusQuantity();
-            entity.addPrice(clientProductRes.price());
+            entity.addPrice(productResponse.price());
 
             cartRepository.save(entity);
         }
@@ -61,10 +63,10 @@ public class CartServiceImpl implements CartService {
             // 새로운 entity 생성 후 데이터 추가
             CartEntity newCart = CartEntity.builder()
                     .userIdx(userIdx)
-                    .productIdx(request.productIdx())
-                    .optionIdx(request.optionIdx())
+                    .productIdx(productResponse.productIdx())
+                    .optionIdx(productResponse.optionIdx())
                     .quantity(1)
-                    .price(clientProductRes.price())
+                    .price(productResponse.price())
                     .del(false)
                     .build();
 
@@ -81,17 +83,17 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional
-    public CartItemRes subtractCartItem(Long userIdx, ClientProductReq request) {
+    public CartItemRes subtractCartItem(Long userIdx, CartReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ClientProductRes clientProductRes;
+        ClientProductRes productResponse;
         try {
-            clientProductRes = productClient.getProduct(request.productIdx(), request.optionIdx());
+            productResponse = productClient.getProduct(request.productCode(), request.optionCode());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, productResponse.productIdx(), productResponse.optionIdx());
 
         if (existingCart.isPresent()) {
             // 장바구니에서 상품을 - 했을 경우 (existCart가 존재할 경우)
@@ -101,7 +103,7 @@ public class CartServiceImpl implements CartService {
             // 개수(quantity)가 1 이상이면 동작하고
             if(entity.getQuantity() > 1) {
                 entity.minusQuantity();
-                entity.subtractPrice(clientProductRes.price());
+                entity.subtractPrice(productResponse.price());
                 cartRepository.save(entity);
             }
             else {
@@ -197,19 +199,20 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional(readOnly = true)
-    public CartItemRes getCartItem(Long userIdx, ClientProductReq request) {
-
-        // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
-        CartEntity entity = cartRepository.findCartEntity(userIdx, request.productIdx(), request.optionIdx())
-                .orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
+    public CartItemRes getCartItem(Long userIdx, CartReq request) {
 
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ClientProductRes product;
         try {
-            product = productClient.getProduct(request.productIdx(), request.optionIdx());
+            product = productClient.getProduct(request.productCode(), request.optionCode());
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
+
+        // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
+        CartEntity entity = cartRepository.findCartEntity(userIdx, product.productIdx(), product.optionIdx())
+                .orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
+
 
         // 상품 가격 = 단가 * 수량
         int quantity = entity.getQuantity();
@@ -235,10 +238,17 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional
-    public void deleteCartItem(Long userIdx, ClientProductReq clientProductReq) {
+    public void deleteCartItem(Long userIdx, CartReq request) {
+
+        ClientProductRes product;
+        try {
+            product = productClient.getProduct(request.productCode(), request.optionCode());
+        } catch (FeignException.NotFound e) {
+            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
 
         // 삭제할 장바구니 아이템 조회
-        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, clientProductReq.productIdx(), clientProductReq.optionIdx());
+        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, product.productIdx(), product.optionIdx());
 
         if (existingCart.isPresent()) {
             // 상품이 존재하면 DB 데이터 삭제

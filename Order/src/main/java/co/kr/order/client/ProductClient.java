@@ -1,14 +1,10 @@
 package co.kr.order.client;
 
+import co.kr.order.model.dto.request.ClientProductReq;
 import co.kr.order.model.dto.request.DeductStockReq;
 import co.kr.order.model.dto.response.ClientProductRes;
-import co.kr.order.model.dto.request.ClientProductReq;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;

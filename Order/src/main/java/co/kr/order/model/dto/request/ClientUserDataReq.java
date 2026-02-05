@@ -1,4 +1,7 @@
-package co.kr.order.model.dto;
+package co.kr.order.model.dto.request;
+
+import co.kr.order.model.dto.AddressInfo;
+import co.kr.order.model.dto.CardInfo;
 
 /*
  * @param addressInfo : 주소 정보 (recipient, address, addressDetail, phoneNum)

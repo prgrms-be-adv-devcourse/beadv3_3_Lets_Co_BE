@@ -1,5 +1,6 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.common.service.S3Service;
 import co.kr.product.product.model.dto.request.DeductStockReq;
 import co.kr.product.product.model.dto.request.ProductIdxsReq;
 import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
@@ -11,8 +12,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,23 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductSearchService productSearchService;
+
+    private final S3Service s3Service;
+
+    // consumes을 명시적으로 표기한다고함 생략가능
+    @PostMapping(value = "test/connect/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> testS3Connect(
+            //@RequestParam("file") MultipartFile file
+            // 파일과 json을 같이 보낼때는 이게 표준이라고 함 진짠인지는 몰루?
+            @RequestPart("file") MultipartFile file){
+
+        String key = s3Service.uploadFile(file);
+
+        String url = s3Service.getFileUrl(key);
+
+
+        return ResponseEntity.ok("테스트 성공"+url);
+    }
 
 
     /**

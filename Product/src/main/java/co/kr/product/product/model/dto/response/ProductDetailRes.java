@@ -14,8 +14,7 @@ public record ProductDetailRes(
         Long viewCount,
         Integer stock,
         ProductStatus status,
-        List<ProductOptionsRes> options,
-        List<ProductImageRes> images
+        List<ProductOptionsRes> options
 
 ) {
 }

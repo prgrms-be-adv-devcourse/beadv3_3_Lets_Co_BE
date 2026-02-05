@@ -5,9 +5,7 @@ import co.kr.product.product.model.dto.request.ProductIdxsReq;
 import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
 import co.kr.product.product.model.dto.response.*;
 import co.kr.product.product.model.entity.ProductEntity;
-import co.kr.product.product.model.entity.ProductImageEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
-import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductService;
@@ -20,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
@@ -30,7 +27,6 @@ import static co.kr.product.product.mapper.ProductMapper.toProductDetail;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
-    private final ProductImageRepository productImageRepository;
     private final ProductOptionRepository productOptionRepository;
 
     /**
@@ -82,17 +78,13 @@ public class ProductServiceImpl implements ProductService {
         productEntity.increaseViewCount();
 
 
-        // 이미지/옵션 조회
-        List<ProductImageEntity> images = productImageRepository
-                .findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(productEntity);
 
         List<ProductOptionEntity> options = productOptionRepository
                 .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
 
         return toProductDetail(
                 productEntity,
-                options,
-                images
+                options
         );
     }
 
@@ -232,8 +224,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductInfoRes> getProductInfoForBoard(ProductIdxsReq request){
         List<ProductEntity> productInfoEntities = productRepository.findAllByProductsIdxInAndDelFalse(request.productIdxs());
 
-        List<ProductImageEntity> thumbnails = productImageRepository.findAllByProduct_ProductsIdxInAndIsThumbnailTrueAndDelFalse(request.productIdxs());
-
+/*
         // 3. 조회를 빠르게 하기 위해 Map으로 변환 (Key: 상품IDX, Value: 이미지URL)
         Map<Long, String> imageUrlMap = thumbnails.stream()
                 .collect(Collectors.toMap(
@@ -241,12 +232,13 @@ public class ProductServiceImpl implements ProductService {
                         ProductImageEntity::getUrl,
                         (existing, replacement) -> existing // 혹시 중복이 있다면 첫 번째 것 유지
                 ));
+        */
+
         return productInfoEntities.stream()
                 .map(entity -> new ProductInfoRes(
                         entity.getProductsIdx(), // 필드명은 엔티티 설정에 맞춰 확인 필요 (예: getProductIdx)
                         entity.getProductsCode(),
-                        entity.getProductsName(),
-                        imageUrlMap.get(entity.getProductsIdx())
+                        entity.getProductsName()
                 ))
                 .toList();
 

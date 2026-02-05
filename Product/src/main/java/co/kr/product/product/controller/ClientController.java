@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +82,7 @@ public class ClientController {
             @PathVariable("productsIdx") Long productsIdx){
 
         return productService.getSellerIdx(productsIdx);
+
     };
 
     // 상품의 판매자 다중 조회

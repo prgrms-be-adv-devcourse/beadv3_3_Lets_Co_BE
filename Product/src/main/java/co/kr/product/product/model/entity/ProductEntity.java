@@ -30,6 +30,12 @@ public class ProductEntity {
     @Column(name = "Seller_IDX", nullable = false)
     private Long sellerIdx;
 
+    @Column(name = "Products_Category")
+    private Long categoryIdx;
+
+    @Column(name = "Products_IP")
+    private Long ipIdx;
+
     @Column(name = "Products_Code", nullable = false, length = 50, unique = true)
     private String productsCode;
 

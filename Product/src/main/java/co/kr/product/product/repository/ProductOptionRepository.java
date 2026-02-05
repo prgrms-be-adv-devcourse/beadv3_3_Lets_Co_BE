@@ -20,14 +20,13 @@ public interface ProductOptionRepository extends JpaRepository<ProductOptionEnti
 
     Optional<ProductOptionEntity> findByOptionGroupIdxAndDelFalse(Long aLong);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE ProductOptionEntity p"+
             " SET p.stock = p.stock - :quantity"+
             " WHERE p.optionGroupIdx = :id " +
-            "AND p.stock >= :quantity " +
-            "AND p.del = false")
+            " AND p.stock >= :quantity " +
+            " AND p.del = false")
     int decreaseStock(@Param("id") Long id, @Param("quantity") int quantity);
-
     List<ProductOptionEntity> findByOptionGroupIdxInAndDelFalse(List<Long> optionIds);
 
 

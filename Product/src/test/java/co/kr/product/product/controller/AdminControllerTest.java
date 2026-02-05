@@ -62,7 +62,7 @@ class AdminControllerTest {
              productCode1, "관리자용 상품 A", "관리자만 볼 수 있는 상세",
             new BigDecimal("10000.00"), new BigDecimal("9000.00"), 50L,
             100, ProductStatus.ON_SALE,
-            Collections.emptyList(), Collections.emptyList()
+            Collections.emptyList()
     );
 
     // 상품 수정 요청 DTO
@@ -134,7 +134,7 @@ class AdminControllerTest {
                 productCode1, "수정된 상품명", "수정된 설명",
                 new BigDecimal("20000.00"), new BigDecimal("18000.00"), 50L,
                 200, ProductStatus.STOPPED,
-                Collections.emptyList(), Collections.emptyList()
+                Collections.emptyList()
         );
 
         given(productManagerService.updateProduct(eq(adminUserIdx), eq(productCode1), any(UpsertProductReq.class), eq(UserRole.ADMIN)))

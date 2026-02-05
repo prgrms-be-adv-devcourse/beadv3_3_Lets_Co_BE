@@ -68,7 +68,7 @@ class SellerControllerTest {
     ProductDetailRes createRes = new ProductDetailRes("NEW_CODE_123", "신규 등록 상품", "아주 좋은 상품입니다.",
             new BigDecimal("30000.00"), new BigDecimal("29000.00"), 0L,
             100, ProductStatus.ON_SALE,
-            Collections.emptyList(), Collections.emptyList()
+            Collections.emptyList()
     );
 
     /**

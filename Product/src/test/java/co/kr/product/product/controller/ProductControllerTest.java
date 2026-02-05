@@ -316,8 +316,7 @@ class ProductControllerTest {
                 product1.viewCount(),
                 null,
                 null,
-                List.of(optionsResponse1, optionsResponse2),
-                null
+                List.of(optionsResponse1, optionsResponse2)
         );
 
         given(productService.getProductDetail(product1.productsCode())).willReturn(fakeResponse);

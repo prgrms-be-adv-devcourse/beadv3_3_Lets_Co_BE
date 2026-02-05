@@ -13,10 +13,8 @@ import co.kr.product.product.model.dto.response.ProductDetailRes;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.model.dto.response.ProductRes;
 import co.kr.product.product.model.entity.ProductEntity;
-import co.kr.product.product.model.entity.ProductImageEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductEsRepository;
-import co.kr.product.product.repository.ProductImageRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductManagerService;
@@ -44,7 +42,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
     private final ProductRepository productRepository;
     private final ProductOptionRepository optionRepository;
-    private final ProductImageRepository imageRepository;
     private final ProductEsRepository productEsRepository;
     private final AuthServiceClient authServiceClient;
 
@@ -89,7 +86,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
                         ).toList();
 
-        // 5. 이미지 저장
+        // 이미지 로직 변경
+/*        // 5. 이미지 저장
         List<ProductImageEntity> images = request.images().stream()
                 .map(requestImg -> ProductImageEntity.builder()
                         .product(savedItem)
@@ -98,16 +96,15 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                         .isThumbnail(requestImg.isThumbnail())
                         .build()
                 ).toList();
-
+        List<ProductImageEntity> savedImg = imageRepository.saveAll(images);*/
 
         List<ProductOptionEntity> savedOpt = optionRepository.saveAll(options);
-        List<ProductImageEntity> savedImg = imageRepository.saveAll(images);
+
 
         // 반환 데이터 생성
         ProductDetailRes result = toProductDetail(
                         savedItem,
-                        savedOpt,
-                        savedImg);
+                        savedOpt);
         return result;
     }
 
@@ -126,9 +123,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         ProductEntity product =  productRepository.findByProductsCodeAndDelFalse(code)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
         
-        // 이미지/옵션 조회
-        List<ProductImageEntity> images = imageRepository
-                .findByProductAndDelFalseOrderByIsThumbnailDescSortOrdersAsc(product);
 
         List<ProductOptionEntity> options = optionRepository
                 .findByProductAndDelFalseOrderBySortOrdersAsc(product);
@@ -136,8 +130,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // mapper 사용
         return toProductDetail(
                 product,
-                options,
-                images
+                options
         );
     }
 
@@ -180,7 +173,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 빈 리스트 생성 (추가 옵션,이미지를 담기 위함)
         List<ProductOptionEntity> newOptions = new ArrayList<>();
-        List<ProductImageEntity> newImages = new ArrayList<>();
 
         // 상품 update 진행
         product.update(request.name(),request.description(),request.price(),
@@ -233,7 +225,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             options.addAll(newOptionsList);
         }
 
-
+/*
+        // 이미지 로직 변경
 
         // 이미지 수정
         // 이미지는 옵션과 달리 product 에만 이어져 있기에 삭제 후 다시 생성해도 큰 문제가 없을것이라 생각.
@@ -254,12 +247,12 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             }
         }
         List<ProductImageEntity> images = imageRepository.saveAll(newImages);
+*/
 
         // mapper 사용
         return toProductDetail(
                 product,
-                options,
-                images
+                options
         );
     }
 
@@ -288,7 +281,6 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 2.3  옵션 및 이미지 가져오기
         List<ProductOptionEntity> options = optionRepository.findByProductAndDelFalse(product);
-        List<ProductImageEntity> images = imageRepository.findByProductAndDelFalse(product);
 
         // 3. 삭제 시도
         try{
@@ -306,11 +298,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         }
 
         // 이미지 삭제
-        try{
-            images.forEach(ProductImageEntity::delete);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("이미지 삭제 과정 중 문제가 발생했습니다.");
-        }
+
 
     }
 

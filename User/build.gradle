@@ -29,41 +29,43 @@ ext {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // --- [Spring Boot Starters: Core & Web] ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'           // MVC를 이용한 RESTful 웹 개발
+    implementation 'org.springframework.boot:spring-boot-starter-validation'    // Bean Validation(유효성 검증)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'      // 애플리케이션 상태 모니터링
+    implementation 'org.springframework.boot:spring-boot-starter-mail'          // 메일 발송 기능
 
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // --- [Database & Cache] ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'      // Spring Data JPA (ORM)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'    // Redis 캐시/데이터 저장소
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'                          // MariaDB 드라이버
 
-    // --- [Zipkin/Tracing 관련 수정된 부분] ---
-    // 1. Micrometer와 Brave 연결 (이미 존재함 - 유지)
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    // 2. spring-boot-starter-zipkin 제거 후 아래 Reporter 추가
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-    // ----------------------------------------
+    // --- [Security & Authentication] ---
+    implementation 'org.springframework.boot:spring-boot-starter-security'      // Spring Security (인증/인가)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // OAuth2 클라이언트 기능
+    implementation 'org.mindrot:jbcrypt:0.4'                                    // 비밀번호 해싱 (BCrypt)
 
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
-
-    // JWT
+    // --- [JWT (JSON Web Token)] ---
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
-    //BCtypt
-    // https://mvnrepository.com/artifact/org.mindrot/jbcrypt
-    implementation group: 'org.mindrot', name: 'jbcrypt', version: '0.4'
+    // --- [Cloud & Distributed Tracing (Microservices)] ---
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // Eureka 서비스 디스커버리
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'                        // Micrometer와 Brave 연동
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'                            // Zipkin으로 트레이스 리포팅
 
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // --- [Documentation] ---
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'   // Swagger/OpenAPI 3 UI
 
-    compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // --- [Lombok: Productivity] ---
+    compileOnly 'org.projectlombok:lombok'                                      // 컴파일 시점 코드 생성
+    annotationProcessor 'org.projectlombok:lombok'                              // 어노테이션 기반 프로세싱
+
+    // --- [Testing] ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'      // 스프링 부트 통합 테스트
+    testImplementation 'org.springframework.security:spring-security-test'      // 시큐리티 설정 테스트
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                // JUnit 플랫폼 런처
 }
 
 dependencyManagement {

@@ -1,6 +1,5 @@
 package co.kr.user.service.Impl;
 
-import co.kr.user.dao.UsersLoginRepository;
 import co.kr.user.dao.UserRepository;
 import co.kr.user.model.dto.login.LoginDTO;
 import co.kr.user.model.dto.login.LoginReq;

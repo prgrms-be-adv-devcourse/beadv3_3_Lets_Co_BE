@@ -7,10 +7,9 @@ import co.kr.user.model.dto.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.Users;
 import co.kr.user.service.CardService;
-import co.kr.user.util.AESUtil;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -23,13 +22,12 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CardServiceImpl implements CardService {
     private final UserRepository userRepository;
     private final UserCardRepository userCardRepository;
 
     private final UserQueryServiceImpl userQueryServiceImpl;
-
-    private final AESUtil aesUtil; // 암호화 유틸리티
 
     /**
      * 사용자의 기본 결제 카드를 조회하고 유효성을 검증하는 메서드입니다.
@@ -107,9 +105,9 @@ public class CardServiceImpl implements CardService {
                 .map(card -> {
                     CardListDTO dto = new CardListDTO();
                     dto.setCardCode(card.getCardCode());
-                    dto.setCardBrand(aesUtil.decrypt(card.getCardBrand()));
-                    dto.setCardName(aesUtil.decrypt(card.getCardName()));
-                    dto.setCardToken(aesUtil.decrypt(card.getCardToken()));
+                    dto.setCardBrand(card.getCardBrand());
+                    dto.setCardName(card.getCardName());
+                    dto.setCardToken(card.getCardToken());
                     dto.setExpMonth(card.getExpMonth());
                     dto.setExpYear(card.getExpYear());
                     return dto;
@@ -134,9 +132,9 @@ public class CardServiceImpl implements CardService {
         UserCard userCard = UserCard.builder()
                 .usersIdx(users.getUsersIdx())
                 .cardCode(UUID.randomUUID().toString()) // 고유 식별 코드 생성
-                .cardBrand(aesUtil.encrypt(cardRequestReq.getCardBrand()))
-                .cardName(aesUtil.encrypt(cardRequestReq.getCardName()))
-                .cardToken(aesUtil.encrypt(cardRequestReq.getCardToken())) // Billing Key 암호화
+                .cardBrand(cardRequestReq.getCardBrand())
+                .cardName(cardRequestReq.getCardName())
+                .cardToken(cardRequestReq.getCardToken())
                 .expMonth(cardRequestReq.getExpMonth())
                 .expYear(cardRequestReq.getExpYear())
                 .build();
@@ -151,81 +149,27 @@ public class CardServiceImpl implements CardService {
      * 유효기간 연장, 별칭 변경 등의 작업을 수행하며, 입력된 필드에 한해 업데이트 및 암호화를 수행합니다.
      *
      * @param userIdx 로그인한 사용자의 식별자
-     * @param cardRequestReq 수정할 카드 정보 (CardCode 필수)
      * @return 처리 결과 메시지
      */
     @Override
     @Transactional
-    public String updateCard(Long userIdx, CardRequestReq cardRequestReq) {
+    public String updateCard(Long userIdx, CardRequestReq req) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
-        // 수정할 카드 조회
-        UserCard userCard = userCardRepository.findByCardCodeAndDel(cardRequestReq.getCardCode(), 0)
+        UserCard userCard = userCardRepository.findByCardCodeAndDel(req.getCardCode(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 카드 정보를 찾을 수 없습니다."));
 
-        // 소유권 검증
         if (!userCard.getUsersIdx().equals(users.getUsersIdx())) {
-            throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
+            throw new IllegalStateException("본인의 카드만 수정할 수 있습니다.");
         }
 
-        // 업데이트 DTO 준비 (기존 값 유지 또는 새 값 암호화)
-        CardRequestReq dto = new CardRequestReq();
-        dto.setCardCode(userCard.getCardCode());
-
-        // 기본 카드 설정
-        if (cardRequestReq.getDefaultCard() == 1) {
-            dto.setDefaultCard(1);
-        } else {
-            dto.setDefaultCard(0);
-        }
-
-        // 브랜드
-        if (cardRequestReq.getCardBrand() == null || cardRequestReq.getCardBrand().equals("")) {
-            dto.setCardBrand(userCard.getCardBrand());
-        }
-        else {
-            dto.setCardBrand(aesUtil.encrypt(cardRequestReq.getCardBrand()));
-        }
-
-        // 카드 별칭
-        if (cardRequestReq.getCardName() == null || cardRequestReq.getCardName().equals("")) {
-            dto.setCardName(userCard.getCardName());
-        }
-        else {
-            dto.setCardName(aesUtil.encrypt(cardRequestReq.getCardName()));
-        }
-
-        // 카드 토큰
-        if (cardRequestReq.getCardToken() == null || cardRequestReq.getCardToken().equals("")) {
-            dto.setCardToken(userCard.getCardToken());
-        }
-        else {
-            dto.setCardToken(aesUtil.encrypt(cardRequestReq.getCardToken()));
-        }
-
-        // 유효기간 (월)
-        if (cardRequestReq.getExpMonth() == 0) {
-            dto.setExpMonth(userCard.getExpMonth());
-        }
-        else {
-            dto.setExpMonth(cardRequestReq.getExpMonth());
-        }
-
-        // 유효기간 (년)
-        if (cardRequestReq.getExpYear() == 0) {
-            dto.setExpYear(userCard.getExpYear());
-        }
-        else {
-            dto.setExpYear(cardRequestReq.getExpYear());
-        }
-
-        // 엔티티 업데이트 수행
+        // [변경] 수동 암호화 없이 입력값이 있으면 업데이트, 없으면 기존값 유지
         userCard.updateCard(
-                dto.getCardBrand(),
-                dto.getCardName(),
-                dto.getCardToken(),
-                dto.getExpMonth(),
-                dto.getExpYear()
+                (req.getCardBrand() == null || req.getCardBrand().isEmpty()) ? userCard.getCardBrand() : req.getCardBrand(),
+                (req.getCardName() == null || req.getCardName().isEmpty()) ? userCard.getCardName() : req.getCardName(),
+                (req.getCardToken() == null || req.getCardToken().isEmpty()) ? userCard.getCardToken() : req.getCardToken(),
+                req.getExpMonth() == 0 ? userCard.getExpMonth() : req.getExpMonth(),
+                req.getExpYear() == 0 ? userCard.getExpYear() : req.getExpYear()
         );
 
         return "카드 정보가 수정되었습니다.";

@@ -16,11 +16,12 @@ import co.kr.user.service.RetrieveService;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -30,6 +31,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RetrieveServiceImpl implements RetrieveService {
     private final UserRepository userRepository;
     private final UserVerificationsRepository userVerificationsRepository;
@@ -165,7 +167,7 @@ public class RetrieveServiceImpl implements RetrieveService {
 
         // 기존 비밀번호 백업 (UsersInformation 테이블)
         UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("비밀번호 재설정을 위한 사용자 상세 정보를 찾을 수 없습니다. (UserIDX: " + users.getUsersIdx() + ")"));
         usersInformation.updatePrePW(users.getPw());
 
         // 새 비밀번호 암호화 및 저장

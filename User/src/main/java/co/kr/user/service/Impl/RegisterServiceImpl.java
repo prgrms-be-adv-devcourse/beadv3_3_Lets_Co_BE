@@ -27,13 +27,13 @@ import java.time.LocalDateTime;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RegisterServiceImpl implements RegisterService {
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
 
     private final BCryptUtil bCryptUtil; // 비밀번호 해싱(단방향 암호화)
-    private final AESUtil aesUtil; // 개인정보 양방향 암호화
     private final RandomCodeUtil randomCodeUtil; // 인증코드 생성
     private final MailUtil mailUtil; // 이메일 발송
 
@@ -43,7 +43,6 @@ public class RegisterServiceImpl implements RegisterService {
      * @param email 확인할 이메일
      * @return 중복 여부 메시지
      */
-    @Transactional(readOnly = true)
     public String checkDuplicate(String email) {
         boolean isDuplicate = userRepository.existsByIdAndDel(email, 0);
 
@@ -80,9 +79,6 @@ public class RegisterServiceImpl implements RegisterService {
 
         // 비밀번호 해싱 및 개인정보 암호화
         registerReq.setPw(bCryptUtil.encode(registerReq.getPw()));
-        registerReq.setName(aesUtil.encrypt(registerReq.getName()));
-        registerReq.setPhoneNumber(aesUtil.encrypt(registerReq.getPhoneNumber()));
-        registerReq.setBirth(aesUtil.encrypt(registerReq.getBirth()));
 
         // Users 엔티티 생성 및 저장 (기본 상태: 미인증)
         Users user = Users.builder()

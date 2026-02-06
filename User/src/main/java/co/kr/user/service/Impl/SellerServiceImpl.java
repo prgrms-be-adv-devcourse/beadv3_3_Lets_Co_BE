@@ -15,7 +15,6 @@ import co.kr.user.model.vo.UsersRole;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.SellerService;
-import co.kr.user.util.AESUtil;
 import co.kr.user.util.BCryptUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
@@ -34,6 +33,7 @@ import java.util.Objects;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SellerServiceImpl implements SellerService {
     private final UserRepository userRepository;
     private final SellerRepository sellerRepository;
@@ -44,7 +44,6 @@ public class SellerServiceImpl implements SellerService {
 
     private final MailUtil mailUtil; // 이메일 발송 유틸
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸
-    private final AESUtil aesUtil; // 양방향 암호화 (이름 복호화용)
     private final BCryptUtil bCryptUtil; // 단방향 암호화 (계좌 토큰용)
 
     /**
@@ -64,10 +63,11 @@ public class SellerServiceImpl implements SellerService {
         // 계좌 토큰 등 민감 정보는 암호화(BCrypt)하여 저장
         Seller seller = Seller.builder()
                 .sellerIdx(users.getUsersIdx())
-                .businessLicense(aesUtil.encrypt(sellerRegisterReq.getBusinessLicense()))
-                .bankBrand(aesUtil.encrypt(sellerRegisterReq.getBankBrand()))
-                .bankName(aesUtil.encrypt(sellerRegisterReq.getBankName()))
-                .bankToken(aesUtil.encrypt(sellerRegisterReq.getBankToken()))
+                .sellerName(sellerRegisterReq.getSellerName())
+                .businessLicense(sellerRegisterReq.getBusinessLicense())
+                .bankBrand(sellerRegisterReq.getBankBrand())
+                .bankName(sellerRegisterReq.getBankName())
+                .bankToken(sellerRegisterReq.getBankToken())
                 .build();
 
         sellerRepository.save(seller);
@@ -198,7 +198,7 @@ public class SellerServiceImpl implements SellerService {
 
         // 승인 완료 이메일 발송을 위해 사용자 이름 조회(복호화 필요)
         UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("판매자 승인 처리를 위한 사용자 상세 정보가 누락되었습니다."));
 
         String htmlTemplate = """
         <div style='background-color: #f6f7f9; padding: 40px 20px; font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6;'>
@@ -236,7 +236,7 @@ public class SellerServiceImpl implements SellerService {
         </div>
         """;
 
-        String finalContent = htmlTemplate.formatted(aesUtil.decrypt(usersInformation.getName()));
+        String finalContent = htmlTemplate.formatted(usersInformation.getName());
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(users.getId())

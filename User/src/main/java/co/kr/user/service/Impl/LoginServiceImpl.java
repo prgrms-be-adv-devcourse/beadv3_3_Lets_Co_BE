@@ -6,14 +6,11 @@ import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.service.LoginService;
 import co.kr.user.util.BCryptUtil;
-import co.kr.user.util.CookieUtil;
 import co.kr.user.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
 
 /**
  * 로그인 및 로그아웃 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -21,6 +18,7 @@ import java.time.Duration;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class LoginServiceImpl implements LoginService {
     private final UserRepository userRepository;
 

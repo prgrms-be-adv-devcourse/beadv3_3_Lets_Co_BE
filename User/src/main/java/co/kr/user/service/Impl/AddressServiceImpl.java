@@ -7,10 +7,9 @@ import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.service.AddressService;
-import co.kr.user.util.AESUtil;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,13 +21,12 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
 
     private final UserQueryServiceImpl userQueryServiceImpl;
-
-    private final AESUtil aesUtil; // 개인정보 양방향 암호화 유틸리티
 
     /**
      * 사용자의 기본 배송지 식별자(PK)를 조회하는 메서드입니다.
@@ -43,7 +41,7 @@ public class AddressServiceImpl implements AddressService {
 
         // 기본 배송지(DefaultAddress=1)이면서 삭제되지 않은(Del=0) 주소 조회
         UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndDelOrderByAddressIdxDesc(users.getUsersIdx(),  0)
-                .orElseThrow(null); // 없을 경우 null 예외 발생 (적절한 예외 처리 필요)
+                .orElseThrow(() -> new IllegalArgumentException("사용자(ID: " + users.getId() + ")의 기본 배송지 정보가 존재하지 않습니다."));
 
         return usersAddress.getAddressIdx();
     }
@@ -76,23 +74,21 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public List<AddressListDTO> addressList(Long userIdx) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        // 삭제되지 않은 모든 주소 조회
         List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(users.getUsersIdx(), 0);
 
         if (usersAddressList.isEmpty()) {
             throw new IllegalArgumentException("주소를 추가해 주세요");
         }
 
-        // Entity -> DTO 변환 (복호화 포함)
         return usersAddressList.stream()
                 .map(address -> {
                     AddressListDTO dto = new AddressListDTO();
                     dto.setAddressCode(address.getAddressCode());
-                    dto.setRecipient(aesUtil.decrypt(address.getRecipient()));
-                    dto.setAddress(aesUtil.decrypt(address.getAddress()));
-                    dto.setAddressDetail(aesUtil.decrypt(address.getAddressDetail()));
-                    dto.setPhoneNumber(aesUtil.decrypt(address.getPhoneNumber()));
+                    // [수정] aesUtil.decrypt() 호출 제거. Entity에서 이미 복호화된 상태로 넘어옵니다.
+                    dto.setRecipient(address.getRecipient());
+                    dto.setAddress(address.getAddress());
+                    dto.setAddressDetail(address.getAddressDetail());
+                    dto.setPhoneNumber(address.getPhoneNumber());
                     return dto;
                 })
                 .toList();
@@ -111,14 +107,14 @@ public class AddressServiceImpl implements AddressService {
     public String addAddress(Long userIdx, AddressRequestReq addressRequestReq) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
-        // 주소 엔티티 생성 및 암호화
+        // [수정] aesUtil.encrypt() 호출 제거. 평문으로 저장하면 JPA가 저장 시 자동 암호화합니다.
         UsersAddress usersAddress = UsersAddress.builder()
                 .usersIdx(users.getUsersIdx())
                 .addressCode(UUID.randomUUID().toString())
-                .recipient(aesUtil.encrypt(addressRequestReq.getRecipient()))
-                .address(aesUtil.encrypt(addressRequestReq.getAddress()))
-                .addressDetail(aesUtil.encrypt(addressRequestReq.getAddressDetail()))
-                .phoneNumber(aesUtil.encrypt(addressRequestReq.getPhoneNumber()))
+                .recipient(addressRequestReq.getRecipient())
+                .address(addressRequestReq.getAddress())
+                .addressDetail(addressRequestReq.getAddressDetail())
+                .phoneNumber(addressRequestReq.getPhoneNumber())
                 .build();
         userAddressRepository.save(usersAddress);
 
@@ -138,64 +134,14 @@ public class AddressServiceImpl implements AddressService {
     @Transactional
     public String updateAddress(Long userIdx, AddressRequestReq addressRequestReq) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressRequestReq.getAddressCode(), 0).orElseThrow();
 
-        // 수정할 주소 조회
-        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressRequestReq.getAddressCode(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
-
-        // 소유권 검증
-        if (!usersAddress.getUsersIdx().equals(users.getUsersIdx())) {
-            throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
-        }
-
-        // 수정 데이터 준비 (입력값이 없으면 기존 값 유지, 있으면 암호화)
-        AddressRequestReq dto = new AddressRequestReq();
-        dto.setAddressCode(usersAddress.getAddressCode());
-
-        // 기본 배송지 설정 여부
-        if (addressRequestReq.getDefaultAddress() == 1) {
-            dto.setDefaultAddress(1);
-        } else {
-            dto.setDefaultAddress(0);
-        }
-
-        // 수령인
-        if (addressRequestReq.getRecipient() == null || addressRequestReq.getRecipient().isEmpty()) {
-            dto.setRecipient(usersAddress.getRecipient()); // 기존 암호화된 값 유지
-        } else {
-            dto.setRecipient(aesUtil.encrypt(addressRequestReq.getRecipient())); // 새 값 암호화
-        }
-
-        // 주소
-        if (addressRequestReq.getAddress() == null || addressRequestReq.getAddress().isEmpty()) {
-            dto.setAddress(usersAddress.getAddress());
-        }
-        else {
-            dto.setAddress(aesUtil.encrypt(addressRequestReq.getAddress()));
-        }
-
-        // 상세 주소
-        if (addressRequestReq.getAddressDetail() == null || addressRequestReq.getAddressDetail().isEmpty()) {
-            dto.setAddressDetail(usersAddress.getAddressDetail());
-        }
-        else {
-            dto.setAddressDetail(aesUtil.encrypt(addressRequestReq.getAddressDetail()));
-        }
-
-        // 전화번호
-        if (addressRequestReq.getPhoneNumber() == null || addressRequestReq.getPhoneNumber().isEmpty()) {
-            dto.setPhoneNumber(usersAddress.getPhoneNumber());
-        }
-        else {
-            dto.setPhoneNumber(aesUtil.encrypt(addressRequestReq.getPhoneNumber()));
-        }
-
-        // 엔티티 업데이트 수행
+        // [수정] 수동 암호화 로직을 모두 제거하고 평문 필드를 그대로 엔티티에 전달합니다.
         usersAddress.updateAddress(
-                dto.getRecipient(),
-                dto.getAddress(),
-                dto.getAddressDetail(),
-                dto.getPhoneNumber()
+                addressRequestReq.getRecipient() != null ? addressRequestReq.getRecipient() : usersAddress.getRecipient(),
+                addressRequestReq.getAddress() != null ? addressRequestReq.getAddress() : usersAddress.getAddress(),
+                addressRequestReq.getAddressDetail() != null ? addressRequestReq.getAddressDetail() : usersAddress.getAddressDetail(),
+                addressRequestReq.getPhoneNumber() != null ? addressRequestReq.getPhoneNumber() : usersAddress.getPhoneNumber()
         );
 
         return "주소 정보가 수정되었습니다.";
@@ -216,11 +162,10 @@ public class AddressServiceImpl implements AddressService {
 
         // 삭제할 주소 조회
         UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressCode, 0)
-                .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드(" + addressCode + ")에 해당하는 정보가 없습니다."));
 
-        // 소유권 검증
-        if (!usersAddress.getUsersIdx().equals(users.getUsersIdx())) {
-            throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
+        if (!usersAddress.getUsersIdx().equals(userIdx)) {
+            throw new IllegalStateException("해당 주소에 대한 수정/삭제 권한이 없습니다.");
         }
 
         // 삭제 처리 (Soft Delete)

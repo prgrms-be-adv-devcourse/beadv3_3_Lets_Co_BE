@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -21,18 +22,23 @@ public class Seller {
     @Column(name = "Seller_IDX", nullable = false)
     private Long sellerIdx;
 
+    @Convert(converter = CryptoConverter.class) // 추가
     @Column(name = "Seller_Name", nullable = false, length = 512)
     private String sellerName;
 
+    @Convert(converter = CryptoConverter.class) // 추가
     @Column(name = "Business_License", nullable = false, length = 512)
     private String businessLicense;
 
+    @Convert(converter = CryptoConverter.class) // 추가
     @Column(name = "Bank_Brand", nullable = false, length = 512)
     private String bankBrand;
 
+    @Convert(converter = CryptoConverter.class) // 추가
     @Column(name = "Bank_Name", nullable = false, length = 512)
     private String bankName;
 
+    @Convert(converter = CryptoConverter.class) // 추가
     @Column(name = "Bank_Token", nullable = false, length = 2048)
     private String bankToken;
 

@@ -14,7 +14,6 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.UserService;
-import co.kr.user.util.AESUtil;
 import co.kr.user.util.CookieUtil;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
@@ -34,6 +33,7 @@ import java.time.LocalDateTime;
  */
 @Service // 스프링 서비스 빈으로 등록합니다.
 @RequiredArgsConstructor // final 필드 생성자 주입을 자동화합니다.
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
@@ -41,7 +41,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserQueryServiceImpl userQueryServiceImpl;
 
-    private final AESUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸리티
     private final MailUtil mailUtil; // 이메일 발송 유틸리티
 
@@ -86,9 +85,9 @@ public class UserServiceImpl implements UserService {
         UserProfileDTO userProfileDTO = new UserProfileDTO();
         userProfileDTO.setGender(userInfo.getGender());
         userProfileDTO.setBalance(userInfo.getBalance());
-        userProfileDTO.setName(aesUtil.decrypt(userInfo.getName()));
-        userProfileDTO.setPhoneNumber(aesUtil.decrypt(userInfo.getPhoneNumber()));
-        userProfileDTO.setBirth(aesUtil.decrypt(userInfo.getBirth()));
+        userProfileDTO.setName(userInfo.getName());
+        userProfileDTO.setPhoneNumber(userInfo.getPhoneNumber());
+        userProfileDTO.setBirth(userInfo.getBirth());
         userProfileDTO.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
 
         return userProfileDTO;
@@ -252,35 +251,16 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserAmendReq myAmend(Long userIdx, UserAmendReq userAmendReq) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        UsersInformation userInfo = userInformationRepository.findById(users.getUsersIdx()).orElseThrow();
 
-        UsersInformation userInfo = userInformationRepository.findById(users.getUsersIdx())
-                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + users.getUsersIdx()));
+        // [수정] aesUtil.encrypt() 호출 제거 및 엔티티 직접 업데이트
+        userInfo.updateInformation(
+                userAmendReq.getGender(),
+                userAmendReq.getName().isEmpty() ? userInfo.getName() : userAmendReq.getName(),
+                userAmendReq.getPhoneNumber().isEmpty() ? userInfo.getPhoneNumber() : userAmendReq.getPhoneNumber(),
+                userAmendReq.getBirth().isEmpty() ? userInfo.getBirth() : userAmendReq.getBirth()
+        );
 
-        // 기존 정보로 DTO 초기화
-        UserAmendReq amend = new UserAmendReq();
-        amend.setGender(userInfo.getGender());
-        amend.setName(userInfo.getName());
-        amend.setPhoneNumber(userInfo.getPhoneNumber());
-        amend.setBirth(userInfo.getBirth());
-        amend.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
-
-        // 입력된 값이 있는 경우에만 암호화하여 수정 객체에 반영
-        if (!userAmendReq.getGender().equals(userInfo.getGender())) {
-            amend.setGender(userAmendReq.getGender());
-        }
-        if (!userAmendReq.getName().isEmpty()) {
-            amend.setName(aesUtil.encrypt(userAmendReq.getName()));
-        }
-        if (!userAmendReq.getPhoneNumber().isEmpty()) {
-            amend.setPhoneNumber(aesUtil.encrypt(userAmendReq.getPhoneNumber()));
-        }
-        if (!userAmendReq.getBirth().isEmpty()) {
-            amend.setBirth(aesUtil.encrypt(userAmendReq.getBirth()));
-        }
-
-        // 엔티티 업데이트
-        userInfo.updateInformation(amend.getGender(), amend.getName(), amend.getPhoneNumber(), amend.getBirth());
-
-        return amend;
+        return userAmendReq;
     }
 }

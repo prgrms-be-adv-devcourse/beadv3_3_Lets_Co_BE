@@ -62,7 +62,6 @@ class ProductControllerTest {
     );
 
     ProductOptionsRes option1_1 = new ProductOptionsRes(
-            1L,
             UUID.randomUUID().toString(),
             "노트북-노랑",
             2,
@@ -73,7 +72,6 @@ class ProductControllerTest {
     );
 
     ProductOptionsRes option1_2 = new ProductOptionsRes(
-            2L,
             UUID.randomUUID().toString(),
             "노트북-파랑",
             1,
@@ -92,7 +90,6 @@ class ProductControllerTest {
     );
 
     ProductOptionsRes option2_1 = new ProductOptionsRes(
-            3L,
             UUID.randomUUID().toString(),
             "스페이스 그레이 / M3 Pro",
             1,

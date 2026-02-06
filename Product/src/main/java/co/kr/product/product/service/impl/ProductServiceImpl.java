@@ -156,19 +156,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductInfoToOrderRes getProductInfo(Long productsIdx, Long optionIdx){
-        ProductEntity product = productRepository.findByProductsIdxAndDelFalse(productsIdx)
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsIdx));
+    public ProductInfoToOrderRes getProductInfo(String productsCode, String optionCode){
+        ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsCode));
 
-        ProductOptionEntity option = productOptionRepository.findByOptionGroupIdxAndDelFalse(optionIdx)
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 옵션입니다: " + optionIdx));
+        ProductOptionEntity option = productOptionRepository.findByOptionCodeAndDelFalse(optionCode)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 옵션입니다: " + optionCode));
 
 
         // List<ProductImageEntity> image = productImageRepository.findByProductAndDelFalse(product)
 
         return new ProductInfoToOrderRes(
-                productsIdx,
-                optionIdx,
+                product.getProductsIdx(),
+                option.getOptionGroupIdx(),
                 product.getSellerIdx(),
                 product.getProductsName(),
                 option.getOptionName(),

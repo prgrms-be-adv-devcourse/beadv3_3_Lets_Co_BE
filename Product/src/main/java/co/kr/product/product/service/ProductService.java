@@ -22,7 +22,7 @@ public interface ProductService {
 
     void deductStocks(List<DeductStockReq> deductStockReq);
 
-    ProductInfoToOrderRes getProductInfo(Long productsIdx, Long optionIdx);
+    ProductInfoToOrderRes getProductInfo(String productsCode, String optionCode);
 
     List<ProductInfoToOrderRes> getProductInfoList(List<ProductInfoToOrderReq> requests);
 

@@ -1,6 +1,7 @@
-package co.kr.order.queue.service;
+package co.kr.order.service.impl;
 
-import co.kr.order.queue.model.dto.QueueStatusInfo;
+import co.kr.order.model.dto.QueueStatusInfo;
+import co.kr.order.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,7 +12,7 @@ import java.util.Set;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class QueueService {
+public class QueueServiceImpl implements QueueService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -24,11 +25,13 @@ public class QueueService {
     // ==========================
     // 1. 입장 대기열 (Rate Limiter)
     // ==========================
+    @Override
     public void registerEnter(String queueToken) {
         long accessTime = System.currentTimeMillis();
         redisTemplate.opsForZSet().add(WAIT_ENTER_KEY, queueToken, accessTime);
     }
 
+    @Override
     public QueueStatusInfo getEnterStatus(String queueToken) {
         Double activeScore = redisTemplate.opsForZSet().score(ACTIVE_ENTER_KEY, queueToken);
 
@@ -46,7 +49,8 @@ public class QueueService {
         return new QueueStatusInfo(-1L, false, "대기열에 없습니다.");
     }
 
-    public void allowEnterUser(long count) {
+    @Override
+    public void allowEnterUser(Long count) {
         Set<Object> allowedUsers = redisTemplate.opsForZSet().range(WAIT_ENTER_KEY, 0, count - 1);
         if (allowedUsers == null || allowedUsers.isEmpty()) return;
 
@@ -61,12 +65,14 @@ public class QueueService {
     // ==========================
     // 2. 주문 대기열 (Capacity Limiter)
     // ==========================
+    @Override
     public void registerOrder(Long userIdx) {
         String member = String.valueOf(userIdx);
         long accessTime = System.currentTimeMillis();
         redisTemplate.opsForZSet().add(WAIT_ORDER_KEY, member, accessTime);
     }
 
+    @Override
     public QueueStatusInfo getOrderStatus(Long userIdx) {
         String member = String.valueOf(userIdx);
         long now = System.currentTimeMillis();
@@ -85,7 +91,8 @@ public class QueueService {
         return new QueueStatusInfo(-1L, false, "대기열에 없습니다.");
     }
 
-    public void allowOrderUser(long maxCapacity) {
+    @Override
+    public void allowOrderUser(Long maxCapacity) {
         Long currentActive = redisTemplate.opsForZSet().zCard(ACTIVE_ORDER_KEY);
         if (currentActive == null) currentActive = 0L;
 
@@ -103,12 +110,14 @@ public class QueueService {
         }
     }
 
+    @Override
     public void exitQueue(Long userIdx) {
         String member = String.valueOf(userIdx);
         redisTemplate.opsForZSet().remove(ACTIVE_ORDER_KEY, member);
         redisTemplate.opsForZSet().remove(WAIT_ORDER_KEY, member);
     }
 
+    @Override
     public void evictInactiveUsers(long timeoutMillis) {
         long now = System.currentTimeMillis();
         long cutOffTime = now - timeoutMillis;

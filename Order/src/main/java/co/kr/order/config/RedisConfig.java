@@ -1,4 +1,4 @@
-package co.kr.order.queue.config;
+package co.kr.order.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,7 +1,7 @@
-package co.kr.order.queue.controller;
+package co.kr.order.controller;
 
-import co.kr.order.queue.model.dto.QueueStatusInfo;
-import co.kr.order.queue.service.QueueService;
+import co.kr.order.model.dto.QueueStatusInfo;
+import co.kr.order.service.QueueService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

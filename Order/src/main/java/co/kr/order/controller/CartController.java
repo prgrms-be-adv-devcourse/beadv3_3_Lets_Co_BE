@@ -1,7 +1,7 @@
 package co.kr.order.controller;
 
 import co.kr.order.model.dto.request.CartReq;
-import co.kr.order.common.BaseResponse;
+import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.model.dto.response.CartRes;
 import co.kr.order.service.CartService;

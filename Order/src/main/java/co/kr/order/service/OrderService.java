@@ -14,8 +14,6 @@ public interface OrderService {
     Page<OrderRes> findOrderList(Long userIdx, Pageable pageable);
     OrderRes findOrder(Long userIdx, String orderCode);
 
-    String refund(Long userIdx, String orderCode);
-
     /**
      * 주문 완료 처리
      * - 주문 상태를 COMPLETED로 변경

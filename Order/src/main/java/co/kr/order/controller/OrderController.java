@@ -2,7 +2,7 @@ package co.kr.order.controller;
 
 import co.kr.order.model.dto.request.OrderCartReq;
 import co.kr.order.model.dto.request.OrderDirectReq;
-import co.kr.order.common.BaseResponse;
+import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderRes;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,21 +51,6 @@ public class OrderController {
         BaseResponse<OrderRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
-    }
-
-    @PostMapping("/refund/{orderCode}")
-    public ResponseEntity<BaseResponse<String>> refund (
-            HttpServletRequest servletRequest,
-            @PathVariable("orderCode") String orderCode
-    ) {
-
-        String headerValue = servletRequest.getHeader("X-USERS-IDX");
-        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
-
-        String info = orderService.refund(userIdx, orderCode);
-        BaseResponse<String> body = new BaseResponse<>("ok", info);
-
-        return ResponseEntity.ok(body);
     }
 
     @GetMapping

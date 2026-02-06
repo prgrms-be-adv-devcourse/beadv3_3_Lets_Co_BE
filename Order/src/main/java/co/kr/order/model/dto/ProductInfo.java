@@ -1,13 +1,13 @@
-package co.kr.order.model.dto.request;
+package co.kr.order.model.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record OrderReq(
-        @NotNull(message = "상품 ID는 필수입니다.")
+public record ProductInfo(
+        @NotNull(message = "상품 코드는 필수입니다.")
         String productCode,
 
-        @NotNull(message = "옵션 ID는 필수입니다.")
+        @NotNull(message = "옵션 코드는 필수입니다.")
         String optionCode,
 
         @NotNull(message = "수량은 필수입니다.")

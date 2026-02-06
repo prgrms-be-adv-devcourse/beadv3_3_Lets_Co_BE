@@ -1,8 +1,7 @@
 package co.kr.product.product.mapper;
 
-import co.kr.product.product.model.dto.response.ProductImageRes;
-import co.kr.product.product.model.dto.response.ProductOptionsRes;
-import co.kr.product.product.model.dto.response.ProductDetailRes;
+import co.kr.product.product.model.dto.response.*;
+import co.kr.product.product.model.entity.ProductCategoryEntity;
 import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
 
@@ -35,7 +34,6 @@ public class ProductMapper {
 
     public static ProductOptionsRes toOptMapper(ProductOptionEntity options){
         return new ProductOptionsRes(
-                options.getOptionGroupIdx(),
                 options.getOptionCode(),
                 options.getOptionName(),
                 options.getSortOrders(),
@@ -47,5 +45,24 @@ public class ProductMapper {
         );
     }
 
+    public static CategoryInfoRes toCategoryInfo(ProductCategoryEntity category){
+        return new CategoryInfoRes(
+                category.getCategoryCode(),
+                category.getCategoryName()
+        );
+    }
+
+
+    public static CategoryFamilyRes toCategoryFamilyMapper(List<ProductCategoryEntity> parents, List<ProductCategoryEntity> childs){
+        List<CategoryInfoRes> parentsRes =  parents.stream()
+                .map(ProductMapper::toCategoryInfo)
+                .toList();
+
+        List<CategoryInfoRes> childsRes =  childs.stream()
+                .map(ProductMapper::toCategoryInfo)
+                .toList();
+
+        return new CategoryFamilyRes(parentsRes,childsRes);
+    }
 
 }

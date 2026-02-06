@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Please create a bug report if you encounter any issues during testing.
-title: "[BUG][FIX]"
+title: "[FIX]"
 labels: bug
 assignees: ''
 

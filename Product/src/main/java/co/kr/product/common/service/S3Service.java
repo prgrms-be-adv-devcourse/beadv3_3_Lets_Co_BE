@@ -35,7 +35,7 @@ public class S3Service {
 
         // TODO !!! 입력받은 파일 유효성 검사 !!!!매우중요!!!!!
 
-        // key : 폴더 / 파일명(랜덤으로 생성)
+        // key : s3 내 "폴더/파일명" (랜덤으로 생성)
         String key = productPrefix +"/" + UUID.randomUUID().toString();
 
         try {

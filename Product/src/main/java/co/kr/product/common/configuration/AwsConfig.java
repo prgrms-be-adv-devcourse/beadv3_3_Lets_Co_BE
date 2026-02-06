@@ -59,8 +59,7 @@ public class AwsConfig {
 
                     // 1. DefaultCredentialsProvider > 순서대로 필요한 키를 찾음
                     //                            > 시스템속성, 환경변수 ~~ 로컬파일, ec2 자체 IAM 등
-                    // 환경변수를 먼저 찾아보기에 accessKey, secretKey가 존재하면 바로 AwsBasicCredentials을 통한
-                    // 영구키를 만들것
+                    // 환경변수를 먼저 찾아보기에 accessKey, secretKey가 존재하면 바로 AwsBasicCredentials을 통한 영구키를 만듦
                     // DefaultCredentialsProvider.create()는 더이상 사용 안함.
                     // DefaultCredentialsProvider.builder().build()
 
@@ -75,8 +74,6 @@ public class AwsConfig {
                             AwsBasicCredentials.create(accessKey, secretKey)
                     ))
                     */
-
-
                 .build();
     }
 

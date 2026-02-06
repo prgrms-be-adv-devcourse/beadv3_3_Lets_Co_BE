@@ -2,7 +2,7 @@
 name: "[Feature Folder Name][Feature]"
 about: Describe this issue template's purpose here
 title: ''
-labels: ''
+labels: "✨Feat"
 assignees: ''
 
 ---

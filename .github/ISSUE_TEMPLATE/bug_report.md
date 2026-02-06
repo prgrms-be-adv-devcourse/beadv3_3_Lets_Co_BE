@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Please create a bug report if you encounter any issues during testing.
-title: "[FIX]"
-labels: bug
+title: ''
+labels: "\U0001F41BFix"
 assignees: ''
 
 ---

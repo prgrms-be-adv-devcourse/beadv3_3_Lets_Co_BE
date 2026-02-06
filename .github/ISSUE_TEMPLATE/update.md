@@ -2,7 +2,7 @@
 name: Update
 about: 종속성 업데이트, 코딩 표준 준수, 라이브러리 최신화 시 사용합니다.
 title: ''
-labels: enhancement
+labels: "\U0001F504Update"
 assignees: ''
 
 ---

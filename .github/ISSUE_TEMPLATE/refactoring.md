@@ -2,7 +2,7 @@
 name: Refactoring
 about: 내부 동작 변경 없이 코드 구조를 개선할 때 사용합니다.
 title: ''
-labels: refactor
+labels: "\U0001F6E0️Refactor"
 assignees: ''
 
 ---

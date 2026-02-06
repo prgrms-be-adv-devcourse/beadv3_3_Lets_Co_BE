@@ -1,8 +1,8 @@
 ---
-name: Update
-about: 종속성 업데이트, 코딩 표준 준수, 라이브러리 최신화 시 사용합니다.
+name: Refactoring
+about: 내부 동작 변경 없이 코드 구조를 개선할 때 사용합니다.
 title: ''
-labels: enhancement
+labels: refactor
 assignees: ''
 
 ---

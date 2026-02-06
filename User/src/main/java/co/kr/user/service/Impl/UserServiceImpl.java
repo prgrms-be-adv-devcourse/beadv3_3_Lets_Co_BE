@@ -39,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
 
+    private final UserQueryServiceImpl userQueryServiceImpl;
+
     private final AESUtil aesUtil; // 양방향 암호화 유틸리티 (이름, 전화번호 등 복호화용)
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸리티
     private final MailUtil mailUtil; // 이메일 발송 유틸리티
@@ -54,17 +56,7 @@ public class UserServiceImpl implements UserService {
      * @return UserDTO (기본 회원 정보)
      */
     public UserDTO my(Long userIdx) {
-        // 사용자 조회 (없을 경우 예외 발생)
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow();
-
-        // 탈퇴(1) 또는 미인증(2) 상태 확인
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // DTO 변환 및 반환
         UserDTO userDTO = new UserDTO();
@@ -84,20 +76,11 @@ public class UserServiceImpl implements UserService {
      * @return UserProfileDTO (상세 회원 정보)
      */
     public UserProfileDTO myDetails(Long userIdx) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        // 계정 상태 검증
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 상세 정보 조회
-        UsersInformation userInfo = userInformationRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + userIdx));
+        UsersInformation userInfo = userInformationRepository.findById(users.getUsersIdx())
+                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + users.getUsersIdx()));
 
         // 암호화된 데이터를 복호화하여 DTO에 설정
         UserProfileDTO userProfileDTO = new UserProfileDTO();
@@ -121,15 +104,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional // 트랜잭션 처리 (인증 정보 저장)
     public UserDeleteDTO myDelete(Long userIdx) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow();
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 탈퇴용 인증번호 생성 및 저장
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
@@ -213,15 +188,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public String myDelete(Long userIdx, String authCode, HttpServletResponse response) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 최신 인증 요청 조회
         UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
@@ -284,18 +251,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserAmendReq myAmend(Long userIdx, UserAmendReq userAmendReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
-
-        UsersInformation userInfo = userInformationRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + userIdx));
+        UsersInformation userInfo = userInformationRepository.findById(users.getUsersIdx())
+                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + users.getUsersIdx()));
 
         // 기존 정보로 DTO 초기화
         UserAmendReq amend = new UserAmendReq();

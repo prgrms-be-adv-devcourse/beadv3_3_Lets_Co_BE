@@ -40,6 +40,8 @@ public class SellerServiceImpl implements SellerService {
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
 
+    private final UserQueryServiceImpl userQueryServiceImpl;
+
     private final MailUtil mailUtil; // 이메일 발송 유틸
     private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸
     private final AESUtil aesUtil; // 양방향 암호화 (이름 복호화용)
@@ -56,16 +58,7 @@ public class SellerServiceImpl implements SellerService {
     @Override
     @Transactional
     public SellerRegisterDTO sellerRegister(Long userIdx, SellerRegisterReq sellerRegisterReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        // 계정 상태 검증
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // Seller 엔티티 생성 및 저장
         // 계좌 토큰 등 민감 정보는 암호화(BCrypt)하여 저장
@@ -163,15 +156,7 @@ public class SellerServiceImpl implements SellerService {
     @Override
     @Transactional
     public String sellerRegisterCheck(Long userIdx, String authCode) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 최신 인증 내역 조회
         UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)

@@ -27,6 +27,8 @@ public class CardServiceImpl implements CardService {
     private final UserRepository userRepository;
     private final UserCardRepository userCardRepository;
 
+    private final UserQueryServiceImpl userQueryServiceImpl;
+
     private final AESUtil aesUtil; // 암호화 유틸리티
 
     /**
@@ -38,16 +40,7 @@ public class CardServiceImpl implements CardService {
      */
     @Override
     public Long defaultCard(Long userIdx) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 기본 카드 조회
         UserCard userCard = userCardRepository.findFirstByUsersIdxAndDelOrderByCardIdxDesc(users.getUsersIdx(), 0)
@@ -74,15 +67,7 @@ public class CardServiceImpl implements CardService {
      */
     @Override
     public Long searchCard(Long userIdx, String cardCode) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 카드 조회
         UserCard userCard = userCardRepository.findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(users.getUsersIdx(), cardCode, 0)
@@ -108,15 +93,7 @@ public class CardServiceImpl implements CardService {
      */
     @Override
     public List<CardListDTO> cardList(Long userIdx) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 삭제되지 않은 모든 카드 조회
         List<UserCard> userCardList = userCardRepository.findAllByUsersIdxAndDel(users.getUsersIdx(), 0);
@@ -151,15 +128,7 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public String addCard(Long userIdx, CardRequestReq cardRequestReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 카드 엔티티 생성 및 암호화 저장
         UserCard userCard = UserCard.builder()
@@ -188,22 +157,14 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public String updateCard(Long userIdx, CardRequestReq cardRequestReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 수정할 카드 조회
         UserCard userCard = userCardRepository.findByCardCodeAndDel(cardRequestReq.getCardCode(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 카드 정보를 찾을 수 없습니다."));
 
         // 소유권 검증
-        if (!userCard.getUsersIdx().equals(userIdx)) {
+        if (!userCard.getUsersIdx().equals(users.getUsersIdx())) {
             throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
         }
 
@@ -281,22 +242,14 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public String deleteCard(Long userIdx, String CardCode) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 삭제할 카드 조회
         UserCard userCard = userCardRepository.findByCardCodeAndDel(CardCode, 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
         // 소유권 검증
-        if (!userCard.getUsersIdx().equals(userIdx)) {
+        if (!userCard.getUsersIdx().equals(users.getUsersIdx())) {
             throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
         }
 

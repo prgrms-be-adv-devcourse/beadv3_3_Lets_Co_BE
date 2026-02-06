@@ -35,6 +35,8 @@ public class RetrieveServiceImpl implements RetrieveService {
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
 
+    private final UserQueryServiceImpl userQueryServiceImpl;
+
     private final RandomCodeUtil randomCodeUtil; // 인증코드 생성 유틸리티
     private final MailUtil mailUtil; // 이메일 발송 유틸리티
     private final BCryptUtil bCryptUtil; // 비밀번호 암호화 유틸리티
@@ -49,17 +51,7 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Override
     @Transactional
     public FindPWFirstStepDTO findPwFirst(FindPWFirstStepReq findPWFirstStepReq) {
-        // 사용자 조회
-        Users users = userRepository.findById(findPWFirstStepReq.getID())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        // 계정 상태 검증
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUserById(findPWFirstStepReq.getID());
 
         // 인증 코드 생성 및 DB 저장 (목적: RESET_PW)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
@@ -143,17 +135,7 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Override
     @Transactional
     public String findPwSecond(FindPWSecondStepReq findPWSecondStepReq) {
-        // 사용자 조회
-        Users users = userRepository.findById(findPWSecondStepReq.getID())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        // 계정 상태 검증
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUserById(findPWSecondStepReq.getID());
 
         // 최신 인증 내역 조회
         UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)

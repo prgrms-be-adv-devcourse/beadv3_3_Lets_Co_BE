@@ -26,6 +26,8 @@ public class AddressServiceImpl implements AddressService {
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
 
+    private final UserQueryServiceImpl userQueryServiceImpl;
+
     private final AESUtil aesUtil; // 개인정보 양방향 암호화 유틸리티
 
     /**
@@ -37,17 +39,7 @@ public class AddressServiceImpl implements AddressService {
      */
     @Override
     public Long defaultAddress(Long userIdx) {
-        // 사용자 검증
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        // 계정 상태 확인 (탈퇴/미인증)
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 기본 배송지(DefaultAddress=1)이면서 삭제되지 않은(Del=0) 주소 조회
         UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndDelOrderByAddressIdxDesc(users.getUsersIdx(),  0)
@@ -66,16 +58,7 @@ public class AddressServiceImpl implements AddressService {
      */
     @Override
     public Long searchAddress(Long userIdx, String addressCode) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
-
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
         // 주소 코드와 사용자 ID로 주소 조회
         UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(users.getUsersIdx(), addressCode, 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보가 없습니다."));
@@ -92,15 +75,7 @@ public class AddressServiceImpl implements AddressService {
      */
     @Override
     public List<AddressListDTO> addressList(Long userIdx) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 삭제되지 않은 모든 주소 조회
         List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(users.getUsersIdx(), 0);
@@ -134,15 +109,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public String addAddress(Long userIdx, AddressRequestReq addressRequestReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 주소 엔티티 생성 및 암호화
         UsersAddress usersAddress = UsersAddress.builder()
@@ -170,22 +137,14 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public String updateAddress(Long userIdx, AddressRequestReq addressRequestReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 수정할 주소 조회
         UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressRequestReq.getAddressCode(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
         // 소유권 검증
-        if (!usersAddress.getUsersIdx().equals(userIdx)) {
+        if (!usersAddress.getUsersIdx().equals(users.getUsersIdx())) {
             throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
         }
 
@@ -253,22 +212,14 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public String deleteAddress(Long userIdx, String addressCode) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 삭제할 주소 조회
         UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndDel(addressCode, 0)
                 .orElseThrow(() -> new IllegalArgumentException("해당 주소 정보를 찾을 수 없습니다."));
 
         // 소유권 검증
-        if (!usersAddress.getUsersIdx().equals(userIdx)) {
+        if (!usersAddress.getUsersIdx().equals(users.getUsersIdx())) {
             throw new IllegalStateException("본인의 주소만 수정할 수 있습니다.");
         }
 

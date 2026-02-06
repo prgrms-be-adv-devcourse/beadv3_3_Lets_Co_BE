@@ -1,4 +1,4 @@
-package co.kr.order.common;
+package co.kr.order.model.dto.response;
 
 /*
  * 최종적으로 return 할 response DTO

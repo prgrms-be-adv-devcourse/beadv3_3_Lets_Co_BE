@@ -2,7 +2,7 @@ package co.kr.order.controller;
 
 import co.kr.order.model.dto.request.OrderCartReq;
 import co.kr.order.model.dto.request.OrderDirectReq;
-import co.kr.order.common.BaseResponse;
+import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderRes;
 import co.kr.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,6 +1,6 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.QueueStatusInfo;
+import co.kr.order.model.redis.WaitingQueue;
 import co.kr.order.service.QueueService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class QueueController {
     }
 
     @GetMapping("/enter/status")
-    public QueueStatusInfo getEnterStatus(
+    public WaitingQueue getEnterStatus(
             @RequestHeader("X-QUEUE-TOKEN") String queueToken
     ) {
         return queueService.getEnterStatus(queueToken);
@@ -63,7 +63,7 @@ public class QueueController {
     }
 
     @GetMapping("/orders/status")
-    public QueueStatusInfo getOrderStatus(
+    public WaitingQueue getOrderStatus(
             HttpServletRequest servletRequest
     ) {
         String headerValue = servletRequest.getHeader("X-USERS-IDX");

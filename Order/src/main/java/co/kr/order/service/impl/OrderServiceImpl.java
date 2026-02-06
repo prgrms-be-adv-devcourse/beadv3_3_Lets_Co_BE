@@ -8,18 +8,13 @@ import co.kr.order.exception.OutOfStockException;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.request.*;
-import co.kr.order.model.dto.response.ClientPaymentRes;
-import co.kr.order.model.dto.response.ClientProductRes;
-import co.kr.order.model.dto.response.OrderItemRes;
-import co.kr.order.model.dto.response.OrderRes;
-import co.kr.order.model.entity.CartEntity;
+import co.kr.order.model.dto.response.*;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
 import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentType;
 import co.kr.order.model.vo.SettlementType;
-import co.kr.order.repository.CartJpaRepository;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.repository.SettlementRepository;
@@ -42,12 +37,13 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderJpaRepository orderRepository;
     private final OrderItemJpaRepository orderItemRepository;
-    private final CartJpaRepository cartRepository;
+    private final SettlementRepository settlementRepository;
+
+    private final CartServiceImpl cartService;
 
     private final PaymentClient paymentClient;
-
     private final ProductClient productClient;
-    private final SettlementRepository settlementRepository;
+
 
     @Transactional
     @Override
@@ -168,12 +164,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderRes cartOrder(Long userIdx, OrderCartReq request) {
 
-//        UserData userData = userClient.getUserData(userIdx, request.userData());
-//
-//        if (request.userData().addressInfo() == null) {
-//            throw new NoInputAddressDataException(ErrorCode.NO_INPUT_ADDRESS_DATA);
-//        }
-
         String orderCode = UUID.randomUUID().toString();
         BigDecimal itemsAmount = BigDecimal.ZERO;
 
@@ -190,24 +180,27 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(orderEntity);
 
-        List<CartEntity> cartEntities = cartRepository.findAllByUserIdx(userIdx);
-        if (cartEntities.isEmpty()) {
+        List<CartItemRes> cartList = cartService.getCartList(userIdx);
+        if (cartList.isEmpty()) {
             throw new IllegalArgumentException("장바구니가 비어있습니다.");
         }
 
-        // 상품 정보 및 판매자 정보 조회 (Bulk)
-        List<ClientProductReq> cartReqest = cartEntities.stream()
-                .map(cart -> new ClientProductReq(cart.getProductIdx(), cart.getOptionIdx()))
-                .toList();
+        List<ClientProductReq> cartRequest = new ArrayList<>();
+        for (CartItemRes cart : cartList) {
+            ClientProductReq req =
+                    new ClientProductReq(cart.product().productIdx(), cart.product().optionIdx());
+            cartRequest.add(req);
+        }
 
-        List<Long> productIds = cartEntities.stream()
-                .map(CartEntity::getProductIdx)
-                .distinct()
-                .toList();
+        Set<Long> productIdSet = new HashSet<>();
+        for (CartItemRes cart : cartList) {
+            productIdSet.add(cart.product().productIdx());
+        }
+        List<Long> productIds = new ArrayList<>(productIdSet);
 
-        List<ClientProductRes> productRespons;
+        List<ClientProductRes> productResponse;
         try {
-            productRespons = productClient.getProductList(cartReqest);
+            productResponse = productClient.getProductList(cartRequest);
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
@@ -217,7 +210,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 조회된 리스트를 Map으로 변환 (Key: "상품ID-옵션ID")
         Map<String, ClientProductRes> productMap = new HashMap<>();
-        for (ClientProductRes info : productRespons) {
+        for (ClientProductRes info : productResponse) {
             String key = info.productIdx() + "-" + info.optionIdx();
             productMap.put(key, info);
         }
@@ -228,31 +221,31 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItemRes> responseList = new ArrayList<>();
         Map<Long, BigDecimal> sellerAmountMap = new HashMap<>(); // 판매자별 정산금 합산용
 
-        for (CartEntity cartEntity : cartEntities) {
+        for (CartItemRes cartItem : cartList) {
 
-            String key = cartEntity.getProductIdx() + "-" + cartEntity.getOptionIdx();
+            String key = cartItem.product().productIdx() + "-" + cartItem.product().optionIdx();
             ClientProductRes product = productMap.get(key);
 
             if (product == null) {
                 throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
             }
 
-            if (product.stock() < cartEntity.getQuantity()) {
+            if (product.stock() < cartItem.quantity()) {
                 throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
             }
 
-            BigDecimal amount = product.price().multiply(BigDecimal.valueOf(cartEntity.getQuantity()));
+            BigDecimal amount = product.price().multiply(BigDecimal.valueOf(cartItem.quantity()));
             itemsAmount = itemsAmount.add(amount);
 
             // OrderItem 생성
             OrderItemEntity orderItemEntity = OrderItemEntity.builder()
                     .order(orderEntity)
-                    .productIdx(cartEntity.getProductIdx())
-                    .optionIdx(cartEntity.getOptionIdx())
+                    .productIdx(cartItem.product().productIdx())
+                    .optionIdx(cartItem.product().optionIdx())
                     .productName(product.productName())
                     .optionName(product.optionName())
                     .price(product.price())
-                    .quantity(cartEntity.getQuantity())
+                    .quantity(cartItem.quantity())
                     .del(false)
                     .build();
             orderItemsToSave.add(orderItemEntity);
@@ -266,19 +259,19 @@ public class OrderServiceImpl implements OrderService {
                             product.optionName(),
                             product.price()
                     ),
-                    cartEntity.getQuantity(),
+                    cartItem.quantity(),
                     amount
             ));
 
             // 재고 차감 요청 리스트 추가
             stockRequests.add(new DeductStockReq(
-                    cartEntity.getProductIdx(),
-                    cartEntity.getOptionIdx(),
-                    cartEntity.getQuantity()
+                    cartItem.product().productIdx(),
+                    cartItem.product().optionIdx(),
+                    cartItem.quantity()
             ));
 
             // 판매자별 정산 금액 합산 로직
-            Long sellerIdx = productSellerMap.get(cartEntity.getProductIdx());
+            Long sellerIdx = productSellerMap.get(cartItem.product().productIdx());
             if (sellerIdx != null) {
                 sellerAmountMap.merge(sellerIdx, amount, BigDecimal::add);
             }
@@ -287,7 +280,7 @@ public class OrderServiceImpl implements OrderService {
         // 주문 상품 DB 저장
         orderItemRepository.saveAll(orderItemsToSave);
 
-        // 6. 주문 총액 업데이트
+        // 주문 총액 업데이트
         orderEntity.setItemsAmount(itemsAmount);
         orderEntity.setTotalAmount(itemsAmount);
         orderRepository.save(orderEntity);
@@ -313,8 +306,6 @@ public class OrderServiceImpl implements OrderService {
         // 재고 차감 및 장바구니 비우기 (실패 시 보상 트랜잭션 수행)
         try {
             productClient.deductStocks(stockRequests);
-            cartRepository.deleteByUserIdx(userIdx);
-
         } catch (Exception e) {
             log.error("주문 후처리 실패 (재고 차감 등). 환불 진행. orderCode={}", orderCode, e);
 
@@ -335,6 +326,14 @@ public class OrderServiceImpl implements OrderService {
             orderEntity.setStatus(OrderStatus.REFUNDED);
 
             throw e;
+        }
+
+        try {
+            cartService.deleteCartAll(userIdx);
+        } catch (Exception e) {
+            // 여기서 에러가 나도 전체 주문을 롤백(환불)할 필요는 없음
+            // 로그만 남기고 운영자가 나중에 확인하거나 무시
+            log.error("주문은 성공했으나 장바구니 비우기 실패 Redis Error userIdx={}", userIdx, e);
         }
 
         orderRepository.save(orderEntity);
@@ -475,13 +474,6 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    /*
-     * 주문 완료 처리 (일단 보류)
-     * - 결제 완료(PAID) 상태의 주문만 완료 처리 가능
-     * - 주문 상태를 COMPLETED로 변경
-     *
-     * @param orderId 주문 ID
-     */
     @Transactional
     @Override
     public void completeOrder(Long orderId) {

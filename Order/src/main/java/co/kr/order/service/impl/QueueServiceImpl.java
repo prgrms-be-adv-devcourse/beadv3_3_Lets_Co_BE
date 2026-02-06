@@ -1,6 +1,6 @@
 package co.kr.order.service.impl;
 
-import co.kr.order.model.dto.QueueStatusInfo;
+import co.kr.order.model.redis.WaitingQueue;
 import co.kr.order.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,21 +32,21 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
-    public QueueStatusInfo getEnterStatus(String queueToken) {
+    public WaitingQueue getEnterStatus(String queueToken) {
         Double activeScore = redisTemplate.opsForZSet().score(ACTIVE_ENTER_KEY, queueToken);
 
         if (activeScore != null) {
             redisTemplate.opsForZSet().remove(ACTIVE_ENTER_KEY, queueToken);
 
-            return new QueueStatusInfo(0L, true, "입장 완료");
+            return new WaitingQueue(0L, true, "입장 완료");
         }
 
         Long rank = redisTemplate.opsForZSet().rank(WAIT_ENTER_KEY, queueToken);
         if (rank != null) {
-            return new QueueStatusInfo(rank + 1, false, "대기 중입니다.");
+            return new WaitingQueue(rank + 1, false, "대기 중입니다.");
         }
 
-        return new QueueStatusInfo(-1L, false, "대기열에 없습니다.");
+        return new WaitingQueue(-1L, false, "대기열에 없습니다.");
     }
 
     @Override
@@ -73,22 +73,22 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
-    public QueueStatusInfo getOrderStatus(Long userIdx) {
+    public WaitingQueue getOrderStatus(Long userIdx) {
         String member = String.valueOf(userIdx);
         long now = System.currentTimeMillis();
 
         Double activeScore = redisTemplate.opsForZSet().score(ACTIVE_ORDER_KEY, member);
         if (activeScore != null) {
             redisTemplate.opsForZSet().add(ACTIVE_ORDER_KEY, member, now);
-            return new QueueStatusInfo(0L, true, "주문 가능");
+            return new WaitingQueue(0L, true, "주문 가능");
         }
 
         Long rank = redisTemplate.opsForZSet().rank(WAIT_ORDER_KEY, member);
         if (rank != null) {
-            return new QueueStatusInfo(rank + 1, false, "대기 중입니다.");
+            return new WaitingQueue(rank + 1, false, "대기 중입니다.");
         }
 
-        return new QueueStatusInfo(-1L, false, "대기열에 없습니다.");
+        return new WaitingQueue(-1L, false, "대기열에 없습니다.");
     }
 
     @Override

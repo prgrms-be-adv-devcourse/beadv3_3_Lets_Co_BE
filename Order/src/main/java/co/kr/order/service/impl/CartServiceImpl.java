@@ -4,23 +4,21 @@ import co.kr.order.client.ProductClient;
 import co.kr.order.exception.CartNotFoundException;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
-import co.kr.order.mapper.CartMapper;
 import co.kr.order.model.dto.ItemInfo;
-import co.kr.order.model.dto.request.ClientProductReq;
-import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.dto.request.CartReq;
+import co.kr.order.model.dto.request.ClientProductReq;
 import co.kr.order.model.dto.response.CartItemRes;
-import co.kr.order.model.dto.response.CartRes;
-import co.kr.order.model.entity.CartEntity;
-import co.kr.order.repository.CartJpaRepository;
+import co.kr.order.model.dto.response.ClientProductRes;
+import co.kr.order.model.redis.Cart;
 import co.kr.order.service.CartService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * todo.
@@ -31,14 +29,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
-    private final CartJpaRepository cartRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final ProductClient productClient;
 
+    private final static String KEY = "cart:user:";
+
     @Override
-    @Transactional
     public CartItemRes addCartItem(Long userIdx, CartReq request) {
 
-        // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ClientProductRes productResponse;
         try {
             productResponse = productClient.getProduct(request.productCode(), request.optionCode());
@@ -46,122 +44,132 @@ public class CartServiceImpl implements CartService {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        // userIdx, productIdx, optionIdx가 같은 컬럼 찾기
-        Optional<CartEntity> existCart = cartRepository.findCartEntity(userIdx, productResponse.productIdx(), productResponse.optionIdx());
+        String cartKey = KEY + userIdx;
+        String field = request.optionCode();
 
-        if (existCart.isPresent()) {
-            // 장바구니에서 상품을 + 했을 경우 (existCart가 존재할 경우)
-            // entity의 개수(quantity) 증가
-            CartEntity entity = existCart.get();
-            entity.plusQuantity();
-            entity.addPrice(productResponse.price());
-
-            cartRepository.save(entity);
+        Cart cartItem = getCartItem(cartKey, field);
+        if (cartItem == null) {
+            cartItem = Cart.builder()
+                .userIdx(userIdx)
+                .productIdx(productResponse.productIdx())
+                .optionIdx(productResponse.optionIdx())
+                .quantity(1)
+                .build();
         }
         else {
-            // 상품에서 직접 카트 담기 눌렀을 경우 (existCart가 없을 경우)
-            // 새로운 entity 생성 후 데이터 추가
-            CartEntity newCart = CartEntity.builder()
-                    .userIdx(userIdx)
-                    .productIdx(productResponse.productIdx())
-                    .optionIdx(productResponse.optionIdx())
-                    .quantity(1)
-                    .price(productResponse.price())
-                    .del(false)
-                    .build();
-
-            cartRepository.save(newCart);
+            cartItem.increaseQuantity();
         }
+        redisTemplate.opsForHash().put(cartKey, field, cartItem);
+        redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
 
-        // 단일상품 조회
-        return getCartItem(userIdx, request);
+        return new CartItemRes(
+                new ItemInfo(
+                        productResponse.productIdx(),
+                        productResponse.optionIdx(),
+                        productResponse.productName(),
+                        productResponse.optionName(),
+                        productResponse.price()
+                ),
+                cartItem.getQuantity(),
+                productResponse.price()
+                        .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
+        );
     }
 
-    /*
-     * @param request : productIdx와 optionIdx
-     * 장바구니 페이지에서 상품 - 클릭
-     */
     @Override
-    @Transactional
     public CartItemRes subtractCartItem(Long userIdx, CartReq request) {
 
-        // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ClientProductRes productResponse;
-        try {
-            productResponse = productClient.getProduct(request.productCode(), request.optionCode());
-        } catch (FeignException.NotFound e) {
-            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
-        }
+        String cartKey = KEY + userIdx;
+        String field = request.optionCode();
 
-        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, productResponse.productIdx(), productResponse.optionIdx());
-
-        if (existingCart.isPresent()) {
-            // 장바구니에서 상품을 - 했을 경우 (existCart가 존재할 경우)
-            // entity의 개수(quantity) 감소
-            CartEntity entity = existingCart.get();
-
-            // 개수(quantity)가 1 이상이면 동작하고
-            if(entity.getQuantity() > 1) {
-                entity.minusQuantity();
-                entity.subtractPrice(productResponse.price());
-                cartRepository.save(entity);
-            }
-            else {
-                // 1 이하이면
-                // 어차피 front에서 처리할거지만 혹시모르니 삭제 처리
-                cartRepository.delete(entity);
-            }
-        }
-        else {
-            // existCart가 없는데 - 를 누를 수 없으니 CartNotFoundException 으로 처리
+        Cart cartItem = getCartItem(cartKey, field);
+        if (cartItem == null) {
             throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
         }
 
-        // 단일상품 조회
-        return getCartItem(userIdx, request);
+        if (cartItem.getQuantity() > 1) {
+            cartItem.decreaseQuantity();
+            redisTemplate.opsForHash().put(cartKey, field, cartItem);
+            redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
+        }
+
+        ClientProductRes productResponse;
+        try {
+            productResponse = productClient.getProduct(request.productCode(), request.optionCode());
+        } catch (FeignException.NotFound e) {
+            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        return new CartItemRes(
+                new ItemInfo(
+                        productResponse.productIdx(),
+                        productResponse.optionIdx(),
+                        productResponse.productName(),
+                        productResponse.optionName(),
+                        productResponse.price()
+                ),
+                cartItem.getQuantity(),
+                productResponse.price()
+                        .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
+        );
     }
 
-    /*
-     * 카트 전체 리스트 조회
-     */
     @Override
-    @Transactional(readOnly = true)
-    public CartRes getCartList(Long userIdx) {
+    public void deleteCartItem(Long userIdx, CartReq request) {
 
-        // useridx가 같은 entity 가져오기
-        List<CartEntity> entities = cartRepository.findAllByUserIdx(userIdx);
-        List<CartItemRes> cartList = new ArrayList<>();
+        String cartKey = KEY + userIdx;
+        String field = request.optionCode();
 
-        // 장바구니가 비어있을 경우 바로 빈리스트 return
-        if (entities.isEmpty()) {
-            return CartMapper.toCartInfo(new ArrayList<>());
+        redisTemplate.opsForHash().delete(cartKey, field);
+        redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
+    }
+
+    @Override
+    public void deleteCartAll(Long userIdx) {
+
+        String cartKey = KEY + userIdx;
+
+        redisTemplate.delete(cartKey);
+    }
+
+    @Override
+    public List<CartItemRes> getCartList(Long userIdx) {
+
+        List<CartItemRes> cartIList = new ArrayList<>();
+
+        String cartKey = KEY + userIdx;
+        List<Object> values = redisTemplate.opsForHash().values(cartKey);
+
+        if (values.isEmpty()) {
+            return List.of();
         }
 
         List<ClientProductReq> productList = new ArrayList<>();
-        for (CartEntity entity : entities) {
-            ClientProductReq product = new ClientProductReq(entity.getProductIdx(), entity.getOptionIdx());
+        for (Object value : values) {
+            Cart cartItem = (Cart) value;
+            ClientProductReq product = new ClientProductReq(cartItem.getProductIdx(), cartItem.getOptionIdx());
             productList.add(product);
         }
 
-        // ProductInfo(상품 정보)를 가져오기 위한 Product-Service간의 동기 통신
-        List<ClientProductRes> clientProductRespons;
+        List<ClientProductRes> clientProductResponse;
         try {
-            clientProductRespons = productClient.getProductList(productList);
+            clientProductResponse = productClient.getProductList(productList);
         } catch (FeignException.NotFound e) {
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 중복 방지를 위한 Map의 Key를 String(복합키)로
         Map<String, ClientProductRes> productMap = new HashMap<>();
-        for (ClientProductRes info : clientProductRespons) {
+        for (ClientProductRes info : clientProductResponse) {
             // key 생성 예: "10-1" (상품ID-옵션 내용)
             String key = info.productIdx() + "-" + info.optionIdx();
             productMap.put(key, info);
         }
 
-        for (CartEntity entity : entities) {
+        for (Object value : values) {
+            Cart cartItem = (Cart) value;
 
-            String key = entity.getProductIdx() + "-" + entity.getOptionIdx();
+            String key = cartItem.getProductIdx() + "-" + cartItem.getOptionIdx();
             ClientProductRes product = productMap.get(key);
 
             if (product == null) {
@@ -169,11 +177,10 @@ public class CartServiceImpl implements CartService {
             }
 
             // 상품 가격 = 단가 * 수량
-            int quantity = entity.getQuantity();
+            int quantity = cartItem.getQuantity();
             BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
 
-            // 장바구니 아이템 Dto 생성
-            CartItemRes cartItem = new CartItemRes(
+            CartItemRes cartItemResponse = new CartItemRes(
                     new ItemInfo(
                             product.productIdx(),
                             product.optionIdx(),
@@ -185,79 +192,15 @@ public class CartServiceImpl implements CartService {
                     totalPrice
             );
 
-            // 단일상품 리스트에 추가
-            cartList.add(cartItem);
+            cartIList.add((cartItemResponse));
         }
 
-        // 응답 dto return
-        return CartMapper.toCartInfo(cartList);
+        return cartIList;
     }
 
-    /*
-     * @param request : 조회할 상품의 productIdx와 optionIdx
-     * 장바구니에 담긴 단일 상품 상세 조회 (수량 변경 후 응답값 반환용)
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public CartItemRes getCartItem(Long userIdx, CartReq request) {
-
-        // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
-        ClientProductRes product;
-        try {
-            product = productClient.getProduct(request.productCode(), request.optionCode());
-        } catch (FeignException.NotFound e) {
-            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
-        }
-
-        // 해당 유저의 장바구니에서 특정 상품(옵션 포함) 찾기, 없으면 예외 발생
-        CartEntity entity = cartRepository.findCartEntity(userIdx, product.productIdx(), product.optionIdx())
-                .orElseThrow(() -> new CartNotFoundException(ErrorCode.CART_NOT_FOUND));
-
-
-        // 상품 가격 = 단가 * 수량
-        int quantity = entity.getQuantity();
-        BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
-
-        // 응답 DTO 반환
-        return new CartItemRes(
-                new ItemInfo(
-                        product.productIdx(),
-                        product.optionIdx(),
-                        product.productName(),
-                        product.optionName(),
-                        product.price()
-                ),
-                quantity,
-                totalPrice
-        );
-    }
-
-    /*
-     * @param productRequest : 삭제할 상품의 productIdx와 optionIdx
-     * 장바구니 상품 아예 삭제 (X 클릭 또는 수량 0 미만 처리)
-     */
-    @Override
-    @Transactional
-    public void deleteCartItem(Long userIdx, CartReq request) {
-
-        ClientProductRes product;
-        try {
-            product = productClient.getProduct(request.productCode(), request.optionCode());
-        } catch (FeignException.NotFound e) {
-            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
-        }
-
-        // 삭제할 장바구니 아이템 조회
-        Optional<CartEntity> existingCart = cartRepository.findCartEntity(userIdx, product.productIdx(), product.optionIdx());
-
-        if (existingCart.isPresent()) {
-            // 상품이 존재하면 DB 데이터 삭제
-            CartEntity entity = existingCart.get();
-            cartRepository.deleteById(entity.getId());
-        }
-        else {
-            // 이미 삭제되었거나 없는 상품에 대한 삭제 요청 시 예외 처리
-            throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
-        }
+    // Helper Method
+    private Cart getCartItem(String cartKey, String field) {
+        Object cartItem = redisTemplate.opsForHash().get(cartKey, field);
+        return (Cart) cartItem;
     }
 }

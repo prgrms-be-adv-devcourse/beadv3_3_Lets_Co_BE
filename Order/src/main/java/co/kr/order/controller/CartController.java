@@ -3,7 +3,6 @@ package co.kr.order.controller;
 import co.kr.order.model.dto.request.CartReq;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.CartItemRes;
-import co.kr.order.model.dto.response.CartRes;
 import co.kr.order.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -11,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,15 +51,15 @@ public class CartController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<CartRes>> getCartList(
+    public ResponseEntity<BaseResponse<List<CartItemRes>>> getCartList(
             HttpServletRequest servletRequest
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        CartRes info = cartService.getCartList(userIdx);
-        BaseResponse<CartRes> body = new BaseResponse<>("ok", info);
+        List<CartItemRes> info = cartService.getCartList(userIdx);
+        BaseResponse<List<CartItemRes>> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
     }

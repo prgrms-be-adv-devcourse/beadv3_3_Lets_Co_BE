@@ -2,25 +2,28 @@ package co.kr.order.service.impl;
 
 import co.kr.order.client.PaymentClient;
 import co.kr.order.client.ProductClient;
-import co.kr.order.client.UserClient;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.OrderNotFoundException;
 import co.kr.order.exception.OutOfStockException;
 import co.kr.order.exception.ProductNotFoundException;
-import co.kr.order.model.dto.request.DeductStockReq;
 import co.kr.order.model.dto.ItemInfo;
-import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.dto.request.*;
+import co.kr.order.model.dto.response.ClientPaymentRes;
+import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.dto.response.OrderItemRes;
 import co.kr.order.model.dto.response.OrderRes;
-import co.kr.order.model.dto.response.ClientPaymentRes;
-import co.kr.order.model.entity.*;
+import co.kr.order.model.entity.CartEntity;
+import co.kr.order.model.entity.OrderEntity;
+import co.kr.order.model.entity.OrderItemEntity;
+import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.PaymentType;
 import co.kr.order.model.vo.SettlementType;
-import co.kr.order.repository.*;
+import co.kr.order.repository.CartJpaRepository;
+import co.kr.order.repository.OrderItemJpaRepository;
+import co.kr.order.repository.OrderJpaRepository;
+import co.kr.order.repository.SettlementRepository;
 import co.kr.order.service.OrderService;
-import co.kr.order.service.SettlementService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +47,6 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentClient paymentClient;
 
     private final ProductClient productClient;
-    private final UserClient userClient;
-    private final SettlementService settlementService;
     private final SettlementRepository settlementRepository;
 
     @Transactional
@@ -355,22 +356,6 @@ public class OrderServiceImpl implements OrderService {
                 .amount(amount)
                 .build();
         settlementRepository.save(entity);
-    }
-
-    @Transactional
-    @Override
-    public String refund(Long userIdx, String orderCode) {
-
-        OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
-
-        paymentClient.refundPayment(
-                new ClientRefundReq(userIdx, orderCode)
-        );
-
-        orderEntity.setStatus(OrderStatus.REFUNDED);
-        orderRepository.save(orderEntity);
-
-        return "환불처리가 완료 되었습니다.";
     }
 
     @Transactional(readOnly = true)

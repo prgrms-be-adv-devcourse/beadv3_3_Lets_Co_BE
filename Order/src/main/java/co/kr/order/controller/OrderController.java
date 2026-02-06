@@ -53,21 +53,6 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-    @PostMapping("/refund/{orderCode}")
-    public ResponseEntity<BaseResponse<String>> refund (
-            HttpServletRequest servletRequest,
-            @PathVariable("orderCode") String orderCode
-    ) {
-
-        String headerValue = servletRequest.getHeader("X-USERS-IDX");
-        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
-
-        String info = orderService.refund(userIdx, orderCode);
-        BaseResponse<String> body = new BaseResponse<>("ok", info);
-
-        return ResponseEntity.ok(body);
-    }
-
     @GetMapping
     public ResponseEntity<BaseResponse<Page<OrderRes>>> getOrderList (
             HttpServletRequest servletRequest,

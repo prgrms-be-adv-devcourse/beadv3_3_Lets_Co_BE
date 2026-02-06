@@ -125,14 +125,11 @@ public class OrderServiceImpl implements OrderService {
             // 비상 상황: 돈은 나갔는데 재고 차감이나 후처리가 실패 (여러 사람이 1개의 재고를 동시에 주문했을 경우)
             // 반드시 결제를 취소(환불) 해줘야 함
 
-            // TOSS_PAY는 아직 결제 전이므로 주문 상태만 취소로 변경 (혹은 삭제)
-            if (request.paymentType() != PaymentType.TOSS_PAY) {
-                // 이미 돈이 나간 경우에만 환불 처리
-                paymentClient.refundPayment(
-                        new ClientRefundReq(userIdx, orderCode)
-                );
-                orderEntity.setStatus(OrderStatus.REFUNDED);
-            }
+            // 모든 결제 타입에서 환불 처리 수행 (TOSS_PAY도 승인 완료 후이므로 환불 필요)
+            paymentClient.refundPayment(
+                    new ClientRefundReq(userIdx, orderEntity.getId())
+            );
+            orderEntity.setStatus(OrderStatus.REFUNDED);
 
             // 예외를 다시 던져서 DB 트랜잭션(주문 생성 등)을 롤백시킴
             throw e;
@@ -315,20 +312,10 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("주문 후처리 실패 (재고 차감 등). 환불 진행. orderCode={}", orderCode, e);
 
-            // TOSS_PAY는 승인이 완료된 상태이므로 취소 필요
-            // 다른 결제 수단도 돈이 나갔다면 환불 처리
-            if (request.paymentType() != PaymentType.TOSS_PAY) {
-                paymentClient.refundPayment(
-                        new ClientRefundReq(userIdx, orderCode)
-                );
-            }
-            else {
-                // Toss 결제도 승인 후 실패 시 환불(취소) 처리 필요
-                // (Toss는 승인 API 호출 성공 시 돈이 나간 상태임)
-                paymentClient.refundPayment(
-                        new ClientRefundReq(userIdx, orderCode)
-                );
-            }
+            // 모든 결제 타입에서 환불 처리 수행 (ordersIdx 포함)
+            paymentClient.refundPayment(
+                    new ClientRefundReq(userIdx, orderEntity.getId())
+            );
             orderEntity.setStatus(OrderStatus.REFUNDED);
 
             throw e;
@@ -359,12 +346,27 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String refund(Long userIdx, String orderCode) {
 
-        OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+        // 1. 주문 조회
+        OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
 
+        // 2. 소유권 검증
+        if (!orderEntity.getUserIdx().equals(userIdx)) {
+            throw new IllegalArgumentException("해당 주문의 소유자가 아닙니다.");
+        }
+
+        // 3. PAID 상태 체크 (결제 완료된 주문만 환불 가능)
+        if (orderEntity.getStatus() != OrderStatus.PAID) {
+            throw new IllegalStateException(
+                    "환불 가능한 상태가 아닙니다. 현재 상태=" + orderEntity.getStatus());
+        }
+
+        // 4. Payment 서비스에 환불 요청 (ordersIdx 포함)
         paymentClient.refundPayment(
-                new ClientRefundReq(userIdx, orderCode)
+                new ClientRefundReq(userIdx, orderEntity.getId())
         );
 
+        // 5. 주문 상태 변경
         orderEntity.setStatus(OrderStatus.REFUNDED);
         orderRepository.save(orderEntity);
 

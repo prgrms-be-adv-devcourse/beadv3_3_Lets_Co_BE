@@ -95,17 +95,21 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentResponse refund(RefundReq request) {
-        // orderCode로 결제 내역 조회 (ordersIdx 기반)
-        // 주문 ID를 알 수 없으므로 orderCode → ordersIdx 매핑이 필요
-        // Payment 테이블에는 ordersIdx만 저장되어 있으므로,
-        // OrderClient를 통해 orderCode로 orderId를 받아오거나,
-        // PaymentEntity에 orderCode를 저장하는 방식이 필요
-        // 현재는 기존 로직과의 호환을 위해 ordersIdx 기반으로 조회
+        // 1. ordersIdx 필수 검증
+        if (request.ordersIdx() == null) {
+            throw new IllegalArgumentException("ordersIdx는 필수입니다.");
+        }
 
-        PaymentEntity payment = paymentRepository.findAll().stream()
-                .filter(p -> p.getUsersIdx().equals(request.userIdx()) && p.getStatus() == PaymentStatus.PAYMENT)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("결제 내역을 찾을 수 없습니다."));
+        // 2. ordersIdx + PAYMENT 상태로 결제 내역 조회
+        // 이미 REFUND 상태인 결제는 조회되지 않음 -> 중복 환불 방지
+        PaymentEntity payment = paymentRepository.findByOrdersIdxAndStatus(request.ordersIdx(), PaymentStatus.PAYMENT)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "환불 가능한 결제 내역을 찾을 수 없습니다. ordersIdx=" + request.ordersIdx()));
+
+        // 3. 유저 유효성 검증
+        if (!payment.getUsersIdx().equals(request.userIdx())) {
+            throw new IllegalArgumentException("결제 내역의 소유자가 아닙니다.");
+        }
 
         BigDecimal refundAmount = payment.getAmount();
 

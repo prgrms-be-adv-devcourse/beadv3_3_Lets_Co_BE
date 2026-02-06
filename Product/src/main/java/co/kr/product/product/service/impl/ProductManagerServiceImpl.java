@@ -1,6 +1,7 @@
 package co.kr.product.product.service.impl;
 
 
+import co.kr.product.common.auth.AuthAdapter;
 import co.kr.product.common.exceptionHandler.ForbiddenException;
 import co.kr.product.common.vo.UserRole;
 import co.kr.product.product.client.AuthServiceClient;
@@ -43,7 +44,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private final ProductRepository productRepository;
     private final ProductOptionRepository optionRepository;
     private final ProductEsRepository productEsRepository;
-    private final AuthServiceClient authServiceClient;
+    private final AuthAdapter authAdapter;
 
     @Override
     @Transactional
@@ -51,8 +52,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
 
         // 2. 본인확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+        String role = authAdapter.getUserRole(usersIdx);
+        // SELLER 또는 ADMIN이 아닌경우
+        if (!UserRole.isStaff(role)) {
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -114,8 +116,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductDetailRes getManagerProductDetail(Long usersIdx, String code){
 
         // 본인 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+        String role = authAdapter.getUserRole(usersIdx);
+        // SELLER 또는 ADMIN이 아닌경우
+        if (!UserRole.isStaff(role)) {
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -151,8 +154,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             ){
 
         // 권한 확인
-        String userRole = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!UserRole.ADMIN.toString().equals(userRole) && !UserRole.SELLER.toString().equals(userRole) ) {
+        String role = authAdapter.getUserRole(usersIdx);
+        // SELLER 또는 ADMIN이 아닌경우
+        if (!UserRole.isStaff(role)) {
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -265,8 +269,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public void deleteProduct(Long usersIdx, String code, UserRole inputRole){
 
         // 1. 본인 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+        String role = authAdapter.getUserRole(usersIdx);
+        // SELLER 또는 ADMIN이 아닌경우
+        if (!UserRole.isStaff(role)) {
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -307,8 +312,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductListRes getListsBySeller(Long usersIdx, Pageable pageable, ProductListReq requests){
 
 
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"SELLER".equals(role)) {
+        String role = authAdapter.getUserRole(usersIdx);
+        // SELLER가 아닌경우
+        if (!UserRole.isSeller(role)) {
             throw new ForbiddenException("판매자가 아닙니다.");
         }
 

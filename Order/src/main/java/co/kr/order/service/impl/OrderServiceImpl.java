@@ -55,19 +55,19 @@ public class OrderServiceImpl implements OrderService {
         // Product 서비스에 feignClient(동기통신) 으로 제품 정보 가져옴
         ClientProductRes productResponse;
         try {
-            productResponse = productClient.getProduct(request.orderReq().productCode(), request.orderReq().optionCode());
+            productResponse = productClient.getProduct(request.productInfo().productCode(), request.productInfo().optionCode());
         } catch (FeignException.NotFound e) {
             // 오류 받으면 error
             throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         // 재고 없으면 Error 던짐
-        if (productResponse.stock() < request.orderReq().quantity()) {
+        if (productResponse.stock() < request.productInfo().quantity()) {
             throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);
         }
 
         // 가격*수량 해서 총 가격 측정
-        BigDecimal amount = productResponse.price().multiply(BigDecimal.valueOf(request.orderReq().quantity()));
+        BigDecimal amount = productResponse.price().multiply(BigDecimal.valueOf(request.productInfo().quantity()));
 
         // orderCode 생성
         String orderCode = UUID.randomUUID().toString();
@@ -76,10 +76,12 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
                 .orderCode(orderCode)
-                .status(OrderStatus.CREATED)
+                .recipient(request.addressInfo().recipient())
+                .address(request.addressInfo().address())
+                .addressDetail(request.addressInfo().addressDetail())
+                .phone(request.addressInfo().phone())
                 .itemsAmount(amount)
                 .totalAmount(amount) // 일단 할인/배송비 고려 x
-                .del(false)
                 .build();
         orderRepository.save(orderEntity);
 
@@ -91,7 +93,7 @@ public class OrderServiceImpl implements OrderService {
                 .productName(productResponse.productName())
                 .optionName(productResponse.optionName())
                 .price(productResponse.price())
-                .quantity(request.orderReq().quantity())
+                .quantity(request.productInfo().quantity())
                 .del(false)
                 .build();
         orderItemRepository.save(itemEntity);
@@ -114,7 +116,7 @@ public class OrderServiceImpl implements OrderService {
         DeductStockReq stockRequest = new DeductStockReq(
                 productResponse.productIdx(),
                 productResponse.optionIdx(),
-                request.orderReq().quantity()
+                request.productInfo().quantity()
         );
 
         try {
@@ -147,7 +149,7 @@ public class OrderServiceImpl implements OrderService {
                         productResponse.optionName(),
                         productResponse.price()
                 ),
-                request.orderReq().quantity(),
+                request.productInfo().quantity(),
                 amount
         );
 
@@ -176,13 +178,13 @@ public class OrderServiceImpl implements OrderService {
 
         OrderEntity orderEntity = OrderEntity.builder()
                 .userIdx(userIdx)
-//                .addressIdx(userData.addressInfo().addressIdx())
-//                .cardIdx(userData.cardInfo().cardIdx())
                 .orderCode(orderCode)
-                .status(OrderStatus.CREATED)
+                .recipient(request.addressInfo().recipient())
+                .address(request.addressInfo().address())
+                .addressDetail(request.addressInfo().addressDetail())
+                .phone(request.addressInfo().phone())
                 .itemsAmount(itemsAmount)
                 .totalAmount(itemsAmount)
-                .del(false)
                 .build();
 
         orderRepository.save(orderEntity);

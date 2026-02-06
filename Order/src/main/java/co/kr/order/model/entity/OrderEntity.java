@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,14 +30,23 @@ public class OrderEntity {
     @Column(name = "Users_IDX", nullable = false)
     private Long userIdx;
 
-    @Column(name = "Address_IDX", nullable = true)
-    private Long addressIdx;
-
-    @Column(name = "Card_IDX", nullable = true)
+    @Column(name = "Card_IDX")
     private Long cardIdx;
 
     @Column(name = "Orders_Code", nullable = false)
     private String orderCode;
+
+    @Column(name = "Recipient", nullable = false)
+    private String recipient;
+
+    @Column(name = "Address", nullable = false)
+    private String address;
+
+    @Column(name = "Address_Detail")
+    private String addressDetail;
+
+    @Column(name = "Phone_Number", nullable = false)
+    private String phone;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "Status", nullable = false)
@@ -56,24 +64,27 @@ public class OrderEntity {
     @Column(name = "Total_Amount", precision = 19, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    @Column(name = "Del", nullable = false)
-    @ColumnDefault("0")
-    private Boolean del;
-
     @Column(name = "Created_at")
     LocalDateTime createdAt;
 
+    @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
+    private Boolean del;
+
     @Builder
-    public OrderEntity(Long userIdx, Long addressIdx, Long cardIdx, String orderCode,
-                       OrderStatus status, BigDecimal itemsAmount, BigDecimal totalAmount, Boolean del) {
+    public OrderEntity(Long userIdx, String orderCode, String recipient, String address, String addressDetail, String phone, BigDecimal itemsAmount, BigDecimal totalAmount) {
         this.userIdx = userIdx;
-        this.addressIdx = addressIdx;
-        this.cardIdx = cardIdx;
         this.orderCode = orderCode;
-        this.status = status;
+        this.recipient = recipient;
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.phone = phone;
+        this.status = OrderStatus.CREATED;
         this.itemsAmount = itemsAmount != null ? itemsAmount : BigDecimal.ZERO;
         this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
-        this.del = del != null ? del : false;
+    }
+
+    public void setCardIdx(Long cardIdx) {
+        this.cardIdx = cardIdx;
     }
 
     public void setItemsAmount(BigDecimal itemsAmount) {
@@ -86,5 +97,9 @@ public class OrderEntity {
 
     public void setStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public void setDel(Boolean del) {
+        this.del = del;
     }
 }

@@ -1,6 +1,6 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.CartReq;
+import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.service.CartService;
@@ -23,28 +23,43 @@ public class CartController {
     @PostMapping("/add")
     public ResponseEntity<BaseResponse<CartItemRes>> addCartItem(
             HttpServletRequest servletRequest,
-            @Valid @RequestBody CartReq cartRequest
+            @Valid @RequestBody ProductInfo productInfo
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        CartItemRes info = cartService.addCartItem(userIdx, cartRequest);
+        CartItemRes info = cartService.addCartItem(userIdx, productInfo);
         BaseResponse<CartItemRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-    @PostMapping("/subtract")
-    public ResponseEntity<BaseResponse<CartItemRes>> subtractCartItem(
+    @PostMapping("/plus/{optionCode}")
+    public ResponseEntity<BaseResponse<CartItemRes>> plusCartItem(
             HttpServletRequest servletRequest,
-            @Valid @RequestBody CartReq cartRequest
+            @PathVariable("optionCode") String optionCode
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        CartItemRes info = cartService.subtractCartItem(userIdx, cartRequest);
+        CartItemRes info = cartService.plusCartItem(userIdx, optionCode);
+        BaseResponse<CartItemRes> body = new BaseResponse<>("ok", info);
+
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/minus/{optionCode}")
+    public ResponseEntity<BaseResponse<CartItemRes>> minusCartItem(
+            HttpServletRequest servletRequest,
+            @PathVariable("optionCode") String optionCode
+    ) {
+
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        CartItemRes info = cartService.minusCartItem(userIdx, optionCode);
         BaseResponse<CartItemRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
@@ -64,16 +79,16 @@ public class CartController {
         return ResponseEntity.ok(body);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{optionCode}")
     public ResponseEntity<BaseResponse<Void>> deleteCartItem(
             HttpServletRequest servletRequest,
-            @Valid @RequestBody CartReq cartRequest
+            @PathVariable("optionCode") String optionCode
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        cartService.deleteCartItem(userIdx, cartRequest);
+        cartService.deleteCartItem(userIdx, optionCode);
         BaseResponse<Void> body = new BaseResponse<>("ok", null);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(body);

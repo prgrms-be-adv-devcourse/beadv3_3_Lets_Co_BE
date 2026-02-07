@@ -5,8 +5,7 @@ import co.kr.order.exception.CartNotFoundException;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.model.dto.ItemInfo;
-import co.kr.order.model.dto.request.CartReq;
-import co.kr.order.model.dto.request.ClientProductReq;
+import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.redis.Cart;
@@ -17,14 +16,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * todo.
- * DB에 Cart 테이블 전부 삭제 예정 (Redis로 처리)
- * 로직 전부 바뀔 예정
- */
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
@@ -35,7 +30,7 @@ public class CartServiceImpl implements CartService {
     private final static String KEY = "cart:user:";
 
     @Override
-    public CartItemRes addCartItem(Long userIdx, CartReq request) {
+    public CartItemRes addCartItem(Long userIdx, ProductInfo request) {
 
         ClientProductRes productResponse;
         try {
@@ -47,27 +42,27 @@ public class CartServiceImpl implements CartService {
         String cartKey = KEY + userIdx;
         String field = request.optionCode();
 
-        Cart cartItem = getCartItem(cartKey, field);
-        if (cartItem == null) {
-            cartItem = Cart.builder()
+        Cart cartItem = Cart.builder()
                 .userIdx(userIdx)
                 .productIdx(productResponse.productIdx())
                 .optionIdx(productResponse.optionIdx())
-                .quantity(1)
+                .productCode(request.productCode())
+                .optionCode(request.optionCode())
+                .productName(productResponse.productName())
+                .optionContent(productResponse.optionContent())
+                .price(productResponse.price())
+                .quantity(request.quantity())
                 .build();
-        }
-        else {
-            cartItem.increaseQuantity();
-        }
+
         redisTemplate.opsForHash().put(cartKey, field, cartItem);
         redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
 
         return new CartItemRes(
                 new ItemInfo(
-                        productResponse.productIdx(),
-                        productResponse.optionIdx(),
+                        request.productCode(),
+                        request.optionCode(),
                         productResponse.productName(),
-                        productResponse.optionName(),
+                        productResponse.optionContent(),
                         productResponse.price()
                 ),
                 cartItem.getQuantity(),
@@ -77,50 +72,71 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartItemRes subtractCartItem(Long userIdx, CartReq request) {
+    public CartItemRes plusCartItem(Long userIdx, String optionCode) {
 
         String cartKey = KEY + userIdx;
-        String field = request.optionCode();
 
-        Cart cartItem = getCartItem(cartKey, field);
+        Cart cartItem = getCartItem(cartKey, optionCode);
+        if (cartItem == null) {
+            throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
+        }
+
+        if (cartItem.getQuantity() < 100) {
+            cartItem.plusQuantity();
+            redisTemplate.opsForHash().put(cartKey, optionCode, cartItem);
+            redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
+        }
+
+        return new CartItemRes(
+                new ItemInfo(
+                        cartItem.getProductCode(),
+                        cartItem.getOptionCode(),
+                        cartItem.getProductName(),
+                        cartItem.getOptionContent(),
+                        cartItem.getPrice()
+                ),
+                cartItem.getQuantity(),
+                cartItem.getPrice()
+                        .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
+        );
+    }
+
+    @Override
+    public CartItemRes minusCartItem(Long userIdx, String optionCode) {
+
+        String cartKey = KEY + userIdx;
+
+        Cart cartItem = getCartItem(cartKey, optionCode);
         if (cartItem == null) {
             throw new CartNotFoundException(ErrorCode.CART_NOT_FOUND);
         }
 
         if (cartItem.getQuantity() > 1) {
-            cartItem.decreaseQuantity();
-            redisTemplate.opsForHash().put(cartKey, field, cartItem);
+            cartItem.minusQuantity();
+            redisTemplate.opsForHash().put(cartKey, optionCode, cartItem);
             redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
-        }
-
-        ClientProductRes productResponse;
-        try {
-            productResponse = productClient.getProduct(request.productCode(), request.optionCode());
-        } catch (FeignException.NotFound e) {
-            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         return new CartItemRes(
                 new ItemInfo(
-                        productResponse.productIdx(),
-                        productResponse.optionIdx(),
-                        productResponse.productName(),
-                        productResponse.optionName(),
-                        productResponse.price()
+                        cartItem.getProductCode(),
+                        cartItem.getOptionCode(),
+                        cartItem.getProductName(),
+                        cartItem.getOptionContent(),
+                        cartItem.getPrice()
                 ),
                 cartItem.getQuantity(),
-                productResponse.price()
+                cartItem.getPrice()
                         .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
         );
     }
 
     @Override
-    public void deleteCartItem(Long userIdx, CartReq request) {
+    public void deleteCartItem(Long userIdx, String optionCode) {
 
         String cartKey = KEY + userIdx;
-        String field = request.optionCode();
 
-        redisTemplate.opsForHash().delete(cartKey, field);
+        redisTemplate.opsForHash().delete(cartKey, optionCode);
         redisTemplate.expire(cartKey, 30, TimeUnit.DAYS);
     }
 
@@ -135,8 +151,6 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartItemRes> getCartList(Long userIdx) {
 
-        List<CartItemRes> cartIList = new ArrayList<>();
-
         String cartKey = KEY + userIdx;
         List<Object> values = redisTemplate.opsForHash().values(cartKey);
 
@@ -144,63 +158,31 @@ public class CartServiceImpl implements CartService {
             return List.of();
         }
 
-        List<ClientProductReq> productList = new ArrayList<>();
+        List<CartItemRes> cartList = new ArrayList<>();
         for (Object value : values) {
             Cart cartItem = (Cart) value;
-            ClientProductReq product = new ClientProductReq(cartItem.getProductIdx(), cartItem.getOptionIdx());
-            productList.add(product);
-        }
-
-        List<ClientProductRes> clientProductResponse;
-        try {
-            clientProductResponse = productClient.getProductList(productList);
-        } catch (FeignException.NotFound e) {
-            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
-        }
-
-        // 중복 방지를 위한 Map의 Key를 String(복합키)로
-        Map<String, ClientProductRes> productMap = new HashMap<>();
-        for (ClientProductRes info : clientProductResponse) {
-            // key 생성 예: "10-1" (상품ID-옵션 내용)
-            String key = info.productIdx() + "-" + info.optionIdx();
-            productMap.put(key, info);
-        }
-
-        for (Object value : values) {
-            Cart cartItem = (Cart) value;
-
-            String key = cartItem.getProductIdx() + "-" + cartItem.getOptionIdx();
-            ClientProductRes product = productMap.get(key);
-
-            if (product == null) {
-                continue;
-            }
-
-            // 상품 가격 = 단가 * 수량
-            int quantity = cartItem.getQuantity();
-            BigDecimal totalPrice = product.price().multiply(BigDecimal.valueOf(quantity));
 
             CartItemRes cartItemResponse = new CartItemRes(
                     new ItemInfo(
-                            product.productIdx(),
-                            product.optionIdx(),
-                            product.productName(),
-                            product.optionName(),
-                            product.price()
+                            cartItem.getProductCode(),
+                            cartItem.getOptionCode(),
+                            cartItem.getProductName(),
+                            cartItem.getOptionContent(),
+                            cartItem.getPrice()
                     ),
-                    quantity,
-                    totalPrice
+                    cartItem.getQuantity(),
+                    cartItem.getPrice()
+                            .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
             );
-
-            cartIList.add((cartItemResponse));
+            cartList.add(cartItemResponse);
         }
 
-        return cartIList;
+        return cartList;
     }
 
     // Helper Method
-    private Cart getCartItem(String cartKey, String field) {
-        Object cartItem = redisTemplate.opsForHash().get(cartKey, field);
+    private Cart getCartItem(String cartKey, String optionCode) {
+        Object cartItem = redisTemplate.opsForHash().get(cartKey, optionCode);
         return (Cart) cartItem;
     }
 }

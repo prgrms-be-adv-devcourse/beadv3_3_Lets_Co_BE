@@ -193,7 +193,12 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItemRes> responseItems = tempOrderItems.stream()
                 .map(item -> new OrderItemRes(
-                        new ItemInfo(item.getProductName(), item.getOptionName(), item.getPrice()),
+                        new ItemInfo(
+                                item.getProductCode(),
+                                item.getOptionCode(),
+                                item.getProductName(),
+                                item.getOptionName(),
+                                item.getPrice()),
                         item.getQuantity(),
                         item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
                 ))
@@ -206,6 +211,8 @@ public class OrderServiceImpl implements OrderService {
         return OrderItemEntity.builder()
                 .productIdx(product.productIdx())
                 .optionIdx(product.optionIdx())
+                .productCode(product.productCode())
+                .optionCode(product.optionCode())
                 .productName(product.productName())
                 .optionName(product.optionContent())
                 .price(product.price())
@@ -234,6 +241,8 @@ public class OrderServiceImpl implements OrderService {
                 responseItemList.add(
                         new OrderItemRes(
                                 new ItemInfo(
+                                        itemEntity.getProductCode(),
+                                        itemEntity.getOptionCode(),
                                         itemEntity.getProductName(),
                                         itemEntity.getOptionName(),
                                         itemEntity.getPrice()
@@ -308,6 +317,8 @@ public class OrderServiceImpl implements OrderService {
             responseItemList.add(
                     new OrderItemRes(
                             new ItemInfo(
+                                    entity.getProductCode(),
+                                    entity.getOptionCode(),
                                     entity.getProductName(),
                                     entity.getOptionName(),
                                     entity.getPrice()

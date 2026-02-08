@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 public record ClientProductRes(
         Long productIdx,
         Long optionIdx,
+        String productCode,
+        String optionCode,
         Long sellerIdx,
         String productName,
 //        String imageUrl,

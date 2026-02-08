@@ -62,6 +62,8 @@ public class CartServiceImpl implements CartService {
 
         return new CartItemRes(
                 new ItemInfo(
+                        request.productCode(),
+                        request.optionCode(),
                         productResponse.productName(),
                         productResponse.optionContent(),
                         productResponse.price()
@@ -90,6 +92,8 @@ public class CartServiceImpl implements CartService {
 
         return new CartItemRes(
                 new ItemInfo(
+                        cartItem.getProductCode(),
+                        cartItem.getOptionCode(),
                         cartItem.getProductName(),
                         cartItem.getOptionContent(),
                         cartItem.getPrice()
@@ -118,6 +122,8 @@ public class CartServiceImpl implements CartService {
 
         return new CartItemRes(
                 new ItemInfo(
+                        cartItem.getProductCode(),
+                        cartItem.getOptionCode(),
                         cartItem.getProductName(),
                         cartItem.getOptionContent(),
                         cartItem.getPrice()
@@ -161,6 +167,8 @@ public class CartServiceImpl implements CartService {
 
             CartItemRes cartItemResponse = new CartItemRes(
                     new ItemInfo(
+                            cartItem.getProductCode(),
+                            cartItem.getOptionCode(),
                             cartItem.getProductName(),
                             cartItem.getOptionContent(),
                             cartItem.getPrice()

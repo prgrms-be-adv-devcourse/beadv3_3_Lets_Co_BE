@@ -29,6 +29,12 @@ public class OrderItemEntity {
     @Column(name = "Option_Group_IDX", nullable = false)
     private Long optionIdx;
 
+    @Column(name = "Products_Code", nullable = false)
+    private String productCode;
+
+    @Column(name = "Option_Code", nullable = false)
+    private String optionCode;
+
     @Column(name = "Products_Name")
     private String productName;
 
@@ -49,12 +55,14 @@ public class OrderItemEntity {
     private Boolean del;
 
     @Builder
-    public OrderItemEntity(OrderEntity order, Long productIdx, Long optionIdx,
+    public OrderItemEntity(OrderEntity order, Long productIdx, Long optionIdx, String productCode, String optionCode,
                            String productName, String optionName, BigDecimal price,
                            Integer quantity, Boolean del) {
         this.order = order;
         this.productIdx = productIdx;
         this.optionIdx = optionIdx;
+        this.productCode = productCode;
+        this.optionCode = optionCode;
         this.productName = productName;
         this.optionName = optionName;
         this.price = price != null ? price : BigDecimal.ZERO;

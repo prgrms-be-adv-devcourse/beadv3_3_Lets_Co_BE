@@ -61,4 +61,8 @@ public class OrderItemEntity {
         this.quantity = quantity != null ? quantity : 0;
         this.del = del != null ? del : false;
     }
+
+    public void setOrder(OrderEntity order) {
+        this.order = order;
+    }
 }

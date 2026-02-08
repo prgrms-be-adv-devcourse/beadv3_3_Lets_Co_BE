@@ -6,6 +6,7 @@ import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.ProductNotFoundException;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.request.ClientProductReq;
 import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.model.dto.response.ClientProductRes;
 import co.kr.order.model.redis.Cart;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,8 +62,6 @@ public class CartServiceImpl implements CartService {
 
         return new CartItemRes(
                 new ItemInfo(
-                        request.productCode(),
-                        request.optionCode(),
                         productResponse.productName(),
                         productResponse.optionContent(),
                         productResponse.price()
@@ -89,8 +90,6 @@ public class CartServiceImpl implements CartService {
 
         return new CartItemRes(
                 new ItemInfo(
-                        cartItem.getProductCode(),
-                        cartItem.getOptionCode(),
                         cartItem.getProductName(),
                         cartItem.getOptionContent(),
                         cartItem.getPrice()
@@ -119,8 +118,6 @@ public class CartServiceImpl implements CartService {
 
         return new CartItemRes(
                 new ItemInfo(
-                        cartItem.getProductCode(),
-                        cartItem.getOptionCode(),
                         cartItem.getProductName(),
                         cartItem.getOptionContent(),
                         cartItem.getPrice()
@@ -164,8 +161,6 @@ public class CartServiceImpl implements CartService {
 
             CartItemRes cartItemResponse = new CartItemRes(
                     new ItemInfo(
-                            cartItem.getProductCode(),
-                            cartItem.getOptionCode(),
                             cartItem.getProductName(),
                             cartItem.getOptionContent(),
                             cartItem.getPrice()
@@ -178,6 +173,48 @@ public class CartServiceImpl implements CartService {
         }
 
         return cartList;
+    }
+
+    @Override
+    public List<ClientProductReq> getProductByCart(Long userIdx) {
+        String cartKey = KEY + userIdx;
+        List<Object> values = redisTemplate.opsForHash().values(cartKey);
+
+        if (values.isEmpty()) {
+            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        List<ClientProductReq> products = new ArrayList<>();
+        for (Object value : values) {
+            Cart cart = (Cart) value;
+
+            // 실제 상품 데이터를(최신화 된) 가져옴
+            ClientProductReq product = new ClientProductReq(
+                    cart.getProductIdx(),
+                    cart.getOptionIdx()
+            );
+
+            products.add(product);
+        }
+
+        return products;
+    }
+
+    @Override
+    public Map<Long, Integer> getCartItemQuantities(Long userIdx) {
+        String cartKey = KEY + userIdx;
+        List<Object> values = redisTemplate.opsForHash().values(cartKey);
+
+        if (values.isEmpty()) {
+            throw new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        return values.stream()
+                .map(value -> (Cart) value)
+                .collect(Collectors.toMap(
+                        Cart::getOptionIdx,
+                        Cart::getQuantity
+                ));
     }
 
     // Helper Method

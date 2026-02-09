@@ -39,3 +39,16 @@ spec:
           envFrom:
             - configMapRef:
                 name: elasticsearch-configmap
+
+          volumeMounts:
+            - name: es-data
+              mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: es-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-data-pvc
+      
+      # 권한 문제 방지 << 공부 필요
+      securityContext:
+        fsGroup: 1000  # Elasticsearch 기본 유저(1000)가 볼륨을 쓸 수 있게 함
+        runAsUser: 1000

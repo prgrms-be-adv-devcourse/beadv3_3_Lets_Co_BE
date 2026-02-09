@@ -2,20 +2,15 @@ package co.kr.order.model.dto.response;
 
 import java.math.BigDecimal;
 
-/*
- * @param productIdx : 제품 id
- * @param productName : 제품 이름
- * @param optionName : 제품 옵션 내용
- * @param price : 제품 가격
- * @param stock : 제품 개수
- */
 public record ClientProductRes(
         Long productIdx,
         Long optionIdx,
+        String productCode,
+        String optionCode,
         Long sellerIdx,
         String productName,
 //        String imageUrl,
-        String optionName,
+        String optionContent,
         BigDecimal price,
         Integer stock
 ) {}

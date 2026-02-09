@@ -1,6 +1,6 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.my.*;
+import co.kr.user.model.dto.my.*;
 import co.kr.user.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

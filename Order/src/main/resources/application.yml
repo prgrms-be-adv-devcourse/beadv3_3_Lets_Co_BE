@@ -5,7 +5,7 @@ spring:
     name: Order
 
   profiles:
-    active: local
+    active: test
 
   jpa:
     show-sql: true

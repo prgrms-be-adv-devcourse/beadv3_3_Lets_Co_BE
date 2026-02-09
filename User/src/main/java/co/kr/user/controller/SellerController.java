@@ -1,8 +1,8 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.auth.AuthenticationReq;
-import co.kr.user.model.DTO.seller.SellerRegisterDTO;
-import co.kr.user.model.DTO.seller.SellerRegisterReq;
+import co.kr.user.model.dto.auth.AuthenticationReq;
+import co.kr.user.model.dto.seller.SellerRegisterDTO;
+import co.kr.user.model.dto.seller.SellerRegisterReq;
 import co.kr.user.service.SellerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 
@@ -23,16 +22,16 @@ public class OrderItemEntity {
     @JoinColumn(name = "Orders_IDX", nullable = false)
     private OrderEntity order;
 
-    @Column(name = "Products_IDX", nullable = false)
-    private Long productIdx;
+    @Column(name = "Products_Code", nullable = false)
+    private String productCode;
 
-    @Column(name = "Option_Group_IDX", nullable = false)
-    private Long optionIdx;
+    @Column(name = "Option_Code", nullable = false)
+    private String optionCode;
 
-    @Column(name = "Products_Name")
+    @Column(name = "Products_Name", nullable = false)
     private String productName;
 
-    @Column(name = "Option_Name")
+    @Column(name = "Option_Name", nullable = false)
     private String optionName;
 
     @Column(name = "Price", precision = 19, scale = 2, nullable = false)
@@ -44,21 +43,24 @@ public class OrderItemEntity {
     @Column(name = "Quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "Del", nullable = false)
-    @ColumnDefault("0")
+    @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
     private Boolean del;
 
     @Builder
-    public OrderItemEntity(OrderEntity order, Long productIdx, Long optionIdx,
+    public OrderItemEntity(OrderEntity order, String productCode, String optionCode,
                            String productName, String optionName, BigDecimal price,
                            Integer quantity, Boolean del) {
         this.order = order;
-        this.productIdx = productIdx;
-        this.optionIdx = optionIdx;
+        this.productCode = productCode;
+        this.optionCode = optionCode;
         this.productName = productName;
         this.optionName = optionName;
         this.price = price != null ? price : BigDecimal.ZERO;
         this.quantity = quantity != null ? quantity : 0;
         this.del = del != null ? del : false;
+    }
+
+    public void setOrder(OrderEntity order) {
+        this.order = order;
     }
 }

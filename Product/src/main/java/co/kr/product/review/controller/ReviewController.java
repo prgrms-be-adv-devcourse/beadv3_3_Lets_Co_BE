@@ -1,9 +1,9 @@
 package co.kr.product.review.controller;
 
-import co.kr.product.review.dto.request.ReviewUpsertRequest;
-import co.kr.product.review.dto.response.CommonResponse;
-import co.kr.product.review.dto.response.ReviewListResponse;
-import co.kr.product.review.dto.response.ReviewResponse;
+import co.kr.product.review.model.dto.request.ReviewUpsertRequest;
+import co.kr.product.review.model.dto.response.CommonResponse;
+import co.kr.product.review.model.dto.response.ReviewListResponse;
+import co.kr.product.review.model.dto.response.ReviewResponse;
 import co.kr.product.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

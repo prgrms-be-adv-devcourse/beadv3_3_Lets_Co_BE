@@ -1,73 +1,73 @@
 version: '3.8'
 
+# 버전은 최신버전으로 직접 작성해야함.
+# docker hub에 올라와있는 이미지 실행 용
+# 환경 변수 주입 필요(.env 파일)
+
 services:
   gateway-service:
+    env_file:
+      - .env
     image: lujol/gateway-service:v1
     container_name: gateway-app
     ports:
       - "8080:8080"            
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
       - SERVER_PORT=8080      
     networks:
       - msa-network
 
   discovery-service:
-
+    env_file:
+      - .env
     image: lujol/discovery-service:v1
     container_name: discovery-app
     ports:
       - "8081:8080"           
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - msa-network
 
 
   customerservice-service:
-
+    env_file:
+      - .env
     image:  lujol/customerservice-service:v1
     container_name: customerservice-app
     ports:
       - "8082:8080"          
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - msa-network
 
 
   order-service:
-
+    env_file:
+      - .env
     image: lujol/order-service:v1
     container_name: order-app
     ports:
       - "8083:8080"            
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - msa-network
 
 
 
   product-service:
-
+    env_file:
+      - .env
     image: lujol/product-service:v1
     container_name: product-app
     ports:
       - "8084:8080"            
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - msa-network
 
   user-service:
-
+    env_file:
+      - .env
     image: lujol/user-service:v1
     container_name: user-app
     ports:
       - "8085:8080"            
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
     networks:
       - msa-network
 

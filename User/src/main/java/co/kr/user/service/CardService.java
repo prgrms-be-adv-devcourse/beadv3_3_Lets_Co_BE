@@ -1,8 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.card.CardDTO;
-import co.kr.user.model.DTO.card.CardListDTO;
-import co.kr.user.model.DTO.card.CardRequestReq;
+import co.kr.user.model.dto.card.CardListDTO;
+import co.kr.user.model.dto.card.CardRequestReq;
 
 import java.util.List;
 

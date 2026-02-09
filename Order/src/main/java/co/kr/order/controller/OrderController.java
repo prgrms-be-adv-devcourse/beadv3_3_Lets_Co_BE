@@ -1,7 +1,6 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.OrderCartReq;
-import co.kr.order.model.dto.request.OrderDirectReq;
+import co.kr.order.model.dto.request.OrderReq;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderRes;
 import co.kr.order.service.OrderService;
@@ -24,30 +23,15 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<BaseResponse<OrderRes>> directOrder (
+    public ResponseEntity<BaseResponse<OrderRes>> createOrder (
             HttpServletRequest servletRequest,
-            @Valid @RequestBody OrderDirectReq request
-            ) {
-
-        String headerValue = servletRequest.getHeader("X-USERS-IDX");
-        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
-
-        OrderRes info = orderService.directOrder(userIdx, request);
-        BaseResponse<OrderRes> body = new BaseResponse<>("ok", info);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
-    }
-
-    @PostMapping("/cart")
-    public ResponseEntity<BaseResponse<OrderRes>> cartOrder (
-            HttpServletRequest servletRequest,
-            @Valid @RequestBody OrderCartReq request
+            @Valid @RequestBody OrderReq request
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        OrderRes info = orderService.cartOrder(userIdx, request);
+        OrderRes info = orderService.createOrder(userIdx, request);
         BaseResponse<OrderRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);

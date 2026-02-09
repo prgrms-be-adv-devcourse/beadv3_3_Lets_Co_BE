@@ -1,9 +1,9 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.address.AddressDelReq;
-import co.kr.user.model.DTO.address.AddressListDTO;
-import co.kr.user.model.DTO.address.AddressReq;
-import co.kr.user.model.DTO.address.AddressRequestReq;
+import co.kr.user.model.dto.address.AddressDelReq;
+import co.kr.user.model.dto.address.AddressListDTO;
+import co.kr.user.model.dto.address.AddressReq;
+import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.service.AddressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

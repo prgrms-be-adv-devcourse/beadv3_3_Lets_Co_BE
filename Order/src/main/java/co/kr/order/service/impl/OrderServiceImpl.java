@@ -13,15 +13,13 @@ import co.kr.order.model.dto.response.OrderItemRes;
 import co.kr.order.model.dto.response.OrderRes;
 import co.kr.order.model.entity.OrderEntity;
 import co.kr.order.model.entity.OrderItemEntity;
-import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.OrderType;
-import co.kr.order.model.vo.SettlementType;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.repository.SettlementRepository;
 import co.kr.order.service.CartService;
 import co.kr.order.service.OrderService;
+import co.kr.order.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,9 +38,10 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderJpaRepository orderRepository;
     private final OrderItemJpaRepository orderItemRepository;
-    private final SettlementRepository settlementRepository;
 
     private final CartService cartService;
+    private final SettlementService settlementService;
+
     private final PaymentClient paymentClient;
     private final ProductClient productClient;
 
@@ -57,12 +56,11 @@ public class OrderServiceImpl implements OrderService {
         Map<Long, BigDecimal> sellerSettlementMap = new HashMap<>();  // 판매자별 정산금
 
         // =================================================================
-        // 주문 상품 데이터 준비 (기존 로직 유지 + 데이터 수집 추가)
+        // 주문 상품 데이터 준비 (기존 로직 유지)
         // =================================================================
 
         switch (request.orderType()) {
             case OrderType.DIRECT:
-
                 ClientProductRes product = productClient.getProduct(
                         request.productInfo().productCode(),
                         request.productInfo().optionCode()
@@ -76,17 +74,17 @@ public class OrderServiceImpl implements OrderService {
                         request.productInfo().quantity()
                 ));
 
+                // 정산 데이터 수집
                 BigDecimal directAmount = product.price().multiply(BigDecimal.valueOf(request.productInfo().quantity()));
                 sellerSettlementMap.merge(product.sellerIdx(), directAmount, BigDecimal::add);
 
                 break;
 
             case OrderType.CART:
-
                 Map<Long, Integer> quantityMap = cartService.getCartItemQuantities(userIdx);
                 List<ClientProductReq> productRequest = cartService.getProductByCart(userIdx);
-                List<ClientProductRes> productsResponse = productClient.getProductList(productRequest);
 
+                List<ClientProductRes> productsResponse = productClient.getProductList(productRequest);
                 for (ClientProductRes productRes : productsResponse) {
                     Integer quantity = quantityMap.getOrDefault(productRes.optionIdx(), 0);
                     if (quantity > 0) {
@@ -98,6 +96,7 @@ public class OrderServiceImpl implements OrderService {
                                 quantity
                         ));
 
+                        // 정산 데이터 수집
                         BigDecimal itemAmount = productRes.price().multiply(BigDecimal.valueOf(quantity));
                         sellerSettlementMap.merge(productRes.sellerIdx(), itemAmount, BigDecimal::add);
                     }
@@ -155,20 +154,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
+            // 재고 차감 요청
             productClient.deductStocks(stockRequests);
 
-            // 정산 내역 저장 (Bulk Insert)
-            List<SettlementHistoryEntity> settlementList = new ArrayList<>();
-            for (Map.Entry<Long, BigDecimal> entry : sellerSettlementMap.entrySet()) {
-                settlementList.add(SettlementHistoryEntity.builder()
-                        .sellerIdx(entry.getKey())
-                        .paymentIdx(paymentRes.paymentIdx())
-                        .type(SettlementType.Orders_CONFIRMED)
-                        .amount(entry.getValue())
-                        .build());
-            }
-            settlementRepository.saveAll(settlementList);
+            settlementService.createSettlement(paymentRes.paymentIdx(), sellerSettlementMap);
 
+            // 장바구니 비우기
             if (request.orderType() == OrderType.CART) {
                 cartService.deleteCartAll(userIdx);
             }
@@ -187,7 +178,6 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(orderEntity);
 
             // 롤백되지 않는 예외를 던짐
-            // Controller는 에러를 알게 되지만, DB에는 REFUNDED 상태가 저장
             throw new OrderRefundedException(ErrorCode.ORDER_REFUND_EXCEPTION);
         }
 
@@ -209,8 +199,6 @@ public class OrderServiceImpl implements OrderService {
 
     private OrderItemEntity createOrderItemEntity(ClientProductRes product, Integer quantity) {
         return OrderItemEntity.builder()
-                .productIdx(product.productIdx())
-                .optionIdx(product.optionIdx())
                 .productCode(product.productCode())
                 .optionCode(product.optionCode())
                 .productName(product.productName())

@@ -1,9 +1,8 @@
 package co.kr.order.controller;
 
-import co.kr.order.model.dto.request.ProductRequest;
+import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.response.BaseResponse;
-import co.kr.order.model.dto.response.CartItemResponse;
-import co.kr.order.model.dto.response.CartResponse;
+import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -12,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/carts")
@@ -19,103 +20,75 @@ public class CartController {
 
     private final CartService cartService;
 
-    /*
-     * @param servletRequest : userIdx
-     * @param request : productIdx와 optionIdx
-     * 장바구니에 단일상품 추가, 상품 수량 추가
-     */
     @PostMapping("/add")
-    public ResponseEntity<BaseResponse<CartItemResponse>> addCartItem(
+    public ResponseEntity<BaseResponse<CartItemRes>> addCartItem(
             HttpServletRequest servletRequest,
-            @Valid @RequestBody ProductRequest request
+            @Valid @RequestBody ProductInfo productInfo
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        CartItemResponse info = cartService.addCartItem(userIdx, request);
-        BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
+        CartItemRes info = cartService.addCartItem(userIdx, productInfo);
+        BaseResponse<CartItemRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-    /*
-     * @param servletRequest : userIdx
-     * @param request : productIdx와 optionIdx
-     * 장바구니 페이지에서 상품 수량 감소
-     */
-    @PostMapping("/subtract")
-    public ResponseEntity<BaseResponse<CartItemResponse>> subtractCartItem(
+    @PostMapping("/plus/{optionCode}")
+    public ResponseEntity<BaseResponse<CartItemRes>> plusCartItem(
             HttpServletRequest servletRequest,
-            @Valid @RequestBody ProductRequest request
+            @PathVariable("optionCode") String optionCode
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        CartItemResponse info = cartService.subtractCartItem(userIdx, request);
-        BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
+        CartItemRes info = cartService.plusCartItem(userIdx, optionCode);
+        BaseResponse<CartItemRes> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
     }
 
-    /*
-     * @param servletRequest : userIdx
-     * 장바군니에 담겨 있는 모든 상품 정보 조회
-     */
+    @PostMapping("/minus/{optionCode}")
+    public ResponseEntity<BaseResponse<CartItemRes>> minusCartItem(
+            HttpServletRequest servletRequest,
+            @PathVariable("optionCode") String optionCode
+    ) {
+
+        String headerValue = servletRequest.getHeader("X-USERS-IDX");
+        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
+
+        CartItemRes info = cartService.minusCartItem(userIdx, optionCode);
+        BaseResponse<CartItemRes> body = new BaseResponse<>("ok", info);
+
+        return ResponseEntity.ok(body);
+    }
+
     @GetMapping
-    public ResponseEntity<BaseResponse<CartResponse>> getCartList(
+    public ResponseEntity<BaseResponse<List<CartItemRes>>> getCartList(
             HttpServletRequest servletRequest
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        CartResponse info = cartService.getCartList(userIdx);
-        BaseResponse<CartResponse> body = new BaseResponse<>("ok", info);
+        List<CartItemRes> info = cartService.getCartList(userIdx);
+        BaseResponse<List<CartItemRes>> body = new BaseResponse<>("ok", info);
 
         return ResponseEntity.ok(body);
     }
-/*
 
-    */
-/*
-     * @param servletRequest : userIdx
-     * @param request : productIdx와 optionIdx
-     * 장바구니에 담겨 있는 단일 상품 정보 조회
-     *//*
-
-    @PostMapping("/item")
-    public ResponseEntity<BaseResponse<CartItemResponse>> getCartItem(
-            HttpServletRequest servletRequest,
-            @Valid @RequestBody ProductRequest request
-    ) {
-
-        String headerValue = servletRequest.getHeader("X-USERS-IDX");
-        Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
-
-        CartItemResponse info = cartService.getCartItem(userIdx, request);
-        BaseResponse<CartItemResponse> body = new BaseResponse<>("ok", info);
-
-        return ResponseEntity.ok(body);
-    }
-*/
-
-    /*
-     * @param servletRequest : userIdx
-     * @param request : productIdx와 optionIdx
-     * 장바구니 상품 삭제 (단일 제품삭제임, 전체 삭제 아님)
-     */
-    @DeleteMapping
+    @DeleteMapping("/{optionCode}")
     public ResponseEntity<BaseResponse<Void>> deleteCartItem(
             HttpServletRequest servletRequest,
-            @Valid @RequestBody ProductRequest request
+            @PathVariable("optionCode") String optionCode
     ) {
 
         String headerValue = servletRequest.getHeader("X-USERS-IDX");
         Long userIdx = (headerValue != null) ? Long.parseLong(headerValue) : null;
 
-        cartService.deleteCartItem(userIdx, request);
+        cartService.deleteCartItem(userIdx, optionCode);
         BaseResponse<Void> body = new BaseResponse<>("ok", null);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(body);

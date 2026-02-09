@@ -1,0 +1,16 @@
+name: 결제 서비스 CI 스크립트
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - "Payment/**"
+
+jobs:
+  execute-test:
+    uses: ./.github/workflows/ci-workflow.yml
+    secrets: inherit
+    with:
+      service-name: Payment

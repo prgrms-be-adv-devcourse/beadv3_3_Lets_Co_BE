@@ -3,10 +3,9 @@ package co.kr.order.model.dto;
 import java.math.BigDecimal;
 
 public record ItemInfo (
-        Long productIdx,
-        Long optionIdx,
+        String productCode,
+        String optionCode,
         String productName,
-//        String imageUrl,
-        String optionName,
+        String optionContent,
         BigDecimal price
 ) {}

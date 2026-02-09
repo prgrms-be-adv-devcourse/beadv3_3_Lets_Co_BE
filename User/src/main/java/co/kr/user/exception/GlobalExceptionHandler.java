@@ -63,9 +63,11 @@ public class GlobalExceptionHandler {
      * (참고: 상황에 따라 400 Bad Request나 409 Conflict를 사용하기도 하지만, 여기서는 권한/상태 문제로 보아 403을 사용하는 것으로 보입니다.)
      */
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<String> handleIllegalStateException(IllegalStateException ex) {
-        // 403 Forbidden 상태와 함께 예외 메시지를 반환합니다.
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("resultCode", "fail");
+        response.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     /**

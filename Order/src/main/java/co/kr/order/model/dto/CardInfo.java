@@ -11,8 +11,6 @@ import jakarta.validation.constraints.NotNull;
  * @param expYear: 만료 년
  */
 public record CardInfo (
-        Long cardIdx,
-
         @NotBlank(message = "카드 브랜드는 필수입니다.")
         String cardBrand,
 

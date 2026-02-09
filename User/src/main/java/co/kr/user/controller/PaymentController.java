@@ -1,7 +1,7 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.Payment.PaymentReq;
-import co.kr.user.model.DTO.Payment.PaymentListDTO;
+import co.kr.user.model.dto.Payment.PaymentReq;
+import co.kr.user.model.dto.Payment.PaymentListDTO;
 import co.kr.user.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

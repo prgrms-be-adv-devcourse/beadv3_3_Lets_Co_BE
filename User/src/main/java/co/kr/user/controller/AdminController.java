@@ -1,9 +1,9 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.admin.AdminLockedUntilReq;
-import co.kr.user.model.DTO.admin.AdminRoleReq;
-import co.kr.user.model.DTO.admin.AdminUserDetailDTO;
-import co.kr.user.model.DTO.admin.AdminUserListDTO;
+import co.kr.user.model.dto.admin.AdminLockedUntilReq;
+import co.kr.user.model.dto.admin.AdminRoleReq;
+import co.kr.user.model.dto.admin.AdminUserDetailDTO;
+import co.kr.user.model.dto.admin.AdminUserListDTO;
 import co.kr.user.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

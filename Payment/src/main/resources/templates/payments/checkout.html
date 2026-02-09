@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+</head>
+<body>
+<div class="box_section" style="padding: 40px 30px 50px 30px; margin-top: 30px; margin-bottom: 50px">
+    <div id="payment-method"></div>
+    <div id="agreement"></div>
+    <div class="result wrapper" style="margin-top: 30px">
+        <button id="payment-button" style="
+            padding: 11px 22px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3282f6;
+            color: #f9fcff;
+            font-weight: 600;
+            font-size: 17px;
+            cursor: pointer;
+            width: 100%;
+        ">
+            결제하기
+        </button>
+    </div>
+</div>
+<script th:inline="javascript">
+    main();
+
+    async function main() {
+
+        const accountCode = [[ ${accountCode} ]];
+
+        const button = document.getElementById("payment-button");
+
+        const amount = {
+            currency: "KRW",
+            value: [[ ${description.totalPrice} ]],
+        };
+
+        const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+        const tossPayments = TossPayments(clientKey);
+
+        const widgets = tossPayments.widgets({
+            "customerKey": "JkMzRlPQ9lUQBiMvYR9ve",
+        });
+
+        await widgets.setAmount(amount);
+        await widgets.renderPaymentMethods({
+            selector: "#payment-method",
+            variantKey: "DEFAULT",
+        });
+
+        await widgets.renderAgreement({selector: "#agreement", variantKey: "AGREEMENT"});
+
+        button.addEventListener("click", async function () {
+
+            widgets.requestPayment({
+                orderId: "ORD_DEMO_013", //테스트 할 임시 Order_Code 삽입
+                orderName: "테스트 상품", 
+                successUrl: window.location.origin + "/payment/view/payments/success",
+                failUrl: window.location.origin + "/payment/view/payments/fail",
+            })
+
+        });
+    }
+
+</script>
+</body>
+</html>

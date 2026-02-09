@@ -1,6 +1,6 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.card.*;
+import co.kr.user.model.dto.card.*;
 import co.kr.user.service.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

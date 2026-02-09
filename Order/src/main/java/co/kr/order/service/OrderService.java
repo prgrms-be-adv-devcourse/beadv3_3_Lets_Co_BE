@@ -1,21 +1,15 @@
 package co.kr.order.service;
 
-import co.kr.order.model.dto.request.ChargeRequest;
-import co.kr.order.model.dto.request.OrderCartRequest;
-import co.kr.order.model.dto.request.OrderDirectRequest;
-import co.kr.order.model.dto.response.OrderResponse;
-
-import java.util.List;
+import co.kr.order.model.dto.request.OrderReq;
+import co.kr.order.model.dto.response.OrderRes;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
 
-    OrderResponse directOrder(Long userIdx, OrderDirectRequest request);
-    OrderResponse cartOrder(Long userIdx, OrderCartRequest request);
-
-    List<OrderResponse> findOrderList(Long userIdx);
-    OrderResponse findOrder(Long userIdx, String orderCode);
-
-    String refund(Long userIdx, String orderCode);
+    Page<OrderRes> findOrderList(Long userIdx, Pageable pageable);
+    OrderRes findOrder(Long userIdx, String orderCode);
 
     /**
      * 주문 완료 처리
@@ -26,5 +20,10 @@ public interface OrderService {
      */
     void completeOrder(Long orderId);
 
-    String charge(Long userIdx, ChargeRequest request);
+    /**
+     * 주문 상태 변경 (Payment에서 콜백)
+     */
+    void updateOrderStatus(String orderCode, String status);
+
+    OrderRes createOrder(Long userIdx, @Valid OrderReq request);
 }

@@ -3,15 +3,15 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: order-service
+  name: payment-service
   labels:
-    app: order-service
+    app: payment-service
 
 spec:
 
   selector:
     matchLabels:
-      app: order-service
+      app: payment-service
 
   replicas: 1
 
@@ -19,11 +19,11 @@ spec:
     
     metadata:
       labels:
-        app: order-service
+        app: payment-service
 
     spec:
       containers:
-        - name: order-service
+        - name: payment-service
           image: lujol/order-service:v2
           # image tag에 버전을 명시하는것이 아닌, latest를 사용하면 필요한 옵션 
           # Always : pod가 시작될 때 항상 dokerhub에 진입해서 이미지 해시값을 획인한다고 함 
@@ -49,34 +49,23 @@ spec:
                 name: db-secret
                 key: DB_PASSWORD 
 
-          - name: REDIS_ENDPOINT
-            valueFrom:
-              secretKeyRef:
-                name: db-secret
-                key: REDIS_ENDPOINT 
-
-          - name: REDIS_PORT
-            valueFrom:
-              secretKeyRef:
-                name: db-secret
-                key: REDIS_PORT 
-
           - name: ZIPKIN_ENDPOINT
             valueFrom: 
               secretKeyRef:
                 name: zipkin-secret
                 key: ZIPKIN_ENDPOINT 
-          - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
-            valueFrom: 
-              secretKeyRef:
-                name: zipkin-secret
-                key: ZIPKIN_ENDPOINT 
 
-          - name: PAYMENTS_TOSS_KEY
+          - name: TOSS_SECRET_KEY
             valueFrom: 
               secretKeyRef:
                 name: order-secret
-                key: PAYMENTS_TOSS_KEY 
+                key: TOSS_SECRET_KEY  
+
+          - name: TOSS_CONFIRM_SECRET_KEY 
+            valueFrom: 
+              secretKeyRef:
+                name: order-secret
+                key: TOSS_CONFIRM_SECRET_KEY 
 
           ports:
             - containerPort: 8080

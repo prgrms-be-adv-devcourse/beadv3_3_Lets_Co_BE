@@ -107,6 +107,27 @@ jobs: # 실제 수행할 작업들을 정의합니다.
           tags: |
             type=raw,value=${{ needs.tagging.outputs.tag_name }}
 
+# 👇 [여기] 빌드 직전에 파일이 진짜 있는지 확인하는 단계
+      - name: 🔍 셜록홈즈 디버깅 (파일 시스템 확인)
+        run: |
+          echo "Current Path: $(pwd)"
+          
+          echo "----------------------------------------------"
+          echo "1. Payment 폴더가 존재하는가?"
+          ls -ld Payment || echo "❌ Payment 폴더 자체가 없음!"
+          
+          echo "----------------------------------------------"
+          echo "2. Payment 폴더 안에 무엇이 있는가?"
+          ls -la Payment || echo "❌ 조회 불가"
+          
+          echo "----------------------------------------------"
+          echo "3. Dockerfile이 존재하는가? (대소문자 구분)"
+          if [ -f "Payment/Dockerfile" ]; then
+            echo "✅ Payment/Dockerfile 발견됨!"
+          else
+            echo "❌ Payment/Dockerfile 없음! (아래 파일 목록 확인)"
+            find Payment -maxdepth 1
+          fi
       - name: Build and Push Image # 이미지를 빌드하고 푸시
         uses: docker/build-push-action@v5
         with:

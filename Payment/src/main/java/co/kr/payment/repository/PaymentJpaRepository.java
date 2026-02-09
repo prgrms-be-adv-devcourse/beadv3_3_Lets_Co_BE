@@ -1,6 +1,7 @@
 package co.kr.payment.repository;
 
 import co.kr.payment.model.entity.PaymentEntity;
+import co.kr.payment.model.vo.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,4 +14,6 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentEntity, Long>
     List<PaymentEntity> findAllByOrdersIdx(Long id);
 
     PaymentEntity findByUsersIdx(Long userIdx);
+
+    Optional<PaymentEntity> findByOrdersIdxAndStatus(Long ordersIdx, PaymentStatus status);
 }

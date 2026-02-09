@@ -148,7 +148,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: oauth-secret
-                  key: REFREKAKAO_CLIENT_IDSH 
+                  key: KAKAO_CLIENT_ID 
 
             - name: KAKAO_CLIENT_SECRET
               valueFrom:

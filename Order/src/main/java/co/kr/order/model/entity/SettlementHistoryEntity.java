@@ -2,8 +2,10 @@ package co.kr.order.model.entity;
 
 import co.kr.order.model.vo.SettlementType;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,8 +58,7 @@ public class SettlementHistoryEntity {
     @Column(name = "Created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "Del", nullable = false)
-    @ColumnDefault("0")
+    @Column(columnDefinition = "TINYINT")
     private boolean del;
 
     @Builder

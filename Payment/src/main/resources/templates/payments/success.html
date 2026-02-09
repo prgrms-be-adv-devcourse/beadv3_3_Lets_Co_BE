@@ -5,7 +5,8 @@
     <title>Title</title>
 </head>
 <body>
-    Success
+    <h2>Success</h2>
+    <div id="info"></div>
     <script>
 
         process();
@@ -18,7 +19,12 @@
             const paymentKey = searchParams.get('paymentKey');
             const amount = searchParams.get('amount');
 
-            await fetch('/payments/toss/confirm', {
+            document.getElementById('info').innerHTML =
+                '<p><b>orderId:</b> ' + orderCode + '</p>' +
+                '<p><b>paymentKey:</b> ' + paymentKey + '</p>' +
+                '<p><b>amount:</b> ' + amount + '</p>';
+
+            await fetch('/payments/process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -26,6 +32,7 @@
                 },
                 body: JSON.stringify({
                     orderCode,
+                    paymentType: 'TOSS_PAY',
                     paymentKey,
                     amount: Number(amount)
                 })

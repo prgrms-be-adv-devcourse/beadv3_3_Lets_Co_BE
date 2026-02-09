@@ -1,20 +1,16 @@
 package co.kr.payment.service;
 
-import co.kr.payment.model.dto.request.ChargeRequest;
-import co.kr.payment.model.dto.request.PaymentRequest;
-import co.kr.payment.model.dto.request.PaymentTossConfirmRequest;
+import co.kr.payment.model.dto.request.ChargeReq;
+import co.kr.payment.model.dto.request.PaymentReq;
+import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
 
 public interface PaymentService {
-    PaymentResponse process(Long userIdx, PaymentRequest request);
+    PaymentResponse process(PaymentReq request);
 
-    PaymentResponse pay(Long userIdx, PaymentRequest request);
+    PaymentResponse refund(RefundReq refundRequest);
 
-    PaymentResponse refund(Long userIdx, String orderCode);
-
-    PaymentResponse confirmTossPayment(Long userIdx, PaymentTossConfirmRequest request);
-
-    PaymentResponse charge(Long userIdx, ChargeRequest request);
+    PaymentResponse charge(ChargeReq request);
 
     PaymentResponse findByOrdersIdx(Long ordersIdx);
 }

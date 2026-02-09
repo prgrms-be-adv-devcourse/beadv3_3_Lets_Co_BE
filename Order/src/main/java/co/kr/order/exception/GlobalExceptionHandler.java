@@ -66,9 +66,16 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
-    
+
     @ExceptionHandler(OutOfStockException.class)
     public ResponseEntity<BaseResponse<String>> outOfStockException(OutOfStockException e) {
+        BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(OrderRefundedException.class)
+    public ResponseEntity<BaseResponse<String>> orderRefundedException(OrderRefundedException e) {
         BaseResponse<String> response = new BaseResponse<>(e.getErrorCode().getCode(), e.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);

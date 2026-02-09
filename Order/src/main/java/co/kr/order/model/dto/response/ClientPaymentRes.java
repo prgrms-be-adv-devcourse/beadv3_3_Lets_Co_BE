@@ -5,12 +5,11 @@ import co.kr.order.model.vo.PaymentType;
 
 import java.math.BigDecimal;
 
-public record PaymentResponse(
+public record ClientPaymentRes(
         Long paymentIdx,
         PaymentStatus status,
         PaymentType type,
         BigDecimal amount,
-        Long ordersIdx,
         Long cardIdx,
         String paymentKey
 ) {}

@@ -1,7 +1,6 @@
 package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserAddressRepository;
-import co.kr.user.dao.UserRepository;
 import co.kr.user.model.dto.address.AddressListDTO;
 import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.model.entity.Users;
@@ -20,10 +19,9 @@ import java.util.UUID;
  * 개인정보(이름, 주소, 전화번호)는 암호화하여 DB에 저장하고, 조회 시 복호화하여 반환합니다.
  */
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor 
 @Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
-    private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
 
     private final UserQueryServiceImpl userQueryServiceImpl;

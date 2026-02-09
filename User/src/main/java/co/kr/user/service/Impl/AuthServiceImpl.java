@@ -9,6 +9,7 @@ import co.kr.user.util.JWTUtil;
 import co.kr.user.util.TokenUtil;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,11 +20,14 @@ import java.time.Duration;
  * 인증(Authentication) 및 권한(Authorization) 관련 공통 로직을 처리하는 서비스 클래스입니다.
  * 사용자 권한 조회와 JWT 토큰 재발급(Refresh) 기능을 제공합니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
 
+
+    private final UserQueryServiceImpl userQueryServiceImpl;
 
     private final JWTUtil jwtUtil; // JWT 생성 및 검증 유틸리티
     private final RedisTemplate<String, Object> redisTemplate;
@@ -47,8 +51,8 @@ public class AuthServiceImpl implements AuthService {
 
         Claims claims = jwtUtil.getRefreshTokenClaims(refreshToken);
 
-        Users users = userRepository.findById(claims.getId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        //리팩토링 과정에서 claims.getSubject()에 타입변환이 필요함을 확인하여 Long.valueOf()를 붙임
+        Users users = userQueryServiceImpl.findActiveUser(Long.valueOf(claims.getSubject()));
 
         // 계정 정지(Lock) 여부 확인
         if (users.getLockedUntil() != null) {

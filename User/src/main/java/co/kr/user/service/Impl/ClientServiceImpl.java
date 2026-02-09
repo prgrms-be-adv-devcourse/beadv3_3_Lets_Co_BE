@@ -4,11 +4,11 @@ import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
 import co.kr.user.model.dto.balance.BalanceReq;
 import co.kr.user.model.entity.Users;
-import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 인증(Authentication) 및 권한(Authorization) 관련 공통 로직을 처리하는 서비스 클래스입니다.
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ClientServiceImpl implements ClientService {
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
@@ -36,6 +37,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional
     public String Balance(Long userIdx, BalanceReq balanceReq) {
 //        Users users = userRepository.findById(userIdx)
 //                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));

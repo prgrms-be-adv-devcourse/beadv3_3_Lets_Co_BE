@@ -11,6 +11,7 @@ import co.kr.user.model.vo.PaymentType;
 import co.kr.user.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -22,21 +23,16 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PaymentServiceImpl implements PaymentService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
 
+    private final UserQueryServiceImpl userQueryServiceImpl;
+
     @Override
     public List<PaymentListDTO> balanceHistory(Long userIdx, PaymentReq paymentReq) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // List가 비어있으면 전체 조회로 간주하여 모든 Enum 값 주입
         if (paymentReq.getPaymentType() == null || paymentReq.getPaymentType().isEmpty()) {

@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -26,15 +27,19 @@ public class UsersAddress {
     @Column(name = "Address_Code", nullable = false)
     private String addressCode;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Recipient", nullable = false, length = 512)
     private String recipient;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Address", nullable = false, length = 2048)
     private String address;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Address_Detail", nullable = false, length = 2048)
     private String addressDetail;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Phone_Number", nullable = false, length = 512)
     private String phoneNumber;
 

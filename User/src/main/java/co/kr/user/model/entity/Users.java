@@ -73,6 +73,16 @@ public class Users {
         this.del = 2;
     }
 
+    public void checkAccountStatus() {
+        if (this.del == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        if (this.del == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+        // 추가적인 공통 검증(계정 잠금 등)을 여기에 포함할 수 있습니다.
+    }
+
     public void increaseLoginFailCount() {
         this.failedLoginAttempts += 1;
     }

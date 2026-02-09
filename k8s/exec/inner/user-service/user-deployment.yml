@@ -54,6 +54,12 @@ spec:
                   name: zipkin-secret
                   key: ZIPKIN_ENDPOINT
 
+            - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
+              valueFrom: 
+                secretKeyRef:
+                  name: zipkin-secret
+                  key: ZIPKIN_ENDPOINT 
+
             - name: MAIL_HOST
               valueFrom:
                 secretKeyRef:

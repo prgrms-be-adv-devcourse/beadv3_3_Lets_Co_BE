@@ -1,5 +1,6 @@
 package co.kr.user.config;
 
+import co.kr.user.service.Impl.CustomOAuth2UserServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,7 +24,7 @@ public class SecurityConfiguration {
      * @throws Exception 설정 중 발생할 수 있는 예외
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2SuccessHandler oAuth2SuccessHandler, CustomOAuth2UserServiceImpl customOAuth2UserServiceImpl) throws Exception {
         return http
                 // CSRF(Cross-Site Request Forgery) 보호 기능을 비활성화합니다.
                 // REST API 서버는 세션을 사용하지 않고(Stateless) 토큰 방식을 주로 사용하므로 CSRF 보호가 불필요한 경우가 많습니다.
@@ -53,6 +54,15 @@ public class SecurityConfiguration {
                         // 현재 설정: 모든 요청(.anyRequest())에 대해 인증 없이 접근을 허용(.permitAll())합니다.
                         // 추후 인증이 필요한 경로는 .authenticated() 또는 .hasRole() 등으로 변경해야 합니다.
                         .anyRequest().permitAll()
+                )
+
+                .oauth2Login(oauth2 -> oauth2
+                        // [추가] 리디렉션 엔드포인트 기본값 수정
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/login/oauth2/*") // /code를 뺀 패턴으로 변경
+                        )
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserServiceImpl))
+                        .successHandler(oAuth2SuccessHandler)
                 )
 
                 // 설정된 보안 필터 체인을 빌드하여 반환합니다.

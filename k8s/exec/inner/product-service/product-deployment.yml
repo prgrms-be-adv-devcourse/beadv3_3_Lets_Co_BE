@@ -55,6 +55,24 @@ spec:
                 name: zipkin-secret
                 key: ZIPKIN_ENDPOINT 
 
+          - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
+            valueFrom: 
+              secretKeyRef:
+                name: zipkin-secret
+                key: ZIPKIN_ENDPOINT 
+
+          - name: ELASTIC_PASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: db-secret
+                key: ELASTIC_PASSWORD           
+                
+          - name: ELASTIC_URL
+            valueFrom: 
+              secretKeyRef:
+                name: db-secret
+                key: ELASTIC_URL 
+
           ports:
             - containerPort: 8080
 

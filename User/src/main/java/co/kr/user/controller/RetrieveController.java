@@ -1,8 +1,8 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.retrieve.FindPWFirstStepReq;
-import co.kr.user.model.DTO.retrieve.FindPWSecondStepReq;
-import co.kr.user.model.DTO.retrieve.FindPWFirstStepDTO;
+import co.kr.user.model.dto.retrieve.FindPWFirstStepReq;
+import co.kr.user.model.dto.retrieve.FindPWSecondStepReq;
+import co.kr.user.model.dto.retrieve.FindPWFirstStepDTO;
 import co.kr.user.service.RetrieveService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

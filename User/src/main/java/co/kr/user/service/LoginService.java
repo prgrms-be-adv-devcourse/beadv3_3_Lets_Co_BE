@@ -1,7 +1,7 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.login.LoginDTO;
-import co.kr.user.model.DTO.login.LoginReq;
+import co.kr.user.model.dto.login.LoginDTO;
+import co.kr.user.model.dto.login.LoginReq;
 
 /**
  * 로그인(Login) 및 로그아웃(Logout) 관련 비즈니스 로직을 정의하는 인터페이스입니다.

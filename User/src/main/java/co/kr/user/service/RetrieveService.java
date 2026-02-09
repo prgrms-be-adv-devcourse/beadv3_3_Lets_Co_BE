@@ -1,8 +1,8 @@
 package co.kr.user.service;
 
-import co.kr.user.model.DTO.retrieve.FindPWFirstStepReq;
-import co.kr.user.model.DTO.retrieve.FindPWSecondStepReq;
-import co.kr.user.model.DTO.retrieve.FindPWFirstStepDTO;
+import co.kr.user.model.dto.retrieve.FindPWFirstStepReq;
+import co.kr.user.model.dto.retrieve.FindPWSecondStepReq;
+import co.kr.user.model.dto.retrieve.FindPWFirstStepDTO;
 
 /**
  * 회원 정보 찾기(Retrieve) 관련 비즈니스 로직을 정의하는 인터페이스입니다.

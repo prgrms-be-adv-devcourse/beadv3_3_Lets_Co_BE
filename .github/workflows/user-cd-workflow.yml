@@ -8,6 +8,7 @@ on: # 트리거 조건
   push:
     branches:
       - main # main 브랜치에 푸시될 때
+      - dev
     paths:
       - "User/**" # User 폴더 내의 파일이 변경되었을 때만 실행
 
@@ -30,7 +31,7 @@ jobs:
       service-name: user-service
       service-dir: User
       file-name: Dockerfile
-      tag-prefix: "user-v" # [추가] 이렇게 하면 user-v1.0.0 형식으로 생성됨
+      tag-prefix: "v" # v1.0.0 형식으로 생성됨
 
 
   # deploying: # 두 번째 단계: 배포

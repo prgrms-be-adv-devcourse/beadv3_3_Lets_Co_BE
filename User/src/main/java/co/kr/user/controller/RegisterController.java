@@ -1,9 +1,9 @@
 package co.kr.user.controller;
 
-import co.kr.user.model.DTO.auth.AuthenticationReq;
-import co.kr.user.model.DTO.register.RegisterDTO;
-import co.kr.user.model.DTO.register.RegisterReq;
-import co.kr.user.model.DTO.register.SignUpCheckReq;
+import co.kr.user.model.dto.auth.AuthenticationReq;
+import co.kr.user.model.dto.register.RegisterDTO;
+import co.kr.user.model.dto.register.RegisterReq;
+import co.kr.user.model.dto.register.SignUpCheckReq;
 import co.kr.user.service.RegisterService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

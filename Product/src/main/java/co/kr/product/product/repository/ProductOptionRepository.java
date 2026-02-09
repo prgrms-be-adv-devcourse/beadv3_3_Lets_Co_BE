@@ -1,7 +1,7 @@
 package co.kr.product.product.repository;
 
-import co.kr.product.product.entity.ProductEntity;
-import co.kr.product.product.entity.ProductOptionEntity;
+import co.kr.product.product.model.entity.ProductEntity;
+import co.kr.product.product.model.entity.ProductOptionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,14 +20,13 @@ public interface ProductOptionRepository extends JpaRepository<ProductOptionEnti
 
     Optional<ProductOptionEntity> findByOptionGroupIdxAndDelFalse(Long aLong);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE ProductOptionEntity p"+
             " SET p.stock = p.stock - :quantity"+
             " WHERE p.optionGroupIdx = :id " +
-            "AND p.stock >= :quantity " +
-            "AND p.del = false")
+            " AND p.stock >= :quantity " +
+            " AND p.del = false")
     int decreaseStock(@Param("id") Long id, @Param("quantity") int quantity);
-
     List<ProductOptionEntity> findByOptionGroupIdxInAndDelFalse(List<Long> optionIds);
 
 

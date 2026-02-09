@@ -1,16 +1,24 @@
 package co.kr.product.product.service.impl;
 
+import co.kr.product.common.service.S3Service;
+import co.kr.product.product.mapper.ProductMapper;
+import co.kr.product.product.model.dto.request.CategoryParentGroup;
 import co.kr.product.product.model.dto.request.DeductStockReq;
 import co.kr.product.product.model.dto.request.ProductIdxsReq;
 import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
 import co.kr.product.product.model.dto.response.*;
+import co.kr.product.product.model.entity.FileEntity;
+import co.kr.product.product.model.entity.ProductCategoryEntity;
 import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
+import co.kr.product.product.repository.FileRepository;
+import co.kr.product.product.repository.ProductCategoryRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +36,12 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductOptionRepository productOptionRepository;
+    private final ProductCategoryRepository categoryRepository;
+    private final FileRepository fileRepository;
+    private final S3Service s3Service;
+
+    @Value("${custom.aws.s3.product-prefix}")
+    private String productPrefix;
 
     /**
      * 상품 목록 조회 (비회원/회원 모두)
@@ -60,31 +74,51 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductDetailRes getProductDetail(String productsCode) {
 
-        ProductEntity productEntity = productRepository.findByProductsCodeAndDelFalse(productsCode)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productsCode));
+        // 1. 상품
+        ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsCode));
 
-        // 조회수 증가 (서비스에서 처리)
-        // @Modifying 쿼리로 원자적 증가도 가능
-        // product.increaseViewCount(); // 메서드 만들었으면 사용
-        // 메서드가 주석이라면 아래처럼 직접 증가
-        // Long vc = (productEntity.getViewCount() == null ? 0L : productEntity.getViewCount());
-        // 리플렉션 없이는 setter가 없으니 "증가 메서드"를 Product에 다시 넣는 걸 권장
-        // 여기서는 안전하게 update 쿼리로 처리하도록 아래 방식 추천:
-        // -> 아래 5번에서 개선안 제공
+        // TODO 조회수 증가 (redis 에서 처리 후 동기화)
 
-
-        // 아래 코드의 경우 return 한 productEntity에서는 증가된 조회수가 적용 안 됨.
-        // 하지만 이를위해 select를 한 번 더 쓰는것 보단 이게 좋다고 봅니다
-        productEntity.increaseViewCount();
-
-
-
+        // 2. 옵션
         List<ProductOptionEntity> options = productOptionRepository
-                .findByProductAndDelFalseOrderBySortOrdersAsc(productEntity);
+                .findByProductAndDelFalseOrderBySortOrdersAsc(product);
+
+        // 3. 카테고리/ip 부모 조회
+        ProductCategoryEntity category = product.getCategory();
+        ProductCategoryEntity ip = product.getIp();
+
+        // 3.1 모든 부모 idx를 리스트로
+        List<Long> parentsIdx = ProductMapper.splitAllPath(List.of(category,ip));
+
+        // 3.2 부모 조회
+        List<ProductCategoryEntity> parentsEntities = categoryRepository
+                .findAllByCategoryIdxInAndDelFalse(parentsIdx);
+
+        // 3.3 위 데이터를 정렬 및 구분 후  반환 데이터 생성
+        CategoryParentGroup parents = ProductMapper.sortAndDivParents(parentsEntities, category.getPath(), ip.getPath());
+
+
+
+        // 4. Image
+        // 4.1 해당 상품에 대한 이미지 조회
+        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse("Products",product.getProductsIdx());
+        // 4.2 S3 조회용 키
+        List<String> keys = images.stream()
+                .map( image -> productPrefix + "/" + image.getStoredFileName())
+                .toList();
+        // 4.3 S3 조회
+        List<String> fileUrls = s3Service.getFileUrls(keys);
+
+        // 4.4 사진 이름 + url 반환
+        List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
+
 
         return toProductDetail(
-                productEntity,
-                options
+                product,
+                options,
+                imageInfo,
+                parents
         );
     }
 

@@ -27,7 +27,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Override
     public List<CategoryRes> getCategory(CategoryType type) {
 
-        List<ProductCategoryEntity> categoryList = categoryRepository.findAllByTypeAndDelFalse(CategoryType.CATEGORY);
+        List<ProductCategoryEntity> categoryList = categoryRepository.findAllByTypeAndDelFalse(type);
 
         List<CategoryRes> item = categoryList.stream()
 
@@ -56,7 +56,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     public CategoryFamilyRes getFamilyCategory(String categoryCode, CategoryType type) {
 
         // 1. 기준 카테고리 검색
-        ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, CategoryType.CATEGORY)
+        ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, type)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 카테고리 입니다."));
 
         // 2. 부모 카테고리 검색
@@ -75,8 +75,9 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
                     .toList();
 
             // 위 idx 기반 in 쿼리로 db에서 카테고리 검색
-            List<ProductCategoryEntity> parents = categoryRepository.findAllByCategoryIdxInAndTypeAndDelFalse(parentsIdx, CategoryType.CATEGORY);
+            List<ProductCategoryEntity> parents = categoryRepository.findAllByCategoryIdxInAndTypeAndDelFalse(parentsIdx,type);
 
+            // list로 바꾸는건 toList면 되지만, Map 출력은 collect을 사용해야 한다고 함
             Map<Long, ProductCategoryEntity> parentsMap = parents.stream()
                     .collect(Collectors.toMap(
                                     ProductCategoryEntity::getCategoryIdx,
@@ -97,7 +98,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         // List<ProductCategoryEntity> childs = categoryRepository.findAllByPathStartingWithAndTypeAndDelFalse(entity.getPath(), CategoryType.CATEGORY);
         
         // 바로 아래 단계 자식만 검색
-        List<ProductCategoryEntity> childs = categoryRepository.findAllByParentIdxAndTypeAndDelFalse(entity.getCategoryIdx(), CategoryType.CATEGORY);
+        List<ProductCategoryEntity> childs = categoryRepository.findAllByParentIdxAndTypeAndDelFalse(entity.getCategoryIdx(), type);
 
 
         return ProductMapper.toCategoryFamilyMapper(sortedParents, childs);
@@ -118,7 +119,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
             ProductCategoryEntity item = ProductCategoryEntity.builder()
                     .categoryName(req.categoryName())
                     .categoryCode(UUID.randomUUID().toString())
-                    .type(CategoryType.CATEGORY)
+                    .type(type)
                     .path("0/")
                     .build();
             // 저장
@@ -131,14 +132,14 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         else{
             // 바로 위 부모 카테고리 하나 조회
             ProductCategoryEntity parent = categoryRepository
-                    .findByCategoryCodeAndTypeAndDelFalse(req.parentCode(), CategoryType.CATEGORY)
+                    .findByCategoryCodeAndTypeAndDelFalse(req.parentCode(), type)
                     .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상위 카테고리 입니다."));
 
             // entity 생성
             ProductCategoryEntity item = ProductCategoryEntity.builder()
                     .categoryName(req.categoryName())
                     .categoryCode(UUID.randomUUID().toString())
-                    .type(CategoryType.CATEGORY)
+                    .type(type)
                     .parentIdx(parent.getCategoryIdx())
                     // 부모의 path 넣어놓기
                     .path(parent.getPath())
@@ -169,7 +170,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         // 이름 변경 및 부모 변경
         
         // 해당 카테고리 조회
-        ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, CategoryType.CATEGORY)
+        ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, type)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 카테고리 입니다."));
 
         entity.updateName(req.categoryName());
@@ -208,7 +209,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
             throw new IllegalArgumentException("자신을 상위/하위 카테고리로 설정 할 수 없습니다.");
         }
         // 3.1 이동 할 부모 카테고리 조회
-        ProductCategoryEntity parent = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(req.parentCode(), CategoryType.CATEGORY)
+        ProductCategoryEntity parent = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(req.parentCode(), type)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상위 카테고리 입니다."));
 
         // ex) 0/1/3/5/7/
@@ -244,7 +245,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     public String deleteCategory(Long usersIdx,String categoryCode, CategoryType type) {
 
         // 검색
-        ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, CategoryType.CATEGORY)
+        ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, type)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 카테고리 입니다."));
 
         // 삭제 (soft delete)

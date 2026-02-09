@@ -1,7 +1,9 @@
 package co.kr.product.product.model.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -9,6 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Table(name = "File")
 public class FileEntity {
 
@@ -47,6 +50,21 @@ public class FileEntity {
 
     // Soft Delete 처리를 위한 컬럼 (0: 정상, 1: 삭제)
     @Column(name = "Del", columnDefinition = "TINYINT(1) DEFAULT 0")
-    private boolean deleted = false;
+    private boolean del = false;
 
+
+    @Builder
+    public FileEntity(Long refIndex,
+                      String filePath,
+                      String fileType,
+                      String storedFileName,
+                      String originalFileName) {
+
+        this.refIndex = refIndex;
+        this.refTable = "Products";
+        this.filePath = filePath;
+        this.fileType = fileType;
+        this.storedFileName = storedFileName;
+        this.originalFileName = originalFileName;
+    }
 }

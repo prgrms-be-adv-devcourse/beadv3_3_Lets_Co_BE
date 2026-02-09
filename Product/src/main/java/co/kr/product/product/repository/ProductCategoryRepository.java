@@ -2,6 +2,7 @@ package co.kr.product.product.repository;
 
 import co.kr.product.product.model.entity.ProductCategoryEntity;
 import co.kr.product.product.model.vo.CategoryType;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +38,8 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
     List<ProductCategoryEntity> findAllByPathStartingWithAndTypeAndDelFalse(String path, CategoryType type);
 
     List<ProductCategoryEntity> findAllByParentIdxAndTypeAndDelFalse(Long parentIdx, CategoryType categoryType);
+
+    List<ProductCategoryEntity> findAllByCategoryCodeInAndDelFalse(List<String> categoryCodes);
+
+    List<ProductCategoryEntity> findAllByCategoryIdxInAndDelFalse(List<Long> parentsIdx);
 }

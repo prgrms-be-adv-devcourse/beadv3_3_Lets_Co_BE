@@ -6,10 +6,13 @@ import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.request.UpsertProductReq;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public interface ProductManagerService {
 
-    ProductDetailRes addProduct(Long usersIdx, UpsertProductReq request);
+    ProductDetailRes addProduct(Long usersIdx, UpsertProductReq request, List<MultipartFile> images);
 
     ProductDetailRes getManagerProductDetail(Long usersIdx, String code);
 

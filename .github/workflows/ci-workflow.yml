@@ -42,7 +42,7 @@ jobs:
             echo '${{ secrets.USER_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
           elif [[ "${{ inputs.service-name }}" == *"Payment"* ]]; then
-            echo '${{ secrets.USER_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            echo '${{ secrets.PAYMENT_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
           else
             echo "알 수 없는 서비스입니다: ${{ inputs.service-name }}"

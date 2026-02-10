@@ -1,7 +1,7 @@
-name: Order Service CD # 워크플로우 이름
+name: Payment Service CD # 워크플로우 이름
 
 concurrency: # 동시 실행 제어
-  group: order-service-deploy # 그룹 이름을 지정
+  group: Payment-service-deploy # 그룹 이름을 지정
   cancel-in-progress: false # 진행 중인 배포가 있다면 취소하지 않고 대기 (순차 배포)
 
 on: # 트리거 조건
@@ -10,7 +10,7 @@ on: # 트리거 조건
       - main # main 브랜치에 푸시될 때
       - dev
     paths:
-      - "Order/**" # Order 폴더 내의 파일이 변경되었을 때만 실행
+      - "Payment/**" # Payment 폴더 내의 파일이 변경되었을 때만 실행
   workflow_dispatch: # 수동으로 실행 버튼을 눌러서 시작할 수도 있음
 
   # 👇 [여기 추가] 이 권한 설정이 반드시 필요합니다!
@@ -26,10 +26,10 @@ jobs:
     secrets: # 필요한 시크릿 전달
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      APPLICATION_YML: ${{ secrets.ORDER_PROD_YML }} # Order 전용 YML 전달
+      APPLICATION_YML: ${{ secrets.PAYMENT_PROD_YML }} # Payment 전용 YML 전달
     with: # 필요한 파라미터 전달
-      service-name: order-service
-      service-dir: Order
+      service-name: payment-service
+      service-dir: Payment
       file-name: Dockerfile
       tag-prefix: "v" # v1.0.0 형식으로 생성됨
 
@@ -40,6 +40,6 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     with:
-      service-name: order-service
+      service-name: payment-service
       # releasing 단계에서 만들어진 태그(버전)를 넘겨받아 배포에 사용
       image-tag: ${{ needs.releasing.outputs.tag_name }}

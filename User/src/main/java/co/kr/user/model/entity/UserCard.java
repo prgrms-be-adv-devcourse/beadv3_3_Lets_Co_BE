@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,12 +26,15 @@ public class UserCard {
     @Column(name = "Card_Code", nullable = false, length = 100)
     private String cardCode;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Card_Brand", nullable = false)
     private String cardBrand;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Card_Name", nullable = false)
     private String cardName;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Card_Token", nullable = false, length = 512)
     private String cardToken;
 

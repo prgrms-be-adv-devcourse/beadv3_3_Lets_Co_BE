@@ -1,6 +1,7 @@
 package co.kr.user.model.entity;
 
 import co.kr.user.model.vo.UsersInformationGender;
+import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -32,12 +33,15 @@ public class UsersInformation {
     @Column(name = "Balance",nullable = false, precision = 19, scale = 2)
     private BigDecimal balance;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Name", nullable = false, length = 512)
     private String name;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Phone_Number", nullable = false, length = 512)
     private String phoneNumber;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Birth", nullable = false, length = 512)
     private String birth;
 

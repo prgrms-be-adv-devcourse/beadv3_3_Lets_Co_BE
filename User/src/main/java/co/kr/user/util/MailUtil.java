@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,6 +30,7 @@ public class MailUtil {
      * @param isHtml 본문이 HTML 형식인지 여부 (true: HTML, false: 텍스트)
      * @return 발송 성공 시 true, 실패 시 false
      */
+    @Async
     public boolean sendEmail(EmailMessage emailMessage, boolean isHtml) {
         // MIME(Multipurpose Internet Mail Extensions) 타입의 메시지 객체 생성
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();

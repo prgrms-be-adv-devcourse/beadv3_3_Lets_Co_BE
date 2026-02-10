@@ -9,7 +9,6 @@ import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AdminService;
 import co.kr.user.service.ClientService;
-import co.kr.user.util.AESUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -30,11 +29,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ClientService clientService; // 권한 확인용 서비스
     private final UserInformationRepository userInformationRepository;
-    private final AESUtil aesUtil; // 개인정보 복호화 유틸리티
+
+    private final UserQueryServiceImpl userQueryServiceImpl;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -48,33 +49,20 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public List<AdminUserListDTO> userList(Long userIdx) {
-        // 관리자 계정 조회 및 상태 검증
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         // 권한 검증 (ADMIN 여부 확인)
         UsersRole role = clientService.getRole(users.getUsersIdx());
-
         if (role != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
 
-        // 전체 회원 및 상세 정보 조회
         List<Users> usersList = userRepository.findAllByDelOrderByCreatedAtDesc(0);
         List<UsersInformation> usersInformationList = userInformationRepository.findAll();
 
-        // 상세 정보를 UserIdx를 키로 하는 Map으로 변환 (O(N) 접근을 위해)
         Map<Long, UsersInformation> userInfoMap = usersInformationList.stream()
                 .collect(Collectors.toMap(UsersInformation::getUsersIdx, Function.identity()));
 
-        // DTO 변환 및 반환
         return usersList.stream()
                 .map(user -> {
                     AdminUserListDTO dto = new AdminUserListDTO();
@@ -84,14 +72,12 @@ public class AdminServiceImpl implements AdminService {
                     dto.setCreatedAt(user.getCreatedAt());
                     dto.setUpdatedAt(user.getUpdatedAt());
 
-                    // 상세 정보 매핑 및 복호화
                     UsersInformation info = userInfoMap.get(user.getUsersIdx());
                     if (info != null) {
-                        dto.setName(aesUtil.decrypt(info.getName()));
-                        dto.setPhoneNumber(aesUtil.decrypt(info.getPhoneNumber()));
-                        dto.setBirth(aesUtil.decrypt(info.getBirth()));
+                        dto.setName(info.getName());
+                        dto.setPhoneNumber(info.getPhoneNumber());
+                        dto.setBirth(info.getBirth());
                     }
-
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -107,16 +93,7 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public AdminUserDetailDTO userDetail(Long userIdx, String id) {
-        // 관리자 검증
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         UsersRole role = clientService.getRole(users.getUsersIdx());
 
@@ -126,7 +103,7 @@ public class AdminServiceImpl implements AdminService {
 
         // 대상 회원 조회
         Users usersDetail = userRepository.findByIdAndDel(id, 0)
-                .orElseThrow(() -> new IllegalArgumentException(("존재하지 않는 아이디입니다.")));
+                .orElseThrow(() -> new IllegalArgumentException("조회 대상 사용자(ID: " + id + ")를 찾을 수 없거나 탈퇴한 회원입니다."));
         UsersInformation usersInformationDetail = userInformationRepository.findByUsersIdx(usersDetail.getUsersIdx())
                 .orElseThrow(() -> new IllegalArgumentException("유저 상세 정보를 찾을 수 없습니다."));
 
@@ -137,9 +114,9 @@ public class AdminServiceImpl implements AdminService {
         dto.setRole(usersDetail.getRole());
         dto.setAgreeTermsAt(usersDetail.getAgreeTermsAt());
         dto.setAgreePrivacyAt(usersDetail.getAgreePrivacyAt());
-        dto.setName(aesUtil.decrypt(usersInformationDetail.getName()));
-        dto.setPhoneNumber(aesUtil.decrypt(usersInformationDetail.getPhoneNumber()));
-        dto.setBirth(aesUtil.decrypt(usersInformationDetail.getBirth()));
+        dto.setName(usersInformationDetail.getName());
+        dto.setPhoneNumber(usersInformationDetail.getPhoneNumber());
+        dto.setBirth(usersInformationDetail.getBirth());
         dto.setCreatedAt(usersDetail.getCreatedAt());
         dto.setUpdatedAt(usersDetail.getUpdatedAt());
 
@@ -158,15 +135,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public String userRole(Long userIdx, String id, UsersRole changeRole) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         UsersRole role = clientService.getRole(users.getUsersIdx());
 
@@ -195,15 +164,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public String userBlock(Long userIdx, String id, LocalDateTime lockedUntil) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         UsersRole role = clientService.getRole(users.getUsersIdx());
 
@@ -248,15 +209,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public String userDelete(Long userIdx, String id) {
-        Users users = userRepository.findById(userIdx)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
         UsersRole role = clientService.getRole(users.getUsersIdx());
 

@@ -5,6 +5,7 @@ import co.kr.payment.client.UserClient;
 import co.kr.payment.exception.ErrorCode;
 import co.kr.payment.exception.PaymentFailedException;
 import co.kr.payment.mapper.PaymentMapper;
+import co.kr.payment.model.dto.request.BalanceClientReq;
 import co.kr.payment.model.dto.request.ChargeReq;
 import co.kr.payment.model.dto.request.PaymentReq;
 import co.kr.payment.model.dto.request.RefundReq;
@@ -102,7 +103,7 @@ public class PaymentServiceImpl implements PaymentService {
         switch (payment.getType()) {
             case DEPOSIT -> {
                 try {
-//                    userClient.refundBalance(request.userIdx(), refundAmount);
+                    userClient.updateBalance(request.userIdx(), new BalanceClientReq(PaymentStatus.REFUND, refundAmount));
                     log.info("Balance 환불 성공: userIdx={}, amount={}", request.userIdx(), refundAmount);
                 } catch (Exception e) {
                     log.error("Balance 환불 실패: userIdx={}, amount={}", request.userIdx(), refundAmount, e);
@@ -170,8 +171,7 @@ public class PaymentServiceImpl implements PaymentService {
      */
     private PaymentResponse handleDepositPayment(Long userIdx, String orderCode, Long ordersIdx, BigDecimal amount) {
         try {
-
-            // userClient.useBalance(userIdx, amount);
+            userClient.updateBalance(userIdx, new BalanceClientReq(PaymentStatus.PAYMENT, amount));
         } catch (Exception e) {
             log.error("Balance(예치금) 결제 실패: userIdx={}, amount={}", userIdx, amount, e);
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
@@ -302,6 +302,13 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponse charge(ChargeReq request) {
         if (request.paymentType() == PaymentType.DEPOSIT) {
             throw new IllegalArgumentException("예치금으로 충전할 수 없습니다.");
+        }
+
+        try {
+            userClient.updateBalance(request.userIdx(), new BalanceClientReq(PaymentStatus.CHARGE, request.amount()));
+        } catch (Exception e) {
+            log.error("Balance(예치금) 충전 실패: userIdx={}, amount={}", request.userIdx(), request.amount(), e);
+            throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
         }
 
         PaymentEntity payment = PaymentEntity.builder()

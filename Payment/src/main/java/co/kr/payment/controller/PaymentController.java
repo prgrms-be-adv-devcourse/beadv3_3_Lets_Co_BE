@@ -5,10 +5,7 @@ import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,8 +16,10 @@ public class PaymentController {
 
     @PostMapping("/refund")
     public ResponseEntity<PaymentResponse> refund(
+            @RequestHeader("X-USERS-IDX") Long userIdx,
             @RequestBody RefundReq request
     ) {
-        return ResponseEntity.ok(paymentService.refund(request));
+        RefundReq refundReq = new RefundReq(userIdx, request.orderCode());
+        return ResponseEntity.ok(paymentService.refund(refundReq));
     }
 }

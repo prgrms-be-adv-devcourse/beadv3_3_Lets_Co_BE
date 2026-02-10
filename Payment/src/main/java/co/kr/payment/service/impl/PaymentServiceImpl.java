@@ -57,7 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
      * 결제 수단별 결제 처리 (통합)
      * - CARD: 카드 결제 (연동없이 기록만 저장)
      * - DEPOSIT: 예치금 결제 (User 서비스 연동)
-     * - TOSS_PAY: 토스페이먼츠 결제 승인
+     * - TOSS_PAY: 토스페이먼츠 결제 confirm 으로 진입
      */
     @Override
     @Transactional
@@ -67,23 +67,9 @@ public class PaymentServiceImpl implements PaymentService {
             case DEPOSIT -> handleDepositPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
             case TOSS_PAY -> {
                 if (request.paymentKey() == null || request.paymentKey().isBlank()) {
-                    throw new IllegalArgumentException("TOSS_PAY 결제 시 paymentKey는 필수입니다.");
+                    throw new PaymentFailedException(ErrorCode.PAYMENT_KEY_NOT_FOUND);
                 }
-                Long ordersIdx = request.ordersIdx();
-
-                /*
-                // 수동 테스트용 fallback: ordersIdx가 없으면 Order 서비스에서 조회
-                // 실제 운영 흐름에서는 Order 서비스가 ordersIdx를 포함하여 호출하므로 이 분기에 진입하지 않음
-                if (ordersIdx == null && request.orderCode() != null) {
-                    Map<String, Object> orderResponse = orderClient.getOrder(request.orderCode(), userIdx);
-                    Map<String, Object> data = (Map<String, Object>) orderResponse.get("data");
-                    if (data != null && data.get("ordersIdx") != null) {
-                        ordersIdx = ((Number) data.get("ordersIdx")).longValue();
-                    }
-                }
-                */
-
-                yield handleTossPayPayment(request.userIdx(), request.orderCode(), ordersIdx, request.paymentKey(), request.amount());
+                yield handleTossPayPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.paymentKey(), request.amount());
             }
         };
     }
@@ -97,16 +83,14 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentResponse refund(RefundReq request) {
-        // 1. ordersIdx 필수 검증
-        if (request.ordersIdx() == null) {
-            throw new IllegalArgumentException("ordersIdx는 필수입니다.");
-        }
+        // 1. orderCode → ordersIdx 변환 (Order 서비스 통신)
+        Long ordersIdx = orderClient.getOrderIdx(request.orderCode());
 
         // 2. ordersIdx + PAYMENT 상태로 결제 내역 조회
         // 이미 REFUND 상태인 결제는 조회되지 않음 -> 중복 환불 방지
-        PaymentEntity payment = paymentRepository.findByOrdersIdxAndStatus(request.ordersIdx(), PaymentStatus.PAYMENT)
+        PaymentEntity payment = paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.PAYMENT)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "환불 가능한 결제 내역을 찾을 수 없습니다. ordersIdx=" + request.ordersIdx()));
+                        "환불 가능한 결제 내역을 찾을 수 없습니다. ordersIdx=" + ordersIdx));
 
         // 3. 유저 유효성 검증
         if (!payment.getUsersIdx().equals(request.userIdx())) {
@@ -118,7 +102,7 @@ public class PaymentServiceImpl implements PaymentService {
         switch (payment.getType()) {
             case DEPOSIT -> {
                 try {
-//                    userClient.refundBalance(userIdx, refundAmount);
+//                    userClient.refundBalance(request.userIdx(), refundAmount);
                     log.info("Balance 환불 성공: userIdx={}, amount={}", request.userIdx(), refundAmount);
                 } catch (Exception e) {
                     log.error("Balance 환불 실패: userIdx={}, amount={}", request.userIdx(), refundAmount, e);
@@ -127,7 +111,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
             case TOSS_PAY -> {
                 if (payment.getPaymentKey() == null) {
-                    throw new IllegalStateException("토스페이 PaymentKey가 없습니다.");
+                    throw new PaymentFailedException(ErrorCode.PAYMENT_KEY_NOT_FOUND);
                 }
                 try {
                     sendTossCancel(payment.getPaymentKey());
@@ -137,10 +121,8 @@ public class PaymentServiceImpl implements PaymentService {
                     throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
                 }
             }
-            case CARD -> {
-                log.warn("카드 환불 요청 - 관리자 처리 필요: userIdx={}, ordersIdx={}, amount={}",
-                        request.userIdx(), payment.getOrdersIdx(), refundAmount);
-            }
+            case CARD -> log.warn("카드 환불 요청 - 추후 실제 PG 로직 필요: userIdx={}, ordersIdx={}, amount={}",
+                    request.userIdx(), payment.getOrdersIdx(), refundAmount);
         }
 
         PaymentEntity refundPayment = PaymentEntity.builder()
@@ -334,14 +316,4 @@ public class PaymentServiceImpl implements PaymentService {
         return PaymentMapper.toResponse(saved);
     }
 
-    /**
-     * ordersIdx로 결제 내역 조회
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public PaymentResponse findByOrdersIdx(Long ordersIdx) {
-        PaymentEntity payment = paymentRepository.findByOrdersIdx(ordersIdx)
-                .orElseThrow(() -> new IllegalArgumentException("결제 내역을 찾을 수 없습니다. ordersIdx=" + ordersIdx));
-        return PaymentMapper.toResponse(payment);
-    }
 }

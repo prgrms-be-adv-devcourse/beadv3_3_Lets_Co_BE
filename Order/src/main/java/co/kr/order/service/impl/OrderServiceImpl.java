@@ -4,8 +4,10 @@ import co.kr.order.client.PaymentClient;
 import co.kr.order.client.ProductClient;
 import co.kr.order.exception.ErrorCode;
 import co.kr.order.exception.OrderNotFoundException;
+import co.kr.order.model.dto.event.StockUpdateEvent;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
+import co.kr.order.model.dto.event.StockUpdateMsg;
 import co.kr.order.model.dto.request.ClientPaymentReq;
 import co.kr.order.model.dto.request.ClientProductReq;
 import co.kr.order.model.dto.request.ClientRefundReq;
@@ -20,12 +22,10 @@ import co.kr.order.model.vo.OrderStatus;
 import co.kr.order.model.vo.OrderType;
 import co.kr.order.repository.OrderItemJpaRepository;
 import co.kr.order.repository.OrderJpaRepository;
-import co.kr.order.service.CartService;
-import co.kr.order.service.DeductStockService;
-import co.kr.order.service.OrderService;
-import co.kr.order.service.SettlementService;
+import co.kr.order.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartService cartService;
     private final DeductStockService deductStockService;
     private final SettlementService settlementService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final PaymentClient paymentClient;
     private final ProductClient productClient;
@@ -192,6 +193,18 @@ public class OrderServiceImpl implements OrderService {
              * todo. kafka로 재고를 갱신하라는 메세지 발행
              * ===========================================
              */
+
+            for (ProductInfo info : stocksInfos) {
+                StockUpdateMsg msg = new StockUpdateMsg(
+                        info.productCode(),
+                        info.optionCode(),
+                        (long) info.quantity()
+                );
+
+                // 이벤트를 발행 (아직 Kafka로 안 날아감 - 메모리에만 존재)
+                // -> DB 트랜잭션이 커밋되어야 Listener 처리함
+                eventPublisher.publishEvent(new StockUpdateEvent(msg));
+            }
 
         } catch (Exception e) {
             log.error("주문 후처리 실패. 결제 취소 및 재고 롤백 수행. orderCode={}", orderCode, e);

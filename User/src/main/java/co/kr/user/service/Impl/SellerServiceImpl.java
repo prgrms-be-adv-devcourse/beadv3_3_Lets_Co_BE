@@ -106,6 +106,8 @@ public class SellerServiceImpl implements SellerService {
     @Transactional
     public String sellerRegisterCheck(Long userIdx, String authCode) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        UsersInformation userInfo = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
@@ -141,7 +143,7 @@ public class SellerServiceImpl implements SellerService {
         String finalContent = emailTemplateProvider.getSellerApprovalTemplate(seller.getSellerName());
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getId())
+                .to(userInfo.getMail())
                 .subject("[GutJJeu] 판매자 등록 승인 안내해 드립니다.")
                 .message(finalContent)
                 .build();

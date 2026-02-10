@@ -71,6 +71,11 @@ spring:
               filters:
                 - TokenAuthenticationFilter
 
+            - id: user-oauth2
+              uri: lb://USER
+              predicates:
+                - Path=/login/oauth2/**, /oauth2/**
+
             - id: auth
               uri: lb://USER
               predicates:

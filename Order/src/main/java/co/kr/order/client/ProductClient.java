@@ -1,10 +1,12 @@
 package co.kr.order.client;
 
 import co.kr.order.model.dto.request.ClientProductReq;
-import co.kr.order.model.dto.request.DeductStockReq;
 import co.kr.order.model.dto.response.ClientProductRes;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -20,9 +22,6 @@ public interface ProductClient {
 
     @GetMapping("/bulk")
     List<ClientProductRes> getProductList(@RequestBody List<ClientProductReq> productRequest);
-
-    @PostMapping("/deductStocks")
-    void deductStocks(@RequestBody List<DeductStockReq> deductStockRequest);
 
     /*
      * 정산용: 상품 ID 목록으로 판매자 ID 조회

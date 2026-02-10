@@ -11,6 +11,4 @@ public interface PaymentService {
     PaymentResponse refund(RefundReq refundRequest);
 
     PaymentResponse charge(ChargeReq request);
-
-    PaymentResponse findByOrdersIdx(Long ordersIdx);
 }

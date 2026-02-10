@@ -21,10 +21,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.LocalDateTime;
 
-/**
- * 회원가입(Sign Up) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
- * 이메일 중복 확인, 신규 계정 생성(암호화 포함), 가입 인증 메일 발송 및 확인 기능을 제공합니다.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,55 +29,31 @@ public class RegisterServiceImpl implements RegisterService {
     private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
 
-    private final BCryptUtil bCryptUtil; // 비밀번호 해싱(단방향 암호화)
-    private final RandomCodeUtil randomCodeUtil; // 인증코드 생성
-    private final MailUtil mailUtil; // 이메일 발송
+    private final BCryptUtil bCryptUtil;
+    private final RandomCodeUtil randomCodeUtil;
+    private final MailUtil mailUtil;
     private final EmailTemplateProvider emailTemplateProvider;
+    private final UserQueryServiceImpl userQueryServiceImpl;
 
-    /**
-     * 이메일(아이디) 중복 확인 메서드입니다.
-     *
-     * @param email 확인할 이메일
-     * @return 중복 여부 메시지
-     */
-    public String checkDuplicate(String email) {
-        boolean isDuplicate = userRepository.existsByIdAndDel(email, 0);
+    public String checkDuplicate(String id) {
+        boolean isDuplicate = userRepository.existsByIdAndDel(id, 0);
 
         if (isDuplicate) {
-            return "이메일 사용이 불가능합니다";
+            return "ID 사용이 불가능합니다";
         }
 
-        return "이메일 사용이 가능합니다.";
+        return "ID 사용이 가능합니다.";
     }
 
-    /**
-     * 회원가입 신청 메서드입니다.
-     * 사용자 정보와 상세 정보를 DB에 저장하고, 이메일 인증 코드를 발송합니다.
-     * 계정은 초기에 미인증 상태(Del=2)로 생성됩니다.
-     *
-     * @param registerReq 회원가입 요청 정보
-     * @return RegisterDTO (가입 처리 결과 및 인증 시간)
-     */
     @Transactional
     public RegisterDTO signup(RegisterReq registerReq) {
-        // 중복 가입 방지
         boolean isDuplicate = userRepository.existsByIdAndDel(registerReq.getId(), 0);
         if (isDuplicate) {
-            throw new IllegalStateException("이미 가입된 이메일입니다.");
+            throw new IllegalStateException("이미 ID 이메일입니다.");
         }
 
-        // 필수 약관 동의 체크
-        if (registerReq.getAgreeTermsAt() == null) {
-            throw new IllegalStateException("이용약관 동의는 필수입니다.");
-        }
-        if (registerReq.getAgreePrivateAt() == null) {
-            throw new IllegalStateException("개인정보 처리방침 동의는 필수입니다.");
-        }
-
-        // 비밀번호 해싱 및 개인정보 암호화
         registerReq.setPw(bCryptUtil.encode(registerReq.getPw()));
 
-        // Users 엔티티 생성 및 저장 (기본 상태: 미인증)
         Users user = Users.builder()
                 .id(registerReq.getId())
                 .pw(registerReq.getPw())
@@ -89,9 +61,9 @@ public class RegisterServiceImpl implements RegisterService {
 
         Users savedUser = userRepository.save(user);
 
-        // UsersInformation 엔티티 생성 및 저장
         UsersInformation usersInformation = UsersInformation.builder()
                 .usersIdx(savedUser.getUsersIdx())
+                .mail(registerReq.getMail())
                 .gender(registerReq.getGender())
                 .name(registerReq.getName())
                 .phoneNumber(registerReq.getPhoneNumber())
@@ -101,7 +73,6 @@ public class RegisterServiceImpl implements RegisterService {
 
         userInformationRepository.save(usersInformation);
 
-        // 인증 코드 생성 및 저장 (목적: SIGNUP)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
                 .usersIdx(savedUser.getUsersIdx())
                 .purpose(UsersVerificationsPurPose.SIGNUP)
@@ -115,7 +86,7 @@ public class RegisterServiceImpl implements RegisterService {
         String finalContent = emailTemplateProvider.getSignupTemplate(savedUserVerifications.getCode());
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(savedUser.getId())
+                .to(usersInformation.getMail())
                 .subject("[GutJJeu] 회원가입 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
@@ -123,51 +94,44 @@ public class RegisterServiceImpl implements RegisterService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                mailUtil.sendEmail(emailMessage, true); // 여기서 비동기로 호출됨
+                mailUtil.sendEmail(emailMessage, true);
             }
         });
 
         RegisterDTO registerDTO = new RegisterDTO();
-        registerDTO.setID(savedUser.getId());
+        registerDTO.setMail(usersInformation.getMail());
         registerDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
         return registerDTO;
     }
 
-    /**
-     * 가입 인증 확인 메서드입니다.
-     * 인증 코드가 유효하면 계정을 활성화(Del=0)합니다.
-     *
-     * @param code 인증 코드
-     * @return 인증 결과 메시지
-     */
     @Transactional
     public String signupAuthentication(String code) {
-        // 코드 조회
         UsersVerifications usersVerifications = userVerificationsRepository.findTopByCodeAndDelOrderByCreatedAtDesc(code, 0)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증 코드입니다."));
 
-        // 유효성 검증 (만료, 목적, 이미 인증됨 등)
         if (usersVerifications.getExpiresAt().isBefore(LocalDateTime.now())) {
             return "인증 시간이 만료되었습니다.";
         }
-
-        if (usersVerifications.getPurpose() != UsersVerificationsPurPose.SIGNUP) {
+        else if (usersVerifications.getPurpose() != UsersVerificationsPurPose.SIGNUP) {
             throw new IllegalArgumentException("회원가입 인증 코드가 아닙니다.");
         }
-
-        if (usersVerifications.getStatus() == UsersVerificationsStatus.VERIFIED) {
+        else if (!usersVerifications.getCode().equals(code)) {
+            throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
+        }
+        else if (usersVerifications.getStatus() == UsersVerificationsStatus.VERIFIED) {
             return "이미 인증 완료된 코드입니다.";
         }
 
-        // 인증 완료 처리
         usersVerifications.confirmVerification();
 
-        // 사용자 계정 활성화 (Del: 2 -> 0)
-        Users user = userRepository.findById(usersVerifications.getUsersIdx())
-                .orElseThrow(() -> new IllegalArgumentException("가입된 회원 정보를 찾을 수 없습니다."));
+        Users user = userQueryServiceImpl.findWaitUser(usersVerifications.getUsersIdx());
+        UsersInformation userInfo = userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), 2)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
+
 
         user.activateUsers();
+        userInfo.activateInformation();
 
         return "인증 완료";
     }

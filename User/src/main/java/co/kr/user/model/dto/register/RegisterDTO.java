@@ -6,6 +6,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class RegisterDTO {
-    private String ID;
+    private String mail;
     private LocalDateTime certificationTime;
 }

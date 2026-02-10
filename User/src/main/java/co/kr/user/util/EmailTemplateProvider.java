@@ -2,15 +2,9 @@ package co.kr.user.util;
 
 import org.springframework.stereotype.Component;
 
-/**
- * 서비스 전체에서 사용되는 이메일 HTML 템플릿을 중앙 관리하는 컴포넌트입니다.
- */
 @Component
 public class EmailTemplateProvider {
 
-    /**
-     * 공통 레이아웃: 모든 이메일의 디자인 뼈대를 형성합니다.
-     */
     private String getCommonLayout(String title, String mainText, String code, String footerText) {
         return """
             <div style='background-color: #f6f7f9; padding: 40px 20px; font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6;'>
@@ -48,9 +42,6 @@ public class EmailTemplateProvider {
             """.formatted(title, mainText, code, footerText);
     }
 
-    /**
-     * 회원가입 인증 템플릿
-     */
     public String getSignupTemplate(String code) {
         return getCommonLayout(
                 "이메일 인증 안내",
@@ -60,9 +51,15 @@ public class EmailTemplateProvider {
         );
     }
 
-    /**
-     * 비밀번호 재설정 인증 템플릿
-     */
+    public String getFindIDTemplate(String code) {
+        return getCommonLayout(
+                "아이디 찾기 인증번호",
+                "아이디 찾기를 위해 아래 인증번호를 입력해 주세요.",
+                code,
+                "* 이 인증번호는 <strong>30분 동안만 유효</strong>합니다.<br>* 본인이 요청하지 않은 경우 이 메일을 무시해 주세요."
+        );
+    }
+
     public String getResetPasswordTemplate(String code) {
         return getCommonLayout(
                 "비밀번호 찾기 인증번호",
@@ -72,9 +69,6 @@ public class EmailTemplateProvider {
         );
     }
 
-    /**
-     * 회원탈퇴 확인 템플릿
-     */
     public String getDeleteAccountTemplate(String code) {
         return getCommonLayout(
                 "회원탈퇴 인증번호",
@@ -84,9 +78,6 @@ public class EmailTemplateProvider {
         );
     }
 
-    /**
-     * 판매자 등록 인증 템플릿
-     */
     public String getSellerRegisterTemplate(String code) {
         return getCommonLayout(
                 "판매자 등록 인증 안내",
@@ -96,15 +87,21 @@ public class EmailTemplateProvider {
         );
     }
 
-    /**
-     * 판매자 승인 완료 알림 템플릿 (인증번호가 아닌 이름을 표시)
-     */
     public String getSellerApprovalTemplate(String sellerName) {
         return getCommonLayout(
                 "판매자 등록 완료 안내",
                 "축하합니다! 신청하신 판매자 권한 승인이 완료되었습니다.",
                 sellerName,
                 "* 위 계정(상점명)으로 판매 활동을 시작하실 수 있습니다.<br>* 판매자 센터에 로그인하여 상품을 등록해 보세요."
+        );
+    }
+
+    public String getDeleteSellerTemplate(String Code) {
+        return getCommonLayout(
+                "판매자 탈퇴 인증번호",
+                "판매자 탈퇴 처리를 위해 아래 인증번호를 입력해 주세요.",
+                Code,
+                "* 이 인증번호는 <strong>30분 동안만 유효</strong>합니다.<br>* 본인이 요청하지 않은 경우, 절대 타인에게 공유하지 마세요."
         );
     }
 }

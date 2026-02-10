@@ -2,6 +2,7 @@ package co.kr.user.model.entity;
 
 import co.kr.user.model.vo.UsersMembership;
 import co.kr.user.model.vo.UsersRole;
+import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -18,12 +19,12 @@ import java.time.LocalDateTime;
 @DynamicInsert
 @Table(name = "Users")
 public class Users {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Users_IDX")
     private Long usersIdx;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "ID", nullable = false, length = 254)
     private String id;
 
@@ -80,7 +81,6 @@ public class Users {
         if (this.del == 2) {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
-        // 추가적인 공통 검증(계정 잠금 등)을 여기에 포함할 수 있습니다.
     }
 
     public void increaseLoginFailCount() {
@@ -109,7 +109,8 @@ public class Users {
         this.del = 0;
     }
 
-    public void deleteUsers() {
+    public void deleteUsers(String id) {
+        this.id = id;
         this.del = 1;
     }
 
@@ -119,9 +120,5 @@ public class Users {
 
     public void suspendUser(LocalDateTime lockedUntil) {
         this.lockedUntil = lockedUntil;
-    }
-
-    public void withdrawUser() {
-        this.del = 1;
     }
 }

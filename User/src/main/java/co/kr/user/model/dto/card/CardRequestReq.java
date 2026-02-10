@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class CardRequestReq {
     private String cardCode;
-    private int defaultCard;
+    private boolean defaultCard;
     private String cardBrand;
     private String cardName;
     private String cardToken;

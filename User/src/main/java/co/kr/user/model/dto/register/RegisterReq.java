@@ -1,6 +1,7 @@
 package co.kr.user.model.dto.register;
 
 import co.kr.user.model.vo.UsersInformationGender;
+import co.kr.user.util.validator.PasswordMatch;
 import co.kr.user.util.validator.ValiDate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
@@ -10,33 +11,45 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Data
+@PasswordMatch
 public class RegisterReq {
-    @NotBlank(message = "이메일을 입력해주세요.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @NotBlank(message = "아이디를 입력해주세요.")
+    @Size(min = 7, max = 11, message = "아이디는 7자에서 11자 사이로 입력해주세요.")
+    @Pattern(regexp = "^[a-z0-9]{7,11}$", message = "아이디는 7~11자의 영문 소문자와 숫자만 사용 가능합니다.")
     @JsonProperty("ID")
     private String id;
 
-    @ToString.Exclude // [핵심] 로그에서 비밀번호 제외
-    @NotBlank(message = "Password cannot be empty.")
-    @Size(min = 8, max = 16, message = "Password must be between 8 and 16 characters.")
+    @NotBlank(message = "이메일을 입력해주세요.")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @Size(max = 100, message = "이메일은 최대 100자까지 입력 가능합니다.")
+    @JsonProperty("Mail")
+    private String mail;
+
+    @ToString.Exclude
+    @NotBlank(message = "비밀번호를 입력해주세요.")
+    @Size(min = 8, max = 16, message = "비밀번호는 8자에서 16자 사이로 입력해주세요.")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,16}$",
-            message = "Password must include at least one letter (lowercase or uppercase), one number, and one special character.")
+            message = "비밀번호는 영문, 숫자, 특수문자를 각각 최소 1자 이상 포함해야 합니다.")
     @JsonProperty("PW")
     private String pw;
 
-    @NotNull(message = "이용약관 동의는 필수입니다.")
+    @NotBlank(message = "비밀번호 확인을 입력해주세요.")
+    @JsonProperty("PW_CHECK")
+    private String pwCheck;
+
+    @NotNull(message = "이용약관 동의 일시가 누락되었습니다.")
     private LocalDateTime agreeTermsAt;
 
-    @NotNull(message = "이용약관 동의는 필수입니다.")
+    @NotNull(message = "개인정보 수집 및 이용 동의 일시가 누락되었습니다.")
     private LocalDateTime agreePrivateAt;
 
-    @NotNull(message = "성별 선택은 필수입니다.")
+    @NotNull(message = "성별을 선택해주세요.")
     private UsersInformationGender gender;
 
     @ToString.Exclude
-    @NotBlank(message = "Name cannot be empty.")
-    @Pattern(regexp = "^[가-힣a-zA-Z ]+$", message = "Name must contain only letters and spaces.")
-    @Size(max = 50, message = "Name must not exceed 50 characters.")
+    @NotBlank(message = "이름을 입력해주세요.")
+    @Pattern(regexp = "^[가-힣a-zA-Z ]+$", message = "이름은 한글 또는 영문만 입력 가능합니다.")
+    @Size(max = 50, message = "이름은 50자를 초과할 수 없습니다.")
     private String name;
 
     @ToString.Exclude

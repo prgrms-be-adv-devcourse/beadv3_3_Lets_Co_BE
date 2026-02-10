@@ -19,7 +19,7 @@ public class ClientController {
         orderService.updateOrderStatus(orderCode, status);
     }
 
-    @GetMapping("/{orderCode}")
+    @GetMapping("/{orderCode}/idx")
     public Long getOrderIdx(
             @PathVariable("orderCode") String orderCode
     ) {

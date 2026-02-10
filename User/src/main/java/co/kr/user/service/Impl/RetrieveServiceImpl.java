@@ -1,12 +1,12 @@
 package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserInformationRepository;
-import co.kr.user.dao.UserRepository;
 import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
-import co.kr.user.model.dto.retrieve.FindPWFirstStepReq;
-import co.kr.user.model.dto.retrieve.FindPWSecondStepReq;
+import co.kr.user.model.dto.retrieve.FindIDFirstStepDTO;
+import co.kr.user.model.dto.retrieve.FindIDSecondStepReq;
 import co.kr.user.model.dto.retrieve.FindPWFirstStepDTO;
+import co.kr.user.model.dto.retrieve.FindPWSecondStepReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
@@ -19,127 +19,170 @@ import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/**
- * 회원 정보 찾기(Retrieve) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
- * 비밀번호 재설정을 위한 인증번호 발송 및 검증, 비밀번호 변경 기능을 수행합니다.
- */
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class RetrieveServiceImpl implements RetrieveService {
-    private final UserRepository userRepository;
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
-
     private final UserQueryServiceImpl userQueryServiceImpl;
-
-    private final RandomCodeUtil randomCodeUtil; // 인증코드 생성 유틸리티
-    private final MailUtil mailUtil; // 이메일 발송 유틸리티
-    private final BCryptUtil bCryptUtil; // 비밀번호 암호화 유틸리티
+    private final RandomCodeUtil randomCodeUtil;
+    private final MailUtil mailUtil;
+    private final BCryptUtil bCryptUtil;
     private final EmailTemplateProvider emailTemplateProvider;
 
-    /**
-     * 비밀번호 찾기 1단계: 인증번호 발송 메서드입니다.
-     * 사용자가 입력한 아이디(이메일)로 회원을 조회하고, 본인 인증을 위한 코드를 이메일로 전송합니다.
-     *
-     * @param findPWFirstStepReq 아이디 정보가 담긴 요청 객체
-     * @return FindPWFirstStepDTO (인증 요청 결과 및 만료 시간)
-     */
     @Override
-    @Transactional
-    public FindPWFirstStepDTO findPwFirst(FindPWFirstStepReq findPWFirstStepReq) {
-        Users users = userQueryServiceImpl.findActiveUserById(findPWFirstStepReq.getID());
+    public FindIDFirstStepDTO findIdFirst(String mail) {
+        UsersInformation info = userInformationRepository.findByMailAndDel(mail, 0)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
+        Users user = userQueryServiceImpl.findActiveUser(info.getUsersIdx());
 
-        // 인증 코드 생성 및 DB 저장 (목적: RESET_PW)
-        UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
-                .usersIdx(users.getUsersIdx())
-                .purpose(UsersVerificationsPurPose.RESET_PW)
+        UsersVerifications verification = UsersVerifications.builder()
+                .usersIdx(user.getUsersIdx())
+                .purpose(UsersVerificationsPurPose.FIND_ID)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효시간 30분
+                .expiresAt(LocalDateTime.now().plusMinutes(30))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
-        UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
+        userVerificationsRepository.save(verification);
+        sendFindEmailAfterCommit(info.getMail(), verification.getCode());
 
-        String finalContent = emailTemplateProvider.getResetPasswordTemplate(savedUserVerifications.getCode());
+        FindIDFirstStepDTO response = new FindIDFirstStepDTO();
+        response.setMail(info.getMail());
+        response.setCertificationTime(verification.getExpiresAt());
 
-        EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getId())
-                .subject("[GutJJeu] 비밀번호 재설정 인증번호 안내해 드립니다.")
-                .message(finalContent)
+        return response;
+    }
+
+    @Override
+    public String findIdSecond(FindIDSecondStepReq req) {
+        UsersInformation info = userInformationRepository.findByMailAndDel(req.getMail(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일 정보가 없습니다."));
+
+        Users user = userQueryServiceImpl.findActiveUser(info.getUsersIdx());
+
+        UsersVerifications verification = userVerificationsRepository
+                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("인증 내역이 없습니다."));
+
+        validateIDVerification(verification, req.getAuthCode());
+
+        return user.getId();
+    }
+
+    @Override
+    @Transactional
+    public FindPWFirstStepDTO findPwFirst(String mail) {
+        UsersInformation info = userInformationRepository.findByMailAndDel(mail, 0)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
+        Users user = userQueryServiceImpl.findActiveUser(info.getUsersIdx());
+
+        UsersVerifications verification = UsersVerifications.builder()
+                .usersIdx(user.getUsersIdx())
+                .purpose(UsersVerificationsPurPose.RESET_PW)
+                .code(randomCodeUtil.getCode())
+                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .status(UsersVerificationsStatus.PENDING)
+                .build();
+
+        userVerificationsRepository.save(verification);
+        sendResetEmailAfterCommit(info.getMail(), verification.getCode());
+
+        FindPWFirstStepDTO response = new FindPWFirstStepDTO();
+        response.setMail(info.getMail());
+        response.setCertificationTime(verification.getExpiresAt());
+
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public String findPwSecond(FindPWSecondStepReq req) {
+        UsersInformation info = userInformationRepository.findByMailAndDel(req.getMail(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일 정보가 없습니다."));
+
+        Users user = userQueryServiceImpl.findActiveUser(info.getUsersIdx());
+
+        UsersVerifications verification = userVerificationsRepository
+                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("인증 내역이 없습니다."));
+
+        validatePWVerification(verification, req.getAuthCode());
+
+        Optional.of(req)
+                .filter(r -> r.getNewPW().equals(r.getNewPWCheck()))
+                .orElseThrow(() -> new IllegalArgumentException("비밀번호가 일치하지 않습니다."));
+
+        info.updatePrePW(user.getPw());
+        user.changePassword(bCryptUtil.encode(req.getNewPW()));
+        verification.confirmVerification();
+
+        return "비밀번호 재설정이 정상 처리되었습니다.";
+    }
+
+    private void validateIDVerification(UsersVerifications v, String code) {
+        Optional.of(v).filter(ver -> ver.getStatus() != UsersVerificationsStatus.VERIFIED)
+                .orElseThrow(() -> new IllegalStateException("이미 완료된 인증입니다."));
+
+        Optional.of(v).filter(ver -> ver.getPurpose() == UsersVerificationsPurPose.FIND_ID)
+                .orElseThrow(() -> new IllegalArgumentException("잘못된 접근입니다."));
+
+        Optional.of(v).filter(ver -> ver.getExpiresAt().isAfter(LocalDateTime.now()))
+                .orElseThrow(() -> new IllegalStateException("만료된 인증번호입니다."));
+
+        Optional.of(v).filter(ver -> ver.getCode().equals(code))
+                .orElseThrow(() -> new IllegalArgumentException("인증번호가 일치하지 않습니다."));
+    }
+
+    private void validatePWVerification(UsersVerifications v, String code) {
+        Optional.of(v).filter(ver -> ver.getStatus() != UsersVerificationsStatus.VERIFIED)
+                .orElseThrow(() -> new IllegalStateException("이미 완료된 인증입니다."));
+
+        Optional.of(v).filter(ver -> ver.getPurpose() == UsersVerificationsPurPose.RESET_PW)
+                .orElseThrow(() -> new IllegalArgumentException("잘못된 접근입니다."));
+
+        Optional.of(v).filter(ver -> ver.getExpiresAt().isAfter(LocalDateTime.now()))
+                .orElseThrow(() -> new IllegalStateException("만료된 인증번호입니다."));
+
+        Optional.of(v).filter(ver -> ver.getCode().equals(code))
+                .orElseThrow(() -> new IllegalArgumentException("인증번호가 일치하지 않습니다."));
+    }
+
+    private void sendFindEmailAfterCommit(String email, String code) {
+        EmailMessage message = EmailMessage.builder()
+                .to(email)
+                .subject("[GutJJeu] 아이디 찾기 인증번호 안내")
+                .message(emailTemplateProvider.getFindIDTemplate(code))
                 .build();
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                mailUtil.sendEmail(emailMessage, true); // 여기서 비동기로 호출됨
+                mailUtil.sendEmail(message, true);
             }
         });
-
-        // 결과 반환
-        FindPWFirstStepDTO retrieveDTO = new FindPWFirstStepDTO();
-        retrieveDTO.setID(users.getId());
-        retrieveDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
-
-        return retrieveDTO;
     }
 
-    /**
-     * 비밀번호 찾기 2단계: 인증 확인 및 비밀번호 변경 메서드입니다.
-     * 사용자가 입력한 인증 코드를 검증하고, 유효할 경우 비밀번호를 재설정합니다.
-     *
-     * @param findPWSecondStepReq 인증 코드 및 새 비밀번호 정보
-     * @return 처리 결과 메시지
-     */
-    @Override
-    @Transactional
-    public String findPwSecond(FindPWSecondStepReq findPWSecondStepReq) {
-        Users users = userQueryServiceImpl.findActiveUserById(findPWSecondStepReq.getID());
+    private void sendResetEmailAfterCommit(String email, String code) {
+        EmailMessage message = EmailMessage.builder()
+                .to(email)
+                .subject("[GutJJeu] 비밀번호 재설정 인증번호 안내")
+                .message(emailTemplateProvider.getResetPasswordTemplate(code))
+                .build();
 
-        // 최신 인증 내역 조회
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
-
-        // 인증 내역 유효성 검사 (목적, 만료 시간, 코드 일치 여부)
-        if (verification.getPurpose() != UsersVerificationsPurPose.RESET_PW) {
-            throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
-        }
-
-        if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.");
-        }
-
-        if (!verification.getCode().equals(findPWSecondStepReq.getAuthCode())) {
-            throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
-        }
-
-        if (verification.getStatus() == UsersVerificationsStatus.VERIFIED) {
-            return "이미 인증 완료된 코드입니다.";
-        }
-
-        // 비밀번호 확인 검증
-        if (!findPWSecondStepReq.getNewPW().equals(findPWSecondStepReq.getNewPWCheck())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-
-        // 기존 비밀번호 백업 (UsersInformation 테이블)
-        UsersInformation usersInformation = userInformationRepository.findById(users.getUsersIdx())
-                .orElseThrow(() -> new IllegalArgumentException("비밀번호 재설정을 위한 사용자 상세 정보를 찾을 수 없습니다. (UserIDX: " + users.getUsersIdx() + ")"));
-        usersInformation.updatePrePW(users.getPw());
-
-        // 새 비밀번호 암호화 및 저장
-        users.changePassword(bCryptUtil.encode(findPWSecondStepReq.getNewPW()));
-
-        // 인증 상태 완료로 변경
-        verification.confirmVerification();
-
-        return "비밀번호 재설정이 정상 처리되었습니다.";
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                mailUtil.sendEmail(message, true);
+            }
+        });
     }
 }

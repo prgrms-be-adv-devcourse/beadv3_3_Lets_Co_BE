@@ -21,31 +21,33 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    private final JWTUtil jwtUtil;
     private final UserRepository userRepository;
+
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private final JWTUtil jwtUtil;
+
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication
+    ) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         String loginId = "";
 
-        // 찾는 로직을 서비스 레이어의 저장 로직과 100% 일치시킵니다.
         if ("google".equals(registrationId)) {
-            loginId = (String) attributes.get("email"); // 숫자 ID(sub) 대신 email을 꺼냄
+            loginId = (String) attributes.get("email");
         } else if ("kakao".equals(registrationId)) {
-            loginId = attributes.get("id") + "@kakao.com";
+            loginId = attributes.get("id").toString();
         } else if ("naver".equals(registrationId)) {
             Map<String, Object> resp = (Map<String, Object>) attributes.get("response");
-            loginId = (String) resp.get("id") + "@naver.com";
+            loginId = (String) resp.get("id");
         }
 
-        // 이제 DB에 저장된 메일 형식 ID와 일치하므로 에러가 사라집니다.
-        Users user = userRepository.findById(loginId).orElseThrow();
+        Users user = userRepository.findByIdAndDel(loginId, 0).orElseThrow();
 
         String accessToken = jwtUtil.createAccessToken(user.getUsersIdx(), user.getCreatedAt(), user.getUpdatedAt());
         String refreshToken = jwtUtil.createRefreshToken(user.getUsersIdx());
@@ -54,8 +56,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         CookieUtil.addCookie(response, "accessToken", accessToken, 15 * 60);
         CookieUtil.addCookie(response, "refreshToken", refreshToken, 7 * 24 * 60 * 60);
 
-        if ("google".equals(registrationId) || "kakao".equals(registrationId)) {
-            // 구글과 카카오는 전화번호 등 필수 정보가 부족하므로 프로필 완성 페이지로 유도
+        if ("naver".equals(registrationId) || "kakao".equals(registrationId)) {
             response.sendRedirect("http://localhost:3000/my/complete-profile");
         } else {
             response.sendRedirect("http://localhost:3000/home");

@@ -51,7 +51,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
     // --- [Cloud & Distributed Tracing (Microservices)] ---
-//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // Eureka 서비스 디스커버리
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // Eureka 서비스 디스커버리
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'                        // Micrometer와 Brave 연동
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'                            // Zipkin으로 트레이스 리포팅
 

@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class AddressListDTO {
-    private String addressCode;
     private int defaultAddress;
+    private String addressCode;
     private String recipient;
     private String address;
     private String addressDetail;

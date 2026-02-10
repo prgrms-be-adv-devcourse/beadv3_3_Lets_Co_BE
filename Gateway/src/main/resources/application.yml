@@ -1,93 +1,97 @@
-
 server:
-  port: 8080
+  port: 8000
 
 spring:
   application:
-    name: gateway-service
+    name: Gateway
 
   cloud:
     gateway:
       server:
         webflux:
           routes:
+            - id: client-User
+              uri: lb://USER
+              predicates:
+                - Path=/client/users/**
+
             - id: seller-PRODUCT
-              uri: http://product-service:8080
+              uri: lb://PRODUCT
               predicates:
                 - Path=/seller/products/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: seller-User
-              uri: http://user-service:8080
+              uri: lb://USER
               predicates:
                 - Path=/seller/users/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: admin-User
-              uri: http://user-service:8080
+              uri: lb://USER
               predicates:
                 - Path=/admin/users/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: admin-PRODUCT
-              uri: http://product-service:8080
+              uri: lb://PRODUCT
               predicates:
                 - Path=/admin/products/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: admin-inquiries
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
                 - Path=/admin/inquiries/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: admin-notice
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
                 - Path=/admin/notice/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: admin-block
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
                 - Path=/admin/block
               filters:
                 - TokenAuthenticationFilter
 
             - id: auth-logout
-              uri: http://user-service:8080
+              uri: lb://USER
               predicates:
                 - Path=/auth/logout
               filters:
                 - TokenAuthenticationFilter
 
             - id: auth
-              uri: http://user-service:8080
+              uri: lb://USER
               predicates:
                 - Path=/auth/role
               filters:
                 - TokenAuthenticationFilter
 
             - id: auth
-              uri: http://user-service:8080
+              uri: lb://USER
               predicates:
                 - Path=/auth/**
 
             - id: users
-              uri: http://user-service:8080
+              uri: lb://USER
               predicates:
                 - Path=/users/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: products-Check
-              uri: http://product-service:8080
+              uri: lb://PRODUCT
               predicates:
                 - Path=/products/**
                 - Method=POST, PUT, DELETE
@@ -95,101 +99,59 @@ spring:
                 - TokenAuthenticationFilter
 
             - id: products
-              uri: http://product-service:8080
+              uri: lb://PRODUCT
               predicates:
                 - Path=/products/**
                 - Method=GET
 
             - id: cart
-              uri: http://order-service:8080
+              uri: lb://ORDER
               predicates:
                 - Path=/cart/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: payments
-              uri: http://order-service:8080
+              uri: lb://ORDER
               predicates:
                 - Path=/payments/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: orders
-              uri: http://order-service:8080
+              uri: lb://ORDER
               predicates:
                 - Path=/orders/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: notice
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
                 - Path=/notice/**
               filters:
                 - TokenAuthenticationFilter
 
             - id: inquiries-me
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
-                - Path=/inquiry/me
+                - Path=/inquiries/me
               filters:
                 - TokenAuthenticationFilter
 
             - id: inquiries-Check
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
-                - Path=/inquiry/**
+                - Path=/inquiries/**
                 - Method=POST, PUT, DELETE
               filters:
                 - TokenAuthenticationFilter
 
             - id: inquiries
-              uri: http://customerservice-service:8080
+              uri: lb://COSTOMERSERVICE
               predicates:
-                - Path=/inquiry/**
+                - Path=/inquiries/**
                 - Method=GET
-              filters:
-                - TokenAuthenticationFilter
-
-            - id: seller-product-qna
-              uri: http://customerservice-service:8080
-              predicates:
-                - Path=/seller/product_qna/**
-              filters:
-                - TokenAuthenticationFilter
-
-            - id: product-qna-me
-              uri: http://customerservice-service:8080
-              predicates:
-                - Path=/qna/products/me
-                - Method=GET
-              filters:
-                - TokenAuthenticationFilter
-
-
-            - id: product-qna-detail
-              uri: http://customerservice-service:8080
-              predicates:
-                - Path=/qna/products/*/* - Method=GET
-              filters:
-                - TokenAuthenticationFilter
-
-
-            - id: product-qna-write
-              uri: http://customerservice-service:8080
-              predicates:
-                - Path=/qna/products/**
-                - Method=POST, PUT, DELETE
-              filters:
-                - TokenAuthenticationFilter
-
-
-            - id: product-qna-list
-              uri: http://customerservice-service:8080
-              predicates:
-                - Path=/qna/products/*
-                - Method=GET
-                  
 
 springdoc:
   api-docs:
@@ -208,14 +170,22 @@ management:
       consume: b3
       produce: b3_multi
 
-  zipkin:
-    enabled: true
-    endpoint: ${ZIPKIN_ENDPOINT}
+    export:
+      zipkin:
+        enabled: true
+        endpoint: http://localhost:9411/api/v2/spans
 
 custom:
   security:
     jwt:
       access:
-        secret: ${ACCESS}
+        secret: N3Ryb25nZXItYW5kLWxvbmdlci1yYW5kb20tc2VjcmV0LWtleS1mb3ItYWNjZXNzLXRva2VuLXByb3RlY3Rpb24tZ2VuZXJhdGVkLWJ5LWFp
 
 
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

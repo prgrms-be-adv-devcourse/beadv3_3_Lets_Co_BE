@@ -17,28 +17,30 @@ import java.time.LocalDateTime;
 @DynamicInsert
 @Table(name = "Seller")
 public class Seller {
-
     @Id
-    @Column(name = "Seller_IDX", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "Seller_IDX")
     private Long sellerIdx;
 
-    @Convert(converter = CryptoConverter.class) // 추가
+    @Column(name = "Users_IDX", nullable = false)
+    private Long usersIdx;
+
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Seller_Name", nullable = false, length = 512)
     private String sellerName;
 
-    @Convert(converter = CryptoConverter.class) // 추가
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Business_License", nullable = false, length = 512)
     private String businessLicense;
 
-    @Convert(converter = CryptoConverter.class) // 추가
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Bank_Brand", nullable = false, length = 512)
     private String bankBrand;
 
-    @Convert(converter = CryptoConverter.class) // 추가
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "Bank_Name", nullable = false, length = 512)
     private String bankName;
 
-    @Convert(converter = CryptoConverter.class) // 추가
     @Column(name = "Bank_Token", nullable = false, length = 2048)
     private String bankToken;
 
@@ -53,8 +55,8 @@ public class Seller {
     private int del;
 
     @Builder
-    public Seller(Long sellerIdx, String sellerName, String businessLicense, String bankBrand, String bankName, String bankToken) {
-        this.sellerIdx = sellerIdx;
+    public Seller(Long usersIdx, String sellerName, String businessLicense, String bankBrand, String bankName, String bankToken) {
+        this.usersIdx = usersIdx;
         this.sellerName = sellerName;
         this.businessLicense = businessLicense;
         this.bankBrand = bankBrand;
@@ -65,7 +67,8 @@ public class Seller {
         this.del = 2;
     }
 
-    public void updateSeller(String bankBrand, String bankName, String bankToken) {
+    public void updateSeller(String sellerName, String bankBrand, String bankName, String bankToken) {
+        this.sellerName = sellerName;
         this.bankBrand = bankBrand;
         this.bankName = bankName;
         this.bankToken = bankToken;

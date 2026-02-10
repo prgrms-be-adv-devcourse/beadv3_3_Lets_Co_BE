@@ -15,7 +15,6 @@ import org.hibernate.annotations.DynamicInsert;
 @DynamicInsert
 @Table(name = "Users_Address")
 public class UsersAddress {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Address_IDX")

@@ -9,11 +9,9 @@ import java.time.LocalDateTime;
 
 @Data
 public class UserDTO {
-
     private String id;
     private UsersRole role;
     private UsersMembership membership;
     private LocalDateTime createdAt;
-
-
+    private BigDecimal balance;
 }

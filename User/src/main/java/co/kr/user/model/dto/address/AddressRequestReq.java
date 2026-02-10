@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class AddressRequestReq {
     private String addressCode;
-    private int defaultAddress;
+    private boolean defaultAddress;
     private String recipient;
     private String address;
     private String addressDetail;

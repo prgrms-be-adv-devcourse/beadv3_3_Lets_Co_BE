@@ -14,7 +14,6 @@ import org.hibernate.annotations.DynamicInsert;
 @DynamicInsert
 @Table(name = "Users_Card")
 public class UserCard {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Card_IDX", nullable = false)

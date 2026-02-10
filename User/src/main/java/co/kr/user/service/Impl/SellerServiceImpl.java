@@ -2,9 +2,11 @@ package co.kr.user.service.Impl;
 
 import co.kr.user.dao.SellerRepository;
 import co.kr.user.dao.UserInformationRepository;
-import co.kr.user.dao.UserRepository;
 import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
+import co.kr.user.model.dto.my.UserDeleteDTO;
+import co.kr.user.model.dto.seller.SellerAmendReq;
+import co.kr.user.model.dto.seller.SellerProfileDTO;
 import co.kr.user.model.dto.seller.SellerRegisterDTO;
 import co.kr.user.model.dto.seller.SellerRegisterReq;
 import co.kr.user.model.entity.Seller;
@@ -20,63 +22,57 @@ import co.kr.user.util.EmailTemplateProvider;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * 판매자(Seller) 등록 및 인증 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
- * 일반 사용자가 판매자 전환 신청을 할 때의 정보 저장, 이메일 인증 발송, 인증 확인 및 권한 변경 등을 수행합니다.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SellerServiceImpl implements SellerService {
-    private final UserRepository userRepository;
     private final SellerRepository sellerRepository;
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
 
     private final UserQueryServiceImpl userQueryServiceImpl;
 
-    private final MailUtil mailUtil; // 이메일 발송 유틸
-    private final RandomCodeUtil randomCodeUtil; // 인증번호 생성 유틸
-    private final BCryptUtil bCryptUtil; // 단방향 암호화 (계좌 토큰용)
+    private final MailUtil mailUtil;
+    private final RandomCodeUtil randomCodeUtil;
+    private final BCryptUtil bCryptUtil;
     private final EmailTemplateProvider emailTemplateProvider;
 
-    /**
-     * 판매자 등록 신청 메서드입니다.
-     * 판매자 정보(사업자 번호, 계좌 정보 등)를 저장하고, 본인 확인을 위한 인증 이메일을 발송합니다.
-     *
-     * @param userIdx 로그인한 사용자의 식별자
-     * @param sellerRegisterReq 판매자 등록 요청 정보
-     * @return SellerRegisterDTO (인증 요청 결과 및 만료 시간)
-     */
+    private static final String BANK_TOKEN_PATTERN = "^[0-9-]+$";
+
     @Override
     @Transactional
     public SellerRegisterDTO sellerRegister(Long userIdx, SellerRegisterReq sellerRegisterReq) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // Seller 엔티티 생성 및 저장
-        // 계좌 토큰 등 민감 정보는 암호화(BCrypt)하여 저장
+        if (sellerRepository.existsByUsersIdxAndDel(users.getUsersIdx(), 0)) {
+            throw new IllegalArgumentException("이미 판매자 등록이 완료된 사용자입니다.");
+        }
+
         Seller seller = Seller.builder()
-                .sellerIdx(users.getUsersIdx())
+                .usersIdx(users.getUsersIdx())
                 .sellerName(sellerRegisterReq.getSellerName())
                 .businessLicense(sellerRegisterReq.getBusinessLicense())
                 .bankBrand(sellerRegisterReq.getBankBrand())
                 .bankName(sellerRegisterReq.getBankName())
-                .bankToken(sellerRegisterReq.getBankToken())
+                .bankToken(bCryptUtil.encode(sellerRegisterReq.getBankToken()))
                 .build();
 
         sellerRepository.save(seller);
 
-        // 인증 코드 생성 및 저장 (목적: SELLER_SIGNUP)
         UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
-                .usersIdx(users.getUsersIdx())
+                .usersIdx(usersInformation.getUsersIdx())
                 .purpose(UsersVerificationsPurPose.SELLER_SIGNUP)
                 .code(randomCodeUtil.getCode())
                 .expiresAt(LocalDateTime.now().plusMinutes(30)) // 유효기간 30분
@@ -85,54 +81,38 @@ public class SellerServiceImpl implements SellerService {
 
         UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
 
-        // [수정] 하드코딩된 HTML 제거 -> 템플릿 프로바이더 호출
         String finalContent = emailTemplateProvider.getSellerRegisterTemplate(savedUserVerifications.getCode());
-
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(users.getId())
+                .to(usersInformation.getMail())
                 .subject("[GutJJeu] 판매자 등록 인증번호 안내해 드립니다.")
                 .message(finalContent)
                 .build();
 
-        // 트랜잭션 커밋 후 이메일 발송
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                mailUtil.sendEmail(emailMessage, true); // 여기서 비동기로 호출됨
+                mailUtil.sendEmail(emailMessage, true);
             }
         });
 
         SellerRegisterDTO sellerRegisterDTO = new SellerRegisterDTO();
-        sellerRegisterDTO.setID(users.getId());
+        sellerRegisterDTO.setMail(usersInformation.getMail());
         sellerRegisterDTO.setCertificationTime(savedUserVerifications.getExpiresAt());
 
         return sellerRegisterDTO;
     }
 
-    /**
-     * 판매자 등록 인증 확인 메서드입니다.
-     * 이메일로 전송된 인증 코드를 검증하고, 성공 시 사용자의 권한(Role)을 SELLER로 변경합니다.
-     * 승인 완료 알림 이메일도 함께 발송합니다.
-     *
-     * @param userIdx 로그인한 사용자의 식별자
-     * @param authCode 사용자가 입력한 인증 코드
-     * @return 처리 결과 메시지
-     */
     @Override
     @Transactional
     public String sellerRegisterCheck(Long userIdx, String authCode) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        // 최신 인증 내역 조회
         UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
-        // 요청자 본인 확인
         if (!Objects.equals(verification.getUsersIdx(), users.getUsersIdx())) {
             throw new IllegalArgumentException("잘못된 인증 요청입니다.");
         }
 
-        // 인증 목적, 만료 시간, 코드 일치 여부 검증
         if (verification.getPurpose() != UsersVerificationsPurPose.SELLER_SIGNUP) {
             throw new IllegalArgumentException("올바르지 않은 인증 요청입니다.");
         }
@@ -149,14 +129,11 @@ public class SellerServiceImpl implements SellerService {
             return "이미 인증 완료된 코드입니다.";
         }
 
-        // 인증 완료 처리
         verification.confirmVerification();
 
-        // 판매자 정보 조회 및 승인 처리
-        Seller seller = sellerRepository.findBySellerIdxAndDel(users.getUsersIdx(), 0)
+        Seller seller = sellerRepository.findByUsersIdxAndDel(users.getUsersIdx(), 2)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
-        // 사용자 권한을 SELLER로 변경
         users.assignRole(UsersRole.SELLER);
 
         seller.activateSeller();
@@ -177,5 +154,150 @@ public class SellerServiceImpl implements SellerService {
         });
 
         return "판매자 등록이 완료되었습니다.";
+    }
+
+    @Override
+    public SellerProfileDTO my(Long userIdx) {
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        Seller seller = sellerRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        SellerProfileDTO sellerProfileDTO = new SellerProfileDTO();
+        sellerProfileDTO.setSellerName(seller.getSellerName());
+        sellerProfileDTO.setBusinessLicense(seller.getBusinessLicense());
+        sellerProfileDTO.setBankBrand(seller.getBankBrand());
+        sellerProfileDTO.setBankName(seller.getBankName());
+        sellerProfileDTO.setCreateAt(seller.getCreatedAt());
+        sellerProfileDTO.setUpdateAt(seller.getUpdatedAt());
+
+        return sellerProfileDTO;
+    }
+
+    @Override
+    @Transactional
+    public String myAmend(Long userIdx, SellerAmendReq sellerAmendReq) {
+        // 1. 엔티티 조회
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        Seller seller = sellerRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 판매자입니다."));
+
+        // 2. 각 필드별 검증 및 값 결정 (값이 없으면 기존 값 유지)
+
+        // 판매자명
+        String sellerName = seller.getSellerName();
+        if (StringUtils.hasText(sellerAmendReq.getSellerName())) {
+            String trimmed = sellerAmendReq.getSellerName().trim();
+            if (trimmed.length() < 2 || trimmed.length() > 50) throw new IllegalArgumentException("유효하지 않은 이름입니다.");
+            sellerName = trimmed;
+        }
+
+        // 은행 브랜드
+        String bankBrand = seller.getBankBrand();
+        if (StringUtils.hasText(sellerAmendReq.getBankBrand())) {
+            String trimmed = sellerAmendReq.getBankBrand().trim();
+            if (trimmed.length() < 2 || trimmed.length() > 50) throw new IllegalArgumentException("유효하지 않은 은행 브랜드입니다.");
+            bankBrand = trimmed;
+        }
+
+        // 예금주 (기존 sellerName으로 잘못 할당되었던 로직 수정)
+        String bankName = seller.getBankName();
+        if (StringUtils.hasText(sellerAmendReq.getBankName())) {
+            String trimmed = sellerAmendReq.getBankName().trim();
+            if (trimmed.length() > 20) throw new IllegalArgumentException("유효하지 않은 예금주명입니다.");
+            bankName = trimmed;
+        }
+
+        // 뱅크 토큰 (정규식 검증 포함)
+        String bankToken = seller.getBankToken(); // 기본값은 기존의 암호화된 토큰
+        if (StringUtils.hasText(sellerAmendReq.getBankToken())) {
+            String trimmed = sellerAmendReq.getBankToken().trim();
+
+            // 길이 및 정규식 검사
+            if (trimmed.length() < 10 || trimmed.length() > 30) throw new IllegalArgumentException("토큰 길이는 10~30자여야 합니다.");
+            if (!trimmed.matches("^[0-9-]+$")) throw new IllegalArgumentException("토큰은 숫자와 하이픈만 가능합니다.");
+
+            // 새 값이 들어온 경우에만 암호화
+            bankToken = bCryptUtil.encode(trimmed);
+        }
+
+        // 3. 한 번에 업데이트
+        seller.updateSeller(
+                sellerName,
+                bankBrand,
+                bankName,
+                bankToken
+        );
+
+        return "판매자 정보가 수정되었습니다.";
+    }
+
+    @Override
+    public UserDeleteDTO myDelete(Long userIdx) {
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        sellerRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
+                .usersIdx(users.getUsersIdx())
+                .purpose(UsersVerificationsPurPose.SELLER_DELETE)
+                .code(randomCodeUtil.getCode())
+                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .status(UsersVerificationsStatus.PENDING)
+                .build();
+
+        UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
+
+        String finalContent = emailTemplateProvider.getDeleteSellerTemplate(savedUserVerifications.getCode());
+
+        EmailMessage emailMessage = EmailMessage.builder()
+                .to(usersInformation.getMail())
+                .subject("[GutJJeu] 판매자 탈퇴 인증번호 안내해 드립니다.")
+                .message(finalContent)
+                .build();
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                mailUtil.sendEmail(emailMessage, true);
+            }
+        });
+
+        UserDeleteDTO userDeleteDTO = new UserDeleteDTO();
+        userDeleteDTO.setMail(usersInformation.getMail());
+        userDeleteDTO.setCertificationTime(LocalDateTime.now());
+        return userDeleteDTO;
+    }
+
+    @Override
+    @Transactional
+    public String myDelete(Long userIdx, String authCode) {
+        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
+
+        if (verification.getPurpose() != UsersVerificationsPurPose.SELLER_DELETE) {
+            throw new IllegalArgumentException("회원탈퇴 인증 코드가 아닙니다.");
+        }
+        else if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.");
+        }
+        else if (!verification.getCode().equals(authCode)) {
+            throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
+        }
+        else if (verification.getStatus() == UsersVerificationsStatus.VERIFIED) {
+            return "이미 인증 완료된 코드입니다.";
+        }
+
+        verification.confirmVerification();
+
+        Seller seller = sellerRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        seller.deleteSeller();
+
+        return "판매자 탈퇴가 정상 처리되었습니다.";
     }
 }

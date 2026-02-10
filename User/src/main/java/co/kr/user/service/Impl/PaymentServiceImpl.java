@@ -1,9 +1,8 @@
 package co.kr.user.service.Impl;
 
 import co.kr.user.dao.PaymentRepository;
-import co.kr.user.dao.UserRepository;
-import co.kr.user.model.dto.Payment.PaymentReq;
-import co.kr.user.model.dto.Payment.PaymentListDTO;
+import co.kr.user.model.dto.payment.PaymentReq;
+import co.kr.user.model.dto.payment.PaymentListDTO;
 import co.kr.user.model.entity.Payment;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.vo.PaymentStatus;
@@ -17,15 +16,10 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * 사용자의 예치금(포인트) 잔액 및 결제/충전 내역을 관리하는 서비스 클래스입니다.
- * 현재 잔액 조회, 전체 충전 내역 조회, 기간별 내역 조회 기능을 제공합니다.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PaymentServiceImpl implements PaymentService {
-    private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
 
     private final UserQueryServiceImpl userQueryServiceImpl;
@@ -34,29 +28,29 @@ public class PaymentServiceImpl implements PaymentService {
     public List<PaymentListDTO> balanceHistory(Long userIdx, PaymentReq paymentReq) {
         Users users = userQueryServiceImpl.findActiveUser(userIdx);
 
-        // List가 비어있으면 전체 조회로 간주하여 모든 Enum 값 주입
-        if (paymentReq.getPaymentType() == null || paymentReq.getPaymentType().isEmpty()) {
-            paymentReq.setPaymentType(Arrays.asList(PaymentType.values()));
+        LocalDateTime now = LocalDateTime.now();
+
+        List<PaymentStatus> statuses = (paymentReq.getPaymentStatus() == null || paymentReq.getPaymentStatus().isEmpty())
+                ? Arrays.asList(PaymentStatus.values()) : paymentReq.getPaymentStatus();
+
+        List<PaymentType> types = (paymentReq.getPaymentType() == null || paymentReq.getPaymentType().isEmpty())
+                ? Arrays.asList(PaymentType.values()) : paymentReq.getPaymentType();
+
+        LocalDateTime start = paymentReq.getStartDate();
+        if (start == null) {
+            LocalDateTime oneMonthAgo = now.minusMonths(1);
+            start = oneMonthAgo.isBefore(users.getCreatedAt()) ? users.getCreatedAt() : oneMonthAgo;
         }
 
-        if (paymentReq.getPaymentStatus() == null || paymentReq.getPaymentStatus().isEmpty()) {
-            paymentReq.setPaymentStatus(Arrays.asList(PaymentStatus.values()));
-        }
+        LocalDateTime end = (paymentReq.getEndDate() == null || paymentReq.getEndDate().isAfter(now))
+                ? now : paymentReq.getEndDate();
 
-        if (paymentReq.getStartDate() == null) {
-            paymentReq.setStartDate(users.getCreatedAt());
-        }
-        if (paymentReq.getEndDate() == null || paymentReq.getEndDate().isAfter(LocalDateTime.now())) {
-            paymentReq.setEndDate(LocalDateTime.now());
-        }
-
-        // [수정] Repository 메서드 변경에 맞춰 호출 (StatusIn, TypeIn)
         List<Payment> paymentList = paymentRepository.findAllByUsersIdxAndStatusInAndTypeInAndCreatedAtBetweenOrderByCreatedAtDesc(
                 users.getUsersIdx(),
-                paymentReq.getPaymentStatus(), // List<PaymentStatus>
-                paymentReq.getPaymentType(),   // List<PaymentType>
-                paymentReq.getStartDate(),
-                paymentReq.getEndDate()
+                statuses,
+                types,
+                start,
+                end
         );
 
         if (paymentList.isEmpty()) {

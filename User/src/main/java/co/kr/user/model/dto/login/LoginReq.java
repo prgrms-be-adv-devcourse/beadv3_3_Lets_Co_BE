@@ -10,8 +10,9 @@ import lombok.ToString;
 
 @Data
 public class LoginReq {
-    @NotBlank(message = "이메일을 입력해주세요.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @NotBlank(message = "아이디를 입력해주세요.")
+    @Size(min = 7, max = 11, message = "아이디는 7자에서 11자 사이로 입력해주세요.")
+    @Pattern(regexp = "^[a-z0-9]{7,11}$", message = "아이디는 7~11자의 영문 소문자와 숫자만 사용 가능합니다.")
     @JsonProperty("ID")
     private String id;
 

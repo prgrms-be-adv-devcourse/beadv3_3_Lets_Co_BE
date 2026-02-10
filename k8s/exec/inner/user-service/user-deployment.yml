@@ -48,6 +48,18 @@ spec:
                   name: db-secret
                   key: DB_PASSWORD
 
+            - name: REDIS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: REDIS_ENDPOINT 
+
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: REDIS_PORT 
+
             - name: ZIPKIN_ENDPOINT
               valueFrom:
                 secretKeyRef:
@@ -108,6 +120,41 @@ spec:
                   name: jwt-secret
                   key: REFRESH 
 
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: GOOGLE_CLIENT_ID 
+
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: GOOGLE_CLIENT_SECRET 
+
+            - name: NAVER_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: NAVER_CLIENT_ID 
+
+            - name: NAVER_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: NAVER_CLIENT_SECRET
+
+            - name: KAKAO_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: KAKAO_CLIENT_ID 
+
+            - name: KAKAO_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: KAKAO_CLIENT_SECRET 
                              
 
           ports:

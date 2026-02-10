@@ -34,12 +34,12 @@ jobs:
       tag-prefix: "v" # v1.0.0 형식으로 생성됨
 
 
-  # deploying: # 두 번째 단계: 배포
-  #   needs: releasing # releasing 단계가 성공해야 실행됨
-  #   uses: ./.github/workflows/deploy-workflow.yml # 공통 deploy 워크플로우 호출
-  #   secrets:
-  #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  #   with:
-  #     service-name: customerservice-service
-  #     # releasing 단계에서 만들어진 태그(버전)를 넘겨받아 배포에 사용
-  #     image-tag: ${{ needs.releasing.outputs.tag_name }}
+  deploying: # 두 번째 단계: 배포
+    needs: releasing # releasing 단계가 성공해야 실행됨
+    uses: ./.github/workflows/deploy-workflow.yml # 공통 deploy 워크플로우 호출
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+    with:
+      service-name: customerservice-service
+      # releasing 단계에서 만들어진 태그(버전)를 넘겨받아 배포에 사용
+      image-tag: ${{ needs.releasing.outputs.tag_name }}

@@ -1,43 +1,34 @@
 package co.kr.order.client;
 
-import co.kr.order.model.dto.DeductStock;
-import co.kr.order.model.dto.ProductInfo;
-import co.kr.order.model.dto.request.ProductRequest;
+import co.kr.order.model.dto.request.ClientProductReq;
+import co.kr.order.model.dto.request.DeductStockReq;
+import co.kr.order.model.dto.response.ClientProductRes;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
-//@FeignClient(name = "Product")
-@FeignClient(name = "product-service" , url = "http://product-service:8080")
+@FeignClient(name = "PRODUCT-SERVICE", path = "/client/products")
 public interface ProductClient {
 
-    @GetMapping("/products/{productIdx}/{optionIdx}")
-    ProductInfo getProduct(
-            @PathVariable("productIdx") Long productIdx,
-            @PathVariable("optionIdx") Long optionIdx
+    @GetMapping("/{productCode}/{optionCode}")
+    ClientProductRes getProduct(
+            @PathVariable("productCode") String productCode,
+            @PathVariable("optionCode") String optionCode
     );
 
-    @GetMapping("/products/bulk")
-    List<ProductInfo> getProductList(@RequestBody List<ProductRequest> productRequests);
+    @GetMapping("/bulk")
+    List<ClientProductRes> getProductList(@RequestBody List<ClientProductReq> productRequest);
 
-    @PostMapping("/products/deductStock")
-    void deductStock(@RequestBody DeductStock requests);
-
-    @PostMapping("/products/deductStocks")
-    void deductStocks(@RequestBody List<DeductStock> requests);
+    @PostMapping("/deductStocks")
+    void deductStocks(@RequestBody List<DeductStockReq> deductStockRequest);
 
     /*
      * 정산용: 상품 ID 목록으로 판매자 ID 조회
      * @param productIds 상품 ID 목록
      * @return Map<상품ID, 판매자ID>
      */
-    @GetMapping("/products/sellers")
+    @GetMapping("/sellers")
     Map<Long, Long> getSellersByProductIds(@RequestParam List<Long> productIds);
-
 }

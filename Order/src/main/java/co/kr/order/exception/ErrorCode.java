@@ -8,7 +8,8 @@ public enum ErrorCode {
     NO_INPUT_ADDRESS_DATA("NO_INPUT_ADDRESS_DATA", "주소 정보를 입력해주세요."),
     PAYMENT_FAILED("PAYMENT_FAILED", "결제를 실패했습니다."),
     PRODUCT_NOT_FOUND("PRODUCT_NOT_FOUND", "제품을 찾을 수 없습니다."),
-    OUT_OF_STOCK("OUT_OF_STOCK", "재고가 부족합니다.");
+    OUT_OF_STOCK("OUT_OF_STOCK", "재고가 부족합니다."),
+    ORDER_REFUND_EXCEPTION("ORDER_REFUND_EXCEPTION","주문 후처리 중 오류가 발생하여 자동 환불되었습니다.");
 
 
     private final String code;

@@ -18,13 +18,16 @@ import java.time.LocalDateTime;
 @DynamicInsert
 @Table(name = "Users_Information")
 public class UsersInformation {
-
     @Id
     @Column(name = "Users_IDX")
     private Long usersIdx;
 
     @Column(name = "Pre_PW")
     private String prePW;
+
+    @Convert(converter = CryptoConverter.class)
+    @Column(name = "Mail", nullable = false)
+    private String mail;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "Gender", nullable = false)
@@ -54,9 +57,13 @@ public class UsersInformation {
     @Column(name = "agree_Marketing_at")
     private LocalDateTime agreeMarketingAt;
 
+    @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
+    private int del;
+
     @Builder
-    public UsersInformation(Long usersIdx, UsersInformationGender gender, String name, String phoneNumber, String birth, LocalDateTime agreeMarketingAt) {
+    public UsersInformation(Long usersIdx, String mail, UsersInformationGender gender, String name, String phoneNumber, String birth, LocalDateTime agreeMarketingAt) {
         this.usersIdx = usersIdx;
+        this.mail = mail;
         this.gender = gender;
         this.balance  = BigDecimal.valueOf(0.00);
         this.name = name;
@@ -65,13 +72,33 @@ public class UsersInformation {
         this.defaultAddress = null;
         this.defaultCard = null;
         this.agreeMarketingAt = agreeMarketingAt;
+        this.del = 2;
+    }
+
+    public void checkAccountStatus() {
+        if (this.del == 1) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+        if (this.del == 2) {
+            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
+        }
+    }
+
+    public void activateInformation() {
+        this.del = 0;
+    }
+
+    public void deleteInformation(String mail) {
+        this.mail = mail;
+        this.del = 1;
     }
 
     public void updatePrePW(String prePW) {
         this.prePW = prePW;
     }
 
-    public void updateInformation(UsersInformationGender gender, String name, String phoneNumber, String birth) {
+    public void updateInformation(String mail, UsersInformationGender gender, String name, String phoneNumber, String birth) {
+        this.mail = mail;
         this.gender = gender;
         this.name = name;
         this.phoneNumber = phoneNumber;

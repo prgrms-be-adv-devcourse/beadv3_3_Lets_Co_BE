@@ -1,4 +1,4 @@
-package co.kr.user.model.dto.Payment;
+package co.kr.user.model.dto.payment;
 
 import co.kr.user.model.vo.PaymentStatus;
 import co.kr.user.model.vo.PaymentType;

@@ -12,8 +12,8 @@ import lombok.ToString;
 public class FindPWSecondStepReq {
     @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
-    @JsonProperty("ID")
-    private String ID;
+    @JsonProperty("Mail")
+    private String mail;
 
     @NotBlank(message = "인증코드를 입력해 주세요.")
     @JsonProperty("authCode")

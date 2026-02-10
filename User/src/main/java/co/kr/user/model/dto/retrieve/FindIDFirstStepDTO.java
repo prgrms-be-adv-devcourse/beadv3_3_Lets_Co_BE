@@ -5,8 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class RetrieveFirstDTO {
-
-    private String ID;
+public class FindIDFirstStepDTO {
+    private String mail;
     private LocalDateTime certificationTime;
 }

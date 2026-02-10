@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class CardListDTO {
-    private String cardCode;
     private int defaultCard;
+    private String cardCode;
     private String cardBrand;
     private String cardName;
     private String cardToken;

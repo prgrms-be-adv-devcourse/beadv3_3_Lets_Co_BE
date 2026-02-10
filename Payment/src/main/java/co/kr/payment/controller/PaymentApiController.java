@@ -37,10 +37,4 @@ public class PaymentApiController {
         return ResponseEntity.ok(paymentService.charge(request));
     }
 
-    @GetMapping("/order/{ordersIdx}")
-    public ResponseEntity<PaymentResponse> findByOrdersIdx(
-            @PathVariable Long ordersIdx
-    ) {
-        return ResponseEntity.ok(paymentService.findByOrdersIdx(ordersIdx));
-    }
 }

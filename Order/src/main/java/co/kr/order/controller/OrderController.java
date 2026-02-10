@@ -79,7 +79,9 @@ public class OrderController {
      * @param orderId 주문 ID
      */
     @PostMapping("/{orderId}/complete")
-    public ResponseEntity<BaseResponse<Void>> completeOrder(@PathVariable Long orderId) {
+    public ResponseEntity<BaseResponse<Void>> completeOrder(
+            @PathVariable Long orderId
+    ) {
         orderService.completeOrder(orderId);
         BaseResponse<Void> body = new BaseResponse<>("ok", null);
         return ResponseEntity.ok(body);

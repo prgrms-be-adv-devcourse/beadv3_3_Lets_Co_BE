@@ -19,6 +19,4 @@ public interface PaymentClient {
             @RequestBody ClientRefundReq refundRequest
     );
 
-    @GetMapping("/order/{ordersIdx}")
-    ClientPaymentRes getPayment(@PathVariable Long ordersIdx);
 }

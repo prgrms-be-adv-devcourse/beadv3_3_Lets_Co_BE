@@ -326,6 +326,26 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
+    public void updateOrderStatus(String orderCode, String status) {
+        OrderEntity order = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+        order.setStatus(OrderStatus.valueOf(status));
+        orderRepository.save(order);
+        log.info("주문 상태 변경: orderCode={}, status={}", orderCode, status);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Long findOrderIdx(String orderCode) {
+        OrderEntity order = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+        return order.getUserIdx();
+    }
+
+    @Transactional
+    @Override
     public void completeOrder(Long orderId) {
         // 1. 주문 조회
         OrderEntity order = orderRepository.findById(orderId)
@@ -340,16 +360,5 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
         log.info("주문 완료 처리: orderId={}", orderId);
-    }
-
-    @Transactional
-    @Override
-    public void updateOrderStatus(String orderCode, String status) {
-        OrderEntity order = orderRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
-
-        order.setStatus(OrderStatus.valueOf(status));
-        orderRepository.save(order);
-        log.info("주문 상태 변경: orderCode={}, status={}", orderCode, status);
     }
 }

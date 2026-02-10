@@ -6,7 +6,7 @@ import co.kr.order.model.dto.response.ClientPaymentRes;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "PAYMENT-SERVICE", path = "/client/payments")
+@FeignClient(name = "payment-service", path = "/client/payments", url = "http://payment-service:8080")
 public interface PaymentClient {
 
     @PostMapping("/process")

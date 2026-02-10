@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
-@FeignClient(name="USER-SERSVICE", path = "/client/users")
+@FeignClient(name="user-service", path = "/client/users", url = "http://user-service:8080")
 public interface UserClient {
 
     @PostMapping("/balance/pay")

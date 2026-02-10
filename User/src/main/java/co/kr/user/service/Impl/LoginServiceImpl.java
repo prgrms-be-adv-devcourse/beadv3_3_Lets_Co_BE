@@ -6,14 +6,11 @@ import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.service.LoginService;
 import co.kr.user.util.BCryptUtil;
-import co.kr.user.util.CookieUtil;
 import co.kr.user.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
 
 /**
  * 로그인 및 로그아웃 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -21,10 +18,13 @@ import java.time.Duration;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class LoginServiceImpl implements LoginService {
     private final UserRepository userRepository;
 
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private final UserQueryServiceImpl userQueryServiceImpl;
 
     private final BCryptUtil bCryptUtil; // 비밀번호 검증 유틸리티
     private final JWTUtil jwtUtil; // JWT 생성 및 검증 유틸리티
@@ -40,17 +40,7 @@ public class LoginServiceImpl implements LoginService {
     @Override
     @Transactional
     public LoginDTO login(LoginReq loginReq) {
-        // 아이디로 사용자 조회 (존재하지 않으면 예외 발생)
-        Users users = userRepository.findById(loginReq.getId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
-
-        // 계정 상태 검증 (탈퇴: 1, 미인증: 2)
-        if (users.getDel() == 1) {
-            throw new IllegalStateException("탈퇴한 회원입니다.");
-        }
-        else if (users.getDel() == 2) {
-            throw new IllegalStateException("인증을 먼저 시도해 주세요.");
-        }
+        Users users = userQueryServiceImpl.findActiveUserById(loginReq.getId());
 
         // 로그인 실패 횟수 확인 (5회 이상이면 잠금 시도)
         if (users.getFailedLoginAttempts() >= 5) {

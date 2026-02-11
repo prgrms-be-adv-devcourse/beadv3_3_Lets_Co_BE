@@ -1,6 +1,7 @@
 package co.kr.product.product.service.impl;
 
 import co.kr.product.common.service.S3Service;
+import co.kr.product.common.service.ViewCountService;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.dto.request.CategoryParentGroup;
 import co.kr.product.product.model.dto.request.DeductStockReq;
@@ -19,6 +20,7 @@ import co.kr.product.product.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -40,9 +42,12 @@ public class ProductServiceImpl implements ProductService {
     private final FileRepository fileRepository;
     private final S3Service s3Service;
 
+
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
 
+    @Value("${custom.aws.s3.product-table}")
+    private String productTableName;
     /**
      * 상품 목록 조회 (비회원/회원 모두)
      * 지금은 사용 안함. > Elastic에서 처리
@@ -73,14 +78,13 @@ public class ProductServiceImpl implements ProductService {
      * - 이미지/옵션 포함
      */
     @Override
+    @Cacheable(value = "product", key = "#productsCode")
     @Transactional(readOnly = true)
-    public ProductDetailRes getProductDetail(String productsCode) {
+    public IdxAndDetailRes getProductDetail(String productsCode) {
 
         // 1. 상품
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 상품입니다: " + productsCode));
-
-        // TODO 조회수 증가 (redis 에서 처리 후 동기화)
 
         // 2. 옵션
         List<ProductOptionEntity> options = productOptionRepository
@@ -104,10 +108,10 @@ public class ProductServiceImpl implements ProductService {
 
         // 4. Image
         // 4.1 해당 상품에 대한 이미지 조회
-        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse("Products",product.getProductsIdx());
+        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse(productTableName,product.getProductsIdx());
         // 4.2 S3 조회용 키
         List<String> keys = images.stream()
-                .map( image -> productPrefix + "/" + image.getStoredFileName())
+                .map( image -> image.getFilePath() + image.getStoredFileName())
                 .toList();
         // 4.3 S3 조회
         List<String> fileUrls = s3Service.getFileUrls(keys);
@@ -116,12 +120,15 @@ public class ProductServiceImpl implements ProductService {
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
 
-        return toProductDetail(
-                product,
-                options,
-                imageInfo,
-                parents
-        );
+        return
+            new IdxAndDetailRes(
+                product.getProductsIdx(),
+                toProductDetail(
+                    product,
+                    options,
+                    imageInfo,
+                    parents)
+            );
     }
 
     /**
@@ -206,6 +213,8 @@ public class ProductServiceImpl implements ProductService {
                 product.getProductsIdx(),
                 option.getOptionGroupIdx(),
                 product.getSellerIdx(),
+                productsCode,
+                optionCode,
                 product.getProductsName(),
                 option.getOptionName(),
                 option.getOptionPrice(),
@@ -236,6 +245,8 @@ public class ProductServiceImpl implements ProductService {
                 opt.getProduct().getProductsIdx(), // 상품 정보도 이미 들어있음
                 opt.getOptionGroupIdx(),
                 opt.getProduct().getSellerIdx(),
+                opt.getProduct().getProductsCode(),
+                opt.getOptionCode(),
                 opt.getProduct().getProductsName(),
                 opt.getOptionName(),
                 opt.getOptionPrice(),

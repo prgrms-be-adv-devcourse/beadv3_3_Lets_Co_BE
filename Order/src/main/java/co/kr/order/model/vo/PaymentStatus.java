@@ -1,7 +1,11 @@
 package co.kr.order.model.vo;
 
+/*
+ * CHARGE: 충전
+ * PAYMENT: 결제
+ * REFUND: 환불
+ */
 public enum PaymentStatus {
-    // 결제 액션에 가까움. 상태 전이가 아님 주의.
     CHARGE,
     PAYMENT,
     REFUND

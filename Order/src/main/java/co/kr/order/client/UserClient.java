@@ -11,8 +11,18 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
+/*
+ * FeignClient
+ * User-Service에 API 요청
+ */
 @FeignClient(name="user-service", path = "/client/users", url = "http://user-service:8080")
 public interface UserClient {
+
+    /**
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * todo. 정민님 주석
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     */
 
     @PostMapping("/balance/pay")
     void useBalance(

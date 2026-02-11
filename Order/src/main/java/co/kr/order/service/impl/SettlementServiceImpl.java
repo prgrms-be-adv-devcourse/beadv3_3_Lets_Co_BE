@@ -20,6 +20,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SettlementServiceImpl implements SettlementService {
 
+    /**
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * todo. 정민님 주석
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     */
+
     private final SettlementRepository settlementRepository;
 
     @Override

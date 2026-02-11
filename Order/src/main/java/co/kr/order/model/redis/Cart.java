@@ -6,6 +6,10 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+/*
+ * Redis에 저장 될
+ * 장바구니 정보
+ */
 @Getter
 @NoArgsConstructor
 public class Cart {

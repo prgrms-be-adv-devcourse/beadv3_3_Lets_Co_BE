@@ -14,6 +14,4 @@ public interface OrderService {
 
     void updateOrderStatus(String orderCode, String status);
     Long findOrderIdx(String orderCode);
-
-    void completeOrder(Long orderId);
 }

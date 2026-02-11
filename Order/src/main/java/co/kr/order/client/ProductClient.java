@@ -3,23 +3,33 @@ package co.kr.order.client;
 import co.kr.order.model.dto.request.ClientProductReq;
 import co.kr.order.model.dto.response.ClientProductRes;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+/*
+ * FeignClient
+ * Product-Service에 API 요청
+ */
 @FeignClient(name = "product-service", path = "/client/products", url = "http://product-service:8080")
 public interface ProductClient {
 
+    /*
+     * 단일 상품 정보 요청 (GET)
+     * @param productCode: 상품 코드
+     * @param optionCode: 상품 옵션 코드
+     */
     @GetMapping("/{productCode}/{optionCode}")
     ClientProductRes getProduct(
             @PathVariable("productCode") String productCode,
             @PathVariable("optionCode") String optionCode
     );
 
+    /*
+     * 상품 리스트 정보 요청 (POST)
+     * @param productRequest: 상품 리스트 요청 정보 (productCode, optionCode)
+     */
     @PostMapping("/bulk")
     List<ClientProductRes> getProductList(@RequestBody List<ClientProductReq> productRequest);
 

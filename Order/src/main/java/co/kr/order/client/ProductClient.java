@@ -18,7 +18,7 @@ public interface ProductClient {
             @PathVariable("optionCode") String optionCode
     );
 
-    @GetMapping("/bulk")
+    @PostMapping("/bulk")
     List<ClientProductRes> getProductList(@RequestBody List<ClientProductReq> productRequest);
 
     @PostMapping("/deductStocks")

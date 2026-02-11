@@ -6,11 +6,11 @@
 
 | 역할     | 이름   | 학과       | 이메일               |
 | -------- | ------ | ---------- | -------------------- |
-| PO       | 문민규 | 소프트웨어 | germ47@naver.com     |
-| Backend  | 정운석 | 소프트웨어 | jjh326326@naver.com  |
-| Backend  | 이용희 | 소프트웨어 | dydgmlzaa@naver.com  |
-| Database | 안수현 | 컴퓨터공학 | soxyxs4996@gmail.com |
-| Backend  | 최정민 | 컴퓨터공학 | gnb0804@gmail.com    |
+| **PO/BE**    | **문민규** | 소프트웨어 | [E-Mail](germ47@naver.com)    |
+| **BE/FE**    | **정운석** | 소프트웨어 | [E-Mail](jjh326326@naver.com)  |
+| **BE/DevOps**| **이용희** | 소프트웨어 | [E-Mail](dydgmlzaa@naver.com)  |
+| **BE/DB**    | **안수현** | 컴퓨터공학 | [E-Mail](soxyxs4996@gmail.com) |
+| **BE**       | **최정민** | 컴퓨터공학 | [E-Mail](gnb0804@gmail.com)    |
 
 ---
 

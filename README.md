@@ -114,6 +114,63 @@
 
 ### 🔊주요 기능
 
+
+<details>
+<summary><h3>🔐 User Service - 회원 및 인증</h3></summary>
+
+#### 인증 (Auth)
+- OAuth 2.0 Google 로그인 (isNewUser 분기 처리)
+- Access Token 재발급 (Refresh Token 기반)
+- 로그아웃 (Redis Token 삭제 + Cookie 만료)
+- JWT 토큰 관리 (HttpOnly Cookie 방식)
+
+#### 회원 (User)
+- 회원가입 (가입 시 토큰 자동 발급)
+- 회원정보 조회 (내 정보 / 특정 사용자)
+- 회원정보 수정 (닉네임, 전화번호, 주소)
+- 프로필 이미지 관리 (S3 업로드/교체)
+
+#### 판매자 권한
+- SMS 인증 코드 발송 (6자리)
+- 인증 코드 검증 후 SELLER 권한 부여
+
+</details>
+
+
+<details>
+<summary><h3>🎁 Product Service - 상품</h3></summary>
+- 
+
+</details>
+
+
+<details>
+<summary><h3>📞 Order Service - 주문, 장바구니</h3></summary>
+- 
+  
+</details>
+
+
+<details>
+<summary><h3>💸 Payment Service - 결제, 정산</h3></summary>
+- 
+
+</details>
+
+
+<details>
+<summary><h3>⁉️ Board Service - Q&A, 공지</h3></summary>
+- 
+  
+</details>
+
+
+<details>
+<summary><h3>🤖 AI Service - 상품 추천</h3></summary>
+- 
+
+</details>
+
 ---
 
 ### 📆 개발 기간

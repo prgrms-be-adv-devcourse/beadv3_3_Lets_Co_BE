@@ -9,7 +9,7 @@ public class PasswordMatchValidator implements ConstraintValidator<PasswordMatch
     @Override
     public boolean isValid(RegisterReq value, ConstraintValidatorContext context) {
         String pw = value.getPw();
-        String pwCheck = value.getPw();
+        String pwCheck = value.getPwCheck();
 
         boolean isValid = pw != null && pw.equals(pwCheck);
 

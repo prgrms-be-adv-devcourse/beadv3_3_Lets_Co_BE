@@ -1,7 +1,7 @@
 package co.kr.user.config;
 
-import co.kr.user.dao.UserRepository;
 import co.kr.user.model.entity.Users;
+import co.kr.user.service.UserQueryService;
 import co.kr.user.util.CookieUtil;
 import co.kr.user.util.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    private final UserRepository userRepository;
-
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private final UserQueryService userQueryService;
 
     private final JWTUtil jwtUtil;
 
@@ -47,7 +47,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             loginId = (String) resp.get("id");
         }
 
-        Users user = userRepository.findByIdAndDel(loginId, 0).orElseThrow();
+        Users user = userQueryService.findActiveUserById(loginId);
 
         String accessToken = jwtUtil.createAccessToken(user.getUsersIdx(), user.getCreatedAt(), user.getUpdatedAt());
         String refreshToken = jwtUtil.createRefreshToken(user.getUsersIdx());

@@ -1,13 +1,12 @@
 package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserAddressRepository;
-import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.model.dto.address.AddressListDTO;
 import co.kr.user.model.dto.address.AddressRequestReq;
-import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.service.AddressService;
+import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,35 +19,28 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
     private final UserAddressRepository userAddressRepository;
-    private final UserInformationRepository userInformationRepository;
 
-    private final UserQueryServiceImpl userQueryServiceImpl;
+    private final UserQueryService userQueryService;
 
     @Override
     public List<AddressListDTO> addressList(Long userIdx) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보가 없습니다."));
-
+        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
         Long defaultAddressIdx = usersInformation.getDefaultAddress();
 
-        List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(users.getUsersIdx(), 0);
+        List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(userIdx, 0);
 
         if (usersAddressList.isEmpty()) {
             throw new IllegalArgumentException("주소를 추가해 주세요");
         }
 
         return usersAddressList.stream()
-                // 정렬: 기본 배송지 IDX와 일치하는 것을 최상단으로
                 .sorted((a, b) -> {
                     int aVal = a.getAddressIdx().equals(defaultAddressIdx) ? 1 : 0;
                     int bVal = b.getAddressIdx().equals(defaultAddressIdx) ? 1 : 0;
-                    return Integer.compare(bVal, aVal); // 1(기본)이 0보다 앞에 오도록 내림차순 정렬
+                    return Integer.compare(bVal, aVal);
                 })
                 .map(address -> {
                     AddressListDTO dto = new AddressListDTO();
-
                     int isDefault = address.getAddressIdx().equals(defaultAddressIdx) ? 1 : 0;
                     dto.setDefaultAddress(isDefault);
                     dto.setAddressCode(address.getAddressCode());
@@ -56,7 +48,6 @@ public class AddressServiceImpl implements AddressService {
                     dto.setAddress(address.getAddress());
                     dto.setAddressDetail(address.getAddressDetail());
                     dto.setPhoneNumber(address.getPhoneNumber());
-
                     return dto;
                 })
                 .toList();
@@ -65,10 +56,10 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public String addAddress(Long userIdx, AddressRequestReq addressRequestReq) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        userQueryService.findActiveUser(userIdx);
 
         UsersAddress usersAddress = UsersAddress.builder()
-                .usersIdx(users.getUsersIdx())
+                .usersIdx(userIdx)
                 .addressCode(UUID.randomUUID().toString())
                 .recipient(addressRequestReq.getRecipient())
                 .address(addressRequestReq.getAddress())
@@ -78,8 +69,7 @@ public class AddressServiceImpl implements AddressService {
         userAddressRepository.save(usersAddress);
 
         if (addressRequestReq.isDefaultAddress()) {
-            UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                    .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드(" + usersAddress.getAddressCode() + ")에 해당하는 정보가 없습니다."));
+            UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
             usersInformation.updateDefaultAddress(usersAddress.getAddressIdx());
         }
 
@@ -89,8 +79,9 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public String updateAddress(Long userIdx, AddressRequestReq addressRequestReq) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(addressRequestReq.getAddressCode(), users.getUsersIdx(), 0).orElseThrow();
+        userQueryService.findActiveUser(userIdx);
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(addressRequestReq.getAddressCode(), userIdx, 0)
+                .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드에 해당하는 정보가 없습니다."));
 
         usersAddress.updateAddress(
                 addressRequestReq.getRecipient() != null ? addressRequestReq.getRecipient() : usersAddress.getRecipient(),
@@ -100,8 +91,7 @@ public class AddressServiceImpl implements AddressService {
         );
 
         if (addressRequestReq.isDefaultAddress()) {
-            UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                    .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드(" + usersAddress.getAddressCode() + ")에 해당하는 정보가 없습니다."));
+            UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
             usersInformation.updateDefaultAddress(usersAddress.getAddressIdx());
         }
 
@@ -111,17 +101,11 @@ public class AddressServiceImpl implements AddressService {
     @Override
     @Transactional
     public String deleteAddress(Long userIdx, String addressCode) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(addressCode, users.getUsersIdx(), 0)
+        userQueryService.findActiveUser(userIdx);
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(addressCode, userIdx, 0)
                 .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드(" + addressCode + ")에 해당하는 정보가 없습니다."));
 
-        if (!usersAddress.getUsersIdx().equals(userIdx)) {
-            throw new IllegalStateException("해당 주소에 대한 수정/삭제 권한이 없습니다.");
-        }
-
         usersAddress.deleteAddress();
-
         return "주소가 삭제되었습니다.";
     }
 }

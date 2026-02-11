@@ -8,6 +8,7 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.model.vo.PaymentStatus;
 import co.kr.user.model.vo.PaymentType;
 import co.kr.user.service.PaymentService;
+import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,11 @@ import java.util.List;
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
 
-    private final UserQueryServiceImpl userQueryServiceImpl;
+    private final UserQueryService userQueryService;
 
     @Override
     public List<PaymentListDTO> balanceHistory(Long userIdx, PaymentReq paymentReq) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        Users user = userQueryService.findActiveUser(userIdx);
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -39,14 +40,14 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDateTime start = paymentReq.getStartDate();
         if (start == null) {
             LocalDateTime oneMonthAgo = now.minusMonths(1);
-            start = oneMonthAgo.isBefore(users.getCreatedAt()) ? users.getCreatedAt() : oneMonthAgo;
+            start = oneMonthAgo.isBefore(user.getCreatedAt()) ? user.getCreatedAt() : oneMonthAgo;
         }
 
         LocalDateTime end = (paymentReq.getEndDate() == null || paymentReq.getEndDate().isAfter(now))
                 ? now : paymentReq.getEndDate();
 
         List<Payment> paymentList = paymentRepository.findAllByUsersIdxAndStatusInAndTypeInAndCreatedAtBetweenOrderByCreatedAtDesc(
-                users.getUsersIdx(),
+                user.getUsersIdx(),
                 statuses,
                 types,
                 start,

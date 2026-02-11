@@ -25,6 +25,8 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implem
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
 
+    private final UserQueryServiceImpl userQueryService;
+
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -57,37 +59,29 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implem
             gender = convertGender((String) response.get("gender"));
         }
 
-        final String finalId = id;
-        log.info("finalId: {}", finalId);
-        Users user = userRepository.findByIdAndDel(finalId, 0)
-                .orElseGet(() -> userRepository.save(Users.builder()
-                        .id(finalId)
-                        .pw("OAUTH_USER_" + UUID.randomUUID())
-                        .build()));
+        Users user;
+        try {
+            user = userQueryService.findActiveUserById(id);
+        } catch (IllegalArgumentException e) {
+            user = userRepository.save(Users.builder()
+                    .id(id)
+                    .pw("OAUTH_USER_" + UUID.randomUUID())
+                    .build());
+        }
 
         user.activateUsers();
 
         if (userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), 0).isEmpty()) {
-            if ("naver".equals(registrationId) || "kakao".equals(registrationId)) {
-                userInformationRepository.save(UsersInformation.builder()
-                        .usersIdx(user.getUsersIdx())
-                        .name(name)
-                        .phoneNumber(phone)
-                        .birth(birth)
-                        .gender(gender)
-                        .build());
-            }
-            else if ("google".equals(registrationId)) {
-                userInformationRepository.save(UsersInformation.builder()
-                        .usersIdx(user.getUsersIdx())
-                        .mail(user.getId())
-                        .name(name)
-                        .phoneNumber(phone)
-                        .birth(birth)
-                        .gender(gender)
-                        .build());
-            }
-
+            userInformationRepository.save(UsersInformation.builder()
+                    .usersIdx(user.getUsersIdx())
+                    .mail("google".equals(registrationId) ? id : "OAUTH_" + id + "@oauth.com")
+                    .name(name)
+                    .phoneNumber(phone)
+                    .birth(birth)
+                    .gender(gender)
+                    .build());
+            userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), 2)
+                    .ifPresent(UsersInformation::activateInformation);
         }
 
         return oAuth2User;

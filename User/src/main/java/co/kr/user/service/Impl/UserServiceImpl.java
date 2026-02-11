@@ -1,6 +1,5 @@
 package co.kr.user.service.Impl;
 
-import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
 import co.kr.user.model.dto.my.UserAmendReq;
@@ -13,6 +12,7 @@ import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.UserService;
+import co.kr.user.service.UserQueryService;
 import co.kr.user.util.CookieUtil;
 import co.kr.user.util.EmailTemplateProvider;
 import co.kr.user.util.MailUtil;
@@ -28,19 +28,17 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
-
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
-    private final UserInformationRepository userInformationRepository;
     private final UserVerificationsRepository userVerificationsRepository;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    private final UserQueryServiceImpl userQueryServiceImpl;
+    private final UserQueryService userQueryService;
 
     private final RandomCodeUtil randomCodeUtil;
     private final MailUtil mailUtil;
@@ -48,19 +46,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public BigDecimal balance(Long userIdx) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        UsersInformation userInfo = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-
-        return userInfo.getBalance();
+        return userQueryService.findActiveUserInfo(userIdx).getBalance();
     }
 
+    @Override
     public UserDTO my(Long userIdx) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        UsersInformation userInfo = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        Users users = userQueryService.findActiveUser(userIdx); 
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx); 
 
         UserDTO userDTO = new UserDTO();
         userDTO.setId(users.getId());
@@ -68,15 +60,12 @@ public class UserServiceImpl implements UserService {
         userDTO.setMembership(users.getMembership());
         userDTO.setCreatedAt(users.getCreatedAt());
         userDTO.setBalance(userInfo.getBalance());
-
         return userDTO;
     }
 
+    @Override
     public UserProfileDTO myDetails(Long userIdx) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-
-        UsersInformation userInfo = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("상세 회원 정보를 찾을 수 없습니다. UserID: " + users.getUsersIdx()));
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
         UserProfileDTO userProfileDTO = new UserProfileDTO();
         userProfileDTO.setName(userInfo.getName());
@@ -85,33 +74,29 @@ public class UserServiceImpl implements UserService {
         userProfileDTO.setGender(userInfo.getGender());
         userProfileDTO.setMail(userInfo.getMail());
         userProfileDTO.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
-
         return userProfileDTO;
     }
 
     @Override
     @Transactional
     public UserDeleteDTO myDelete(Long userIdx) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-        UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다. UserID: " + users.getUsersIdx()));
+        userQueryService.findActiveUser(userIdx); 
+        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
 
-        UsersVerifications usersVerifications = co.kr.user.model.entity.UsersVerifications.builder()
-                .usersIdx(users.getUsersIdx())
+        UsersVerifications usersVerifications = UsersVerifications.builder()
+                .usersIdx(userIdx)
                 .purpose(UsersVerificationsPurPose.DELETE_ACCOUNT)
                 .code(randomCodeUtil.getCode())
                 .expiresAt(LocalDateTime.now().plusMinutes(30))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
-        UsersVerifications savedUserVerifications = userVerificationsRepository.save(usersVerifications);
-
-        String finalContent = emailTemplateProvider.getDeleteAccountTemplate(savedUserVerifications.getCode());
+        userVerificationsRepository.save(usersVerifications);
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(usersInformation.getMail())
                 .subject("[GutJJeu] 회원탈퇴 인증번호 안내해 드립니다.")
-                .message(finalContent)
+                .message(emailTemplateProvider.getDeleteAccountTemplate(usersVerifications.getCode()))
                 .build();
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -124,46 +109,37 @@ public class UserServiceImpl implements UserService {
         UserDeleteDTO userDeleteDTO = new UserDeleteDTO();
         userDeleteDTO.setMail(usersInformation.getMail());
         userDeleteDTO.setCertificationTime(LocalDateTime.now());
-
         return userDeleteDTO;
     }
 
     @Override
     @Transactional
     public String myDelete(Long userIdx, String authCode, HttpServletResponse response) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
+        Users users = userQueryService.findActiveUser(userIdx); 
+        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
 
-        UsersInformation usersInformation = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(users.getUsersIdx(), 0)
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, 0)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         if (verification.getPurpose() != UsersVerificationsPurPose.DELETE_ACCOUNT) {
             throw new IllegalArgumentException("회원탈퇴 인증 코드가 아닙니다.");
-        }
-        else if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
+        } else if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.");
-        }
-        else if (!verification.getCode().equals(authCode)) {
+        } else if (!verification.getCode().equals(authCode)) {
             throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
-        }
-        else if (verification.getStatus() == UsersVerificationsStatus.VERIFIED) {
+        } else if (verification.getStatus() == UsersVerificationsStatus.VERIFIED) {
             return "이미 인증 완료된 코드입니다.";
         }
 
         verification.confirmVerification();
-
         users.deleteUsers(users.getId() + "_DEL_" + LocalDateTime.now());
         usersInformation.deleteInformation(usersInformation.getMail() + "_DEL_" + LocalDateTime.now());
 
-        String rtKey = "RT:" + users.getUsersIdx();
+        String rtKey = "RT:" + userIdx;
         String refreshToken = (String) redisTemplate.opsForValue().get(rtKey);
-
         if (refreshToken != null) {
             redisTemplate.delete(rtKey);
-
-            redisTemplate.opsForValue().set("BL:" + refreshToken, "DELETED_BY_ADMIN");
+            redisTemplate.opsForValue().set("BL:" + refreshToken, "DELETED_BY_USER");
         }
 
         CookieUtil.deleteCookie(response, CookieUtil.ACCESS_TOKEN_NAME);
@@ -175,50 +151,21 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserAmendReq myAmend(Long userIdx, UserAmendReq userAmendReq) {
-        Users users = userQueryServiceImpl.findActiveUser(userIdx);
-        UsersInformation userInfo = userInformationRepository.findByUsersIdxAndDel(users.getUsersIdx(), 0)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+        userQueryService.findActiveUser(userIdx); 
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx); 
 
-        String updateMail = userInfo.getMail();
         if (StringUtils.hasText(userAmendReq.getMail())) {
             if (!Pattern.matches("^[A-Za-z0-9+_.-]+@(.+)$", userAmendReq.getMail())) {
                 throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
             }
-            updateMail = userAmendReq.getMail();
-        }
-
-        String updateName = userInfo.getName();
-        if (StringUtils.hasText(userAmendReq.getName())) {
-            String trimmedName = userAmendReq.getName().trim();
-            if (trimmedName.length() < 2) {
-                throw new IllegalArgumentException("이름은 최소 2자 이상이어야 합니다.");
-            }
-            updateName = trimmedName;
-        }
-
-        String updatePhone = userInfo.getPhoneNumber();
-        if (StringUtils.hasText(userAmendReq.getPhoneNumber())) {
-            String cleanPhone = userAmendReq.getPhoneNumber();
-            if (cleanPhone.length() < 10 || cleanPhone.length() > 13) {
-                throw new IllegalArgumentException("유효하지 않은 전화번호 형식입니다.");
-            }
-            updatePhone = cleanPhone;
-        }
-
-        String updateBirth = userInfo.getBirth();
-        if (StringUtils.hasText(userAmendReq.getBirth())) {
-            if (!Pattern.matches("^\\d{8}$", userAmendReq.getBirth())) {
-                throw new IllegalArgumentException("생년월일은 8자리 숫자(YYYYMMDD)여야 합니다.");
-            }
-            updateBirth = userAmendReq.getBirth();
         }
 
         userInfo.updateInformation(
-                updateMail,
+                StringUtils.hasText(userAmendReq.getMail()) ? userAmendReq.getMail() : userInfo.getMail(),
                 userAmendReq.getGender() != null ? userAmendReq.getGender() : userInfo.getGender(),
-                updateName,
-                updatePhone,
-                updateBirth
+                StringUtils.hasText(userAmendReq.getName()) ? userAmendReq.getName().trim() : userInfo.getName(),
+                StringUtils.hasText(userAmendReq.getPhoneNumber()) ? userAmendReq.getPhoneNumber() : userInfo.getPhoneNumber(),
+                StringUtils.hasText(userAmendReq.getBirth()) ? userAmendReq.getBirth() : userInfo.getBirth()
         );
 
         return userAmendReq;

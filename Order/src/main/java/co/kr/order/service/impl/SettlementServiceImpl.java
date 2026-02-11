@@ -67,10 +67,6 @@ public class SettlementServiceImpl implements SettlementService {
         }
     }
 
-    /*
-     * 정산목록 조회를 Order-service 쪽에서 할지, Member-service에서 할지?
-     * member에서 sellerIdx 주면 Order에서 sellerIdx 맞는거 찾아 List나 단건을 주기만 함면 될거같음
-     */
     @Transactional
     @Override
     public List<SettlementInfo> getSettlementList(Long sellerIdx) {

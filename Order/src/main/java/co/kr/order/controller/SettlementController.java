@@ -15,6 +15,12 @@ import java.util.List;
 @RequestMapping("/settlement")
 public class SettlementController {
 
+    /**
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * todo. 정민님 주석
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     */
+
     private final SettlementService settlementService;
 
     @GetMapping("/{sellerIdx}")

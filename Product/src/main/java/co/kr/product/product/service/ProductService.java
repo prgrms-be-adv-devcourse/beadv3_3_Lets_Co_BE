@@ -13,7 +13,7 @@ public interface ProductService {
     // ProductListRes getProducts(Pageable pageable);
 
 
-    ProductDetailRes getProductDetail(String productsCode);
+    IdxAndDetailRes getProductDetail(String productsCode);
 
 
     ProductCheckStockRes getCheckStock(String productsCode);

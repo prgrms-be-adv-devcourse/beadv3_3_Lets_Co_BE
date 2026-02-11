@@ -24,6 +24,7 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private String port;
 
+/*
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory){
 
@@ -38,22 +39,23 @@ public class RedisConfig {
 
         return redisTemplate;
     }
-
+*/
 
 
     @Bean
     public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory ){
 
         // 기본 설정
+        // 캐시 데이터에 대한 규칙
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues() // null 캐싱 방지
                 .entryTtl(Duration.ofMinutes(4)) // 만료시간. 사진 만료시간이 5분이기에 그 이전에 만료
                 .computePrefixWith(CacheKeyPrefix.simple()) // 캐시 키 앞에 "cacheName::" 같은 접두사
+                                                            // ex) @Cacheable(value = "product") > product::1
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
         // 캐시 이름 별 커스텀 설정 가능
-        
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(connectionFactory)
                 .cacheDefaults(configuration)

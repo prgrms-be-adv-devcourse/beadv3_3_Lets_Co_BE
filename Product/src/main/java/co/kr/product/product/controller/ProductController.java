@@ -1,6 +1,7 @@
 package co.kr.product.product.controller;
 
 import co.kr.product.common.service.S3Service;
+import co.kr.product.common.service.ViewCountService;
 import co.kr.product.product.model.dto.request.DeductStockReq;
 import co.kr.product.product.model.dto.request.ProductIdxsReq;
 import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
@@ -28,7 +29,8 @@ public class ProductController {
     private final ProductService productService;
     private final ProductSearchService productSearchService;
 
-    private final S3Service s3Service;
+    // private final S3Service s3Service;
+    private final ViewCountService viewCountService;
 /*
 
     // S3 연결 테스트 용
@@ -77,9 +79,17 @@ public class ProductController {
     @GetMapping("/{productsCode}")
     public ResponseEntity<ProductDetailRes> getProductDetail(
             @PathVariable String productsCode) {
+        
+        // 상품 상세 정보 조회 (캐싱 ㅇ)
+        IdxAndDetailRes productDetail = productService.getProductDetail(productsCode);
+        
+        // 조회수 증가 처리
+        // 캐싱과 상관없이 반드시 실행
+        viewCountService.increaseViewCountProduct(productDetail.productIdx());
 
         return ResponseEntity.ok(
-                productService.getProductDetail(productsCode));
+                productDetail.detail()
+                );
     }
 
 

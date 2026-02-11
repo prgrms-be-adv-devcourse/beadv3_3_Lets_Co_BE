@@ -4,8 +4,8 @@ import co.kr.user.dao.UserCardRepository;
 import co.kr.user.model.dto.card.CardListDTO;
 import co.kr.user.model.dto.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
-import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.service.CardService;
 import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +20,14 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class CardServiceImpl implements CardService {
     private final UserCardRepository userCardRepository;
-    
     private final UserQueryService userQueryService;
 
     @Override
     public List<CardListDTO> cardList(Long userIdx) {
-        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
+        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
         Long defaultCardIdx = usersInformation.getDefaultCard();
 
-        List<UserCard> userCardList = userCardRepository.findAllByUsersIdxAndDel(userIdx, 0);
+        List<UserCard> userCardList = userCardRepository.findAllByUsersIdxAndDel(userIdx, UserDel.ACTIVE);
 
         if (userCardList.isEmpty()) {
             throw new IllegalArgumentException("카드를 추가해 주세요");
@@ -57,23 +56,23 @@ public class CardServiceImpl implements CardService {
 
     @Override
     @Transactional
-    public String addCard(Long userIdx, CardRequestReq cardRequestReq) {
-        Users user = userQueryService.findActiveUser(userIdx); 
+    public String addCard(Long userIdx, CardRequestReq req) {
+        userQueryService.findActiveUser(userIdx);
 
         UserCard userCard = UserCard.builder()
-                .usersIdx(user.getUsersIdx())
+                .usersIdx(userIdx)
                 .cardCode(UUID.randomUUID().toString())
-                .cardBrand(cardRequestReq.getCardBrand())
-                .cardName(cardRequestReq.getCardName())
-                .cardToken(cardRequestReq.getCardToken())
-                .expMonth(cardRequestReq.getExpMonth())
-                .expYear(cardRequestReq.getExpYear())
+                .cardBrand(req.getCardBrand())
+                .cardName(req.getCardName())
+                .cardToken(req.getCardToken())
+                .expMonth(req.getExpMonth())
+                .expYear(req.getExpYear())
                 .build();
 
         userCardRepository.save(userCard);
 
-        if (cardRequestReq.isDefaultCard()) {
-            UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
+        if (req.isDefaultCard()) {
+            UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
             usersInformation.updateDefaultCard(userCard.getCardIdx());
         }
 
@@ -83,20 +82,14 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public String updateCard(Long userIdx, CardRequestReq req) {
-        userQueryService.findActiveUser(userIdx); 
-        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(req.getCardCode(), userIdx, 0)
-                .orElseThrow(() -> new IllegalArgumentException("요청하신 카드 코드에 해당하는 정보가 없습니다."));
+        userQueryService.findActiveUser(userIdx);
+        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(req.getCardCode(), userIdx, UserDel.ACTIVE)
+                .orElseThrow(() -> new IllegalArgumentException("요청하신 카드 정보가 없습니다."));
 
-        userCard.updateCard(
-                req.getCardBrand() != null ? req.getCardBrand() : userCard.getCardBrand(),
-                req.getCardName() != null ? req.getCardName() : userCard.getCardName(),
-                req.getCardToken() != null ? req.getCardToken() : userCard.getCardToken(),
-                req.getExpMonth() != 0 ? req.getExpMonth() : userCard.getExpMonth(),
-                req.getExpYear() != 0 ? req.getExpYear() : userCard.getExpYear()
-        );
+        userCard.updateCard(req.getCardBrand(), req.getCardName(), req.getCardToken(), req.getExpMonth(), req.getExpYear());
 
         if (req.isDefaultCard()) {
-            UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
+            UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
             usersInformation.updateDefaultCard(userCard.getCardIdx());
         }
 
@@ -106,9 +99,9 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public String deleteCard(Long userIdx, String cardCode) {
-        userQueryService.findActiveUser(userIdx); 
-        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(cardCode, userIdx, 0)
-                .orElseThrow(() -> new IllegalArgumentException("요청하신 카드 코드에 해당하는 정보가 없습니다."));
+        userQueryService.findActiveUser(userIdx);
+        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(cardCode, userIdx, UserDel.ACTIVE)
+                .orElseThrow(() -> new IllegalArgumentException("요청하신 카드 정보가 없습니다."));
 
         userCard.deleteCard();
         return "카드가 삭제되었습니다.";

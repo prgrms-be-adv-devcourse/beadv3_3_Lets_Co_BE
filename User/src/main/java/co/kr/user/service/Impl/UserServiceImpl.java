@@ -9,6 +9,7 @@ import co.kr.user.model.dto.my.UserDTO;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.UserService;
@@ -24,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
@@ -35,11 +35,8 @@ import java.time.LocalDateTime;
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
     private final UserVerificationsRepository userVerificationsRepository;
-
     private final RedisTemplate<String, Object> redisTemplate;
-
     private final UserQueryService userQueryService;
-
     private final RandomCodeUtil randomCodeUtil;
     private final MailUtil mailUtil;
     private final EmailTemplateProvider emailTemplateProvider;
@@ -51,8 +48,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO my(Long userIdx) {
-        Users users = userQueryService.findActiveUser(userIdx); 
-        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx); 
+        Users users = userQueryService.findActiveUser(userIdx);
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
         UserDTO userDTO = new UserDTO();
         userDTO.setId(users.getId());
@@ -67,23 +64,23 @@ public class UserServiceImpl implements UserService {
     public UserProfileDTO myDetails(Long userIdx) {
         UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
-        UserProfileDTO userProfileDTO = new UserProfileDTO();
-        userProfileDTO.setName(userInfo.getName());
-        userProfileDTO.setPhoneNumber(userInfo.getPhoneNumber());
-        userProfileDTO.setBirth(userInfo.getBirth());
-        userProfileDTO.setGender(userInfo.getGender());
-        userProfileDTO.setMail(userInfo.getMail());
-        userProfileDTO.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
-        return userProfileDTO;
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setName(userInfo.getName());
+        dto.setPhoneNumber(userInfo.getPhoneNumber());
+        dto.setBirth(userInfo.getBirth());
+        dto.setGender(userInfo.getGender());
+        dto.setMail(userInfo.getMail());
+        dto.setAgreeMarketingAt(userInfo.getAgreeMarketingAt());
+        return dto;
     }
 
     @Override
     @Transactional
     public UserDeleteDTO myDelete(Long userIdx) {
-        userQueryService.findActiveUser(userIdx); 
-        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
+        userQueryService.findActiveUser(userIdx);
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
-        UsersVerifications usersVerifications = UsersVerifications.builder()
+        UsersVerifications verification = UsersVerifications.builder()
                 .usersIdx(userIdx)
                 .purpose(UsersVerificationsPurPose.DELETE_ACCOUNT)
                 .code(randomCodeUtil.getCode())
@@ -91,49 +88,45 @@ public class UserServiceImpl implements UserService {
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
-        userVerificationsRepository.save(usersVerifications);
+        userVerificationsRepository.save(verification);
 
         EmailMessage emailMessage = EmailMessage.builder()
-                .to(usersInformation.getMail())
+                .to(userInfo.getMail())
                 .subject("[GutJJeu] 회원탈퇴 인증번호 안내해 드립니다.")
-                .message(emailTemplateProvider.getDeleteAccountTemplate(usersVerifications.getCode()))
+                .message(emailTemplateProvider.getDeleteAccountTemplate(verification.getCode()))
                 .build();
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
-            public void afterCommit() {
-                mailUtil.sendEmail(emailMessage, true);
-            }
+            public void afterCommit() { mailUtil.sendEmail(emailMessage, true); }
         });
 
-        UserDeleteDTO userDeleteDTO = new UserDeleteDTO();
-        userDeleteDTO.setMail(usersInformation.getMail());
-        userDeleteDTO.setCertificationTime(LocalDateTime.now());
-        return userDeleteDTO;
+        UserDeleteDTO dto = new UserDeleteDTO();
+        dto.setMail(userInfo.getMail());
+        dto.setCertificationTime(LocalDateTime.now());
+        return dto;
     }
 
     @Override
     @Transactional
     public String myDelete(Long userIdx, String authCode, HttpServletResponse response) {
-        Users users = userQueryService.findActiveUser(userIdx); 
-        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx); 
+        Users users = userQueryService.findActiveUser(userIdx);
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, 0)
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         if (verification.getPurpose() != UsersVerificationsPurPose.DELETE_ACCOUNT) {
-            throw new IllegalArgumentException("회원탈퇴 인증 코드가 아닙니다.");
+            throw new IllegalArgumentException("인증 코드가 일치하지 않습니다.");
         } else if (verification.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.");
+            throw new IllegalStateException("인증 시간이 만료되었습니다.");
         } else if (!verification.getCode().equals(authCode)) {
             throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
-        } else if (verification.getStatus() == UsersVerificationsStatus.VERIFIED) {
-            return "이미 인증 완료된 코드입니다.";
         }
 
         verification.confirmVerification();
         users.deleteUsers(users.getId() + "_DEL_" + LocalDateTime.now());
-        usersInformation.deleteInformation(usersInformation.getMail() + "_DEL_" + LocalDateTime.now());
+        userInfo.deleteInformation(userInfo.getMail() + "_DEL_" + LocalDateTime.now());
 
         String rtKey = "RT:" + userIdx;
         String refreshToken = (String) redisTemplate.opsForValue().get(rtKey);
@@ -150,24 +143,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserAmendReq myAmend(Long userIdx, UserAmendReq userAmendReq) {
-        userQueryService.findActiveUser(userIdx); 
-        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx); 
+    public UserAmendReq myAmend(Long userIdx, UserAmendReq req) {
+        userQueryService.findActiveUser(userIdx);
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
-        if (StringUtils.hasText(userAmendReq.getMail())) {
-            if (!Pattern.matches("^[A-Za-z0-9+_.-]+@(.+)$", userAmendReq.getMail())) {
-                throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
-            }
+        if (req.getMail() != null && !Pattern.matches("^[A-Za-z0-9+_.-]+@(.+)$", req.getMail())) {
+            throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
         }
 
-        userInfo.updateInformation(
-                StringUtils.hasText(userAmendReq.getMail()) ? userAmendReq.getMail() : userInfo.getMail(),
-                userAmendReq.getGender() != null ? userAmendReq.getGender() : userInfo.getGender(),
-                StringUtils.hasText(userAmendReq.getName()) ? userAmendReq.getName().trim() : userInfo.getName(),
-                StringUtils.hasText(userAmendReq.getPhoneNumber()) ? userAmendReq.getPhoneNumber() : userInfo.getPhoneNumber(),
-                StringUtils.hasText(userAmendReq.getBirth()) ? userAmendReq.getBirth() : userInfo.getBirth()
-        );
+        userInfo.updateProfile(req.getMail(), req.getGender(), req.getName(), req.getPhoneNumber(), req.getBirth());
 
-        return userAmendReq;
+        return req;
     }
 }

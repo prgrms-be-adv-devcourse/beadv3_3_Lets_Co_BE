@@ -4,6 +4,7 @@ import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersInformationGender;
 import co.kr.user.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +72,7 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implem
 
         user.activateUsers();
 
-        if (userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), 0).isEmpty()) {
+        if (userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), UserDel.ACTIVE).isEmpty()) {
             userInformationRepository.save(UsersInformation.builder()
                     .usersIdx(user.getUsersIdx())
                     .mail("google".equals(registrationId) ? id : "OAUTH_" + id + "@oauth.com")
@@ -80,7 +81,7 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implem
                     .birth(birth)
                     .gender(gender)
                     .build());
-            userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), 2)
+            userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), UserDel.PENDING)
                     .ifPresent(UsersInformation::activateInformation);
         }
 

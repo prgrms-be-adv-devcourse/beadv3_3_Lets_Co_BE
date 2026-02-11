@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import jakarta.persistence.*;
@@ -44,7 +45,7 @@ public class UsersVerifications {
     private UsersVerificationsStatus status;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private int del;
+    private UserDel del;
 
     @Builder
     public UsersVerifications(Long usersIdx, UsersVerificationsPurPose purpose, String code, LocalDateTime expiresAt, UsersVerificationsStatus status) {

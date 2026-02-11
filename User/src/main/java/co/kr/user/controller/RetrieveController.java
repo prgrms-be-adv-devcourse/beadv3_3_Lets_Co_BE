@@ -2,6 +2,7 @@ package co.kr.user.controller;
 
 import co.kr.user.model.dto.retrieve.*;
 import co.kr.user.service.RetrieveService;
+import co.kr.user.util.BaseResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,22 +17,22 @@ public class RetrieveController {
     private final RetrieveService retrieveService;
 
     @PostMapping("/findID/findMail")
-    public ResponseEntity<FindIDFirstStepDTO> findID(@RequestBody @Valid FindIDFirstStepReq findIDFirstStepReq) {
-        return ResponseEntity.ok(retrieveService.findIdFirst(findIDFirstStepReq.getMail()));
+    public ResponseEntity<BaseResponse<FindIDFirstStepDTO>> findID(@RequestBody @Valid FindIDFirstStepReq findIDFirstStepReq) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", retrieveService.findIdFirst(findIDFirstStepReq.getMail())));
     }
 
     @PostMapping("/findID/getID")
-    public ResponseEntity<String> findID(@RequestBody @Valid FindIDSecondStepReq findIDSecondStepReq) {
-        return ResponseEntity.ok(retrieveService.findIdSecond(findIDSecondStepReq));
+    public ResponseEntity<BaseResponse<String>> findID(@RequestBody @Valid FindIDSecondStepReq findIDSecondStepReq) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", retrieveService.findIdSecond(findIDSecondStepReq)));
     }
 
     @PostMapping("/findPW/findMail")
-    public ResponseEntity<FindPWFirstStepDTO> findPW(@RequestBody @Valid FindPWFirstStepReq findPWFirstStepReq) {
-        return ResponseEntity.ok(retrieveService.findPwFirst(findPWFirstStepReq.getMail()));
+    public ResponseEntity<BaseResponse<FindPWFirstStepDTO>> findPW(@RequestBody @Valid FindPWFirstStepReq findPWFirstStepReq) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", retrieveService.findPwFirst(findPWFirstStepReq.getMail())));
     }
 
     @PostMapping("/findPW/setPW")
-    public ResponseEntity<String> findPW(@RequestBody @Valid FindPWSecondStepReq findPWSecondStepReq) {
-        return ResponseEntity.ok(retrieveService.findPwSecond(findPWSecondStepReq));
+    public ResponseEntity<BaseResponse<String>> findPW(@RequestBody @Valid FindPWSecondStepReq findPWSecondStepReq) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", retrieveService.findPwSecond(findPWSecondStepReq)));
     }
 }

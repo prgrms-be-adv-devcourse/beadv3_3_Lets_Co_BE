@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,7 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
-
+import org.springframework.util.StringUtils;
 
 @Entity
 @Getter
@@ -43,26 +44,38 @@ public class UsersAddress {
     private String phoneNumber;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private int del;
+    private UserDel del;
 
     @Builder
     public UsersAddress(Long usersIdx, String addressCode, String recipient, String address, String addressDetail, String phoneNumber) {
+        if (usersIdx == null) throw new IllegalArgumentException("사용자 식별자는 필수입니다.");
+        if (!StringUtils.hasText(addressCode)) throw new IllegalArgumentException("주소 코드는 필수입니다.");
+
         this.usersIdx = usersIdx;
         this.addressCode = addressCode;
         this.recipient = recipient;
         this.address = address;
         this.addressDetail = addressDetail;
         this.phoneNumber = phoneNumber;
+        this.del = UserDel.ACTIVE;
     }
 
-    public void updateAddress( String recipient, String address, String addressDetail, String phoneNumber) {
-        this.recipient = recipient;
-        this.address = address;
-        this.addressDetail = addressDetail;
-        this.phoneNumber = phoneNumber;
+    public void updateAddress(String recipient, String address, String addressDetail, String phoneNumber) {
+        if (StringUtils.hasText(recipient)) {
+            this.recipient = recipient.trim();
+        }
+        if (StringUtils.hasText(address)) {
+            this.address = address.trim();
+        }
+        if (StringUtils.hasText(addressDetail)) {
+            this.addressDetail = addressDetail.trim();
+        }
+        if (StringUtils.hasText(phoneNumber)) {
+            this.phoneNumber = phoneNumber.trim();
+        }
     }
 
     public void deleteAddress() {
-        this.del = 1;
+        this.del = UserDel.DELETED;
     }
 }

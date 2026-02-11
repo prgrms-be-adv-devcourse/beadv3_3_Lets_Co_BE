@@ -5,6 +5,5 @@ import lombok.Data;
 
 @Data
 public class ClientRoleDTO {
-    private Long idx;
     private UsersRole role;
 }

@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersMembership;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.util.CryptoConverter;
@@ -11,7 +12,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDateTime;
-
 
 @Entity
 @Getter
@@ -58,7 +58,7 @@ public class Users {
     private LocalDateTime updatedAt;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private int del;
+    private UserDel del;
 
     @Builder
     public Users(String id, String pw) {
@@ -67,38 +67,37 @@ public class Users {
         this.failedLoginAttempts = 0;
         this.role = UsersRole.USERS;
         this.membership = UsersMembership.STANDARD;
-        this.agreeTermsAt = null;
-        this.agreePrivacyAt = null;
-        this.createdAt = null;
-        this.updatedAt = null;
-        this.del = 2;
+        this.del = UserDel.PENDING;
     }
 
     public void checkAccountStatus() {
-        if (this.del == 1) {
+        if (this.del == UserDel.DELETED) {
             throw new IllegalStateException("탈퇴한 회원입니다.");
         }
-        if (this.del == 2) {
+        if (this.del == UserDel.PENDING) {
             throw new IllegalStateException("인증을 먼저 시도해 주세요.");
         }
     }
 
-    public void increaseLoginFailCount() {
-        this.failedLoginAttempts += 1;
+    public boolean isLocked() {
+        return this.lockedUntil != null && this.lockedUntil.isAfter(LocalDateTime.now());
     }
 
-    public void lockAccount() {
-        this.failedLoginAttempts = 0;
-        this.lockedUntil = LocalDateTime.now().plusMinutes(15);
+    public void handleLoginFailure() {
+        this.failedLoginAttempts += 1;
+        if (this.failedLoginAttempts >= 5) {
+            this.lockedUntil = LocalDateTime.now().plusMinutes(15);
+        }
     }
 
     public void completeLogin() {
         this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
     }
 
-    public void changePassword(String pw) {
-        this.pw = pw;
-        this.failedLoginAttempts = 0;
+    public void changePassword(String encodedPw) {
+        this.pw = encodedPw;
+        this.completeLogin();
     }
 
     public void updateMembership(UsersMembership membership) {
@@ -106,12 +105,12 @@ public class Users {
     }
 
     public void activateUsers() {
-        this.del = 0;
+        this.del = UserDel.ACTIVE;
     }
 
-    public void deleteUsers(String id) {
-        this.id = id;
-        this.del = 1;
+    public void deleteUsers(String deletedId) {
+        this.id = deletedId;
+        this.del = UserDel.DELETED;
     }
 
     public void assignRole(UsersRole role) {

@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -52,33 +54,42 @@ public class Seller {
     private LocalDateTime updatedAt;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private int del;
+    private UserDel del;
 
     @Builder
     public Seller(Long usersIdx, String sellerName, String businessLicense, String bankBrand, String bankName, String bankToken) {
+        if (usersIdx == null) throw new IllegalArgumentException("사용자 식별자는 필수입니다.");
+        if (!StringUtils.hasText(sellerName)) throw new IllegalArgumentException("판매자 명은 필수입니다.");
+
         this.usersIdx = usersIdx;
         this.sellerName = sellerName;
         this.businessLicense = businessLicense;
         this.bankBrand = bankBrand;
         this.bankName = bankName;
         this.bankToken = bankToken;
-        this.createdAt = null;
-        this.updatedAt = null;
-        this.del = 2;
+        this.del = UserDel.PENDING;
     }
 
-    public void updateSeller(String sellerName, String bankBrand, String bankName, String bankToken) {
-        this.sellerName = sellerName;
-        this.bankBrand = bankBrand;
-        this.bankName = bankName;
-        this.bankToken = bankToken;
+    public void updateSeller(String sellerName, String bankBrand, String bankName, String encodedBankToken) {
+        if (StringUtils.hasText(sellerName)) {
+            this.sellerName = sellerName.trim();
+        }
+        if (StringUtils.hasText(bankBrand)) {
+            this.bankBrand = bankBrand.trim();
+        }
+        if (StringUtils.hasText(bankName)) {
+            this.bankName = bankName.trim();
+        }
+        if (StringUtils.hasText(encodedBankToken)) {
+            this.bankToken = encodedBankToken;
+        }
     }
 
     public void activateSeller() {
-        this.del = 0;
+        this.del = UserDel.ACTIVE;
     }
 
     public void deleteSeller() {
-        this.del = 1;
+        this.del = UserDel.DELETED;
     }
 }

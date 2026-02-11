@@ -10,6 +10,7 @@ import co.kr.user.model.dto.admin.AdminUserListDTO;
 import co.kr.user.model.dto.card.CardListDTO;
 import co.kr.user.model.entity.*;
 import co.kr.user.model.vo.DBSorting;
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AdminService;
 import co.kr.user.service.UserQueryService;
@@ -51,7 +52,7 @@ public class AdminServiceImpl implements AdminService {
                 .map(Users::getUsersIdx)
                 .collect(Collectors.toList());
 
-        Map<Long, UsersInformation> userInfoMap = userInformationRepository.findAllByUsersIdxInAndDel(userIdxList, 0)
+        Map<Long, UsersInformation> userInfoMap = userInformationRepository.findAllByUsersIdxInAndDel(userIdxList, UserDel.ACTIVE)
                 .stream()
                 .collect(Collectors.toMap(UsersInformation::getUsersIdx, Function.identity()));
 
@@ -105,7 +106,7 @@ public class AdminServiceImpl implements AdminService {
         Users targetUser = userQueryService.findActiveUserById(id); //
         UsersInformation targetInfo = userQueryService.findActiveUserInfo(targetUser.getUsersIdx()); //
 
-        List<AddressListDTO> addressList = userAddressRepository.findAllByUsersIdxAndDel(targetUser.getUsersIdx(), 0).stream()
+        List<AddressListDTO> addressList = userAddressRepository.findAllByUsersIdxAndDel(targetUser.getUsersIdx(), UserDel.ACTIVE).stream()
                 .map(addr -> {
                     AddressListDTO dto = new AddressListDTO();
                     dto.setDefaultAddress(addr.getAddressIdx().equals(targetInfo.getDefaultAddress()) ? 1 : 0);
@@ -119,7 +120,7 @@ public class AdminServiceImpl implements AdminService {
                 .sorted((a, b) -> Integer.compare(b.getDefaultAddress(), a.getDefaultAddress()))
                 .collect(Collectors.toList());
 
-        List<CardListDTO> cardList = userCardRepository.findAllByUsersIdxAndDel(targetUser.getUsersIdx(), 0).stream()
+        List<CardListDTO> cardList = userCardRepository.findAllByUsersIdxAndDel(targetUser.getUsersIdx(), UserDel.ACTIVE).stream()
                 .map(card -> {
                     CardListDTO dto = new CardListDTO();
                     dto.setDefaultCard(card.getCardIdx().equals(targetInfo.getDefaultCard()) ? 1 : 0);

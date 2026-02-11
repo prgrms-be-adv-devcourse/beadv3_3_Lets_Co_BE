@@ -2,6 +2,7 @@ package co.kr.user.controller;
 
 import co.kr.user.model.dto.admin.*;
 import co.kr.user.service.AdminService;
+import co.kr.user.util.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,29 +18,35 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("/list/{page}")
-    public ResponseEntity<List<AdminUserListDTO>> userList(@RequestHeader("X-USERS-IDX") Long userIdx,
-                                                           @PathVariable int page,
-                                                           @RequestBody AdminItemsPerPageReq adminPageReq) {
-        return ResponseEntity.ok(adminService.userList(userIdx, page, adminPageReq));
+    public ResponseEntity<BaseResponse<List<AdminUserListDTO>>> userList(@RequestHeader("X-USERS-IDX") Long userIdx,
+                                                                         @PathVariable int page,
+                                                                         @RequestBody AdminItemsPerPageReq adminPageReq) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", adminService.userList(userIdx, page, adminPageReq)));
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<AdminUserDetailDTO> userDetail(@RequestHeader("X-USERS-IDX") Long userIdx, @PathVariable String id) {
-        return ResponseEntity.ok(adminService.userDetail(userIdx, id));
+    public ResponseEntity<BaseResponse<AdminUserDetailDTO>> userDetail(@RequestHeader("X-USERS-IDX") Long userIdx,
+                                                                       @PathVariable String id) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", adminService.userDetail(userIdx, id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> userRole(@RequestHeader("X-USERS-IDX") Long userIdx, @PathVariable String id, @RequestBody  AdminRoleReq req) {
-        return ResponseEntity.ok(adminService.userRole(userIdx, id, req.getRole()));
+    public ResponseEntity<BaseResponse<String>> userRole(@RequestHeader("X-USERS-IDX") Long userIdx,
+                                                         @PathVariable String id,
+                                                         @RequestBody AdminRoleReq req) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", adminService.userRole(userIdx, id, req.getRole())));
     }
 
     @PutMapping("/{id}/block")
-    public ResponseEntity<String> userBlock(@RequestHeader("X-USERS-IDX") Long userIdx, @PathVariable String id, @RequestBody AdminLockedUntilReq adminLockedUntilReq) {
-        return  ResponseEntity.ok(adminService.userBlock(userIdx, id, adminLockedUntilReq.getLocalDateTime()));
+    public ResponseEntity<BaseResponse<String>> userBlock(@RequestHeader("X-USERS-IDX") Long userIdx,
+                                                          @PathVariable String id,
+                                                          @RequestBody AdminLockedUntilReq adminLockedUntilReq) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", adminService.userBlock(userIdx, id, adminLockedUntilReq.getLocalDateTime())));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> userDelete(@RequestHeader("X-USERS-IDX") Long userIdx, @PathVariable String id) {
-        return ResponseEntity.ok(adminService.userDelete(userIdx, id));
+    public ResponseEntity<BaseResponse<String>> userDelete(@RequestHeader("X-USERS-IDX") Long userIdx,
+                                                           @PathVariable String id) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", adminService.userDelete(userIdx, id)));
     }
 }

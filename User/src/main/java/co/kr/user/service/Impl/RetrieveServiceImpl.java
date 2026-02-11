@@ -5,6 +5,7 @@ import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
 import co.kr.user.model.dto.retrieve.*;
 import co.kr.user.model.entity.*;
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.RetrieveService;
@@ -35,7 +36,7 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Override
     @Transactional
     public FindIDFirstStepDTO findIdFirst(String mail) {
-        UsersInformation info = userInformationRepository.findByMailAndDel(mail, 0)
+        UsersInformation info = userInformationRepository.findByMailAndDel(mail, UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 정보가 없습니다."));
 
         userQueryService.findActiveUser(info.getUsersIdx());
@@ -59,13 +60,13 @@ public class RetrieveServiceImpl implements RetrieveService {
 
     @Override
     public String findIdSecond(FindIDSecondStepReq req) {
-        UsersInformation info = userInformationRepository.findByMailAndDel(req.getMail(), 0)
+        UsersInformation info = userInformationRepository.findByMailAndDel(req.getMail(), UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일 정보가 없습니다."));
 
         Users user = userQueryService.findActiveUser(info.getUsersIdx());
 
         UsersVerifications verification = userVerificationsRepository
-                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), 0)
+                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 내역이 없습니다."));
 
         validateVerification(verification, req.getAuthCode(), UsersVerificationsPurPose.FIND_ID);
@@ -76,7 +77,7 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Override
     @Transactional
     public FindPWFirstStepDTO findPwFirst(String mail) {
-        UsersInformation info = userInformationRepository.findByMailAndDel(mail, 0)
+        UsersInformation info = userInformationRepository.findByMailAndDel(mail, UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 정보가 없습니다."));
 
         userQueryService.findActiveUser(info.getUsersIdx());
@@ -101,13 +102,13 @@ public class RetrieveServiceImpl implements RetrieveService {
     @Override
     @Transactional
     public String findPwSecond(FindPWSecondStepReq req) {
-        UsersInformation info = userInformationRepository.findByMailAndDel(req.getMail(), 0)
+        UsersInformation info = userInformationRepository.findByMailAndDel(req.getMail(), UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일 정보가 없습니다."));
 
         Users user = userQueryService.findActiveUser(info.getUsersIdx());
 
         UsersVerifications verification = userVerificationsRepository
-                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), 0)
+                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 내역이 없습니다."));
 
         validateVerification(verification, req.getAuthCode(), UsersVerificationsPurPose.RESET_PW);

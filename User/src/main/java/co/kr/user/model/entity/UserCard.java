@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Getter
@@ -44,10 +46,13 @@ public class UserCard {
     private int expYear;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private int del;
+    private UserDel del;
 
     @Builder
     public UserCard(Long usersIdx, String cardCode, String cardBrand, String cardName, String cardToken, int expMonth, int expYear) {
+        if (usersIdx == null) throw new IllegalArgumentException("사용자 식별자는 필수입니다.");
+        if (expMonth < 1 || expMonth > 12) throw new IllegalArgumentException("유효하지 않은 만료 월입니다.");
+
         this.usersIdx = usersIdx;
         this.cardCode = cardCode;
         this.cardBrand = cardBrand;
@@ -55,17 +60,28 @@ public class UserCard {
         this.cardToken = cardToken;
         this.expMonth = expMonth;
         this.expYear = expYear;
+        this.del = UserDel.ACTIVE;
     }
 
     public void updateCard(String cardBrand, String cardName, String cardToken, int expMonth, int expYear) {
-        this.cardBrand = cardBrand;
-        this.cardName = cardName;
-        this.cardToken = cardToken;
-        this.expMonth = expMonth;
-        this.expYear = expYear;
+        if (StringUtils.hasText(cardBrand)) {
+            this.cardBrand = cardBrand.trim();
+        }
+        if (StringUtils.hasText(cardName)) {
+            this.cardName = cardName.trim();
+        }
+        if (StringUtils.hasText(cardToken)) {
+            this.cardToken = cardToken;
+        }
+        if (expMonth >= 1 && expMonth <= 12) {
+            this.expMonth = expMonth;
+        }
+        if (expYear > 0) {
+            this.expYear = expYear;
+        }
     }
 
     public void deleteCard() {
-        this.del = 1;
+        this.del = UserDel.DELETED;
     }
 }

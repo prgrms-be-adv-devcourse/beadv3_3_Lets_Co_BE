@@ -3,6 +3,7 @@ package co.kr.user.controller;
 import co.kr.user.model.dto.login.LoginDTO;
 import co.kr.user.model.dto.login.LoginReq;
 import co.kr.user.service.LoginService;
+import co.kr.user.util.BaseResponse;
 import co.kr.user.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -19,7 +20,8 @@ public class LoginController {
     private final LoginService loginService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid LoginReq loginReq, HttpServletResponse response) {
+    public ResponseEntity<BaseResponse<String>> login(@RequestBody @Valid LoginReq loginReq,
+                                                      HttpServletResponse response) {
         LoginDTO loginDTO = loginService.login(loginReq);
 
         CookieUtil.addCookie(response,
@@ -34,17 +36,16 @@ public class LoginController {
                 CookieUtil.ACCESS_TOKEN_EXPIRY
         );
 
-        return ResponseEntity.ok("로그인 성공");
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", "로그인 성공"));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken,
-                                         HttpServletResponse response) {
-        String value = loginService.logout(refreshToken);
+    public ResponseEntity<BaseResponse<String>> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken,
+                                                       HttpServletResponse response) {
 
         CookieUtil.deleteCookie(response, CookieUtil.ACCESS_TOKEN_NAME);
         CookieUtil.deleteCookie(response, CookieUtil.REFRESH_TOKEN_NAME);
 
-        return ResponseEntity.ok(value);
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", loginService.logout(refreshToken)));
     }
 }

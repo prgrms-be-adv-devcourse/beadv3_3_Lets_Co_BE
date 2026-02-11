@@ -4,6 +4,7 @@ import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.vo.UserDel;
 import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,13 +21,13 @@ public class UserQueryServiceImpl implements UserQueryService {
 
     @Override
     public Users findWaitUser(Long userIdx) {
-        return userRepository.findByUsersIdxAndDel(userIdx, 2)
+        return userRepository.findByUsersIdxAndDel(userIdx, UserDel.PENDING)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 대기 상태가 아닌 사용자입니다."));
     }
 
     @Override
     public Users findActiveUser(Long userIdx) {
-        Users user = userRepository.findByUsersIdxAndDel(userIdx, 0)
+        Users user = userRepository.findByUsersIdxAndDel(userIdx, UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         user.checkAccountStatus();
         return user;
@@ -34,7 +35,7 @@ public class UserQueryServiceImpl implements UserQueryService {
 
     @Override
     public Users findActiveUserById(String id) {
-        Users user = userRepository.findByIdAndDel(id, 0)
+        Users user = userRepository.findByIdAndDel(id, UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
         user.checkAccountStatus();
         return user;
@@ -42,17 +43,17 @@ public class UserQueryServiceImpl implements UserQueryService {
 
     @Override
     public boolean existsActiveId(String id) {
-        return userRepository.existsByIdAndDel(id, 0);
+        return userRepository.existsByIdAndDel(id, UserDel.ACTIVE);
     }
 
     @Override
     public List<Users> findAllActiveUsers() {
-        return userRepository.findAllByDel(0);
+        return userRepository.findAllByDel(UserDel.ACTIVE);
     }
 
     @Override
     public UsersInformation findWaitUserInfo(Long userIdx) {
-        return userInformationRepository.findByUsersIdxAndDel(userIdx, 2)
+        return userInformationRepository.findByUsersIdxAndDel(userIdx, UserDel.PENDING)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 대기 상태가 아닌 사용자입니다."));
     }
 
@@ -60,7 +61,7 @@ public class UserQueryServiceImpl implements UserQueryService {
     public UsersInformation findActiveUserInfo(Long userIdx) {
         this.findActiveUser(userIdx);
 
-        return userInformationRepository.findByUsersIdxAndDel(userIdx, 0)
+        return userInformationRepository.findByUsersIdxAndDel(userIdx, UserDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 상세 정보를 찾을 수 없습니다."));
     }
 }

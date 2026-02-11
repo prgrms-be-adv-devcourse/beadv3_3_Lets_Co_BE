@@ -2,6 +2,7 @@ package co.kr.user.controller;
 
 import co.kr.user.model.dto.auth.TokenDto;
 import co.kr.user.service.AuthService;
+import co.kr.user.util.BaseResponse;
 import co.kr.user.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/refresh")
-    public ResponseEntity<String> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken,
-                                          HttpServletResponse response) {
+    public ResponseEntity<BaseResponse<String>> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken,
+                                                        HttpServletResponse response) {
         TokenDto tokenDto = authService.refreshToken(refreshToken);
 
         CookieUtil.addCookie(response,
@@ -33,6 +34,6 @@ public class AuthController {
             );
         }
 
-        return ResponseEntity.ok("토큰이 재발급되었습니다.");
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", "토큰이 재발급되었습니다."));
     }
 }

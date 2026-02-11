@@ -23,6 +23,7 @@ import co.kr.user.util.EmailTemplateProvider;
 import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -42,6 +43,15 @@ public class SellerServiceImpl implements SellerService {
     private final RandomCodeUtil randomCodeUtil;
     private final BCryptUtil bCryptUtil;
     private final EmailTemplateProvider emailTemplateProvider;
+
+    @Value("${custom.security.verification.expiration-minutes}")
+    private long expirationMinutes;
+
+    @Value("${custom.mail.subject.seller-reg}")
+    private String sellerRegSubject;
+
+    @Value("${custom.mail.subject.delete-account}")
+    private String deleteSellerSubject;
 
     @Override
     @Transactional
@@ -66,14 +76,14 @@ public class SellerServiceImpl implements SellerService {
                 .usersIdx(userIdx)
                 .purpose(UsersVerificationsPurPose.SELLER_SIGNUP)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
         userVerificationsRepository.save(verification);
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(userInfo.getMail())
-                .subject("[GutJJeu] 판매자 등록 인증번호 안내해 드립니다.")
+                .subject(sellerRegSubject)
                 .message(emailTemplateProvider.getSellerRegisterTemplate(verification.getCode()))
                 .build();
 
@@ -168,14 +178,14 @@ public class SellerServiceImpl implements SellerService {
                 .usersIdx(userIdx)
                 .purpose(UsersVerificationsPurPose.SELLER_DELETE)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
         userVerificationsRepository.save(verification);
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(userInfo.getMail())
-                .subject("[GutJJeu] 판매자 탈퇴 인증번호 안내해 드립니다.")
+                .subject(deleteSellerSubject)
                 .message(emailTemplateProvider.getDeleteSellerTemplate(verification.getCode()))
                 .build();
 

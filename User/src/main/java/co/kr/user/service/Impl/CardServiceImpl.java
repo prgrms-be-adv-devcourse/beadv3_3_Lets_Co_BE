@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +60,6 @@ public class CardServiceImpl implements CardService {
 
         UserCard userCard = UserCard.builder()
                 .usersIdx(userIdx)
-                .cardCode(UUID.randomUUID().toString())
                 .cardBrand(req.getCardBrand())
                 .cardName(req.getCardName())
                 .cardToken(req.getCardToken())

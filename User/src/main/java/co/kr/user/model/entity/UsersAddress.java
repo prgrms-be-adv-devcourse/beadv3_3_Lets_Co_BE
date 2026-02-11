@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.util.StringUtils;
 
+import java.util.UUID;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -47,12 +49,11 @@ public class UsersAddress {
     private UserDel del;
 
     @Builder
-    public UsersAddress(Long usersIdx, String addressCode, String recipient, String address, String addressDetail, String phoneNumber) {
+    public UsersAddress(Long usersIdx, String recipient, String address, String addressDetail, String phoneNumber) {
         if (usersIdx == null) throw new IllegalArgumentException("사용자 식별자는 필수입니다.");
-        if (!StringUtils.hasText(addressCode)) throw new IllegalArgumentException("주소 코드는 필수입니다.");
 
         this.usersIdx = usersIdx;
-        this.addressCode = addressCode;
+        this.addressCode = UUID.randomUUID().toString();
         this.recipient = recipient;
         this.address = address;
         this.addressDetail = addressDetail;

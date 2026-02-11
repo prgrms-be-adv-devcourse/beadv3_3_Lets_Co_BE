@@ -60,7 +60,6 @@ public class AddressServiceImpl implements AddressService {
 
         UsersAddress usersAddress = UsersAddress.builder()
                 .usersIdx(userIdx)
-                .addressCode(UUID.randomUUID().toString())
                 .recipient(addressRequestReq.getRecipient())
                 .address(addressRequestReq.getAddress())
                 .addressDetail(addressRequestReq.getAddressDetail())

@@ -7,6 +7,7 @@ import co.kr.user.util.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -22,10 +23,14 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final RedisTemplate<String, Object> redisTemplate;
-
     private final UserQueryService userQueryService;
-
     private final JWTUtil jwtUtil;
+
+    @Value("${custom.security.redis.rt-prefix}")
+    private String rtPrefix;
+
+    @Value("${custom.site.url.base}")
+    private String baseUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -52,14 +57,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtUtil.createAccessToken(user.getUsersIdx(), user.getCreatedAt(), user.getUpdatedAt());
         String refreshToken = jwtUtil.createRefreshToken(user.getUsersIdx());
 
-        redisTemplate.opsForValue().set("RT:" + user.getUsersIdx(), refreshToken, 7, TimeUnit.DAYS);
-        CookieUtil.addCookie(response, "accessToken", accessToken, 15 * 60);
-        CookieUtil.addCookie(response, "refreshToken", refreshToken, 7 * 24 * 60 * 60);
+        redisTemplate.opsForValue().set(rtPrefix + user.getUsersIdx(), refreshToken, 7, TimeUnit.DAYS);
+        CookieUtil.addCookie(response, CookieUtil.ACCESS_TOKEN_NAME, accessToken, CookieUtil.ACCESS_TOKEN_EXPIRY);
+        CookieUtil.addCookie(response, CookieUtil.REFRESH_TOKEN_NAME, refreshToken, CookieUtil.REFRESH_TOKEN_EXPIRY);
 
         if ("naver".equals(registrationId) || "kakao".equals(registrationId)) {
-            response.sendRedirect("http://localhost:3000/my/complete-profile");
+            response.sendRedirect(baseUrl + "/my/complete-profile");
         } else {
-            response.sendRedirect("http://localhost:3000/home");
+            response.sendRedirect(baseUrl + "/home");
         }
     }
 }

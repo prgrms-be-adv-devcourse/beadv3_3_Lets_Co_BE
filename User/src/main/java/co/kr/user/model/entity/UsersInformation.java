@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.function.BiFunction;
 
 @Entity
 @Getter
@@ -144,5 +145,11 @@ public class UsersInformation {
 
     public void updateAgreeMarketingAt(LocalDateTime agreeMarketingAt) {
         this.agreeMarketingAt = agreeMarketingAt;
+    }
+
+    public void validateNewPassword(String newEncodedPw, BiFunction<String, String, Boolean> passwordChecker) {
+        if (StringUtils.hasText(this.prePW) && passwordChecker.apply(newEncodedPw, this.prePW)) {
+            throw new IllegalArgumentException("과거에 사용했던 비밀번호는 다시 사용할 수 없습니다.");
+        }
     }
 }

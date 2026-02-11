@@ -4,56 +4,54 @@ import co.kr.user.model.dto.auth.TokenDto;
 import co.kr.user.model.entity.Users;
 import co.kr.user.service.AuthService;
 import co.kr.user.service.UserQueryService;
-import co.kr.user.util.CookieUtil;
 import co.kr.user.util.JWTUtil;
 import co.kr.user.util.TokenUtil;
-import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
     private final UserQueryService userQueryService;
-
     private final RedisTemplate<String, Object> redisTemplate;
-
     private final JWTUtil jwtUtil;
+
+    @Value("${custom.security.redis.rt-prefix}")
+    private String rtPrefix;
+
+    @Value("${custom.security.redis.bl-prefix}")
+    private String blPrefix;
 
     @Override
     @Transactional
     public TokenDto refreshToken(String refreshToken) {
-        if (Boolean.TRUE.equals(redisTemplate.hasKey("BL:" + refreshToken))) {
+        if (refreshToken == null || !jwtUtil.validateRefreshToken(refreshToken)) {
+            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
+        }
+
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(blPrefix + refreshToken))) {
             throw new IllegalStateException("이미 로그아웃되거나 폐기된 토큰입니다. 다시 로그인해주세요.");
         }
 
-        Claims claims = jwtUtil.getRefreshTokenClaims(refreshToken);
-        Users user = userQueryService.findActiveUser(Long.valueOf(claims.getSubject()));
+        Long userIdx = jwtUtil.getUserIdxFromToken(refreshToken, false);
+        Users user = userQueryService.findActiveUser(userIdx);
 
-        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
-            throw new IllegalStateException("계정이 " + user.getLockedUntil() + "까지 정지되었습니다.");
+        if (user.isLocked()) {
+            throw new IllegalStateException("계정이 잠금 상태입니다. 해제 일시: " + user.getLockedUntil());
         }
 
         String newAccessToken = jwtUtil.createAccessToken(user.getUsersIdx(), user.getCreatedAt(), user.getUpdatedAt());
         String newRefreshToken = null;
 
         if (TokenUtil.isTokenExpiringSoon(refreshToken)) {
-            redisTemplate.delete("RT:" + user.getUsersIdx());
-            redisTemplate.opsForValue().set("BL:" + refreshToken, "rotated");
+            redisTemplate.opsForValue().set(blPrefix + refreshToken, "rotated");
 
             newRefreshToken = jwtUtil.createRefreshToken(user.getUsersIdx());
-            redisTemplate.opsForValue().set(
-                    "RT:" + user.getUsersIdx(),
-                    newRefreshToken,
-                    Duration.ofSeconds(CookieUtil.REFRESH_TOKEN_EXPIRY)
-            );
+            redisTemplate.opsForValue().set(rtPrefix + userIdx, newRefreshToken);
         }
 
         TokenDto tokenDto = new TokenDto();

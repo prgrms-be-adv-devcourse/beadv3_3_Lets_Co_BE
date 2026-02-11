@@ -4,6 +4,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Converter
 @Component
@@ -14,7 +15,7 @@ public class CryptoConverter implements AttributeConverter<String, String> {
 
     @Override
     public String convertToDatabaseColumn(String attribute) {
-        if (attribute == null || attribute.isBlank()) {
+        if (!StringUtils.hasText(attribute)) {
             return attribute;
         }
         return aesUtil.encrypt(attribute);
@@ -22,7 +23,7 @@ public class CryptoConverter implements AttributeConverter<String, String> {
 
     @Override
     public String convertToEntityAttribute(String dbData) {
-        if (dbData == null || dbData.isBlank()) {
+        if (!StringUtils.hasText(dbData)) {
             return dbData;
         }
         return aesUtil.decrypt(dbData);

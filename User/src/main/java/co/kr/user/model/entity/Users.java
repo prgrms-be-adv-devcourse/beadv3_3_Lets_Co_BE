@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDateTime;
+import java.util.function.BiFunction;
 
 @Entity
 @Getter
@@ -83,10 +84,10 @@ public class Users {
         return this.lockedUntil != null && this.lockedUntil.isAfter(LocalDateTime.now());
     }
 
-    public void handleLoginFailure() {
+    public void handleLoginFailure(int maxAttempts, int lockMinutes) {
         this.failedLoginAttempts += 1;
-        if (this.failedLoginAttempts >= 5) {
-            this.lockedUntil = LocalDateTime.now().plusMinutes(15);
+        if (this.failedLoginAttempts >= maxAttempts) {
+            this.lockedUntil = LocalDateTime.now().plusMinutes(lockMinutes);
         }
     }
 
@@ -95,9 +96,12 @@ public class Users {
         this.lockedUntil = null;
     }
 
-    public void changePassword(String encodedPw) {
-        this.pw = encodedPw;
-        this.completeLogin();
+    public void changePassword(String newEncodedPw, String rawCurrentPw, BiFunction<String, String, Boolean> passwordChecker) {
+        if (passwordChecker.apply(rawCurrentPw, this.pw)) {
+            throw new IllegalArgumentException("새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다.");
+        }
+        this.pw = newEncodedPw;
+        this.completeLogin(); // 실패 횟수 및 잠금 상태 초기화 로직이 세트로 동작
     }
 
     public void updateMembership(UsersMembership membership) {

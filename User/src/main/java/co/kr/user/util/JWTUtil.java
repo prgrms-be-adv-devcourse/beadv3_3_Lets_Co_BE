@@ -19,46 +19,27 @@ public class JWTUtil {
     private final long refreshTokenExp;
 
     public JWTUtil(
-            @Value("${custom.security.jwt.access.secret}")
-            String accessSecret,
-            @Value("${custom.security.jwt.access.expiration}")
-            long accessTokenExp,
-            @Value("${custom.security.jwt.refresh.secret}")
-            String refreshSecret,
-            @Value("${custom.security.jwt.refresh.expiration}")
-            long refreshTokenExp
+            @Value("${custom.security.jwt.access.secret}") String accessSecret,
+            @Value("${custom.security.jwt.access.expiration}") long accessTokenExp,
+            @Value("${custom.security.jwt.refresh.secret}") String refreshSecret,
+            @Value("${custom.security.jwt.refresh.expiration}") long refreshTokenExp
     ) {
-        byte[] accessKeyBytes = Decoders.BASE64.decode(accessSecret);
-        this.accessKey = Keys.hmacShaKeyFor(accessKeyBytes);
+        this.accessKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessSecret));
+        this.refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshSecret));
         this.accessTokenExp = accessTokenExp;
-
-        byte[] refreshKeyBytes = Decoders.BASE64.decode(refreshSecret);
-        this.refreshKey = Keys.hmacShaKeyFor(refreshKeyBytes);
         this.refreshTokenExp = refreshTokenExp;
     }
 
-    public String createAccessToken(
-            Long userIDX,
-            LocalDateTime userCreatedAt,
-            LocalDateTime userUpdatedAt
-    ) {
+    public String createAccessToken(Long userIDX, LocalDateTime userCreatedAt, LocalDateTime userUpdatedAt) {
         Date now = new Date();
-
-        Date createdAtDate = (userCreatedAt != null)
-                ? Date.from(userCreatedAt.atZone(ZoneId.systemDefault()).toInstant())
-                : new Date();
-
-        Date updatedAtDate = (userUpdatedAt != null)
-                ? Date.from(userUpdatedAt.atZone(ZoneId.systemDefault()).toInstant())
-                : new Date();
+        Date createdAtDate = (userCreatedAt != null) ? Date.from(userCreatedAt.atZone(ZoneId.systemDefault()).toInstant()) : now;
+        Date updatedAtDate = (userUpdatedAt != null) ? Date.from(userUpdatedAt.atZone(ZoneId.systemDefault()).toInstant()) : now;
 
         return Jwts.builder()
                 .subject(String.valueOf(userIDX))
-
                 .claim("createdAt", createdAtDate)
                 .claim("updatedAt", updatedAtDate)
-
-                .issuedAt(now) // 토큰 발행 시간
+                .issuedAt(now)
                 .expiration(new Date(now.getTime() + accessTokenExp))
                 .signWith(accessKey, Jwts.SIG.HS256)
                 .compact();
@@ -66,7 +47,6 @@ public class JWTUtil {
 
     public String createRefreshToken(Long userIDX) {
         Date now = new Date();
-
         return Jwts.builder()
                 .subject(String.valueOf(userIDX))
                 .issuedAt(now)
@@ -79,37 +59,37 @@ public class JWTUtil {
         return validateToken(token, accessKey);
     }
 
-    public Claims getAccessTokenClaims(String token) {
-        return parseClaims(token, accessKey);
-    }
-
     public boolean validateRefreshToken(String token) {
         return validateToken(token, refreshKey);
+    }
+
+    public Claims getAccessTokenClaims(String token) {
+        return parseClaims(token, accessKey);
     }
 
     public Claims getRefreshTokenClaims(String token) {
         return parseClaims(token, refreshKey);
     }
 
+    public Long getUserIdxFromToken(String token, boolean isAccessToken) {
+        return Long.parseLong(parseClaims(token, isAccessToken ? accessKey : refreshKey).getSubject());
+    }
+
+    public long getRemainingExpiration(String token, boolean isAccessToken) {
+        Date expiration = parseClaims(token, isAccessToken ? accessKey : refreshKey).getExpiration();
+        return Math.max(0, expiration.getTime() - System.currentTimeMillis());
+    }
+
     private boolean validateToken(String token, SecretKey key) {
         try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
-
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
-
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
     private Claims parseClaims(String token, SecretKey key) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload(); // Body(Payload) 반환
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
 }

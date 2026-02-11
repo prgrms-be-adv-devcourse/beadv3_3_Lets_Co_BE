@@ -12,6 +12,7 @@ import co.kr.user.service.RetrieveService;
 import co.kr.user.service.UserQueryService;
 import co.kr.user.util.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -25,13 +26,20 @@ import java.time.LocalDateTime;
 public class RetrieveServiceImpl implements RetrieveService {
     private final UserVerificationsRepository userVerificationsRepository;
     private final UserInformationRepository userInformationRepository;
-
     private final UserQueryService userQueryService;
-
     private final RandomCodeUtil randomCodeUtil;
     private final MailUtil mailUtil;
     private final BCryptUtil bCryptUtil;
     private final EmailTemplateProvider emailTemplateProvider;
+
+    @Value("${custom.security.verification.expiration-minutes}")
+    private long expirationMinutes;
+
+    @Value("${custom.mail.subject.find-id}")
+    private String findIdSubject;
+
+    @Value("${custom.mail.subject.reset-pw}")
+    private String resetPwSubject;
 
     @Override
     @Transactional
@@ -45,12 +53,12 @@ public class RetrieveServiceImpl implements RetrieveService {
                 .usersIdx(info.getUsersIdx())
                 .purpose(UsersVerificationsPurPose.FIND_ID)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
         userVerificationsRepository.save(verification);
-        sendFindEmailAfterCommit(info.getMail(), verification.getCode());
+        sendEmailAfterCommit(info.getMail(), findIdSubject, emailTemplateProvider.getFindIDTemplate(verification.getCode()));
 
         FindIDFirstStepDTO response = new FindIDFirstStepDTO();
         response.setMail(info.getMail());
@@ -86,12 +94,12 @@ public class RetrieveServiceImpl implements RetrieveService {
                 .usersIdx(info.getUsersIdx())
                 .purpose(UsersVerificationsPurPose.RESET_PW)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
         userVerificationsRepository.save(verification);
-        sendResetEmailAfterCommit(info.getMail(), verification.getCode());
+        sendEmailAfterCommit(info.getMail(), resetPwSubject, emailTemplateProvider.getResetPasswordTemplate(verification.getCode()));
 
         FindPWFirstStepDTO response = new FindPWFirstStepDTO();
         response.setMail(info.getMail());
@@ -117,8 +125,12 @@ public class RetrieveServiceImpl implements RetrieveService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        info.updatePrePW(user.getPw());
-        user.changePassword(bCryptUtil.encode(req.getNewPW()));
+        info.validateNewPassword(req.getNewPW(), bCryptUtil::check);
+
+        String oldPw = user.getPw();
+        user.changePassword(bCryptUtil.encode(req.getNewPW()), req.getNewPW(), bCryptUtil::check);
+
+        info.updatePrePW(oldPw);
         verification.confirmVerification();
 
         return "비밀번호 재설정이 정상 처리되었습니다.";
@@ -131,23 +143,11 @@ public class RetrieveServiceImpl implements RetrieveService {
         if (!v.getCode().equals(code)) throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
     }
 
-    private void sendFindEmailAfterCommit(String email, String code) {
+    private void sendEmailAfterCommit(String email, String subject, String content) {
         EmailMessage message = EmailMessage.builder()
                 .to(email)
-                .subject("[GutJJeu] 아이디 찾기 인증번호 안내")
-                .message(emailTemplateProvider.getFindIDTemplate(code))
-                .build();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() { mailUtil.sendEmail(message, true); }
-        });
-    }
-
-    private void sendResetEmailAfterCommit(String email, String code) {
-        EmailMessage message = EmailMessage.builder()
-                .to(email)
-                .subject("[GutJJeu] 비밀번호 재설정 인증번호 안내")
-                .message(emailTemplateProvider.getResetPasswordTemplate(code))
+                .subject(subject)
+                .message(content)
                 .build();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override

@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.util.StringUtils;
 
+import java.util.UUID;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -49,12 +51,12 @@ public class UserCard {
     private UserDel del;
 
     @Builder
-    public UserCard(Long usersIdx, String cardCode, String cardBrand, String cardName, String cardToken, int expMonth, int expYear) {
+    public UserCard(Long usersIdx, String cardBrand, String cardName, String cardToken, int expMonth, int expYear) {
         if (usersIdx == null) throw new IllegalArgumentException("사용자 식별자는 필수입니다.");
         if (expMonth < 1 || expMonth > 12) throw new IllegalArgumentException("유효하지 않은 만료 월입니다.");
 
         this.usersIdx = usersIdx;
-        this.cardCode = cardCode;
+        this.cardCode = UUID.randomUUID().toString();
         this.cardBrand = cardBrand;
         this.cardName = cardName;
         this.cardToken = cardToken;

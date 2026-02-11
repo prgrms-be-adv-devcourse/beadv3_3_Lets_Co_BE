@@ -20,6 +20,7 @@ import co.kr.user.util.MailUtil;
 import co.kr.user.util.RandomCodeUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,18 @@ public class UserServiceImpl implements UserService {
     private final RandomCodeUtil randomCodeUtil;
     private final MailUtil mailUtil;
     private final EmailTemplateProvider emailTemplateProvider;
+
+    @Value("${custom.security.verification.expiration-minutes}")
+    private long expirationMinutes;
+
+    @Value("${custom.mail.subject.delete-account}")
+    private String deleteAccountSubject;
+
+    @Value("${custom.security.redis.rt-prefix}")
+    private String rtPrefix;
+
+    @Value("${custom.security.redis.bl-prefix}")
+    private String blPrefix;
 
     @Override
     public BigDecimal balance(Long userIdx) {
@@ -84,7 +97,7 @@ public class UserServiceImpl implements UserService {
                 .usersIdx(userIdx)
                 .purpose(UsersVerificationsPurPose.DELETE_ACCOUNT)
                 .code(randomCodeUtil.getCode())
-                .expiresAt(LocalDateTime.now().plusMinutes(30))
+                .expiresAt(LocalDateTime.now().plusMinutes(expirationMinutes))
                 .status(UsersVerificationsStatus.PENDING)
                 .build();
 
@@ -92,7 +105,7 @@ public class UserServiceImpl implements UserService {
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(userInfo.getMail())
-                .subject("[GutJJeu] 회원탈퇴 인증번호 안내해 드립니다.")
+                .subject(deleteAccountSubject)
                 .message(emailTemplateProvider.getDeleteAccountTemplate(verification.getCode()))
                 .build();
 
@@ -128,11 +141,11 @@ public class UserServiceImpl implements UserService {
         users.deleteUsers(users.getId() + "_DEL_" + LocalDateTime.now());
         userInfo.deleteInformation(userInfo.getMail() + "_DEL_" + LocalDateTime.now());
 
-        String rtKey = "RT:" + userIdx;
+        String rtKey = rtPrefix + userIdx;
         String refreshToken = (String) redisTemplate.opsForValue().get(rtKey);
         if (refreshToken != null) {
             redisTemplate.delete(rtKey);
-            redisTemplate.opsForValue().set("BL:" + refreshToken, "DELETED_BY_USER");
+            redisTemplate.opsForValue().set(blPrefix + refreshToken, "DELETED_BY_USER");
         }
 
         CookieUtil.deleteCookie(response, CookieUtil.ACCESS_TOKEN_NAME);

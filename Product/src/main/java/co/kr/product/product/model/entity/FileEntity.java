@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -12,6 +14,9 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor
+// createdAt,Updated_at을 null로 보낼 수 있도록 함
+@DynamicInsert
+@DynamicUpdate
 @Table(name = "File")
 public class FileEntity {
 
@@ -40,13 +45,12 @@ public class FileEntity {
     @Column(name = "Ref_Index")
     private Long refIndex;
 
-    @CreatedDate
     @Column(name = "Created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
     @Column(name = "Updated_at")
     private LocalDateTime updatedAt;
+
 
     // Soft Delete 처리를 위한 컬럼 (0: 정상, 1: 삭제)
     @Column(name = "Del", columnDefinition = "TINYINT(1) DEFAULT 0")

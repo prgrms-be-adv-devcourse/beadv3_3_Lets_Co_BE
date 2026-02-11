@@ -47,6 +47,7 @@ public class ProductServiceImpl implements ProductService {
      * 상품 목록 조회 (비회원/회원 모두)
      * 지금은 사용 안함. > Elastic에서 처리
      */
+/*
     @Override
     @Transactional(readOnly = true)
     public ProductListRes getProducts(Pageable pageable) {
@@ -64,6 +65,7 @@ public class ProductServiceImpl implements ProductService {
 
         return new ProductListRes(items);
     }
+*/
 
     /**
      * 상품 상세 조회 (비회원/회원 모두)

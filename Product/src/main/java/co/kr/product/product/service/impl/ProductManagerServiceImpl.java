@@ -51,6 +51,11 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
 
+    @Value("${custom.aws.s3.product-table}")
+    private String productTableName;
+
+
+    // TODO !! ! ! userIdx로 권환은 물론 sellerIdx 까지 필요함!!! ! ! !
 
     @Override
     @Transactional
@@ -64,6 +69,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             throw new ForbiddenException("권한이 없습니다.");
         }
 */
+        // 1.1 seller idx 받아와야함
+        // 임시
+        Long sellerIdx = 6L;
 
         // 2. 카테고리 및 ip 불러오기
         // 2.1. in 쿼리로 카테고리, ip 동시 조회
@@ -82,7 +90,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 3. 상품 저장
         ProductEntity item = ProductEntity.builder()
-                .sellerIdx(usersIdx)
+                .sellerIdx(sellerIdx)
                 .productsCode(UUID.randomUUID().toString())
                 .productsName(request.name())
                 .description(request.description())
@@ -100,6 +108,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 4. Option 저장
         List<ProductOptionEntity> options = request.options().stream()
                 .map(requestOpt ->  ProductOptionEntity.builder()
+                        .product(savedItem)
                         .optionCode(UUID.randomUUID().toString())
                         .optionName(requestOpt.name())
                         .sortOrders(requestOpt.sortOrder())
@@ -130,7 +139,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 .toList();
 
         // 5-3. DB에 저장
-        List<FileEntity> savedImage = fileRepository.saveAll(imageEntities);
+        fileRepository.saveAll(imageEntities);
 
 
 
@@ -206,7 +215,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 4. Image
         // 4.1 해당 상품에 대한 이미지 조회
-        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse("Products",product.getProductsIdx());
+        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse(productTableName ,product.getProductsIdx());
         // 4.2 S3 조회용 키
         List<String> keys = images.stream()
                 .map( image -> productPrefix + "/" + image.getStoredFileName())
@@ -355,7 +364,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         //  Image
         // 6.4 해당 상품에 대한 이미지 조회
-        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse("Products",product.getProductsIdx());
+        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse(productTableName,product.getProductsIdx());
         // 6.5 S3 조회용 키
         List<String> keys = images.stream()
                 .map( image -> productPrefix + "/" + image.getStoredFileName())
@@ -418,7 +427,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 3.1 이미지 조회
         // 전부 삭제 or 하나 만 남기고 삭제 고민
         // 주문 목록 등에서 썸네일 보여주기 용
-        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse("Products",product.getProductsIdx());
+        List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse(productTableName,product.getProductsIdx());
 
         List<String> keys = images.stream()
                 .map( image -> productPrefix + "/" + image.getStoredFileName())
@@ -460,7 +469,10 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                         doc.getProductsName(),
                         doc.getPrice(),     // Double -> BigDecimal 변환
                         doc.getSalePrice(), // Double -> BigDecimal 변환
-                        doc.getViewCount()
+                        doc.getViewCount(),
+                        doc.getStatus(),
+                        doc.getCategoryNames(),
+                        s3Service.getFileUrl(doc.getThumbnailKey())
                 ))
                 .toList();
         return new ProductListRes(

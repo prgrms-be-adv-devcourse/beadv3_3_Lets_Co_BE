@@ -59,8 +59,7 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ProductListRes> getProducts(
             @PageableDefault(size = 20) Pageable pageable,
-            // @ModelAttribute ProductListRequest requests
-            @RequestBody ProductListReq request) {
+            @ModelAttribute ProductListReq request) {
 
         //return productService.getProducts(pageable);
 

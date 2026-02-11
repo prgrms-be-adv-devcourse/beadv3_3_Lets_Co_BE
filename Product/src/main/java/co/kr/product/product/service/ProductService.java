@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProductService {
-    ProductListRes getProducts(Pageable pageable);
+    // ProductListRes getProducts(Pageable pageable);
 
 
     ProductDetailRes getProductDetail(String productsCode);

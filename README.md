@@ -205,13 +205,12 @@
 ![Google OAuth](https://img.shields.io/badge/Google_OAuth2.0-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![Toss Payments](https://img.shields.io/badge/Toss_Payment-FF3B30?style=for-the-badge&logoColor=white)
 
-![QueryDSL](https://img.shields.io/badge/QueryDSL-FF5722?style=for-the-badge)
 ![OpenFeign](https://img.shields.io/badge/OpenFeign-00CCFF?style=for-the-badge&logo=apache-feign&logoColor=white)
 
 #### 🗄 Database & Search
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![H2](https://img.shields.io/badge/H2-00599C?style=for-the-badge&logo=h2&logoColor=white)
+
 
 ![Elasticsearch](https://img.shields.io/badge/Elasticsearch-005571?style=for-the-badge&logo=elasticsearch&logoColor=white)
 ![Logstash](https://img.shields.io/badge/Logstash-005571?style=for-the-badge&logo=logstash&logoColor=white)
@@ -230,16 +229,12 @@
 ![Eureka](https://img.shields.io/badge/Eureka-0061A8?style=for-the-badge&logo=netflix&logoColor=white)
 ![Spring Cloud Gateway](https://img.shields.io/badge/Spring_Cloud_Gateway-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
-![Kafka UI](https://img.shields.io/badge/Kafka_UI-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
 
 #### 🔧 Collaboration Tools
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
 ![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
 ![Zep](https://img.shields.io/badge/Zep-008080?style=for-the-badge&logo=artstation&logoColor=white)
-
-![Canva](https://img.shields.io/badge/Canva-00C4CC?style=for-the-badge&logo=canva&logoColor=white)
 ![ERDCloud](https://img.shields.io/badge/ERDCloud-4A90E2?style=for-the-badge&logo=icloud&logoColor=white)
-![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
 
 ---

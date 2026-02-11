@@ -44,7 +44,7 @@ public class SettlementBatchScheduler {
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
-            log.info("정산 대상 월: {}", targetMonthStr);
+            log.info("정산 대상 : {} 월", targetMonthStr);
 
             jobLauncher.run(monthlySettlementJob, jobParameters);
 

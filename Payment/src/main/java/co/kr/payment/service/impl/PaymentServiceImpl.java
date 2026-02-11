@@ -63,6 +63,11 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentResponse process(PaymentReq request) {
+        // 중복 결제 방지
+        if (paymentRepository.findByOrdersIdxAndStatus(request.ordersIdx(), PaymentStatus.PAYMENT).isPresent()) {
+            throw new PaymentFailedException(ErrorCode.ALREADY_PAID);
+        }
+
         return switch (request.paymentType()) {
             case CARD -> handleCardPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
             case DEPOSIT -> handleDepositPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
@@ -88,14 +93,12 @@ public class PaymentServiceImpl implements PaymentService {
         Long ordersIdx = orderClient.getOrderIdx(request.orderCode());
 
         // 2. ordersIdx + PAYMENT 상태로 결제 내역 조회
-        // 이미 REFUND 상태인 결제는 조회되지 않음 -> 중복 환불 방지
         PaymentEntity payment = paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.PAYMENT)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "환불 가능한 결제 내역을 찾을 수 없습니다. ordersIdx=" + ordersIdx));
+                .orElseThrow(() -> new PaymentFailedException(ErrorCode.PAYMENT_NOT_FOUND));
 
         // 3. 유저 유효성 검증
         if (!payment.getUsersIdx().equals(request.userIdx())) {
-            throw new IllegalArgumentException("결제 내역의 소유자가 아닙니다.");
+            throw new PaymentFailedException(ErrorCode.USER_MISMATCH);
         }
 
         BigDecimal refundAmount = payment.getAmount();
@@ -103,11 +106,11 @@ public class PaymentServiceImpl implements PaymentService {
         switch (payment.getType()) {
             case DEPOSIT -> {
                 try {
-                    userClient.updateBalance(request.userIdx(), new BalanceClientReq(PaymentStatus.REFUND, refundAmount));
+                    userClient.updateBalance(new BalanceClientReq(request.userIdx(), PaymentStatus.REFUND, refundAmount));
                     log.info("Balance 환불 성공: userIdx={}, amount={}", request.userIdx(), refundAmount);
                 } catch (Exception e) {
                     log.error("Balance 환불 실패: userIdx={}, amount={}", request.userIdx(), refundAmount, e);
-                    throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
+                    throw new PaymentFailedException(ErrorCode.PAYMENT_CANCEL_FAILED);
                 }
             }
             case TOSS_PAY -> {
@@ -119,7 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
                     log.info("토스페이 환불 성공: paymentKey={}, amount={}", payment.getPaymentKey(), refundAmount);
                 } catch (Exception e) {
                     log.error("토스페이 환불 실패: paymentKey={}, amount={}", payment.getPaymentKey(), refundAmount, e);
-                    throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
+                    throw new PaymentFailedException(ErrorCode.PAYMENT_CANCEL_FAILED);
                 }
             }
             case CARD -> log.warn("카드 환불 요청 - 추후 실제 PG 로직 필요: userIdx={}, ordersIdx={}, amount={}",
@@ -171,7 +174,7 @@ public class PaymentServiceImpl implements PaymentService {
      */
     private PaymentResponse handleDepositPayment(Long userIdx, String orderCode, Long ordersIdx, BigDecimal amount) {
         try {
-            userClient.updateBalance(userIdx, new BalanceClientReq(PaymentStatus.PAYMENT, amount));
+            userClient.updateBalance(new BalanceClientReq(userIdx, PaymentStatus.PAYMENT, amount));
         } catch (Exception e) {
             log.error("Balance(예치금) 결제 실패: userIdx={}, amount={}", userIdx, amount, e);
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
@@ -254,6 +257,10 @@ public class PaymentServiceImpl implements PaymentService {
             log.info("토스페이 승인 API 응답: {}", response.body());
         } catch (PaymentFailedException e) {
             throw e;
+        } catch (InterruptedException e) {
+            log.error("토스 결제 승인 요청 중 인터럽트 발생: orderCode={}, paymentKey={}", orderCode, paymentKey, e);
+            Thread.currentThread().interrupt();
+            throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
         } catch (Exception e) {
             log.error("토스 결제 승인 요청 실패: orderCode={}, paymentKey={}", orderCode, paymentKey, e);
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
@@ -284,13 +291,19 @@ public class PaymentServiceImpl implements PaymentService {
 
             if (response.statusCode() != 200) {
                 log.error("토스페이 취소 실패 - Status: {}, Body: {}", response.statusCode(), response.body());
-                throw new RuntimeException("토스페이 취소 실패: " + response.body());
+                throw new PaymentFailedException(ErrorCode.PAYMENT_CANCEL_FAILED);
             }
 
             log.info("토스페이 취소 API 응답: {}", response.body());
+        } catch (PaymentFailedException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            log.error("토스 취소 요청 중 인터럽트 발생: paymentKey={}", paymentKey, e);
+            Thread.currentThread().interrupt();
+            throw new PaymentFailedException(ErrorCode.PAYMENT_CANCEL_FAILED);
         } catch (Exception e) {
             log.error("토스 취소 요청 실패: paymentKey={}", paymentKey, e);
-            throw new RuntimeException("토스페이 환불 요청 실패", e);
+            throw new PaymentFailedException(ErrorCode.PAYMENT_CANCEL_FAILED);
         }
     }
 
@@ -301,14 +314,14 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse charge(ChargeReq request) {
         if (request.paymentType() == PaymentType.DEPOSIT) {
-            throw new IllegalArgumentException("예치금으로 충전할 수 없습니다.");
+            throw new PaymentFailedException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         try {
-            userClient.updateBalance(request.userIdx(), new BalanceClientReq(PaymentStatus.CHARGE, request.amount()));
+            userClient.updateBalance(new BalanceClientReq(request.userIdx(), PaymentStatus.CHARGE, request.amount()));
         } catch (Exception e) {
             log.error("Balance(예치금) 충전 실패: userIdx={}, amount={}", request.userIdx(), request.amount(), e);
-            throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
+            throw new PaymentFailedException(ErrorCode.CHARGE_FAILED);
         }
 
         PaymentEntity payment = PaymentEntity.builder()

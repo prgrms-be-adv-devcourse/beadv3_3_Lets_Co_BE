@@ -60,6 +60,9 @@ dependencies {
     // maria db jdbc
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     // h2 for test
     runtimeOnly 'com.h2database:h2'
 

@@ -135,7 +135,7 @@
 
 ## ❗ 사이트 소개
 
-<img width="128" height="128" alt="Image" src="https://github.com/user-attachments/assets/806ebe51-0022-4fef-8cea-95355f3902d6" />
+<img width="128" height="128" alt="Image" src="https://github.com/user-attachments/assets/4653b880-a8b5-4542-9447-a17ead852646" />
 
 ### ℹ️ 사이트 이름 : GutJJeu
 > **세상에 없던 나만의 굿즈 판매 이커머스 플랫폼**

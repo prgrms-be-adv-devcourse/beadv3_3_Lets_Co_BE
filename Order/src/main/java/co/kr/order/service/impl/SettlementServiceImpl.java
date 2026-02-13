@@ -1,5 +1,7 @@
 package co.kr.order.service.impl;
 
+import co.kr.order.exception.CustomException;
+import co.kr.order.exception.ErrorCode;
 import co.kr.order.model.dto.SettlementInfo;
 import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.SettlementType;
@@ -38,7 +40,7 @@ public class SettlementServiceImpl implements SettlementService {
             settlementList.add(SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
                     .paymentIdx(paymentIdx)
-                    .type(SettlementType.Orders_CONFIRMED)
+                    .type(SettlementType.ORDERS_CONFIRMED)
                     .amount(entry.getValue())
                     .build());
         }
@@ -73,7 +75,7 @@ public class SettlementServiceImpl implements SettlementService {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<SettlementInfo> getSettlementList(Long sellerIdx) {
 
@@ -98,12 +100,14 @@ public class SettlementServiceImpl implements SettlementService {
         return returnSettlementList;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public SettlementInfo getSettlement(Long sellerIdx, Long paymentIdx) {
 
         SettlementHistoryEntity entity = settlementRepository
-        .findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
+                .findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx)
+                .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND,
+                        "정산 정보를 찾을 수 없습니다. sellerIdx=" + sellerIdx + ", paymentIdx=" + paymentIdx));
 
         return new SettlementInfo(
                 entity.getSettlementIdx(),

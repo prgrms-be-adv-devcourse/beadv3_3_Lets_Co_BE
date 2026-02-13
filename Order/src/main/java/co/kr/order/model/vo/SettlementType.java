@@ -6,7 +6,7 @@ package co.kr.order.model.vo;
  * CANCEL_ADJUST: 주문 취소(환불)
  */
 public enum SettlementType {
-    Orders_CONFIRMED,
+    ORDERS_CONFIRMED,
     SETTLE_PAYOUT,
     CANCEL_ADJUST
 }

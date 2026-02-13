@@ -1,0 +1,32 @@
+name: elk
+
+services:
+  elasticsearch:
+    env_file:
+      - ../.env
+
+    image: lujol/es:latest
+    container_name: elasticsearch
+
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node              
+      - xpack.security.enabled=false            
+      - xpack.security.http.ssl.enabled=false   
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+
+
+    volumes:
+      - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
+
+  logstash:
+    env_file:
+      - ../.env
+    image: lujol/logstash:latest
+    container_name: logstash
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ls/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+      - ./ls/pipeline:/usr/share/logstash/pipeline

@@ -1,0 +1,7 @@
+# 데이터 적재 파이프라인 1 Products
+# 카테고리와 이미지 모두 하나의index에
+- pipeline.id: products_pipeline
+  pipeline.workers: 1
+  pipeline.batch.size: 1
+  path.config: '/usr/share/logstash/pipeline/logstash-products.conf'
+

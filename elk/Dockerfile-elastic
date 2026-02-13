@@ -1,0 +1,5 @@
+
+FROM docker.elastic.co/elasticsearch/elasticsearch:9.2.2
+
+# 노리 설치
+RUN bin/elasticsearch-plugin install analysis-nori

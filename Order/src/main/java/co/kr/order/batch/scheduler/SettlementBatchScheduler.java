@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * 월간 정산 배치 스케줄러
- * - 매월 15일 새벽 1시에 전월 정산 실행
+ * - 매월 15일 새벽 3시에 전월 정산 실행
  */
 @Slf4j
 @Component
@@ -26,10 +26,6 @@ public class SettlementBatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job monthlySettlementJob;
 
-    /**
-     * 매월 15일 새벽 3시에 전월 정산 실행
-     * "0 0 3 15 * ?" = 매월 15일 03:00:00
-     */
     @Scheduled(cron = "${custom.batch.settlement.cron:0 0 3 15 * ?}")
     public void runMonthlySettlementJob() {
         log.info("===== 월간 정산 배치 스케줄 실행 시작 =====");

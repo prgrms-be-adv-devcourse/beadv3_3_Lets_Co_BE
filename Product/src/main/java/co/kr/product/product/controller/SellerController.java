@@ -7,13 +7,19 @@ import co.kr.product.product.model.dto.response.ProductDetailRes;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.model.dto.response.ResultRes;
 import co.kr.product.product.service.ProductManagerService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -41,12 +47,15 @@ public class SellerController {
     }
 
 
-    /**
+/*
+    */
+/**
      * 상품 등록(판매자)
      * @param usersIdx
      * @param request
      * @return 등록 된 상품의 상세 정보
-     */
+     *//*
+
     @PostMapping("/products")
     public  ResponseEntity<ProductDetailRes> addProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -57,6 +66,29 @@ public class SellerController {
         return ResponseEntity.ok(
                 productManagerService.addProduct(usersIdx,request));
     }
+*/
+    /**
+     * 상품 등록(판매자)
+     * @param usersIdx
+     * @param request
+     * @return 등록 된 상품의 상세 정보
+     */
+    @PostMapping(value = "/products" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public  ResponseEntity<ProductDetailRes> addProduct(
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
+
+            // swagger 인식용
+            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            @RequestPart("request") @Valid UpsertProductReq request,
+
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+            ){
+
+
+        return ResponseEntity.ok(
+                productManagerService.addProduct(usersIdx,request, images));
+    }
+
 
     /**
      * 상품 상세 정보(판매자)

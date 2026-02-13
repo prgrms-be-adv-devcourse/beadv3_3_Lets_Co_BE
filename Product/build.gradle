@@ -32,8 +32,18 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // aws s3
+//    implementation 'com.amazonaws:aws-java-sdk-s3'
+    implementation "software.amazon.awssdk:s3:2.41.20"
+
 
     // implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    // Source: https://mvnrepository.com/artifact/software.amazon.awssdk/s3
+
 
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
@@ -41,21 +51,28 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // --- [Zipkin/Tracing 관련 수정된 부분] ---
-    // 1. Micrometer와 Brave 연결 (이미 존재함 - 유지)
+    // Zipkin
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    // 2. spring-boot-starter-zipkin 제거 후 아래 Reporter 추가
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-    compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    runtimeOnly 'com.h2database:h2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
+    // maria db jdbc
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // h2 for test
+    runtimeOnly 'com.h2database:h2'
+
+    // elastic search
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
+    // for test code
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
 }
 
 dependencyManagement {

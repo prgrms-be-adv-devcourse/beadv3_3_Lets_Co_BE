@@ -30,10 +30,10 @@ public class ProductDocument {
     private String productsCode;
 
 
-    @Field(name = "price", type = FieldType.Scaled_Float)
+    @Field(name = "price", type = FieldType.Float)
     private BigDecimal price;
 
-    @Field(name = "sale_price", type = FieldType.Scaled_Float)
+    @Field(name = "sale_price", type = FieldType.Float)
     private BigDecimal salePrice;
 
     @Field(name = "seller_idx", type = FieldType.Long)
@@ -45,8 +45,16 @@ public class ProductDocument {
     @Field(name = "view_count", type = FieldType.Long)
     private Long viewCount;
 
+    @Field(name = "thumbnail_key", type = FieldType.Text)
+    private String thumbnailKey;
+
+    @MultiField(
+            mainField = @Field (name = "category_names", type = FieldType.Text),
+            otherFields = @InnerField(suffix = "keyword", type = FieldType.Keyword, ignoreAbove = 256))
+    private List<String> categoryNames;
+
     // 날짜 포맷 매핑
-    @Field(name = "updated_at", type = FieldType.Date,format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSX")
+    @Field(name = "updated_at", type = FieldType.Date,format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSSSSX")
     private LocalDateTime updatedAt;
 
     @Field(name = "del", type = FieldType.Boolean)

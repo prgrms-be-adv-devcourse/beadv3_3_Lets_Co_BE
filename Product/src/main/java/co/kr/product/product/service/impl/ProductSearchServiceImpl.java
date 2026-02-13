@@ -1,5 +1,6 @@
 package co.kr.product.product.service.impl;
 
+import co.kr.product.common.service.S3Service;
 import co.kr.product.product.model.document.ProductDocument;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.ProductListRes;
@@ -19,18 +20,35 @@ import java.util.List;
 public class ProductSearchServiceImpl implements ProductSearchService {
 
     private final ProductEsRepository productEsRepository;
-
+    private final S3Service s3Service;
 
     // 상품 리스트 전체/검색
     @Transactional(readOnly = true)
     public ProductListRes getProductsList(Pageable pageable, ProductListReq request){
 
         String search = request.search();
+        String category = request.category();
 
-        // 1. 검색 (search 없을 시 전체 리스트 반환)
-        Page<ProductDocument> pageResult = (search == null || search.isBlank())
-                ? productEsRepository.findAll(pageable)
-                : productEsRepository.findByProductsNameAndDelFalse(search, pageable);
+        // 1. 검색
+        Page<ProductDocument> pageResult;
+
+        boolean hasSearch = !(search == null || search.isBlank());
+        boolean hasCategory = !(category == null || category.isBlank());
+
+
+        if (!hasSearch && !hasCategory){
+            pageResult = productEsRepository.findAll(pageable);
+        }
+        else if(hasSearch && !hasCategory){
+            pageResult = productEsRepository.findByProductsNameAndDelFalse(search, pageable);
+        }
+        else if (!hasSearch && hasCategory) {
+            pageResult = productEsRepository.findAllByCategoryNamesAndDelFalse(category, pageable);
+        }
+        else{
+            pageResult = productEsRepository.findAllByProductsNameAndCategoryNamesAndDelFalse(search, category, pageable);
+        }
+
 
         // 2. Document -> Response DTO 변환
         List<ProductRes> items = pageResult.stream()
@@ -39,7 +57,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                         doc.getProductsName(),
                         doc.getPrice(),
                         doc.getSalePrice(),
-                        doc.getViewCount()
+                        doc.getViewCount(),
+                        doc.getStatus(),
+                        doc.getCategoryNames(),
+                        s3Service.getFileUrl(doc.getThumbnailKey())
                 ))
                 .toList();
 

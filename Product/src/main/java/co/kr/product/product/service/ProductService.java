@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProductService {
-    ProductListRes getProducts(Pageable pageable);
+    // ProductListRes getProducts(Pageable pageable);
 
 
-    ProductDetailRes getProductDetail(String productsCode);
+    IdxAndDetailRes getProductDetail(String productsCode);
 
 
     ProductCheckStockRes getCheckStock(String productsCode);
@@ -22,7 +22,7 @@ public interface ProductService {
 
     void deductStocks(List<DeductStockReq> deductStockReq);
 
-    ProductInfoToOrderRes getProductInfo(Long productsIdx, Long optionIdx);
+    ProductInfoToOrderRes getProductInfo(String productsCode, String optionCode);
 
     List<ProductInfoToOrderRes> getProductInfoList(List<ProductInfoToOrderReq> requests);
 

@@ -13,4 +13,8 @@ public interface ProductEsRepository extends ElasticsearchRepository<ProductDocu
     Page<ProductDocument> findByProductsNameAndDelFalse(String productsName, Pageable pageable);
 
     Page<ProductDocument> findAllBySellerIdxAndProductsNameAndDelFalse(Long sellerIdx, String search, Pageable pageable);
+
+    Page<ProductDocument> findAllByCategoryNamesAndDelFalse(String categoryNames, Pageable pageable);
+
+    Page<ProductDocument> findAllByProductsNameAndCategoryNamesAndDelFalse(String search, String categoryNames, Pageable pageable);
 }

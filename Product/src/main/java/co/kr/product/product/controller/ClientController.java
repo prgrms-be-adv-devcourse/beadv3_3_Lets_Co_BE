@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/client/product")
+@RequestMapping("/client/products")
 public class ClientController {
 
     private final ProductService productService;
@@ -42,12 +42,12 @@ public class ClientController {
 
 
     // order에 보내 줄 상품 정보
-    @GetMapping("/{productsIdx}/{optionIdx}")
+    @GetMapping("/{productsCode}/{optionCode}")
     public ProductInfoToOrderRes getProductInfo(
-            @PathVariable("productsIdx") Long productsIdx,
-            @PathVariable("optionIdx") Long optionIdx
+            @PathVariable("productsCode") String productsCode,
+            @PathVariable("optionCode") String optionCode
     ) {
-        return productService.getProductInfo(productsIdx, optionIdx);
+        return productService.getProductInfo(productsCode, optionCode);
     }
 
     // order에 보내 줄 상품 정보 리스트

@@ -6,6 +6,8 @@ public record ProductInfoToOrderRes(
         Long productIdx,
         Long optionIdx,
         Long sellerIdx,
+        String productCode,
+        String optionCode,
         String productName,
 //        String imageUrl,
         String optionContent,

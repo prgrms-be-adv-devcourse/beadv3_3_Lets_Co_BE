@@ -1,6 +1,5 @@
 package co.kr.payment.controller;
 
-import co.kr.payment.model.dto.request.PaymentReq;
 import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.service.PaymentService;
@@ -14,16 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/client/payments")
-public class PaymentApiController {
+public class ClientPaymentController {
 
     private final PaymentService paymentService;
-
-    @PostMapping("/process")
-    public ResponseEntity<PaymentResponse> processPayment(
-            @RequestBody PaymentReq request
-    ) {
-        return ResponseEntity.ok(paymentService.process(request));
-    }
 
     @PostMapping("/refund")
     public ResponseEntity<PaymentResponse> refundPayment(

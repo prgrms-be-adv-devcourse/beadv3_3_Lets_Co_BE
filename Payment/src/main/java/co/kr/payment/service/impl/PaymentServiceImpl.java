@@ -54,6 +54,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${custom.payments.toss.cancel-url}")
     private String tossPaymentCancelUrl;
 
+
     /**
      * 결제 수단별 결제 처리 (통합)
      * - CARD: 카드 결제 (연동없이 기록만 저장)
@@ -62,22 +63,53 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     @Transactional
-    public PaymentResponse process(PaymentReq request) {
+    public void process(Long userIdx, PaymentReq request) {
+
+        Long ordersIdx = orderClient.getOrderIdx(request.orderCode());
+
         // 중복 결제 방지
-        if (paymentRepository.findByOrdersIdxAndStatus(request.ordersIdx(), PaymentStatus.PAYMENT).isPresent()) {
+        if (paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.PAYMENT).isPresent()) {
             throw new PaymentFailedException(ErrorCode.ALREADY_PAID);
         }
 
-        return switch (request.paymentType()) {
-            case CARD -> handleCardPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
-            case DEPOSIT -> handleDepositPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
-            case TOSS_PAY -> {
-                if (request.paymentKey() == null || request.paymentKey().isBlank()) {
-                    throw new PaymentFailedException(ErrorCode.PAYMENT_KEY_NOT_FOUND);
+        try {
+            switch (request.paymentType()) {
+                case CARD -> handleCardPayment(userIdx, request.orderCode(), ordersIdx, request.amount());
+
+                case DEPOSIT -> handleDepositPayment(userIdx, request.orderCode(), ordersIdx, request.amount());
+
+                case TOSS_PAY -> {
+                    if (request.tossKey() == null || request.tossKey().isBlank()) {
+                        throw new PaymentFailedException(ErrorCode.PAYMENT_KEY_NOT_FOUND);
+                    }
+
+                    handleTossPayPayment(userIdx, request.orderCode(), ordersIdx, request.tossKey(), request.amount());
                 }
-                yield handleTossPayPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.paymentKey(), request.amount());
             }
-        };
+
+        } catch (Exception e) {
+
+            log.error("결제 실패. 재고 롤백 수행. orderCode={}", request.orderCode());
+
+            orderClient.failPayment(request.orderCode());
+            throw new RuntimeException("결제 실패", e);
+        }
+
+        try {
+            // 결제 성공 후 주문 서비스에 알림
+            // 만약 정산 시 paymentIdx가 꼭 필요하다면 request DTO에 담아서 보내야 함
+            orderClient.successPayment(request.orderCode(), request.userInfo());
+
+        } catch (Exception e) {
+            log.error("주문 성공 처리(정산/후처리) 호출 중 실패. orderCode={}", request.orderCode(), e);
+
+            // 여기
+            // 결제는PG사에서 승인되었는데, 우리 서버 내부 로직(정산 등)이 터진 상황
+            // 1. 단순 네트워크 오류면 재시도(Retry) 메커니즘 필요
+            // 2. 논리적 오류면 결제 취소(환불) 로직을 여기서 수행해야 할 수도 있음
+
+            throw new RuntimeException("주문 마무리 실패", e);
+        }
     }
 
     /**

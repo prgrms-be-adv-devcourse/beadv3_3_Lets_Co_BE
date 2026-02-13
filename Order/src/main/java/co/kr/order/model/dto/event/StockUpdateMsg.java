@@ -7,6 +7,8 @@ package co.kr.order.model.dto.event;
  * @param quantity: 감소할 개수
  */
 public record StockUpdateMsg (
+        // 10~15 자리
+        String msgCode,
         String productCode,
         String optionCode,
         Long quantity

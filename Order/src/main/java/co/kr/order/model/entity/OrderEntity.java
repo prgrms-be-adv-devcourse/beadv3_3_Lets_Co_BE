@@ -1,5 +1,6 @@
 package co.kr.order.model.entity;
 
+import co.kr.order.model.dto.UserInfo;
 import co.kr.order.model.vo.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -33,19 +34,19 @@ public class OrderEntity {
     @Column(name = "Card_IDX")
     private Long cardIdx;
 
-    @Column(name = "Orders_Code", nullable = false)
+    @Column(name = "Orders_Code")
     private String orderCode;
 
-    @Column(name = "Recipient", nullable = false)
+    @Column(name = "Recipient")
     private String recipient;
 
-    @Column(name = "Address", nullable = false)
+    @Column(name = "Address")
     private String address;
 
     @Column(name = "Address_Detail")
     private String addressDetail;
 
-    @Column(name = "Phone_Number", nullable = false)
+    @Column(name = "Phone_Number")
     private String phone;
 
     @Enumerated(EnumType.STRING)
@@ -71,16 +72,23 @@ public class OrderEntity {
     private Boolean del;
 
     @Builder
-    public OrderEntity(Long userIdx, String orderCode, String recipient, String address, String addressDetail, String phone, BigDecimal itemsAmount, BigDecimal totalAmount) {
+    public OrderEntity(Long userIdx, String orderCode, BigDecimal itemsAmount, BigDecimal totalAmount) {
         this.userIdx = userIdx;
         this.orderCode = orderCode;
-        this.recipient = recipient;
-        this.address = address;
-        this.addressDetail = addressDetail;
-        this.phone = phone;
+        this.recipient = null;
+        this.address = null;
+        this.addressDetail = null;
+        this.phone = null;
         this.status = OrderStatus.CREATED;
         this.itemsAmount = itemsAmount != null ? itemsAmount : BigDecimal.ZERO;
         this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
+    }
+
+    public void setUserData(UserInfo userInfo) {
+        this.recipient = userInfo.addressInfo().recipient();
+        this.address = userInfo.addressInfo().address();
+        this.addressDetail = userInfo.addressInfo().addressDetail();
+        this.phone =userInfo.addressInfo().phone();
     }
 
     public void setCardIdx(Long cardIdx) {

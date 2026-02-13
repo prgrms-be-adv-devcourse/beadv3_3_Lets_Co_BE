@@ -106,7 +106,7 @@ public class PaymentServiceImpl implements PaymentService {
         switch (payment.getType()) {
             case DEPOSIT -> {
                 try {
-                    userClient.updateBalance(new BalanceClientReq(request.userIdx(), PaymentStatus.REFUND, refundAmount));
+                    userClient.updateBalance(request.userIdx(), new BalanceClientReq(PaymentStatus.REFUND, refundAmount));
                     log.info("Balance 환불 성공: userIdx={}, amount={}", request.userIdx(), refundAmount);
                 } catch (Exception e) {
                     log.error("Balance 환불 실패: userIdx={}, amount={}", request.userIdx(), refundAmount, e);
@@ -140,9 +140,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
         paymentRepository.save(refundPayment);
 
-        // Order 상태를 REFUNDED로 변경 (콜백)
-        orderClient.updateOrderStatus(request.orderCode(), "REFUNDED");
-
         return PaymentMapper.toResponse(refundPayment);
     }
 
@@ -161,9 +158,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentEntity saved = paymentRepository.save(payment);
 
-        // Order 상태를 PAID로 변경 (콜백)
-        orderClient.updateOrderStatus(orderCode, "PAID");
-
         return PaymentMapper.toResponse(saved);
     }
 
@@ -174,7 +168,7 @@ public class PaymentServiceImpl implements PaymentService {
      */
     private PaymentResponse handleDepositPayment(Long userIdx, String orderCode, Long ordersIdx, BigDecimal amount) {
         try {
-            userClient.updateBalance(new BalanceClientReq(userIdx, PaymentStatus.PAYMENT, amount));
+            userClient.updateBalance(userIdx, new BalanceClientReq(PaymentStatus.PAYMENT, amount));
         } catch (Exception e) {
             log.error("Balance(예치금) 결제 실패: userIdx={}, amount={}", userIdx, amount, e);
             throw new PaymentFailedException(ErrorCode.PAYMENT_FAILED);
@@ -189,9 +183,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-
-//         Order 상태를 PAID로 변경 (콜백)
-        orderClient.updateOrderStatus(orderCode, "PAID");
 
         return PaymentMapper.toResponse(saved);
     }
@@ -220,9 +211,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
 
         PaymentEntity saved = paymentRepository.save(payment);
-
-        // Order 상태를 PAID로 변경 (콜백)
-        orderClient.updateOrderStatus(orderCode, "PAID");
 
         return PaymentMapper.toResponse(saved);
     }
@@ -312,20 +300,20 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     @Transactional
-    public PaymentResponse charge(ChargeReq request) {
+    public PaymentResponse charge(Long userIdx, ChargeReq request) {
         if (request.paymentType() == PaymentType.DEPOSIT) {
             throw new PaymentFailedException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         try {
-            userClient.updateBalance(new BalanceClientReq(request.userIdx(), PaymentStatus.CHARGE, request.amount()));
+            userClient.updateBalance(userIdx, new BalanceClientReq(PaymentStatus.CHARGE, request.amount()));
         } catch (Exception e) {
-            log.error("Balance(예치금) 충전 실패: userIdx={}, amount={}", request.userIdx(), request.amount(), e);
+            log.error("Balance(예치금) 충전 실패: userIdx={}, amount={}", userIdx, request.amount(), e);
             throw new PaymentFailedException(ErrorCode.CHARGE_FAILED);
         }
 
         PaymentEntity payment = PaymentEntity.builder()
-                .usersIdx(request.userIdx())
+                .usersIdx(userIdx)
                 .status(PaymentStatus.CHARGE)
                 .type(request.paymentType())
                 .amount(request.amount())

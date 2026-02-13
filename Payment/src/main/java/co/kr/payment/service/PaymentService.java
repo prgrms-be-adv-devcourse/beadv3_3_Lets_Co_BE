@@ -10,5 +10,5 @@ public interface PaymentService {
 
     PaymentResponse refund(RefundReq refundRequest);
 
-    PaymentResponse charge(ChargeReq request);
+    PaymentResponse charge(Long userIdx, ChargeReq request);
 }

@@ -42,7 +42,7 @@ public class ClientController {
     @PostMapping("/success/{orderCode}")
     void successPayment(
             @PathVariable String orderCode,
-            @RequestParam UserInfo userInfo
+            @RequestBody UserInfo userInfo
     ) {
         orderService.orderSuccess(orderCode, userInfo);
     }
@@ -51,8 +51,6 @@ public class ClientController {
     void failPayment(
             @PathVariable String orderCode
     ) {
-
+        orderService.orderFail(orderCode);
     }
-
-
 }

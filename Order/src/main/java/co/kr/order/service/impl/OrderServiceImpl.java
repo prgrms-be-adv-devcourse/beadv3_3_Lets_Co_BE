@@ -93,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
                     Integer quantity = quantityMap.getOrDefault(productRes.optionIdx(), 0);
                     if (quantity > 0) {
                         tempOrderItems.add(createOrderItemEntity(productRes, quantity));
+
                         stocksInfos.add(new ProductInfo(
                                 productRes.productCode(),
                                 productRes.optionCode(),
@@ -134,6 +135,10 @@ public class OrderServiceImpl implements OrderService {
             throw e;
         }
 
+        if(request.orderType().equals(OrderType.CART)) {
+            cartService.deleteCartAll(orderEntity.getUserIdx());
+        }
+
         // 응답 생성
         List<OrderItemRes> responseItems = tempOrderItems.stream()
                 .map(item -> new OrderItemRes(
@@ -166,7 +171,6 @@ public class OrderServiceImpl implements OrderService {
 
     /*
      * 결제 성공 시 호출 (장바구니 삭제, 재고 동기화 이벤트)
-     * - 정산 로직 및 상품 재조회 로직 제거됨
      */
     @Transactional
     @Override
@@ -186,9 +190,6 @@ public class OrderServiceImpl implements OrderService {
 
         // 주문 상품 리스트 조회 (재고 이벤트를 위해 필요)
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
-
-        // TODO 상태 받고 CART일때만 삭제
-        cartService.deleteCartAll(orderEntity.getUserIdx());
 
         // 5. Kafka 이벤트 발행 (Product Service DB 재고 차감용)
         for (OrderItemEntity item : itemEntities) {
@@ -232,7 +233,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-     /*
+    /*
      * 주문 정보 조회
      * @param userIdx: 유저 인덱스
      * @param pageable: 페이징 정보

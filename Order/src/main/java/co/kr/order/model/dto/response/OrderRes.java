@@ -10,7 +10,7 @@ import java.util.List;
  * @param itemsAmount: 최종 결제 금액
  */
 public record OrderRes(
-        String ordersCode,
+        String orderCode,
         List<OrderItemRes> orderItemList,
         BigDecimal itemsAmount
 ) {}

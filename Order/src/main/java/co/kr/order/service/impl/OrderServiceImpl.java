@@ -22,20 +22,23 @@ import co.kr.order.repository.OrderJpaRepository;
 import co.kr.order.service.CartService;
 import co.kr.order.service.DeductStockService;
 import co.kr.order.service.OrderService;
+import co.kr.order.service.SettlementService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,12 +48,17 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderJpaRepository orderRepository;
     private final OrderItemJpaRepository orderItemRepository;
+    private final SettlementService settlementService;
 
     private final CartService cartService;
     private final DeductStockService deductStockService;
     private final ApplicationEventPublisher eventPublisher;
 
     private final ProductClient productClient;
+
+    // 정산금 처리를 위한 Redis
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     /*
      * 주문 생성
@@ -64,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
         String orderCode = UUID.randomUUID().toString();
         List<OrderItemEntity> tempOrderItems = new ArrayList<>();
         List<ProductInfo> stocksInfos = new ArrayList<>();
+        Map<Long, BigDecimal> sellerSettlementMap = new HashMap<>();
 
         switch (request.orderType()) {
             case OrderType.DIRECT:
@@ -75,6 +84,9 @@ public class OrderServiceImpl implements OrderService {
 
                 // 엔티티 생성
                 tempOrderItems.add(createOrderItemEntity(product, request.productInfo().quantity()));
+
+                BigDecimal directAmount = product.price().multiply(BigDecimal.valueOf(request.productInfo().quantity()));
+                sellerSettlementMap.merge(product.sellerIdx(), directAmount, BigDecimal::add);
 
                 // 재고 차감 정보
                 stocksInfos.add(new ProductInfo(
@@ -93,6 +105,9 @@ public class OrderServiceImpl implements OrderService {
                     Integer quantity = quantityMap.getOrDefault(productRes.optionIdx(), 0);
                     if (quantity > 0) {
                         tempOrderItems.add(createOrderItemEntity(productRes, quantity));
+
+                        BigDecimal itemAmount = productRes.price().multiply(BigDecimal.valueOf(quantity));
+                        sellerSettlementMap.merge(productRes.sellerIdx(), itemAmount, BigDecimal::add);
 
                         stocksInfos.add(new ProductInfo(
                                 productRes.productCode(),
@@ -129,6 +144,18 @@ public class OrderServiceImpl implements OrderService {
                 item.setOrder(orderEntity);
             }
             orderItemRepository.saveAll(tempOrderItems);
+
+            /* ======================
+             * 정산 잘 적용되는지 로그
+             =======================*/
+            log.info("========== [정산 로그] 주문 생성 (Redis 저장 전) ==========");
+            log.info("OrderCode: {}", orderCode);
+            sellerSettlementMap.forEach((sellerIdx, amount) ->
+                    log.info(" - 판매자(SellerIdx): {}, 정산금: {}", sellerIdx, amount)
+            );
+            log.info("==========================================================");
+
+            saveSettlementInfoToRedis(orderCode, sellerSettlementMap);
         } catch (Exception e) {
             log.error("주문 저장 실패. 재고 롤백. orderCode={}", orderCode);
             deductStockService.rollBackStocks(stocksInfos);
@@ -156,7 +183,7 @@ public class OrderServiceImpl implements OrderService {
         return new OrderRes(orderCode, responseItems, totalAmount);
     }
 
-    // Helper Method
+    // Helper Method 주문한 상품 엔티티
     private OrderItemEntity createOrderItemEntity(ClientProductRes product, Integer quantity) {
         return OrderItemEntity.builder()
                 .productCode(product.productCode())
@@ -174,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
      */
     @Transactional
     @Override
-    public void orderSuccess(String orderCode, UserInfo userInfo) {
+    public void orderSuccess(String orderCode, Long paymentIdx, UserInfo userInfo) {
 
         // 주문 엔티티 조회
         OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode)
@@ -191,7 +218,9 @@ public class OrderServiceImpl implements OrderService {
         // 주문 상품 리스트 조회 (재고 이벤트를 위해 필요)
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
 
-        // 5. Kafka 이벤트 발행 (Product Service DB 재고 차감용)
+        processSettlement(orderCode, paymentIdx, itemEntities);
+
+        // Kafka 이벤트 발행 (Product Service DB 재고 차감용)
         for (OrderItemEntity item : itemEntities) {
             StockUpdateMsg msg = new StockUpdateMsg(
                     UUID.randomUUID().toString(),
@@ -231,6 +260,84 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("재고 롤백 중 에러 발생! 수동 확인 필요. orderCode={}", orderCode, e);
         }
+    }
+
+
+    // ==========================================
+    // Helper Methods Settlement (Redis)
+    // ==========================================
+
+    private void saveSettlementInfoToRedis(String orderCode, Map<Long, BigDecimal> map) {
+        try {
+            String key = "settlement:" + orderCode;
+
+            String jsonValue = objectMapper.writeValueAsString(map);
+            redisTemplate.opsForValue().set(key, jsonValue, 30, TimeUnit.MINUTES);
+            log.info("Redis 정산 정보 저장 완료: {}", orderCode);
+
+        } catch (JsonProcessingException e) {
+            log.error("정산 정보 Redis 직렬화 실패: {}", orderCode, e);
+        }
+    }
+
+    private void processSettlement(String orderCode, Long paymentIdx, List<OrderItemEntity> items) {
+        Map<Long, BigDecimal> settlementMap = null;
+        String key = "settlement:" + orderCode;
+
+        // Redis에서 조회 시도
+        try {
+            Object redisValue = redisTemplate.opsForValue().get(key);
+            if (redisValue != null) {
+                // Redis에 저장된 JSON 문자열을 Map으로 복원
+                // RedisTemplate<String, Object>라서 String으로 캐스팅 필요할 수 있음
+                String jsonStr = String.valueOf(redisValue);
+                settlementMap = objectMapper.readValue(jsonStr, new TypeReference<Map<Long, BigDecimal>>() {});
+            }
+        } catch (Exception e) {
+            log.warn("Redis 정산 정보 조회/파싱 실패 (재계산 수행 예정): {}", orderCode, e);
+        }
+
+        // Redis에 없으면 DB/Feign으로 재계산 (Fallback)
+        if (settlementMap == null || settlementMap.isEmpty()) {
+            log.info("정산 정보 재계산 수행: {}", orderCode);
+            settlementMap = recalculateSettlementMap(items);
+        }
+
+        // 정산 서비스 호출
+        if (!settlementMap.isEmpty()) {
+            settlementService.createSettlement(paymentIdx, settlementMap);
+            // 처리 후 Redis 키 삭제
+            redisTemplate.delete(key);
+        }
+    }
+
+    // Fallback: 상품 서비스를 통해 sellerIdx를 다시 조회하여 정산금 계산
+    private Map<Long, BigDecimal> recalculateSettlementMap(List<OrderItemEntity> items) {
+        Map<Long, BigDecimal> map = new HashMap<>();
+
+        // 주문 상품들의 코드로 최신 상품 정보(SellerIdx 포함) 조회
+        List<ClientProductReq> reqList = items.stream()
+                .map(item -> new ClientProductReq(item.getProductCode(), item.getOptionCode()))
+                .collect(Collectors.toList());
+
+        // Product Service 호출 (Bulk)
+        List<ClientProductRes> productInfos = productClient.getProductList(reqList);
+
+        // 정산금 합산
+        for (ClientProductRes p : productInfos) {
+            // 해당 옵션 코드의 주문 수량 찾기
+            int quantity = items.stream()
+                    .filter(i -> i.getOptionCode().equals(p.optionCode()))
+                    .mapToInt(OrderItemEntity::getQuantity)
+                    .sum();
+
+            if (quantity > 0) {
+                // 가격 * 수량
+                BigDecimal amount = p.price().multiply(BigDecimal.valueOf(quantity));
+                map.merge(p.sellerIdx(), amount, BigDecimal::add);
+            }
+        }
+        return map;
     }
 
     /*
@@ -408,7 +515,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
 
         // orderIdx return
-        return order.getUserIdx();
+        return order.getId();
     }
 
 }

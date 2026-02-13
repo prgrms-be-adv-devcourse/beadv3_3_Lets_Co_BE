@@ -39,12 +39,13 @@ public class ClientController {
         return orderService.findOrderIdx(orderCode);
     }
 
-    @PostMapping("/success/{orderCode}")
+    @PostMapping("/success/{orderCode}/{paymentIdx}")
     void successPayment(
-            @PathVariable String orderCode,
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx,
             @RequestBody UserInfo userInfo
     ) {
-        orderService.orderSuccess(orderCode, userInfo);
+        orderService.orderSuccess(orderCode, paymentIdx, userInfo);
     }
 
     @PostMapping("/fail/{orderCode}")

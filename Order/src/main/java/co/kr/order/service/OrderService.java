@@ -16,6 +16,6 @@ public interface OrderService {
     void updateOrderStatus(String orderCode, String status);
     Long findOrderIdx(String orderCode);
 
-    void orderSuccess(String orderCode, UserInfo userInfo);
+    void orderSuccess(String orderCode, Long paymentIdx, UserInfo userInfo);
     void orderFail(String orderCode);
 }

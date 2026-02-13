@@ -23,9 +23,10 @@ public interface OrderClient {
             @PathVariable String orderCode
     );
 
-    @PostMapping("/success/{orderCode}")
+    @PostMapping("/success/{orderCode}/{paymentIdx}")
     void successPayment(
-            @PathVariable String orderCode,
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx,
             @RequestBody UserInfo userInfo
     );
 }

@@ -73,6 +73,73 @@ spec:
                 name: db-secret
                 key: ELASTIC_URL 
 
+          - name: REDIS_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_ENDPOINT 
+
+          - name: REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_PORT 
+
+
+          - name: REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_PORT 
+
+          - name:  PRODUCT_VIEW_COUNT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key:  PRODUCT_VIEW_COUNT_KEY
+
+          - name: PRODUCT_DIRTY_KEY
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: PRODUCT_DIRTY_KEY
+
+          - name: AWS_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret
+                key: AWS_ACCESS_KEY
+
+          - name: AWS_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret
+                key: AWS_SECRET_KEY
+
+          - name: AWS_REGION
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret
+                key: AWS_REGION
+                
+          - name: AWS_BUCKET_NAME
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret
+                key: AWS_BUCKET_NAME
+
+          - name:  PRESIGNED_DURATION
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret
+                key:  PRESIGNED_DURATION
+
+          - name: AWS_PRODUCT_PREFIX
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret
+                key: AWS_PRODUCT_PREFIX
+
           ports:
             - containerPort: 8080
 

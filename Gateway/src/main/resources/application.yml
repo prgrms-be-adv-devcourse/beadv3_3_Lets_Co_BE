@@ -10,6 +10,11 @@ spring:
       server:
         webflux:
           routes:
+            - id: client-User
+              uri: lb://USER
+              predicates:
+                - Path=/client/users/**
+
             - id: seller-PRODUCT
               uri: lb://PRODUCT
               predicates:

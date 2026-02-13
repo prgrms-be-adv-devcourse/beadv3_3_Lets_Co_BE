@@ -14,6 +14,12 @@ spring:
         format_sql: true
 
 custom:
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   order:
     temp-mode: false
   payments:
@@ -21,3 +27,4 @@ custom:
       confirm-url: https://api.tosspayments.com/v1/payments/confirm
       cancel-url: https://api.tosspayments.com/v1/payments/{paymentKey}/cancel
       secrets: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
+

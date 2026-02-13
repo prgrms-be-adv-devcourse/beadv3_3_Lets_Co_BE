@@ -1,7 +1,6 @@
 package co.kr.product.product.repository;
 
-import co.kr.product.product.entity.ProductEntity;
-import org.springframework.data.domain.Limit;
+import co.kr.product.product.model.entity.ProductEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,6 +19,10 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     String productsCode(String productsCode);
 
     List<ProductEntity> findByProductsIdxInAndDelFalse(List<Long> productIds);
+
+    List<ProductEntity> findAllByProductsIdxInAndDelFalse(List<Long> productsIdx);
+
+    Optional<ProductEntity> findByProductsCode(String productCode);
 }
 
 

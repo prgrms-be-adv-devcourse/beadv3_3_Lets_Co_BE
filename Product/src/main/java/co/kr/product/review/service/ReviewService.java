@@ -1,10 +1,9 @@
 package co.kr.product.review.service;
 
-import co.kr.product.product.client.AuthServiceClient;
-import co.kr.product.review.entity.Review;
-import co.kr.product.review.dto.request.ReviewUpsertRequest;
-import co.kr.product.review.dto.response.ReviewListResponse;
-import co.kr.product.review.dto.response.ReviewResponse;
+import co.kr.product.review.model.entity.Review;
+import co.kr.product.review.model.dto.request.ReviewUpsertRequest;
+import co.kr.product.review.model.dto.response.ReviewListResponse;
+import co.kr.product.review.model.dto.response.ReviewResponse;
 import co.kr.product.review.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

@@ -29,8 +29,8 @@ jobs:
           if [[ "${{ inputs.service-name }}" == *"Gateway"* ]]; then
             echo '${{ secrets.GATEWAY_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
-          elif [[ "${{ inputs.service-name }}" == *"CostomerService"* ]]; then
-            echo '${{ secrets.COSTOMERSERVICE_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+          elif [[ "${{ inputs.service-name }}" == *"customerService"* ]]; then
+            echo '${{ secrets.customerSERVICE_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
           elif [[ "${{ inputs.service-name }}" == *"Order"* ]]; then
             echo '${{ secrets.ORDER_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
@@ -40,6 +40,9 @@ jobs:
             
           elif [[ "${{ inputs.service-name }}" == *"User"* ]]; then
             echo '${{ secrets.USER_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
+            
+          elif [[ "${{ inputs.service-name }}" == *"Payment"* ]]; then
+            echo '${{ secrets.PAYMENT_TEST_YML }}' > ${{ inputs.service-name }}/src/main/resources/application.yml
             
           else
             echo "알 수 없는 서비스입니다: ${{ inputs.service-name }}"

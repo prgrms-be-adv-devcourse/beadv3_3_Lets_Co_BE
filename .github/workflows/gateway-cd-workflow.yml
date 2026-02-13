@@ -8,6 +8,7 @@ on: # 트리거 조건
   push:
     branches:
       - main # main 브랜치에 푸시될 때
+      - dev
     paths:
       - "Gateway/**" # Gateway 폴더 내의 파일이 변경되었을 때만 실행
   workflow_dispatch: # 수동으로 실행 버튼을 눌러서 시작할 수도 있음
@@ -30,7 +31,8 @@ jobs:
       service-name: gateway-service
       service-dir: Gateway
       file-name: Dockerfile
-      tag-prefix: "gateway-v" # [추가] 이렇게 하면 gateway-v1.0.0 형식으로 생성됨
+      tag-prefix: "v" # v1.0.0 형식으로 생성됨
+
 
   deploying: # 두 번째 단계: 배포
     needs: releasing # releasing 단계가 성공해야 실행됨

@@ -49,17 +49,29 @@ spec:
                 name: db-secret
                 key: DB_PASSWORD 
 
+          - name: REDIS_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_ENDPOINT 
+
+          - name: REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_PORT 
+
           - name: ZIPKIN_ENDPOINT
             valueFrom: 
               secretKeyRef:
                 name: zipkin-secret
                 key: ZIPKIN_ENDPOINT 
-
-          - name: PAYMENTS_TOSS_KEY
+                
+          - name: MANAGEMENT_ZIPKIN_TRACING_ENDPOINT
             valueFrom: 
               secretKeyRef:
-                name: order-secret
-                key: PAYMENTS_TOSS_KEY 
+                name: zipkin-secret
+                key: ZIPKIN_ENDPOINT 
 
           ports:
             - containerPort: 8080

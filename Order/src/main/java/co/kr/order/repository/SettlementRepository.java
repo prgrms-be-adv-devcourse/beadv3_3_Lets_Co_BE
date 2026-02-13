@@ -39,4 +39,5 @@ public interface SettlementRepository extends JpaRepository<SettlementHistoryEnt
             @Param("endDate") LocalDateTime endDate
     );
 
+    List<SettlementHistoryEntity> findAllByPaymentIdx(Long paymentIdx);
 }

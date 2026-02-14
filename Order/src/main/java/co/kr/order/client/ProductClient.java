@@ -28,7 +28,7 @@ public interface ProductClient {
 
     /*
      * 상품 리스트 정보 요청 (POST)
-     * @param productRequest: 상품 리스트 요청 정보 (productCode, optionCode)
+     * @param productRequest: 상품 리스트 요청 정보 (productIdx, optionIdx)
      */
     @PostMapping("/bulk")
     List<ClientProductRes> getProductList(@RequestBody List<ClientProductReq> productRequest);

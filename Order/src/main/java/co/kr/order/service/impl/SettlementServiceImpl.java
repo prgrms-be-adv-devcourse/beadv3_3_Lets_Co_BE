@@ -45,6 +45,18 @@ public class SettlementServiceImpl implements SettlementService {
                     .build());
         }
 
+
+        /*
+         * 실제 정산 DB 에 저장되었는지
+         */
+        log.info("========== [정산 로그] DB 저장 (SettlementHistory) ==========");
+        log.info("결제번호(PaymentIdx): {}", paymentIdx);
+        for (SettlementHistoryEntity entity : settlementList) {
+            log.info(" - [저장] 판매자: {}, 타입: {}, 금액: {}",
+                    entity.getSellerIdx(), entity.getType(), entity.getAmount());
+        }
+        log.info("==============================================================");
+
         settlementRepository.saveAll(settlementList);
     }
 

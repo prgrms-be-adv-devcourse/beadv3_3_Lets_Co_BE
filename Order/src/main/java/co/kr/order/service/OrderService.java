@@ -1,5 +1,6 @@
 package co.kr.order.service;
 
+import co.kr.order.model.dto.UserInfo;
 import co.kr.order.model.dto.request.OrderReq;
 import co.kr.order.model.dto.response.OrderRes;
 import jakarta.validation.Valid;
@@ -14,4 +15,7 @@ public interface OrderService {
 
     void updateOrderStatus(String orderCode, String status);
     Long findOrderIdx(String orderCode);
+
+    void orderSuccess(String orderCode, Long paymentIdx, UserInfo userInfo);
+    void orderFail(String orderCode);
 }

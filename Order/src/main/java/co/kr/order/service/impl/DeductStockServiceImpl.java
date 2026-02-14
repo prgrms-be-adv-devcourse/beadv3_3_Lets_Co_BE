@@ -131,7 +131,7 @@ public class DeductStockServiceImpl implements DeductStockService {
                 if (stock < 0) {
 
                     // 재고 감소에 성공한 상품 다시 롤백(직접 increment) 후 OutOfStockException
-                    log.info("장바구니 재고 부족 발생. 즉시 복구 후 롤백 진입. Item: {}", item.optionCode());
+                    log.info("재고 부족 발생. 즉시 복구 후 롤백 진입. Item: {}", item.optionCode());
                     ops.increment(key, item.quantity());
 
                     throw new OutOfStockException(ErrorCode.OUT_OF_STOCK);

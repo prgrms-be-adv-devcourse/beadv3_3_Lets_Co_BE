@@ -54,6 +54,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${custom.payments.toss.cancel-url}")
     private String tossPaymentCancelUrl;
 
+
     /**
      * 결제 수단별 결제 처리 (통합)
      * - CARD: 카드 결제 (연동없이 기록만 저장)
@@ -62,22 +63,60 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     @Transactional
-    public PaymentResponse process(PaymentReq request) {
+    public void process(Long userIdx, PaymentReq request) {
+
+        Long ordersIdx = orderClient.getOrderIdx(request.orderCode());
+        PaymentResponse paymentResponse;
+
         // 중복 결제 방지
-        if (paymentRepository.findByOrdersIdxAndStatus(request.ordersIdx(), PaymentStatus.PAYMENT).isPresent()) {
+        if (paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.PAYMENT).isPresent()) {
             throw new PaymentFailedException(ErrorCode.ALREADY_PAID);
         }
 
-        return switch (request.paymentType()) {
-            case CARD -> handleCardPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
-            case DEPOSIT -> handleDepositPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.amount());
-            case TOSS_PAY -> {
-                if (request.paymentKey() == null || request.paymentKey().isBlank()) {
-                    throw new PaymentFailedException(ErrorCode.PAYMENT_KEY_NOT_FOUND);
+
+        try {
+            // 2. 각 핸들러의 결과(PaymentResponse)를 변수에 저장
+            switch (request.paymentType()) {
+                case CARD -> {
+                    paymentResponse = handleCardPayment(userIdx, request.orderCode(), ordersIdx, request.amount());
                 }
-                yield handleTossPayPayment(request.userIdx(), request.orderCode(), request.ordersIdx(), request.paymentKey(), request.amount());
+                case DEPOSIT -> {
+                    paymentResponse = handleDepositPayment(userIdx, request.orderCode(), ordersIdx, request.amount());
+                }
+                case TOSS_PAY -> {
+                    if (request.tossKey() == null || request.tossKey().isBlank()) {
+                        throw new PaymentFailedException(ErrorCode.PAYMENT_KEY_NOT_FOUND);
+                    }
+                    paymentResponse = handleTossPayPayment(userIdx, request.orderCode(), ordersIdx, request.tossKey(), request.amount());
+                }
+                default -> throw new RuntimeException("결제 타입이 없습니다.");
             }
-        };
+
+        } catch (Exception e) {
+
+            log.error("결제 실패. 재고 롤백 수행. orderCode={}", request.orderCode());
+
+            orderClient.failPayment(request.orderCode());
+            throw new RuntimeException("결제 실패", e);
+        }
+
+        try {
+            // 결제 성공 후 주문 서비스에 알림
+            orderClient.successPayment(request.orderCode(), paymentResponse.paymentIdx(), request.userInfo());
+
+        } catch (Exception e) {
+            log.error("주문 성공 처리(정산/후처리) 호출 중 실패. orderCode={}", request.orderCode(), e);
+
+            try {
+                RefundReq refundReq = new RefundReq(userIdx, request.orderCode());
+                refund(refundReq);
+                // 토스 환불 요청
+            } catch (Exception noRefund) {
+                log.error("환불이 진행되지 않음. 관리자 호출 필요!!!!");
+            }
+
+            throw new RuntimeException("주문 마무리 실패", e);
+        }
     }
 
     /**

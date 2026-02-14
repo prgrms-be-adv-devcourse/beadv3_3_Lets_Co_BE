@@ -257,8 +257,8 @@ public class CartServiceImpl implements CartService {
 
             // 실제 상품 데이터를(최신화 된) 가져옴
             ClientProductReq product = new ClientProductReq(
-                    cart.getProductIdx(),
-                    cart.getOptionIdx()
+                    cart.getProductCode(),
+                    cart.getOptionCode()
             );
 
             products.add(product);

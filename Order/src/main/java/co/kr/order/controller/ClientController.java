@@ -1,5 +1,6 @@
 package co.kr.order.controller;
 
+import co.kr.order.model.dto.UserInfo;
 import co.kr.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -36,5 +37,21 @@ public class ClientController {
             @PathVariable("orderCode") String orderCode
     ) {
         return orderService.findOrderIdx(orderCode);
+    }
+
+    @PostMapping("/success/{orderCode}/{paymentIdx}")
+    void successPayment(
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx,
+            @RequestBody UserInfo userInfo
+    ) {
+        orderService.orderSuccess(orderCode, paymentIdx, userInfo);
+    }
+
+    @PostMapping("/fail/{orderCode}")
+    void failPayment(
+            @PathVariable String orderCode
+    ) {
+        orderService.orderFail(orderCode);
     }
 }

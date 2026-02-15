@@ -5,12 +5,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
+/*
+ * 스케쥴러(Worker) 설정
+ * - 대기열 시스템
+ * -
+ */
 @Configuration
 @RequiredArgsConstructor
 public class WorkerConfig {
 
     private final QueueService queueService;
 
+    /*
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * 대기열 시스템 Worker
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     */
     // [입장] 1초마다 10명씩 입장 (유량 제어)
     @Scheduled(fixedDelay = 1000)
     public void workerEnter() {

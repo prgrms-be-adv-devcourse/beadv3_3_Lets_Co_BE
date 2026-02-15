@@ -10,7 +10,6 @@ public record PaymentResponse(
         PaymentStatus status,
         PaymentType type,
         BigDecimal amount,
-        Long ordersIdx,
         Long cardIdx,
         String paymentKey
 ) {}

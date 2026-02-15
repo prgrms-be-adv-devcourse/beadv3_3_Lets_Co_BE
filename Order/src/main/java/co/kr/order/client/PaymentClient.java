@@ -6,19 +6,29 @@ import co.kr.order.model.dto.response.ClientPaymentRes;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "PAYMENT-SERVICE", path = "/client/payments")
+/*
+ * FeignClient
+ * Payment-Service에 API 요청
+ */
+@FeignClient(name = "payment-service", path = "/client/payments", url = "http://payment-service:8080")
 public interface PaymentClient {
 
+    /*
+     * 결제 요청 (POST)
+     * @param paymentRequest: 결제 요청 정보
+     */
     @PostMapping("/process")
     ClientPaymentRes processPayment(
             @RequestBody ClientPaymentReq paymentRequest
     );
 
+    /*
+     * 환불 요청 (POST)
+     * @param refundRequest: 환불 요청 정보
+     */
     @PostMapping("/refund")
     ClientPaymentRes refundPayment(
             @RequestBody ClientRefundReq refundRequest
     );
 
-    @GetMapping("/order/{ordersIdx}")
-    ClientPaymentRes getPayment(@PathVariable Long ordersIdx);
 }

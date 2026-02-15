@@ -37,8 +37,13 @@ public record UpsertProductReq(
         @NotNull(message = "옵션 리스트는 null일 수 없습니다. (빈 리스트는 허용)")
         List<ProductOptionsReq> options,
 
-        @Valid
-        @NotNull(message = "이미지 리스트는 null일 수 없습니다. (빈 리스트는 허용)")
-        List<ProductImagesReq> images
-        ) {
+        @NotNull(message = "카테고리 설정은 필수 입니다.")
+        String categoryCode,
+
+        @NotNull(message = "IP 설정은 필수 입니다.")
+        String ipCode
+
+
+
+) {
 }

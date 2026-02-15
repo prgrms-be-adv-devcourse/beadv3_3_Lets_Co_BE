@@ -1,4 +1,4 @@
-name: zipkin_server
+name: infra
 
 services:
   zipkin:

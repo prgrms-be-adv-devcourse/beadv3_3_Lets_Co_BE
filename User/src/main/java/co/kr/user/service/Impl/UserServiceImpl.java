@@ -2,10 +2,7 @@ package co.kr.user.service.Impl;
 
 import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
-import co.kr.user.model.dto.my.UserAmendReq;
-import co.kr.user.model.dto.my.UserDeleteDTO;
-import co.kr.user.model.dto.my.UserProfileDTO;
-import co.kr.user.model.dto.my.UserDTO;
+import co.kr.user.model.dto.my.*;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
@@ -156,16 +153,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserAmendReq myAmend(Long userIdx, UserAmendReq req) {
+    public UserAmendDTO myAmend(Long userIdx, UserAmendReq req) {
         userQueryService.findActiveUser(userIdx);
         UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
-        if (req.getMail() != null && !Pattern.matches("^[A-Za-z0-9+_.-]+@(.+)$", req.getMail())) {
-            throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
-        }
+        userInfo.updateProfile(
+                req.getMail(),
+                req.getGender(),
+                req.getName(),
+                req.getPhoneNumber(),
+                req.getBirth()
+        );
 
-        userInfo.updateProfile(req.getMail(), req.getGender(), req.getName(), req.getPhoneNumber(), req.getBirth());
-
-        return req;
+        UserAmendDTO userAmendDTO = new UserAmendDTO();
+        userAmendDTO.setMail(userInfo.getMail());
+        userAmendDTO.setName(userInfo.getName());
+        userAmendDTO.setPhoneNumber(userInfo.getPhoneNumber());
+        userAmendDTO.setBirth(userInfo.getBirth());
+        userAmendDTO.setGender(userInfo.getGender());
+        
+        return userAmendDTO;
     }
 }

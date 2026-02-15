@@ -28,7 +28,7 @@ public class UsersInformation {
     @Column(name = "Pre_PW")
     private String prePW;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.DeterministicConverter.class)
     @Column(name = "Mail", nullable = false)
     private String mail;
 
@@ -39,15 +39,15 @@ public class UsersInformation {
     @Column(name = "Balance", nullable = false, precision = 19, scale = 2)
     private BigDecimal balance;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Name", nullable = false, length = 512)
     private String name;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Phone_Number", nullable = false, length = 512)
     private String phoneNumber;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Birth", nullable = false, length = 512)
     private String birth;
 

@@ -1,9 +1,6 @@
 package co.kr.user.service;
 
-import co.kr.user.model.dto.my.UserAmendReq;
-import co.kr.user.model.dto.my.UserDTO;
-import co.kr.user.model.dto.my.UserDeleteDTO;
-import co.kr.user.model.dto.my.UserProfileDTO;
+import co.kr.user.model.dto.my.*;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.math.BigDecimal;
@@ -19,5 +16,5 @@ public interface UserService {
 
     String myDelete(Long userIdx, String authCode, HttpServletResponse response);
 
-    UserAmendReq myAmend(Long userIdx, UserAmendReq userAmendReq);
+    UserAmendDTO myAmend(Long userIdx, UserAmendReq userAmendReq);
 }

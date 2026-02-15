@@ -29,19 +29,19 @@ public class UsersAddress {
     @Column(name = "Address_Code", nullable = false)
     private String addressCode;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Recipient", nullable = false, length = 512)
     private String recipient;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Address", nullable = false, length = 2048)
     private String address;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Address_Detail", nullable = false, length = 2048)
     private String addressDetail;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Phone_Number", nullable = false, length = 512)
     private String phoneNumber;
 

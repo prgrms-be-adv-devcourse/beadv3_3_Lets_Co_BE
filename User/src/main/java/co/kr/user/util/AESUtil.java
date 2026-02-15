@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -16,9 +17,13 @@ public class AESUtil {
     @Value("${custom.security.ase256.key}")
     private String secretKey;
 
-    private static final String ALGORITHM = "AES/GCM/NoPadding";
+    private static final String GCM_ALGORITHM = "AES/GCM/NoPadding";
+    private static final String CBC_ALGORITHM = "AES/CBC/PKCS5Padding";
     private static final int TAG_BIT_LENGTH = 128;
-    private static final int IV_SIZE = 12;
+    private static final int GCM_IV_SIZE = 12;
+    private static final int CBC_IV_SIZE = 16;
+    private static final byte[] FIXED_IV = new byte[CBC_IV_SIZE];
+
     private SecretKeySpec secretKeySpec;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -30,12 +35,12 @@ public class AESUtil {
         this.secretKeySpec = new SecretKeySpec(keyBytes, "AES");
     }
 
-    public String encrypt(String value) {
+    public String GCMencrypt(String value) {
         try {
-            byte[] iv = new byte[IV_SIZE];
+            byte[] iv = new byte[GCM_IV_SIZE];
             secureRandom.nextBytes(iv);
 
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            Cipher cipher = Cipher.getInstance(GCM_ALGORITHM);
             GCMParameterSpec spec = new GCMParameterSpec(TAG_BIT_LENGTH, iv);
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, spec);
 
@@ -47,28 +52,53 @@ public class AESUtil {
 
             return Base64.getEncoder().encodeToString(combined);
         } catch (Exception e) {
-            throw new RuntimeException("암호화 중 오류 발생: " + e.getMessage(), e);
+            throw new RuntimeException("GCM 암호화 중 오류 발생: " + e.getMessage(), e);
         }
     }
 
-    public String decrypt(String encryptedValue) {
+    public String CBCencrypt(String value) {
+        try {
+            Cipher cipher = Cipher.getInstance(CBC_ALGORITHM);
+            IvParameterSpec ivSpec = new IvParameterSpec(FIXED_IV);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivSpec);
+            byte[] encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(encrypted);
+        } catch (Exception e) {
+            throw new RuntimeException("CBC 암호화 중 오류 발생: " + e.getMessage(), e);
+        }
+    }
+
+    public String GCMdecrypt(String encryptedValue) {
         try {
             byte[] combined = Base64.getDecoder().decode(encryptedValue);
 
-            byte[] iv = new byte[IV_SIZE];
+            byte[] iv = new byte[GCM_IV_SIZE];
             System.arraycopy(combined, 0, iv, 0, iv.length);
 
-            byte[] encrypted = new byte[combined.length - IV_SIZE];
-            System.arraycopy(combined, IV_SIZE, encrypted, 0, encrypted.length);
+            byte[] encrypted = new byte[combined.length - GCM_IV_SIZE];
+            System.arraycopy(combined, GCM_IV_SIZE, encrypted, 0, encrypted.length);
 
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            Cipher cipher = Cipher.getInstance(GCM_ALGORITHM);
             GCMParameterSpec spec = new GCMParameterSpec(TAG_BIT_LENGTH, iv);
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, spec);
 
             byte[] decrypted = cipher.doFinal(encrypted);
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new RuntimeException("복호화 중 오류 발생: " + e.getMessage(), e);
+            throw new RuntimeException("GCM 복호화 중 오류 발생: " + e.getMessage(), e);
+        }
+    }
+
+    public String CBCdecrypt(String encryptedValue) {
+        try {
+            byte[] encrypted = Base64.getDecoder().decode(encryptedValue);
+            Cipher cipher = Cipher.getInstance(CBC_ALGORITHM);
+            IvParameterSpec ivSpec = new IvParameterSpec(FIXED_IV);
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivSpec);
+            byte[] decrypted = cipher.doFinal(encrypted);
+            return new String(decrypted, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("CBC 복호화 중 오류 발생: " + e.getMessage(), e);
         }
     }
 }

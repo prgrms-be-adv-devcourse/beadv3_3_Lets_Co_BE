@@ -31,6 +31,6 @@ public class RegisterController {
 
     @PostMapping("/signup/Authentication")
     public ResponseEntity<BaseResponse<String>> signupAuthentication(@RequestBody @Valid AuthenticationReq authenticationReq) {
-        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", registerService.signupAuthentication(authenticationReq.getCode())));
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", registerService.signupAuthentication(authenticationReq.getAuthCode())));
     }
 }

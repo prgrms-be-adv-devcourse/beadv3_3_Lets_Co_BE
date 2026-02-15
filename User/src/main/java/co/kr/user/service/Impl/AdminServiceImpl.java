@@ -1,8 +1,5 @@
 package co.kr.user.service.Impl;
 
-import co.kr.user.dao.UserAddressRepository;
-import co.kr.user.dao.UserCardRepository;
-import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.model.dto.address.AddressListDTO;
 import co.kr.user.model.dto.admin.AdminItemsPerPageReq;
 import co.kr.user.model.dto.admin.AdminUserDetailDTO;
@@ -10,7 +7,6 @@ import co.kr.user.model.dto.admin.AdminUserListDTO;
 import co.kr.user.model.dto.card.CardListDTO;
 import co.kr.user.model.entity.*;
 import co.kr.user.model.vo.DBSorting;
-import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersRole;
 import co.kr.user.service.AdminService;
 import co.kr.user.service.UserQueryService;
@@ -18,26 +14,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminServiceImpl implements AdminService {
-    private final UserInformationRepository userInformationRepository;
-    private final UserAddressRepository userAddressRepository;
-    private final UserCardRepository userCardRepository;
-
     private final RedisTemplate<String, Object> redisTemplate;
-
     private final UserQueryService userQueryService;
 
     private void checkAdminRole(Long adminIdx) {
-        Users admin = userQueryService.findActiveUser(adminIdx); //
+        Users admin = userQueryService.findActiveUser(adminIdx);
         if (admin.getRole() != UsersRole.ADMIN) {
             throw new IllegalStateException("권한이 없습니다.");
         }
@@ -50,11 +39,9 @@ public class AdminServiceImpl implements AdminService {
         List<Users> usersList = userQueryService.findAllActiveUsers();
         List<Long> userIdxList = usersList.stream()
                 .map(Users::getUsersIdx)
-                .collect(Collectors.toList());
+                .toList();
 
-        Map<Long, UsersInformation> userInfoMap = userInformationRepository.findAllByUsersIdxInAndDel(userIdxList, UserDel.ACTIVE)
-                .stream()
-                .collect(Collectors.toMap(UsersInformation::getUsersIdx, Function.identity()));
+        Map<Long, UsersInformation> userInfoMap = userQueryService.findActiveUserInfos(userIdxList);
 
         List<AdminUserListDTO> dtoList = usersList.stream()
                 .map(user -> {
@@ -88,11 +75,10 @@ public class AdminServiceImpl implements AdminService {
         }
 
         dtoList.sort(comparator);
-        page = Math.max(page, 1) - 1;
-
+        int finalPage = Math.max(page, 1) - 1;
         int pageSize = adminItemsPerPageReq.getItemsPerPage();
         int totalSize = dtoList.size();
-        int start = Math.min(page * pageSize, totalSize);
+        int start = Math.min(finalPage * pageSize, totalSize);
         int end = Math.min(start + pageSize, totalSize);
 
         if (start >= totalSize) return Collections.emptyList();
@@ -103,10 +89,10 @@ public class AdminServiceImpl implements AdminService {
     public AdminUserDetailDTO userDetail(Long userIdx, String id) {
         checkAdminRole(userIdx);
 
-        Users targetUser = userQueryService.findActiveUserById(id); //
-        UsersInformation targetInfo = userQueryService.findActiveUserInfo(targetUser.getUsersIdx()); //
+        Users targetUser = userQueryService.findActiveUserById(id);
+        UsersInformation targetInfo = userQueryService.findActiveUserInfo(targetUser.getUsersIdx());
 
-        List<AddressListDTO> addressList = userAddressRepository.findAllByUsersIdxAndDel(targetUser.getUsersIdx(), UserDel.ACTIVE).stream()
+        List<AddressListDTO> addressList = userQueryService.findActiveAddresses(targetUser.getUsersIdx()).stream()
                 .map(addr -> {
                     AddressListDTO dto = new AddressListDTO();
                     dto.setDefaultAddress(addr.getAddressIdx().equals(targetInfo.getDefaultAddress()) ? 1 : 0);
@@ -118,9 +104,9 @@ public class AdminServiceImpl implements AdminService {
                     return dto;
                 })
                 .sorted((a, b) -> Integer.compare(b.getDefaultAddress(), a.getDefaultAddress()))
-                .collect(Collectors.toList());
+                .toList();
 
-        List<CardListDTO> cardList = userCardRepository.findAllByUsersIdxAndDel(targetUser.getUsersIdx(), UserDel.ACTIVE).stream()
+        List<CardListDTO> cardList = userQueryService.findActiveCards(targetUser.getUsersIdx()).stream()
                 .map(card -> {
                     CardListDTO dto = new CardListDTO();
                     dto.setDefaultCard(card.getCardIdx().equals(targetInfo.getDefaultCard()) ? 1 : 0);
@@ -133,7 +119,7 @@ public class AdminServiceImpl implements AdminService {
                     return dto;
                 })
                 .sorted((a, b) -> Integer.compare(b.getDefaultCard(), a.getDefaultCard()))
-                .collect(Collectors.toList());
+                .toList();
 
         AdminUserDetailDTO dto = new AdminUserDetailDTO();
         dto.setId(targetUser.getId());
@@ -161,7 +147,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public String userRole(Long userIdx, String id, UsersRole changeRole) {
         checkAdminRole(userIdx);
-        Users targetUser = userQueryService.findActiveUserById(id); //
+        Users targetUser = userQueryService.findActiveUserById(id);
         targetUser.assignRole(changeRole);
         return targetUser.getId() + "의 권한이 " + changeRole + "으로 변경되었습니다.";
     }
@@ -174,7 +160,7 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("정지 해제 일시는 현재 시간보다 이후여야 합니다.");
         }
 
-        Users targetUser = userQueryService.findActiveUserById(id); //
+        Users targetUser = userQueryService.findActiveUserById(id);
         targetUser.suspendUser(lockedUntil);
 
         String rtKey = "RT:" + targetUser.getUsersIdx();
@@ -191,8 +177,8 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public String userDelete(Long userIdx, String id) {
         checkAdminRole(userIdx);
-        Users targetUser = userQueryService.findActiveUserById(id); //
-        UsersInformation targetInfo = userQueryService.findActiveUserInfo(targetUser.getUsersIdx()); //
+        Users targetUser = userQueryService.findActiveUserById(id);
+        UsersInformation targetInfo = userQueryService.findActiveUserInfo(targetUser.getUsersIdx());
 
         targetUser.deleteUsers(targetUser.getId() + "_DEL_" + LocalDateTime.now());
         targetInfo.deleteInformation(targetInfo.getMail() + "_DEL_" + LocalDateTime.now());

@@ -27,19 +27,19 @@ public class Seller {
     @Column(name = "Users_IDX", nullable = false)
     private Long usersIdx;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Seller_Name", nullable = false, length = 512)
     private String sellerName;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Business_License", nullable = false, length = 512)
     private String businessLicense;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Bank_Brand", nullable = false, length = 512)
     private String bankBrand;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.GcmConverter.class)
     @Column(name = "Bank_Name", nullable = false, length = 512)
     private String bankName;
 

@@ -6,26 +6,39 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-@Converter
-@Component
-@RequiredArgsConstructor
-public class CryptoConverter implements AttributeConverter<String, String> {
+public class CryptoConverter {
 
-    private final AESUtil aesUtil;
+    @Converter
+    @Component
+    @RequiredArgsConstructor
+    public static class DeterministicConverter implements AttributeConverter<String, String> {
+        private final AESUtil aesUtil;
 
-    @Override
-    public String convertToDatabaseColumn(String attribute) {
-        if (!StringUtils.hasText(attribute)) {
-            return attribute;
+        @Override
+        public String convertToDatabaseColumn(String attribute) {
+            return StringUtils.hasText(attribute) ? aesUtil.CBCencrypt(attribute) : attribute;
         }
-        return aesUtil.encrypt(attribute);
+
+        @Override
+        public String convertToEntityAttribute(String dbData) {
+            return StringUtils.hasText(dbData) ? aesUtil.CBCdecrypt(dbData) : dbData;
+        }
     }
 
-    @Override
-    public String convertToEntityAttribute(String dbData) {
-        if (!StringUtils.hasText(dbData)) {
-            return dbData;
+    @Converter
+    @Component
+    @RequiredArgsConstructor
+    public static class GcmConverter implements AttributeConverter<String, String> {
+        private final AESUtil aesUtil;
+
+        @Override
+        public String convertToDatabaseColumn(String attribute) {
+            return StringUtils.hasText(attribute) ? aesUtil.GCMencrypt(attribute) : attribute;
         }
-        return aesUtil.decrypt(dbData);
+
+        @Override
+        public String convertToEntityAttribute(String dbData) {
+            return StringUtils.hasText(dbData) ? aesUtil.GCMdecrypt(dbData) : dbData;
+        }
     }
 }

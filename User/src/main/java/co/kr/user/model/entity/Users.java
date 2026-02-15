@@ -25,7 +25,7 @@ public class Users {
     @Column(name = "Users_IDX")
     private Long usersIdx;
 
-    @Convert(converter = CryptoConverter.class)
+    @Convert(converter = CryptoConverter.DeterministicConverter.class)
     @Column(name = "ID", nullable = false, length = 254)
     private String id;
 

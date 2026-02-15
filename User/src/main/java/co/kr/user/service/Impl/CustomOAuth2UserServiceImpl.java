@@ -7,6 +7,7 @@ import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersInformationGender;
 import co.kr.user.service.CustomOAuth2UserService;
+import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -25,8 +27,7 @@ import java.util.UUID;
 public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implements CustomOAuth2UserService {
     private final UserRepository userRepository;
     private final UserInformationRepository userInformationRepository;
-
-    private final UserQueryServiceImpl userQueryService;
+    private final UserQueryService userQueryService;
 
     @Override
     @Transactional
@@ -60,20 +61,20 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implem
             gender = convertGender((String) response.get("gender"));
         }
 
+        Optional<Users> usersOptional = userRepository.findByIdAndDel(id, UserDel.ACTIVE);
+
         Users user;
-        try {
-            user = userQueryService.findActiveUserById(id);
-        } catch (IllegalArgumentException e) {
+        if (usersOptional.isPresent()) {
+            user = usersOptional.get();
+        } else {
             user = userRepository.save(Users.builder()
                     .id(id)
                     .pw("OAUTH_USER_" + UUID.randomUUID())
                     .build());
-        }
 
-        user.activateUsers();
+            user.activateUsers();
 
-        if (userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), UserDel.ACTIVE).isEmpty()) {
-            userInformationRepository.save(UsersInformation.builder()
+            UsersInformation usersInformation = userInformationRepository.save(UsersInformation.builder()
                     .usersIdx(user.getUsersIdx())
                     .mail("google".equals(registrationId) ? id : "OAUTH_" + id + "@oauth.com")
                     .name(name)
@@ -81,8 +82,8 @@ public class CustomOAuth2UserServiceImpl extends DefaultOAuth2UserService implem
                     .birth(birth)
                     .gender(gender)
                     .build());
-            userInformationRepository.findByUsersIdxAndDel(user.getUsersIdx(), UserDel.PENDING)
-                    .ifPresent(UsersInformation::activateInformation);
+
+            usersInformation.activateInformation();
         }
 
         return oAuth2User;

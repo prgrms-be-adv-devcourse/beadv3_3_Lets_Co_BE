@@ -47,8 +47,8 @@ public class UserController {
     }
 
     @PutMapping("/my")
-    public ResponseEntity<BaseResponse<UserAmendReq>> userAmendReqResponseEntity(@RequestHeader ("X-USERS-IDX") Long userIdx,
-                                                                                 @RequestBody UserAmendReq userAmendReq) {
+    public ResponseEntity<BaseResponse<UserAmendDTO>> userAmendReqResponseEntity(@RequestHeader ("X-USERS-IDX") Long userIdx,
+                                                                                 @Valid @RequestBody UserAmendReq userAmendReq) {
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", userService.myAmend(userIdx, userAmendReq)));
     }
 }

@@ -2,9 +2,21 @@ package co.kr.user.util;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * 이메일 발송에 사용될 HTML 템플릿 문자열을 제공하는 클래스입니다.
+ * Java 15부터 도입된 Text Blocks (""") 기능을 사용하여 HTML 코드를 가독성 있게 작성했습니다.
+ */
 @Component
 public class EmailTemplateProvider {
 
+    /**
+     * 모든 이메일 템플릿에서 공통적으로 사용되는 레이아웃을 생성합니다.
+     * @param title 이메일 본문의 큰 제목
+     * @param mainText 사용자에게 전달할 주요 메시지 내용
+     * @param code 인증 코드 또는 강조할 텍스트
+     * @param footerText 하단에 표시될 안내 문구
+     * @return 완성된 HTML 문자열
+     */
     private String getCommonLayout(String title, String mainText, String code, String footerText) {
         return """
             <div style='background-color: #f6f7f9; padding: 40px 20px; font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6;'>
@@ -39,9 +51,14 @@ public class EmailTemplateProvider {
                     </div>
                 </div>
             </div>
-            """.formatted(title, mainText, code, footerText);
+            """.formatted(title, mainText, code, footerText); // %s 위치에 파라미터 값들을 순서대로 바인딩
     }
 
+    /**
+     * 회원가입 인증 메일 템플릿을 반환합니다.
+     * @param code 생성된 인증번호
+     * @return HTML 형식의 이메일 본문
+     */
     public String getSignupTemplate(String code) {
         return getCommonLayout(
                 "이메일 인증 안내",
@@ -51,6 +68,11 @@ public class EmailTemplateProvider {
         );
     }
 
+    /**
+     * 아이디 찾기 인증 메일 템플릿을 반환합니다.
+     * @param code 생성된 인증번호
+     * @return HTML 형식의 이메일 본문
+     */
     public String getFindIDTemplate(String code) {
         return getCommonLayout(
                 "아이디 찾기 인증번호",
@@ -60,6 +82,11 @@ public class EmailTemplateProvider {
         );
     }
 
+    /**
+     * 비밀번호 재설정 인증 메일 템플릿을 반환합니다.
+     * @param code 생성된 인증번호
+     * @return HTML 형식의 이메일 본문
+     */
     public String getResetPasswordTemplate(String code) {
         return getCommonLayout(
                 "비밀번호 찾기 인증번호",
@@ -69,6 +96,11 @@ public class EmailTemplateProvider {
         );
     }
 
+    /**
+     * 회원 탈퇴 인증 메일 템플릿을 반환합니다.
+     * @param code 생성된 인증번호
+     * @return HTML 형식의 이메일 본문
+     */
     public String getDeleteAccountTemplate(String code) {
         return getCommonLayout(
                 "회원탈퇴 인증번호",
@@ -78,6 +110,11 @@ public class EmailTemplateProvider {
         );
     }
 
+    /**
+     * 판매자 등록 인증 메일 템플릿을 반환합니다.
+     * @param code 생성된 인증번호
+     * @return HTML 형식의 이메일 본문
+     */
     public String getSellerRegisterTemplate(String code) {
         return getCommonLayout(
                 "판매자 등록 인증 안내",
@@ -87,6 +124,11 @@ public class EmailTemplateProvider {
         );
     }
 
+    /**
+     * 판매자 승인 완료 안내 메일 템플릿을 반환합니다.
+     * @param sellerName 승인된 판매자(상점) 이름
+     * @return HTML 형식의 이메일 본문
+     */
     public String getSellerApprovalTemplate(String sellerName) {
         return getCommonLayout(
                 "판매자 등록 완료 안내",
@@ -96,6 +138,11 @@ public class EmailTemplateProvider {
         );
     }
 
+    /**
+     * 판매자 탈퇴 인증 메일 템플릿을 반환합니다.
+     * @param Code 생성된 인증번호
+     * @return HTML 형식의 이메일 본문
+     */
     public String getDeleteSellerTemplate(String Code) {
         return getCommonLayout(
                 "판매자 탈퇴 인증번호",

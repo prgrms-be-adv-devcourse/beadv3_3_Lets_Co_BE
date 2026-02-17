@@ -63,4 +63,6 @@ public interface UserRepository extends JpaRepository<Users, Long> {
      * @return 조건에 맞는 Users 엔티티 (Optional)
      */
     Optional<Users> findByIdAndDel(String id, UserDel del);
+
+    boolean existsById(String id);
 }

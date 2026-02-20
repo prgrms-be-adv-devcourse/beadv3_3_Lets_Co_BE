@@ -62,9 +62,13 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'                                      // 컴파일 시점 코드 생성
     annotationProcessor 'org.projectlombok:lombok'                              // 어노테이션 기반 프로세싱
 
+    // --- [H2] ---
+    runtimeOnly 'com.h2database:h2'
+
     // --- [Testing] ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'      // 스프링 부트 통합 테스트
     testImplementation 'org.springframework.security:spring-security-test'      // 시큐리티 설정 테스트
+    testImplementation 'com.h2database:h2'                                     // H2 DB (IDE 인식용)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                // JUnit 플랫폼 런처
 }
 

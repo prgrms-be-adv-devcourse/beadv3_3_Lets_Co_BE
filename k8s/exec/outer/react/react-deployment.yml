@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: react-service
+  labels:
+    app: react-service
+
+spec:
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: react-service
+
+  template:
+    metadata:
+      labels:
+        app: react-service
+
+    spec:
+      containers:
+        - name: react-service
+          image: lujol/front:0.0.1
+          ports:
+            - containerPort: 80
+

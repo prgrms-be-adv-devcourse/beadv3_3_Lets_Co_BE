@@ -6,6 +6,7 @@ import co.kr.assistant.model.entity.AssistantChat;
 import co.kr.assistant.dao.AssistantChatRepository;
 import co.kr.assistant.dao.AssistantRepository;
 import co.kr.assistant.service.ChatService;
+import co.kr.assistant.util.TokenUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -22,26 +23,32 @@ public class ChatServiceImpl implements ChatService {
 
     private final AssistantRepository assistantRepository;
     private final AssistantChatRepository assistantChatRepository;
+
     private final RedisTemplate<String, Object> redisTemplate; // Redis 활용
 
     @Override
     @Transactional
-    public String initSession(String ip, String ua) {
-        // 1. UUID 생성
+    public String start(String refreshToken, String ip, String ua) {
         String chatToken = UUID.randomUUID().toString();
+        Long usersIdx = null;
 
-        // 2. MariaDB에 저장 (영구 기록)
+        // 1. refreshToken이 있으면 TokenUtil로 유저 식별자 추출
+        if (refreshToken != null) {
+            usersIdx = TokenUtil.getUserIdFromToken(refreshToken);
+        }
+
+        // usersIdx가 null인 상태로 Assistant 객체가 생성 및 저장됩니다.
         Assistant assistant = Assistant.builder()
                 .assistantCode(chatToken)
+                .usersIdx(usersIdx)
                 .ipAddress(ip)
                 .userAgent(ua)
                 .build();
-        assistantRepository.save(assistant); // <--- 이 시점에 MariaDB에 저장됩니다.
 
-        // 3. Redis에 저장 (빠른 보안 검증용 캐시)
-        // Key: session:[UUID], 만료시간 1시간 설정
-        String redisKey = "session:" + chatToken;
-        redisTemplate.opsForValue().set(redisKey, ip + "|" + ua, 1, TimeUnit.HOURS);
+        assistantRepository.save(assistant);
+
+        // 3. 보안 검증용 Redis 캐싱 (1시간)
+        redisTemplate.opsForValue().set("session:" + chatToken, ip + "|" + ua, 1, TimeUnit.HOURS);
 
         return chatToken;
     }

@@ -8,14 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * JWT 토큰(Access Token, Refresh Token)을 쿠키에 저장하고 관리하는 데 주로 사용됩니다.
  */
 public class CookieUtil {
-    // 액세스 토큰 쿠키 이름 상수
-    public static final String ACCESS_TOKEN_NAME = "accessToken";
-    // 리프레시 토큰 쿠키 이름 상수
-    public static final String REFRESH_TOKEN_NAME = "refreshToken";
-    // 액세스 토큰 만료 시간 (초 단위): 15분 (15 * 60)
-    public static final int ACCESS_TOKEN_EXPIRY = 15 * 60;
-    // 리프레시 토큰 만료 시간 (초 단위): 7일 (7 * 24 * 60 * 60)
-    public static final int REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60;
+
+    public static final String CHAT_TOKEN_NAME = "chatToken";
+    public static final int CHAT_TOKEN_EXPIRY = 60 * 60;
 
     /**
      * 유틸리티 클래스이므로 인스턴스 생성을 방지하기 위해 생성자를 private으로 선언합니다.

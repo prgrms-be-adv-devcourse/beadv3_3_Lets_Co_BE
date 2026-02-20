@@ -4,6 +4,7 @@ import co.kr.assistant.model.dto.ChatListDTO;
 import co.kr.assistant.service.ChatService;
 import co.kr.assistant.util.BaseResponse;
 import co.kr.assistant.util.CookieUtil;
+import co.kr.assistant.util.TokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,18 +25,25 @@ public class ChatController {
     private final ChatService chatService;
 
     // 챗봇 시작 (세션 초기화 및 쿠키 발급)
-    @PostMapping("/init")
-    public ResponseEntity<BaseResponse<String>> init(HttpServletRequest request, HttpServletResponse response) {
+    @PostMapping("/start")
+    public ResponseEntity<BaseResponse<String>> start(HttpServletRequest request, HttpServletResponse response) {
+        // 1. TokenUtil을 통해 쿠키에서 refreshToken 추출
+        String refreshToken = TokenUtil.getCookieValue(request, "refreshToken");
+
         String ip = request.getRemoteAddr();
-        String ua = request.getHeader("User-Agent");
+        String userAgent = request.getHeader("User-Agent");
 
-        // Service 호출하여 MariaDB/Redis에 저장하고 토큰 받아옴
-        String chatToken = chatService.initSession(ip, ua);
+        // 2. 세션 초기화 (회원/비회원 판별 포함)
+        String chatToken = chatService.start(refreshToken, ip, userAgent);
 
-        // 클라이언트 쿠키에 토큰 심어줌 (1시간 유효)
-        CookieUtil.addCookie(response, "chatToken", chatToken, 3600);
+        // 3. 채팅용 세션 토큰 쿠키 발급 (기존 CookieUtil 활용)
+        CookieUtil.addCookie(
+                response,
+                CookieUtil.CHAT_TOKEN_NAME,
+                chatToken,
+                CookieUtil.CHAT_TOKEN_EXPIRY);
 
-        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", "Session Initialized"));
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", "채팅을 시작합니다."));
     }
 
     @PostMapping("/list")

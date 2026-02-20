@@ -3,6 +3,7 @@ package co.kr.assistant;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+
 @SpringBootApplication
 public class AssistantApplication {
 

@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ChatService {
 
-    String initSession(String ip, String ua);
+    String start(String refreshToken, String ip, String ua);
 
     List<ChatListDTO> list(String chatToken);
 

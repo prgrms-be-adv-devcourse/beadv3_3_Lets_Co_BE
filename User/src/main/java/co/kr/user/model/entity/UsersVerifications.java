@@ -1,6 +1,6 @@
 package co.kr.user.model.entity;
 
-import co.kr.user.model.vo.UserDel;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import jakarta.persistence.*;
@@ -58,7 +58,7 @@ public class UsersVerifications {
 
     /** 해당 인증 데이터의 삭제/유효 여부 */
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private UserDel del;
+    private PublicDel del;
 
     @Builder
     public UsersVerifications(Long usersIdx, UsersVerificationsPurPose purpose, String code, LocalDateTime expiresAt, UsersVerificationsStatus status) {
@@ -67,6 +67,7 @@ public class UsersVerifications {
         this.code = code;
         this.expiresAt = expiresAt;
         this.status = status;
+        this.del = PublicDel.ACTIVE;
     }
 
     /** 사용자가 입력한 코드가 확인되어 인증을 완료 처리합니다. */

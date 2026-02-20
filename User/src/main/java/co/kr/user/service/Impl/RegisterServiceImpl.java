@@ -9,6 +9,7 @@ import co.kr.user.model.dto.register.RegisterReq;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
@@ -131,7 +132,7 @@ public class RegisterServiceImpl implements RegisterService {
     @Transactional
     public String signupAuthentication(String code) {
         // 인증 코드로 Verification 엔티티 조회 (최신순)
-        UsersVerifications usersVerifications = userVerificationsRepository.findTopByCodeAndDelOrderByCreatedAtDesc(code, UserDel.ACTIVE)
+        UsersVerifications usersVerifications = userVerificationsRepository.findTopByCodeAndDelOrderByCreatedAtDesc(code, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증 코드입니다."));
 
         // 유효성 검증

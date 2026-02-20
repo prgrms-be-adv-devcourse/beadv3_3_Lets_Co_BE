@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
@@ -61,7 +62,7 @@ public class UserCard {
 
     /** 카드 삭제 여부 상태 */
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private UserDel del;
+    private PublicDel del;
 
     @Builder
     public UserCard(Long usersIdx, String cardBrand, String cardName, String cardToken, int expMonth, int expYear) {
@@ -75,7 +76,7 @@ public class UserCard {
         this.cardToken = cardToken;
         this.expMonth = expMonth;
         this.expYear = expYear;
-        this.del = UserDel.ACTIVE;
+        this.del = PublicDel.ACTIVE;
     }
 
     /** 등록된 카드 정보를 업데이트합니다. */
@@ -99,6 +100,6 @@ public class UserCard {
 
     /** 카드를 논리적으로 삭제 처리합니다. */
     public void deleteCard() {
-        this.del = UserDel.DELETED;
+        this.del = PublicDel.DELETED;
     }
 }

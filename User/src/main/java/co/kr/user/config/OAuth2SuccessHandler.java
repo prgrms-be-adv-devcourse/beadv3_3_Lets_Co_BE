@@ -1,6 +1,7 @@
 package co.kr.user.config;
 
 import co.kr.user.model.entity.Users;
+import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.service.UserQueryService;
 import co.kr.user.util.CookieUtil;
 import co.kr.user.util.JWTUtil;
@@ -75,6 +76,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 추출한 ID로 DB에서 활성 사용자 정보를 조회합니다.
         // (CustomOAuth2UserService에서 이미 가입 처리가 되었으므로 조회 가능해야 함)
         Users user = userQueryService.findActiveUserById(loginId);
+        UsersInformation userInfo = userQueryService.findActiveUserInfo(user.getUsersIdx());
 
         // JWT Access Token 및 Refresh Token 생성
         String accessToken = jwtUtil.createAccessToken(user.getUsersIdx(), user.getCreatedAt(), user.getUpdatedAt());
@@ -87,12 +89,21 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         CookieUtil.addCookie(response, CookieUtil.ACCESS_TOKEN_NAME, accessToken, CookieUtil.ACCESS_TOKEN_EXPIRY);
         CookieUtil.addCookie(response, CookieUtil.REFRESH_TOKEN_NAME, refreshToken, CookieUtil.REFRESH_TOKEN_EXPIRY);
 
+        // CustomOAuth2UserServiceImpl에서 설정한 초기값과 비교합니다.
+        // 1. 기본 전화번호 그대로인지 확인
+        // 2. 기본 생년월일 그대로인지 확인
+        // 3. 이메일이 임시 도메인(@oauth.com)인지 확인
+        boolean isProfileIncomplete = "010-0000-0000".equals(userInfo.getPhoneNumber())
+                || "1900-01-01".equals(userInfo.getBirth())
+                || (userInfo.getMail() != null && userInfo.getMail().endsWith("@oauth.com"));
+
         // 로그인 성공 후 리다이렉트 처리
         // 네이버나 카카오 로그인의 경우 추가 정보 입력 페이지 등으로 이동시킬 수 있음 (비즈니스 로직에 따라 다름)
-        if ("naver".equals(registrationId) || "kakao".equals(registrationId)) {
+        if (isProfileIncomplete) {
+            // 처음 로그인하거나 아직 정보를 수정하지 않은 경우
             response.sendRedirect(baseUrl + "/my/complete-profile");
         } else {
-            // 그 외(구글 등)는 홈 화면으로 이동
+            // 이미 개인 정보를 입력한 경우
             response.sendRedirect(baseUrl + "/home");
         }
     }

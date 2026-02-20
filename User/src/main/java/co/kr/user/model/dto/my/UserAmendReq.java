@@ -2,6 +2,7 @@ package co.kr.user.model.dto.my;
 
 import co.kr.user.model.vo.UsersInformationGender;
 import co.kr.user.util.validator.ValiDate;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class UserAmendReq {
     private String mail;
 
     /** 변경할 성별 (MALE, FEMALE, OTHER) */
+    @JsonProperty("gender")
     private UsersInformationGender gender;
 
     /** 변경할 이름 */

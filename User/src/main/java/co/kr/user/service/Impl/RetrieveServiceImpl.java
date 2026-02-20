@@ -5,6 +5,7 @@ import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
 import co.kr.user.model.dto.retrieve.*;
 import co.kr.user.model.entity.*;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
@@ -114,7 +115,7 @@ public class RetrieveServiceImpl implements RetrieveService {
 
         // 해당 사용자의 최신 인증 내역 조회
         UsersVerifications verification = userVerificationsRepository
-                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), UserDel.ACTIVE)
+                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 내역이 없습니다."));
 
         // 인증 코드 검증 (목적: FIND_ID)
@@ -178,7 +179,7 @@ public class RetrieveServiceImpl implements RetrieveService {
 
         // 최신 인증 내역 조회
         UsersVerifications verification = userVerificationsRepository
-                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), UserDel.ACTIVE)
+                .findTopByUsersIdxAndDelOrderByCreatedAtDesc(info.getUsersIdx(), PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 내역이 없습니다."));
 
         // 인증 코드 검증 (목적: RESET_PW)

@@ -12,10 +12,7 @@ import co.kr.user.model.entity.Seller;
 import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
-import co.kr.user.model.vo.UserDel;
-import co.kr.user.model.vo.UsersRole;
-import co.kr.user.model.vo.UsersVerificationsPurPose;
-import co.kr.user.model.vo.UsersVerificationsStatus;
+import co.kr.user.model.vo.*;
 import co.kr.user.service.SellerService;
 import co.kr.user.service.UserQueryService;
 import co.kr.user.util.BCryptUtil;
@@ -136,7 +133,7 @@ public class SellerServiceImpl implements SellerService {
         UsersInformation userInfo = userQueryService.findActiveUserInfo(userIdx);
 
         // 최신 인증 요청 조회
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, UserDel.ACTIVE)
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 유효성 검증
@@ -275,7 +272,7 @@ public class SellerServiceImpl implements SellerService {
         userQueryService.findActiveUser(userIdx);
 
         // 인증 요청 확인
-        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, UserDel.ACTIVE)
+        UsersVerifications verification = userVerificationsRepository.findTopByUsersIdxAndDelOrderByCreatedAtDesc(userIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("인증 요청 내역이 존재하지 않습니다."));
 
         // 유효성 검증

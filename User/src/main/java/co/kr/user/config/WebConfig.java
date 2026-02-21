@@ -17,7 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * 애플리케이션의 보안 정책(인증, 인가, 세션 관리 등)을 정의합니다.
  */
 @Configuration
-public class SecurityConfiguration {
+public class WebConfig {
 
     /**
      * HTTP 보안 필터 체인을 구성하여 빈으로 등록합니다.

@@ -6,8 +6,10 @@ import java.util.List;
 
 public interface ChatService {
 
-    String start(String refreshToken, String ip, String ua);
+    String start(String accessToken, String ip, String ua);
 
     List<ChatListDTO> list(String chatToken);
+
+    String ask(String chatToken, String question);
 
 }

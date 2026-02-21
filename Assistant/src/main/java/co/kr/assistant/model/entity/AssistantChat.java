@@ -19,6 +19,9 @@ public class AssistantChat {
     @JoinColumn(name = "Assistant_IDX", nullable = false)
     private Assistant assistant;
 
+    @Column(name = "Prompt", nullable = false, columnDefinition = "MEDIUMTEXT")
+    private String prompt;
+
     @Column(name = "Question", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String question;
 
@@ -32,8 +35,9 @@ public class AssistantChat {
     private Integer del = 0;
 
     @Builder
-    public AssistantChat(Assistant assistant, String question, String answer) {
+    public AssistantChat(Assistant assistant, String prompt, String question, String answer) {
         this.assistant = assistant;
+        this.prompt = prompt;
         this.question = question;
         this.answer = answer;
         this.createdAt = LocalDateTime.now();

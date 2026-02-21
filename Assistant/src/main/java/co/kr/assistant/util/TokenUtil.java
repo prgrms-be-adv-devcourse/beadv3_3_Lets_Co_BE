@@ -33,22 +33,47 @@ public class TokenUtil {
         return null;
     }
 
-    /**
-     * JWT 토큰의 Payload에서 유저 식별자(userIdx)를 추출합니다.
-     */
     public static Long getUserIdFromToken(String token) {
         try {
             String[] parts = token.split("\\.");
             if (parts.length < 2) return null;
 
-            // Payload(두 번째 부분) 디코딩
             String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
             Map<String, Object> claims = objectMapper.readValue(payload, Map.class);
 
-            Object userIdx = claims.get("userIdx");
+            Object userIdx = claims.get("sub");
             return userIdx != null ? Long.valueOf(userIdx.toString()) : null;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public static String getClientIp(HttpServletRequest request) {
+        // 확인해야 할 주요 HTTP 헤더들
+        String[] headerNames = {
+                "X-Forwarded-For",    // 가장 일반적인 프록시 헤더
+                "Proxy-Client-IP",    // Apache HTTP Server에서 사용하는 경우
+                "WL-Proxy-Client-IP", // WebLogic에서 사용하는 경우
+                "HTTP_CLIENT_IP",     // 일부 PHP 환경이나 오래된 프록시
+                "HTTP_X_FORWARDED_FOR"
+        };
+
+        for (String header : headerNames) {
+            String ip = request.getHeader(header);
+
+            // 헤더가 존재하고 값이 "unknown"이 아닌 경우 탐색
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+                // X-Forwarded-For의 경우 '클라이언트IP, 프록시1IP, 프록시2IP' 형태로 올 수 있음
+                // 따라서 첫 번째 IP가 실제 클라이언트의 외부 IP임
+                if (ip.contains(",")) {
+                    return ip.split(",")[0].trim();
+                }
+                return ip;
+            }
+        }
+
+        // 헤더에 정보가 없으면 최후의 수단으로 직접 연결된 주소를 가져옴
+        // (이 경우 로컬 테스트 시에는 127.0.0.1이 반환됨)
+        return request.getRemoteAddr();
     }
 }

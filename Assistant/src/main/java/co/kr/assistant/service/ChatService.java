@@ -1,6 +1,6 @@
 package co.kr.assistant.service;
 
-import co.kr.assistant.model.dto.ChatListDTO;
+import co.kr.assistant.model.dto.list.ChatListDTO;
 
 import java.util.List;
 

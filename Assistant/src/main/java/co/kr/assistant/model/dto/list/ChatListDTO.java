@@ -1,4 +1,4 @@
-package co.kr.assistant.model.dto;
+package co.kr.assistant.model.dto.list;
 
 import lombok.*;
 import java.time.LocalDateTime;

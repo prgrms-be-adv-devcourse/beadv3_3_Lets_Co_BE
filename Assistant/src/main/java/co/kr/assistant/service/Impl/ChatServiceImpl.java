@@ -1,11 +1,15 @@
 package co.kr.assistant.service.Impl;
 
-import co.kr.assistant.model.dto.ChatListDTO;
+import co.kr.assistant.client.RagServiceClient;
+import co.kr.assistant.model.dto.list.ChatListDTO;
+import co.kr.assistant.model.dto.rag.RagRes;
 import co.kr.assistant.model.entity.Assistant;
 import co.kr.assistant.model.entity.AssistantChat;
 import co.kr.assistant.dao.AssistantChatRepository;
 import co.kr.assistant.dao.AssistantRepository;
 import co.kr.assistant.service.ChatService;
+import co.kr.assistant.util.PrivacyUtil; // 개인정보 마스킹 유틸
+import co.kr.assistant.util.ProfanityFilter; // 욕설 필터 유틸
 import co.kr.assistant.util.TokenUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,8 +34,14 @@ public class ChatServiceImpl implements ChatService {
     private final AssistantRepository assistantRepository;
     private final AssistantChatRepository assistantChatRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ObjectMapper objectMapper; // JSON 변환용
+    private final ObjectMapper objectMapper;
     private final ChatClient.Builder chatClientBuilder;
+
+    // 유틸리티 주입
+    private final ProfanityFilter profanityFilter;
+    private final PrivacyUtil privacyUtil;
+
+    private final RagServiceClient ragServiceClient;
 
     @Override
     @Transactional
@@ -52,6 +62,7 @@ public class ChatServiceImpl implements ChatService {
 
         assistantRepository.save(assistant);
 
+        // 보안 검증용 세션 캐싱 (1시간)
         redisTemplate.opsForValue().set("session:" + chatToken, ip + "|" + ua, 1, TimeUnit.HOURS);
 
         return chatToken;
@@ -70,7 +81,7 @@ public class ChatServiceImpl implements ChatService {
                 log.info("Redis 캐시에서 채팅 리스트를 반환합니다.");
                 return objectMapper.readValue(cachedData, new TypeReference<List<ChatListDTO>>() {});
             } catch (JsonProcessingException e) {
-                log.error("Redis 데이터 파싱 실패, DB에서 직접 조회합니다.", e);
+                log.error("Redis 데이터 파싱 실패", e);
             }
         }
 
@@ -87,7 +98,7 @@ public class ChatServiceImpl implements ChatService {
                         .build())
                 .collect(Collectors.toList());
 
-        // 3. 조회된 데이터를 Redis에 저장 (JSON 문자열 형태)
+        // 3. 조회된 데이터를 Redis에 저장
         if (!dbChats.isEmpty()) {
             try {
                 String jsonChats = objectMapper.writeValueAsString(dbChats);
@@ -103,38 +114,57 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public String ask(String chatToken, String question) {
-        // 1. 세션 확인
+        // 1. 세션 확인 및 유효성 검사
         Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 채팅 세션입니다."));
 
-        // 2. 이전 대화 내역 가져오기 (최대 5개)
-        // list() 메서드를 호출함으로써 Redis 우선 조회 로직을 그대로 활용함
-        List<ChatListDTO> history = this.list(chatToken).stream()
-                .limit(5)
-                .collect(Collectors.toList());
+        int cleanLength = profanityFilter.getCleanLength(question);
+        if (cleanLength <= 1) {
+            throw new IllegalArgumentException("질문 내용이 너무 짧거나 부적절한 표현만 포함되어 있습니다.");
+        }
 
-        // 3. AI에게 전달할 시스템 프롬프트 및 컨텍스트 구성
+        // 2. 현재 질문 가공 (욕설 필터 및 개인정보 마스킹)
+        String processedQuestion = privacyUtil.maskAll(profanityFilter.filter(question));
+
+        // 3. [추가] Python RAG 서버를 통해 관련 지식(Context) 조회
+        // 3060 Ti에서 BGE-M3 + Reranker 로직이 작동하여 최상의 지식을 선별합니다.
+        List<RagRes> searchResults = ragServiceClient.searchKnowledge(processedQuestion, 5);
+        String retrievedContext = searchResults.stream()
+                .map(RagRes::getText)
+                .collect(Collectors.joining("\n\n"));
+
+        // 4. 시스템 프롬프트 구성 (지식 기반 답변 지침 추가)
         StringBuilder contextBuilder = new StringBuilder();
-        contextBuilder.append("당신은 유능한 어시스턴트입니다. 다음의 이전 대화 내역을 참고하여 답변해주세요.\n\n");
+        contextBuilder.append("당신은 유능한 보안 챗봇 어시스턴트입니다. 아래 [참고 지식]을 바탕으로 질문에 답하세요.\n");
+        contextBuilder.append("1. 문장에 포함된 <PROFANITY_MASK>는 부적절한 단어가 가려진 것이니 무시하고 자연스럽게 답하세요.\n");
+        contextBuilder.append("2. <PRIVACY_MASK>로 가려진 부분은 답변에서 직접 언급하거나 '없다'고 말하지 말고, 문맥에 맞춰 자연스럽게 생략하거나 대체하세요.\n");
+        contextBuilder.append("3. [참고 지식]에 관련 정보가 있다면 우선적으로 활용하여 정확하게 답변하세요.\n\n");
 
-        // 내역이 최신순(Desc)이므로, 과거->현재 순서로 변경하여 AI에게 전달
+        contextBuilder.append("[참고 지식]\n");
+        contextBuilder.append(retrievedContext.isEmpty() ? "관련된 내부 지식을 찾지 못했습니다." : retrievedContext).append("\n\n");
+
+        // 5. 이전 대화 내역 가져오기 (기존 로직 유지)
+        List<ChatListDTO> history = this.list(chatToken).stream().limit(5).collect(Collectors.toList());
+        contextBuilder.append("[이전 대화 내역]\n");
         for (int i = history.size() - 1; i >= 0; i--) {
             ChatListDTO h = history.get(i);
-            contextBuilder.append("User: ").append(h.getQuestion()).append("\n");
-            contextBuilder.append("Assistant: ").append(h.getAnswer()).append("\n\n");
+            contextBuilder.append("User: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getQuestion()))).append("\n");
+            contextBuilder.append("Assistant: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getAnswer()))).append("\n\n");
         }
 
         contextBuilder.append("한글로만 답해줘.");
         String systemPrompt = contextBuilder.toString();
 
-        // 4. AI 응답 생성 (ChatClient 추상화로 Ollama/OpenAI 공용 사용)
+        log.info("AI에게 전달되는 시스템 프롬프트: {}", systemPrompt);
+        log.info("AI에게 전달되는 질문: {}", question);
+
+        // 6. AI 호출 및 결과 저장
         String answer = chatClientBuilder.build()
                 .prompt(systemPrompt)
-                .user(question)
+                .user(processedQuestion)
                 .call()
                 .content();
 
-        // 5. MariaDB에 대화 내역 저장 (RAG 및 머신러닝 데이터 수집용)
         AssistantChat chat = AssistantChat.builder()
                 .prompt(systemPrompt)
                 .assistant(assistant)
@@ -143,10 +173,7 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         assistantChatRepository.save(chat);
 
-        // 6. 유저 활동 시간 업데이트
         assistant.updateActivity();
-
-        // 7. 새로운 대화가 추가되었으므로 Redis 캐시 삭제 (다음 list 호출 시 최 최신화 유도)
         redisTemplate.delete("chat_history:" + chatToken);
 
         return answer;

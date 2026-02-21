@@ -31,6 +31,10 @@ ext {
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'io.projectreactor.netty:reactor-netty-http'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
     // Redis 전용 (JPA 대신 Repository 패턴 제공)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 

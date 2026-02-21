@@ -1,12 +1,14 @@
 package co.kr.assistant.controller;
 
-import co.kr.assistant.model.dto.ChatListDTO;
+import co.kr.assistant.model.dto.chat.AskReq;
+import co.kr.assistant.model.dto.list.ChatListDTO;
 import co.kr.assistant.service.ChatService;
 import co.kr.assistant.util.BaseResponse;
 import co.kr.assistant.util.CookieUtil;
 import co.kr.assistant.util.TokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -23,7 +25,8 @@ public class ChatController {
 
     // 챗봇 시작 (세션 초기화 및 쿠키 발급)
     @PostMapping("/start")
-    public ResponseEntity<BaseResponse<String>> start(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<BaseResponse<String>> start(HttpServletRequest request,
+                                                      HttpServletResponse response) {
         // 1. TokenUtil을 통해 쿠키에서 refreshToken 추출
         String accessToken = TokenUtil.getCookieValue(request, "accessToken");
 
@@ -56,7 +59,8 @@ public class ChatController {
     }
 
     @PostMapping("/ask")
-    public ResponseEntity<BaseResponse<String>> ask(HttpServletRequest request, @RequestBody String question) {
+    public ResponseEntity<BaseResponse<String>> ask(HttpServletRequest request,
+                                                    @RequestBody @Valid AskReq askReq) {
         // 1. 쿠키에서 chatToken 추출
         String chatToken = TokenUtil.getCookieValue(request, CookieUtil.CHAT_TOKEN_NAME);
 
@@ -65,7 +69,7 @@ public class ChatController {
         }
 
         // 2. 서비스 호출 및 결과 반환
-        String answer = chatService.ask(chatToken, question);
+        String answer = chatService.ask(chatToken, askReq.getQuestion());
 
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", answer));
     }

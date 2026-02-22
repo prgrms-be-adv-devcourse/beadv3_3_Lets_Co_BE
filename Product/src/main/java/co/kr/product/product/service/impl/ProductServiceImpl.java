@@ -141,7 +141,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductCheckStockRes getCheckStock(String productsCode) {
 
-        // TODO : option id or code 를 받아오는것이 훨 좋음
 
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));

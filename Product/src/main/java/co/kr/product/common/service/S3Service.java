@@ -37,8 +37,6 @@ public class S3Service {
 
     public ImageUploadRes uploadFile(MultipartFile file){
 
-        // TODO !!! 입력받은 파일 유효성 검사 !!!!매우중요!!!!!
-
         // s3 에 저장 될 파일명 (랜덤으로 생성)
         String storedFileName = UUID.randomUUID().toString();
         String filePath = productPrefix +"/";

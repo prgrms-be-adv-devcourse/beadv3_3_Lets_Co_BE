@@ -77,10 +77,7 @@
 - **GitHub Actions** 연동 자동화 CI/CD 파이프라인 구축
 - Docker Compose 기반 로컬 개발 환경 표준화
 
-**Swagger, Zipkin**
-- **Swagger** 기반 API 문서화 작업
-- **Zipkin** 도입으로 시스템 흐름 파악 크게 향상
-- 협업시 프론트엔드와 커뮤니케이션 비용 감소, 개발 생산성 크게 증가
+
 
 ---
 

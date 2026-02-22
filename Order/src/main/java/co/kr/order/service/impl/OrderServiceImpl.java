@@ -180,7 +180,7 @@ public class OrderServiceImpl implements OrderService {
                 ))
                 .collect(Collectors.toList());
 
-        return new OrderRes(orderCode, responseItems, totalAmount);
+        return new OrderRes(orderCode, responseItems, totalAmount, orderEntity.getCreatedAt());
     }
 
     // Helper Method 주문한 상품 엔티티
@@ -192,7 +192,6 @@ public class OrderServiceImpl implements OrderService {
                 .optionName(product.optionContent())
                 .price(product.price())
                 .quantity(quantity)
-                .del(false)
                 .build();
     }
 
@@ -388,7 +387,8 @@ public class OrderServiceImpl implements OrderService {
             OrderRes orderRes = new OrderRes(
                     orderEntity.getOrderCode(),
                     responseItemList,
-                    itemsAmount
+                    itemsAmount,
+                    orderEntity.getCreatedAt()
             );
             resultList.add(orderRes);
         }
@@ -481,7 +481,8 @@ public class OrderServiceImpl implements OrderService {
         return new OrderRes(
                 orderEntity.getOrderCode(),
                 responseItemList,
-                itemsAmount
+                itemsAmount,
+                orderEntity.getCreatedAt()
         );
     }
 

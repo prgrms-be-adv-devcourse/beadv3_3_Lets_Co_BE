@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -65,8 +67,9 @@ public class OrderEntity {
     @Column(name = "Total_Amount", precision = 19, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    @Column(name = "Created_at")
-    LocalDateTime createdAt;
+    @Generated(event = EventType.INSERT)
+    @Column(name = "Created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
     private Boolean del;

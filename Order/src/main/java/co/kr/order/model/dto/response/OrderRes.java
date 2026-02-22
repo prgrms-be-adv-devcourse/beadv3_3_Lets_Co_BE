@@ -1,6 +1,7 @@
 package co.kr.order.model.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /*
@@ -12,5 +13,6 @@ import java.util.List;
 public record OrderRes(
         String orderCode,
         List<OrderItemRes> orderItemList,
-        BigDecimal itemsAmount
+        BigDecimal itemsAmount,
+        LocalDateTime createdAt
 ) {}

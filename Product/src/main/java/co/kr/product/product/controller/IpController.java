@@ -3,6 +3,7 @@ package co.kr.product.product.controller;
 import co.kr.product.product.model.dto.request.CategoryUpsertReq;
 import co.kr.product.product.model.dto.response.CategoryFamilyRes;
 import co.kr.product.product.model.dto.response.CategoryRes;
+import co.kr.product.product.model.dto.response.CategorySortedRes;
 import co.kr.product.product.model.vo.CategoryType;
 import co.kr.product.product.service.ProductCategoryService;
 import lombok.RequiredArgsConstructor;
@@ -18,16 +19,16 @@ public class IpController {
 
     private final ProductCategoryService categoryService;
 
-    // 모든 카테고리 목록 출력 (개발용)
+    // 모든 IP 목록 출력. 순서 o
     @GetMapping
-    public ResponseEntity<List<CategoryRes>> getCategory(
+    public ResponseEntity<List<CategorySortedRes>> getCategory(
 
     ){
         return ResponseEntity.ok(
                 categoryService.getCategory(CategoryType.IP));
     }
 
-    // 상위 카테고리 출력
+    // 상위 IP 출력
     @GetMapping("/{categoryCode}")
     public ResponseEntity<CategoryFamilyRes> getFamilyCategory(
             @PathVariable("categoryCode") String categoryCode
@@ -36,40 +37,36 @@ public class IpController {
                 categoryService.getFamilyCategory(categoryCode, CategoryType.IP));}
 
 
-    // 카테고리 추가
+    // IP 추가
     @PostMapping
     public ResponseEntity<CategoryRes> addCategory(
-            //@RequestHeader("X-USERS-IDX") Long usersIdx,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @RequestBody CategoryUpsertReq req
             ){
-        Long usersIdx = 1L;
 
         return ResponseEntity.ok(
                 categoryService.addCategory(usersIdx, req, CategoryType.IP));
     }
 
 
-    // 카테고리 수정 (이름 , 부모카테고리)
+    // IP 수정 (이름 , 부모IP)
     @PutMapping("/{categoryCode}")
     public ResponseEntity<String> updateCategory(
-            //@RequestHeader("X-USERS-IDX") Long usersIdx,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("categoryCode") String categoryCode,
             @RequestBody CategoryUpsertReq req
     ){
-
-        Long usersIdx = 1L;
 
         return ResponseEntity.ok(
                 categoryService.updateCategory(usersIdx, categoryCode ,req, CategoryType.IP));
     }
 
-    // 카테고리 삭제(하위 카테고리 포함)
+    // IP 삭제(하위 IP 포함)
     @DeleteMapping("/{categoryCode}")
     public ResponseEntity<String> deleteCategory(
-            //@RequestHeader("X-USERS-IDX") Long usersIdx,
+            @RequestHeader("X-USERS-IDX") Long usersIdx,
             @PathVariable("categoryCode") String categoryCode
     ){
-        Long usersIdx = 1L;
 
         return ResponseEntity.ok(
                 categoryService.deleteCategory(usersIdx, categoryCode, CategoryType.IP));

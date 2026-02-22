@@ -26,28 +26,19 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     @Transactional(readOnly = true)
     public ProductListRes getProductsList(Pageable pageable, ProductListReq request){
 
+        // TODO 벡터검색 까지 하려면 지금 못건듬....어차피 싹 고쳐야함...
+        // Category 별 조회, ip별 조회까지 여기서 처리
+
         String search = request.search();
         String category = request.category();
+        String ip = request.ip();
 
         // 1. 검색
         Page<ProductDocument> pageResult;
 
-        boolean hasSearch = !(search == null || search.isBlank());
-        boolean hasCategory = !(category == null || category.isBlank());
 
+        pageResult = productEsRepository.findByProductsNameAndDelFalse(search, pageable);
 
-        if (!hasSearch && !hasCategory){
-            pageResult = productEsRepository.findAll(pageable);
-        }
-        else if(hasSearch && !hasCategory){
-            pageResult = productEsRepository.findByProductsNameAndDelFalse(search, pageable);
-        }
-        else if (!hasSearch && hasCategory) {
-            pageResult = productEsRepository.findAllByCategoryNamesAndDelFalse(category, pageable);
-        }
-        else{
-            pageResult = productEsRepository.findAllByProductsNameAndCategoryNamesAndDelFalse(search, category, pageable);
-        }
 
 
         // 2. Document -> Response DTO 변환

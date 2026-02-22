@@ -9,8 +9,13 @@ public record ProductListReq(
         @Size(max = 100, message = "검색어는 100자를 넘을 수 없습니다.")
         String search,
 
+        // category 이름
         @Size(max = 20, message = "카테고리는 20자를 넘을 수 없습니다.")
-        String category
+        String category,
+
+        // ip 이름
+        @Size(max = 20, message = "ip는 20자를 넘을 수 없습니다.")
+        String ip
 
 ) {
 }

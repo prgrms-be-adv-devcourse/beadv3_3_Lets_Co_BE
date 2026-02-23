@@ -2,27 +2,30 @@ package co.kr.assistant.service.Impl;
 
 import co.kr.assistant.client.RagServiceClient;
 import co.kr.assistant.model.dto.list.ChatListDTO;
+import co.kr.assistant.model.dto.rag.RagItem;
 import co.kr.assistant.model.dto.rag.RagRes;
 import co.kr.assistant.model.entity.Assistant;
 import co.kr.assistant.model.entity.AssistantChat;
 import co.kr.assistant.dao.AssistantChatRepository;
 import co.kr.assistant.dao.AssistantRepository;
 import co.kr.assistant.service.ChatService;
-import co.kr.assistant.util.PrivacyUtil; // 개인정보 마스킹 유틸
-import co.kr.assistant.util.ProfanityFilter; // 욕설 필터 유틸
+import co.kr.assistant.util.PrivacyUtil;
+import co.kr.assistant.util.ProfanityFilter;
 import co.kr.assistant.util.TokenUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.io.InputStream;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -36,35 +39,37 @@ public class ChatServiceImpl implements ChatService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
     private final ChatClient.Builder chatClientBuilder;
-
-    // 유틸리티 주입
     private final ProfanityFilter profanityFilter;
     private final PrivacyUtil privacyUtil;
-
     private final RagServiceClient ragServiceClient;
+
+    private final Map<String, Object> promptTemplates = new HashMap<>();
+
+    // RAG 데이터의 신뢰도를 결정하는 최소 점수 임계값
+    private static final double MIN_SCORE_THRESHOLD = 0.1;
+
+    @PostConstruct
+    public void initPrompts() {
+        try {
+            ClassPathResource resource = new ClassPathResource("data/prompts.json");
+            try (InputStream is = resource.getInputStream()) {
+                Map<String, Object> loaded = objectMapper.readValue(is, new TypeReference<>() {});
+                this.promptTemplates.putAll(loaded);
+                log.info("GutJJeu 고도화 프롬프트 로드 완료: {}개 섹션", promptTemplates.size());
+            }
+        } catch (Exception e) {
+            log.error("프롬프트 파일 로드 실패 (src/main/resources/data/prompts.json)", e);
+        }
+    }
 
     @Override
     @Transactional
     public String start(String accessToken, String ip, String ua) {
         String chatToken = UUID.randomUUID().toString();
-        Long usersIdx = null;
-
-        if (accessToken != null) {
-            usersIdx = TokenUtil.getUserIdFromToken(accessToken);
-        }
-
-        Assistant assistant = Assistant.builder()
-                .assistantCode(chatToken)
-                .usersIdx(usersIdx)
-                .ipAddress(ip)
-                .userAgent(ua)
-                .build();
-
+        Long usersIdx = (accessToken != null) ? TokenUtil.getUserIdFromToken(accessToken) : null;
+        Assistant assistant = Assistant.builder().assistantCode(chatToken).usersIdx(usersIdx).ipAddress(ip).userAgent(ua).build();
         assistantRepository.save(assistant);
-
-        // 보안 검증용 세션 캐싱 (1시간)
         redisTemplate.opsForValue().set("session:" + chatToken, ip + "|" + ua, 1, TimeUnit.HOURS);
-
         return chatToken;
     }
 
@@ -72,106 +77,112 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatListDTO> list(String chatToken) {
         String redisKey = "chat_history:" + chatToken;
-
-        // 1. Redis에서 캐시 데이터 확인
         String cachedData = (String) redisTemplate.opsForValue().get(redisKey);
-
         if (cachedData != null) {
-            try {
-                log.info("Redis 캐시에서 채팅 리스트를 반환합니다.");
-                return objectMapper.readValue(cachedData, new TypeReference<List<ChatListDTO>>() {});
-            } catch (JsonProcessingException e) {
-                log.error("Redis 데이터 파싱 실패", e);
-            }
+            try { return objectMapper.readValue(cachedData, new TypeReference<List<ChatListDTO>>() {}); }
+            catch (JsonProcessingException e) { log.error("Cache parsing error", e); }
         }
-
-        // 2. Redis에 없으면 MariaDB에서 조회
-        Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 채팅 세션입니다."));
-
+        Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0).orElseThrow(() -> new IllegalArgumentException("Invalid Session"));
         List<ChatListDTO> dbChats = assistantChatRepository.findByAssistant_AssistantIdxAndDelOrderByCreatedAtDesc(assistant.getAssistantIdx(), 0)
-                .stream()
-                .map(chat -> ChatListDTO.builder()
-                        .question(chat.getQuestion())
-                        .answer(chat.getAnswer())
-                        .time(chat.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
-
-        // 3. 조회된 데이터를 Redis에 저장
+                .stream().map(chat -> ChatListDTO.builder().question(chat.getQuestion()).answer(chat.getAnswer()).time(chat.getCreatedAt()).build()).collect(Collectors.toList());
         if (!dbChats.isEmpty()) {
-            try {
-                String jsonChats = objectMapper.writeValueAsString(dbChats);
-                redisTemplate.opsForValue().set(redisKey, jsonChats, 1, TimeUnit.HOURS);
-            } catch (JsonProcessingException e) {
-                log.error("Redis 저장용 JSON 변환 실패", e);
-            }
+            try { redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(dbChats), 1, TimeUnit.HOURS); }
+            catch (JsonProcessingException e) { log.error("Cache save error", e); }
         }
-
         return dbChats;
     }
 
     @Override
     @Transactional
     public String ask(String chatToken, String question) {
-        // 1. 세션 확인 및 유효성 검사
+        // 1. 세션 확인 및 질문 정제
         Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 채팅 세션입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("세션이 만료되었습니다."));
 
-        int cleanLength = profanityFilter.getCleanLength(question);
-        if (cleanLength <= 1) {
-            throw new IllegalArgumentException("질문 내용이 너무 짧거나 부적절한 표현만 포함되어 있습니다.");
+        if (profanityFilter.getCleanLength(question) <= 1) {
+            throw new IllegalArgumentException("질문 내용이 적절하지 않습니다.");
         }
 
-        // 2. 현재 질문 가공 (욕설 필터 및 개인정보 마스킹)
         String processedQuestion = privacyUtil.maskAll(profanityFilter.filter(question));
 
-        // 3. [추가] Python RAG 서버를 통해 관련 지식(Context) 조회
-        // 3060 Ti에서 BGE-M3 + Reranker 로직이 작동하여 최상의 지식을 선별합니다.
-        List<RagRes> searchResults = ragServiceClient.searchKnowledge(processedQuestion, 5);
-        String retrievedContext = searchResults.stream()
-                .map(RagRes::getText)
-                .collect(Collectors.joining("\n\n"));
+        // 2. RAG 서버 호출 및 검색 결과 필터링
+        RagRes ragRes = ragServiceClient.searchKnowledge(processedQuestion, 5);
+        String intent = (ragRes != null) ? ragRes.getIntent() : "GENERAL_CHAT";
 
-        // 4. 시스템 프롬프트 구성 (지식 기반 답변 지침 추가)
-        StringBuilder contextBuilder = new StringBuilder();
-        contextBuilder.append("당신은 유능한 보안 챗봇 어시스턴트입니다. 아래 [참고 지식]을 바탕으로 질문에 답하세요.\n");
-        contextBuilder.append("1. 문장에 포함된 <PROFANITY_MASK>는 부적절한 단어가 가려진 것이니 무시하고 자연스럽게 답하세요.\n");
-        contextBuilder.append("2. <PRIVACY_MASK>로 가려진 부분은 답변에서 직접 언급하거나 '없다'고 말하지 말고, 문맥에 맞춰 자연스럽게 생략하거나 대체하세요.\n");
-        contextBuilder.append("3. [참고 지식]에 관련 정보가 있다면 우선적으로 활용하여 정확하게 답변하세요.\n\n");
+        // 유사도 점수가 임계값(0.1) 이상인 데이터만 추출하여 환각 현상 방지
+        String retrievedContext = (ragRes != null && ragRes.getResults() != null)
+                ? ragRes.getResults().stream()
+                .filter(item -> item.getScore() >= MIN_SCORE_THRESHOLD)
+                .map(RagItem::getText)
+                .collect(Collectors.joining("\n\n"))
+                : "";
 
-        contextBuilder.append("[참고 지식]\n");
-        contextBuilder.append(retrievedContext.isEmpty() ? "관련된 내부 지식을 찾지 못했습니다." : retrievedContext).append("\n\n");
-
-        // 5. 이전 대화 내역 가져오기 (기존 로직 유지)
-        List<ChatListDTO> history = this.list(chatToken).stream().limit(5).collect(Collectors.toList());
-        contextBuilder.append("[이전 대화 내역]\n");
-        for (int i = history.size() - 1; i >= 0; i--) {
-            ChatListDTO h = history.get(i);
-            contextBuilder.append("User: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getQuestion()))).append("\n");
-            contextBuilder.append("Assistant: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getAnswer()))).append("\n\n");
+        if (retrievedContext.isEmpty()) {
+            retrievedContext = "관련된 직접적인 지식을 찾지 못했습니다. 일반적인 가이드라인에 따라 답변하십시오.";
         }
 
-        contextBuilder.append("한글로만 답해줘.");
-        String systemPrompt = contextBuilder.toString();
+        // 3. 고도화된 시스템 프롬프트 조립
+        Map<String, Object> common = (Map<String, Object>) promptTemplates.get("COMMON");
+        Map<String, Object> intentConfig = (Map<String, Object>) promptTemplates.getOrDefault(intent, promptTemplates.get("GENERAL_CHAT"));
 
-        log.info("AI에게 전달되는 시스템 프롬프트: {}", systemPrompt);
-        log.info("AI에게 전달되는 질문: {}", question);
+        StringBuilder pb = new StringBuilder();
 
-        // 6. AI 호출 및 결과 저장
+        // [MANDATORY] 언어 및 안전 정책
+        pb.append("# MANDATORY POLICIES\n");
+        pb.append("- RESPONSE LANGUAGE: MUST match the user's input language.\n");
+        ((List<String>) common.get("language_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
+        ((List<String>) common.get("safety_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
+        ((List<String>) common.get("fallback_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
+
+        // [PERSONA] 역할 정의
+        pb.append("\n## YOUR IDENTITY\n").append(intentConfig.get("persona")).append("\n\n");
+
+        // [INSTRUCTIONS] 상세 지침 및 제약 사항
+        pb.append("## OPERATIONAL GUIDELINES\n");
+        if (intentConfig.containsKey("instructions")) {
+            ((List<String>) intentConfig.get("instructions")).forEach(i -> pb.append("- ").append(i).append("\n"));
+        }
+        if (intentConfig.containsKey("negative_constraints")) {
+            pb.append("### NEVER DO THESE:\n");
+            ((List<String>) intentConfig.get("negative_constraints")).forEach(nc -> pb.append("- ").append(nc).append("\n"));
+        }
+
+        // [CoT] 사고 과정 주입
+        if (intentConfig.containsKey("cot_steps")) {
+            pb.append("\n## THINKING PROCESS\n");
+            ((List<String>) intentConfig.get("cot_steps")).forEach(step -> pb.append(step).append("\n"));
+        }
+
+        // [EXAMPLES] Few-shot 예시
+        if (intentConfig.containsKey("examples")) {
+            pb.append("\n## REFERENCE EXAMPLES\n");
+            List<Map<String, String>> examples = (List<Map<String, String>>) intentConfig.get("examples");
+            examples.forEach(ex -> pb.append("Q: ").append(ex.get("q")).append("\nA: ").append(ex.get("a")).append("\n\n"));
+        }
+
+        // [KNOWLEDGE] 필터링된 지식 및 대화 내역
+        pb.append("## [REFERENCE KNOWLEDGE]\n").append(retrievedContext).append("\n\n");
+
+        List<ChatListDTO> history = this.list(chatToken).stream().limit(5).collect(Collectors.toList());
+        pb.append("## [CONVERSATION HISTORY]\n");
+        for (int i = history.size() - 1; i >= 0; i--) {
+            ChatListDTO h = history.get(i);
+            pb.append("User: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getQuestion()))).append("\n");
+            pb.append("Assistant: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getAnswer()))).append("\n\n");
+        }
+
+        pb.append("\nFinal Step: Apply self-correction to ensure the response follows all constraints.");
+        String finalSystemPrompt = pb.toString();
+
+        // 4. AI 호출 및 결과 저장
         String answer = chatClientBuilder.build()
-                .prompt(systemPrompt)
+                .prompt(finalSystemPrompt)
                 .user(processedQuestion)
                 .call()
                 .content();
 
-        AssistantChat chat = AssistantChat.builder()
-                .prompt(systemPrompt)
-                .assistant(assistant)
-                .question(question)
-                .answer(answer)
-                .build();
-        assistantChatRepository.save(chat);
+        assistantChatRepository.save(AssistantChat.builder()
+                .prompt(finalSystemPrompt).assistant(assistant).question(question).answer(answer).build());
 
         assistant.updateActivity();
         redisTemplate.delete("chat_history:" + chatToken);

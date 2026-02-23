@@ -1,14 +1,12 @@
 package co.kr.assistant.client;
 
 import co.kr.assistant.model.dto.rag.RagReq;
-import co.kr.assistant.model.dto.rag.RagRes;
+import co.kr.assistant.model.dto.rag.RagRes; // 변경된 DTO 사용
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Component
 public class RagServiceClient {
@@ -17,14 +15,14 @@ public class RagServiceClient {
 
     public RagServiceClient(WebClient.Builder webClientBuilder,
                             @Value("${rag.server.url:http://localhost:8077}") String baseUrl) {
-        // WebClientConfig에서 생성된 builder를 사용하여 baseUrl 설정
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
     /**
-     * Python RAG 서버에 지식 검색 요청을 보냅니다.
+     * Python RAG 서버에 지식 검색 및 의도 분류 요청을 보냅니다.
+     * 반환 타입이 List<RagRes>에서 RagRes로 변경되었습니다.
      */
-    public List<RagRes> searchKnowledge(String query, int topK) {
+    public RagRes searchKnowledge(String query, int topK) {
         RagReq request = new RagReq(query, topK);
 
         return webClient.post()
@@ -37,17 +35,13 @@ public class RagServiceClient {
                             return Mono.error(new RuntimeException("RAG 서버 요청 실패: " + errorBody));
                         })
                 )
-                .bodyToFlux(RagRes.class)
-                .collectList()
+                .bodyToMono(RagRes.class) // 단일 객체로 수신
                 .block();
     }
 
-    /**
-     * Python RAG 서버에 DB 동기화를 요청합니다.
-     */
     public void triggerSync() {
         webClient.post()
-                .uri("/sync") // Python 서버의 POST /sync 호출
+                .uri("/sync")
                 .retrieve()
                 .bodyToMono(String.class)
                 .subscribe(result -> System.out.println("RAG Sync Started: " + result));

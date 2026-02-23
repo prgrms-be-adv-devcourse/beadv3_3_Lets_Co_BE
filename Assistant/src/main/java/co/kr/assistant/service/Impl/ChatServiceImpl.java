@@ -46,7 +46,7 @@ public class ChatServiceImpl implements ChatService {
     private final Map<String, Object> promptTemplates = new HashMap<>();
 
     // RAG 데이터의 신뢰도를 결정하는 최소 점수 임계값
-    private static final double MIN_SCORE_THRESHOLD = 0.1;
+    private static final double MIN_SCORE_THRESHOLD = 0.0006;
 
     @PostConstruct
     public void initPrompts() {
@@ -173,6 +173,9 @@ public class ChatServiceImpl implements ChatService {
 
         pb.append("\nFinal Step: Apply self-correction to ensure the response follows all constraints.");
         String finalSystemPrompt = pb.toString();
+
+        log.info("Final System Prompt for ChatToken {}: \n{}", chatToken, finalSystemPrompt);
+        log.info("User Question after processing: {}", processedQuestion);
 
         // 4. AI 호출 및 결과 저장
         String answer = chatClientBuilder.build()

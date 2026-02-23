@@ -1,4 +1,4 @@
-package co.kr.user.service.Impl;
+package co.kr.user.service.impl;
 
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
@@ -10,7 +10,6 @@ import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.service.UserQueryService;
-import co.kr.user.util.AESUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

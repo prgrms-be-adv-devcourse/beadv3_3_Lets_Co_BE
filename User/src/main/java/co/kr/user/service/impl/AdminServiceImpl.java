@@ -1,4 +1,4 @@
-package co.kr.user.service.Impl;
+package co.kr.user.service.impl;
 
 import co.kr.user.model.dto.address.AddressListDTO;
 import co.kr.user.model.dto.admin.AdminItemsPerPageReq;

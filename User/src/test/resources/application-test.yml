@@ -42,4 +42,4 @@ custom:
       seller-reg: "[테스트] 판매자 등록 안내"
   site:
     url:
-      base: "http://localhost:8080"
+      base: "https://gutjjeu.chlab.org"

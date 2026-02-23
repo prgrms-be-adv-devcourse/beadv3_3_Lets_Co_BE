@@ -55,4 +55,13 @@ public interface ClientService {
      * @return 해당 카드의 식별자 (Card IDX)
      */
     Long searchCard(Long userIdx, String cardCode);
+
+    /**
+     * 판매자 식별자(sellerIdx)를 이용해 프로필 이미지의 Presigned URL을 조회합니다.
+     * DB에 등록된 이미지가 없을 경우 기본 인덱스 이미지 URL을 반환합니다.
+     *
+     * @param sellerIdx 조회할 판매자의 PK
+     * @return S3 Presigned URL
+     */
+    String getSellerProfileImage(Long sellerIdx);
 }

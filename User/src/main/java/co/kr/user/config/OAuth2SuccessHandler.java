@@ -104,7 +104,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             response.sendRedirect(baseUrl + "/my/complete-profile");
         } else {
             // 이미 개인 정보를 입력한 경우
-            response.sendRedirect(baseUrl + "/home");
+            response.sendRedirect(baseUrl + "/");
         }
     }
 }

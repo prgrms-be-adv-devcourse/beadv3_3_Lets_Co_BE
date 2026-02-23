@@ -1,4 +1,4 @@
-package co.kr.user.service.Impl;
+package co.kr.user.service.impl;
 
 import co.kr.user.dao.UserInformationRepository;
 import co.kr.user.dao.UserRepository;
@@ -10,7 +10,6 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.PublicDel;
-import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.RegisterService;

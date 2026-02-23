@@ -1,4 +1,4 @@
-package co.kr.user.service.Impl;
+package co.kr.user.service.impl;
 
 import co.kr.user.dao.UserVerificationsRepository;
 import co.kr.user.model.dto.mail.EmailMessage;
@@ -7,7 +7,6 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersVerifications;
 import co.kr.user.model.vo.PublicDel;
-import co.kr.user.model.vo.UserDel;
 import co.kr.user.model.vo.UsersVerificationsPurPose;
 import co.kr.user.model.vo.UsersVerificationsStatus;
 import co.kr.user.service.UserService;
@@ -26,7 +25,6 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
-import java.util.regex.Pattern;
 import java.time.LocalDateTime;
 
 /**

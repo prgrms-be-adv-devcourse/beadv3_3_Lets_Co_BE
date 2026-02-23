@@ -1,5 +1,6 @@
 package co.kr.product.product.controller;
 
+import co.kr.product.product.controller.swagger.ip.*;
 import co.kr.product.product.model.dto.request.CategoryUpsertReq;
 import co.kr.product.product.model.dto.response.CategoryFamilyRes;
 import co.kr.product.product.model.dto.response.CategoryRes;
@@ -19,7 +20,12 @@ public class IpController {
 
     private final ProductCategoryService categoryService;
 
-    // 모든 IP 목록 출력. 순서 o
+
+    /**
+     * 모든 IP 목록 출력. 순서 o
+     * @return IP List
+     */
+    @IpListDocs
     @GetMapping
     public ResponseEntity<List<CategorySortedRes>> getCategory(
 
@@ -28,7 +34,12 @@ public class IpController {
                 categoryService.getCategory(CategoryType.IP));
     }
 
-    // 상위 IP 출력
+    /**
+     * 가족 IP 출력
+     * @param categoryCode
+     * @return CategoryFamilyRes
+     */
+    @IpFamilyListDocs
     @GetMapping("/{categoryCode}")
     public ResponseEntity<CategoryFamilyRes> getFamilyCategory(
             @PathVariable("categoryCode") String categoryCode
@@ -37,7 +48,13 @@ public class IpController {
                 categoryService.getFamilyCategory(categoryCode, CategoryType.IP));}
 
 
-    // IP 추가
+    /**
+     * IP 추가
+     * @param usersIdx
+     * @param req
+     * @return IP 상세 정보
+     */
+    @IpAddDocs
     @PostMapping
     public ResponseEntity<CategoryRes> addCategory(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -49,7 +66,13 @@ public class IpController {
     }
 
 
-    // IP 수정 (이름 , 부모IP)
+    /** IP 수정 (이름 , 부모IP)
+     * @param usersIdx
+     * @param categoryCode
+     * @param req
+     * @return IP 상세 정보
+     */
+    @IpUpdateDocs
     @PutMapping("/{categoryCode}")
     public ResponseEntity<String> updateCategory(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -61,7 +84,12 @@ public class IpController {
                 categoryService.updateCategory(usersIdx, categoryCode ,req, CategoryType.IP));
     }
 
-    // IP 삭제(하위 IP 포함)
+    /** IP 삭제(하위 IP 포함)
+     * @param usersIdx
+     * @param categoryCode
+     * @return
+     */
+    @IpDeleteDocs
     @DeleteMapping("/{categoryCode}")
     public ResponseEntity<String> deleteCategory(
             @RequestHeader("X-USERS-IDX") Long usersIdx,

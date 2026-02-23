@@ -1,6 +1,10 @@
 package co.kr.product.product.controller;
 
 import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.controller.swagger.product.AdminProductListDocs;
+import co.kr.product.product.controller.swagger.product.ManagerProductDetailDocs;
+import co.kr.product.product.controller.swagger.product.ProductDeleteDocs;
+import co.kr.product.product.controller.swagger.product.ProductUpdateDocs;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.request.UpsertProductReq;
 import co.kr.product.product.model.dto.response.ProductDetailRes;
@@ -38,6 +42,7 @@ public class AdminController {
      * @param requests  search
      * @return 상품 리스트
      */
+    @AdminProductListDocs
     @GetMapping("/products")
     public ResponseEntity<ProductListRes> getProductList(
             @PageableDefault Pageable pageable,
@@ -56,6 +61,7 @@ public class AdminController {
      * @param productCode
      * @return 상품 상세 정보
      */
+    @ManagerProductDetailDocs
     @GetMapping("/products/{code}")
     public ResponseEntity<ProductDetailRes> getProductDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -73,7 +79,7 @@ public class AdminController {
      * @param productCode
      * @return 상품 상세 정보
      */
-
+    @ProductUpdateDocs
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailRes> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -92,6 +98,7 @@ public class AdminController {
      * @param productCode
      * @return resultCode
      */
+    @ProductDeleteDocs
     @DeleteMapping("/products/{code}")
     public ResponseEntity<ResultRes> deleteProduct(
 

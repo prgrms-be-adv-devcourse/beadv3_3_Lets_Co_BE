@@ -1,14 +1,13 @@
 package co.kr.product.product.controller;
 
 import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.controller.swagger.product.*;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.request.UpsertProductReq;
 import co.kr.product.product.model.dto.response.ProductDetailRes;
 import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.model.dto.response.ResultRes;
 import co.kr.product.product.service.ProductManagerService;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +36,7 @@ public class SellerController {
      * @param requests
      * @return 판매자가 올린 상품 리스트 반환
      */
+    @SellerProductListDocs
     @GetMapping("/products")
     public ResponseEntity<ProductListRes> getLists(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -75,12 +75,14 @@ public class SellerController {
      * @param request
      * @return 등록 된 상품의 상세 정보
      */
+    @ProductAddDocs
     @PostMapping(value = "/products" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public  ResponseEntity<ProductDetailRes> addProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
 
-            // swagger 인식용
-            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            // 파일까지 같이 받는 경우에만 여기서 선언
+
+            //@Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
             @RequestPart("request") @Valid UpsertProductReq request,
 
             @RequestPart(value = "images") @NotEmpty(message = "최소 1개의 이미지를 등록해야 합니다.") List<MultipartFile> images
@@ -96,7 +98,7 @@ public class SellerController {
                 throw new IllegalArgumentException("비어있는 파일이 포함되어 있습니다.");
             }
 
-            // 2. MIME 타입 검사 (단순 확장자 검사보다 안전함)
+            // 2. MIME 타입 검사
             String contentType = file.getContentType();
             if (contentType == null || !allowedMimeTypes.contains(contentType)) {
                 throw new IllegalArgumentException("지원하지 않는 이미지 형식입니다. (JPEG, PNG, GIF, WEBP만 허용)");
@@ -115,11 +117,12 @@ public class SellerController {
 
 
     /**
-     * 상품 상세 정보(판매자)
+     * 상품 상세 조회(판매자)
      * @param usersIdx
      * @param productCode
      * @return 상품 상세 정보
      */
+    @ManagerProductDetailDocs
     @GetMapping("/products/{code}")
     public ResponseEntity<ProductDetailRes> getProductDetail(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -138,6 +141,7 @@ public class SellerController {
      * @param request
      * @return 상품 상세 정보
      */
+    @ProductUpdateDocs
     @PutMapping("/products/{code}")
     public ResponseEntity<ProductDetailRes> updateProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,
@@ -155,6 +159,7 @@ public class SellerController {
      * @param productCode
      * @return resultCode
      */
+    @ProductDeleteDocs
     @DeleteMapping("/products/{code}")
     public ResponseEntity<ResultRes> deleteProduct(
             @RequestHeader("X-USERS-IDX") Long usersIdx,

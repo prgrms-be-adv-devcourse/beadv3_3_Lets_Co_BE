@@ -18,11 +18,11 @@ public record UpsertProductReq(
 
         @NotNull(message = "가격은 필수입니다.")
         @PositiveOrZero(message = "가격은 0원 이상이어야 합니다.")
-        @Digits(integer = 17, fraction = 2, message = "가격은 정수 17자리, 소수 2자리까지 허용됩니다.")
+        @Digits(integer = 17, fraction = 0, message = "가격은 정수 17자리까지 허용됩니다.")
         BigDecimal price,
 
         @PositiveOrZero(message = "할인가는 0원 이상이어야 합니다.")
-        @Digits(integer = 17, fraction = 2, message = "할인가는 정수 17자리, 소수 2자리까지 허용됩니다.")
+        @Digits(integer = 17, fraction = 0, message = "할인가는 정수 17자리까지 허용됩니다.")
         BigDecimal salePrice,
 
         @NotNull(message = "재고 수량은 필수입니다.")

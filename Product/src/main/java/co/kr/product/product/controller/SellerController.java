@@ -10,6 +10,7 @@ import co.kr.product.product.service.ProductManagerService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -81,9 +83,31 @@ public class SellerController {
             @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
             @RequestPart("request") @Valid UpsertProductReq request,
 
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
+            @RequestPart(value = "images") @NotEmpty(message = "최소 1개의 이미지를 등록해야 합니다.") List<MultipartFile> images
             ){
 
+
+        // 허용할 이미지  타입 목록
+        List<String> allowedMimeTypes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/webp");
+
+        for (MultipartFile file : images) {
+            // 1. 파일이 비어있는지 확인 (이름만 있고 내용이 없는 깡통 파일)
+            if (file.isEmpty()) {
+                throw new IllegalArgumentException("비어있는 파일이 포함되어 있습니다.");
+            }
+
+            // 2. MIME 타입 검사 (단순 확장자 검사보다 안전함)
+            String contentType = file.getContentType();
+            if (contentType == null || !allowedMimeTypes.contains(contentType)) {
+                throw new IllegalArgumentException("지원하지 않는 이미지 형식입니다. (JPEG, PNG, GIF, WEBP만 허용)");
+            }
+
+            // 3.  파일 이름 길이 제한
+            String fileName = file.getOriginalFilename();
+            if (fileName != null && fileName.length() > 100) {
+                throw new IllegalArgumentException("파일 이름이 너무 깁니다.");
+            }
+        }
 
         return ResponseEntity.ok(
                 productManagerService.addProduct(usersIdx,request, images));

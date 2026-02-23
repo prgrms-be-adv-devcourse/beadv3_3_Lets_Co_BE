@@ -10,7 +10,6 @@ public class PaymentMapper {
                 payment.getStatus(),
                 payment.getType(),
                 payment.getAmount(),
-                payment.getOrdersIdx(),
                 payment.getCardIdx(),
                 payment.getPaymentKey()
         );

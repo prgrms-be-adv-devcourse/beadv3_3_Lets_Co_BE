@@ -57,7 +57,6 @@ public class OrderItemEntity {
         this.optionName = optionName;
         this.price = price != null ? price : BigDecimal.ZERO;
         this.quantity = quantity != null ? quantity : 0;
-        this.del = del != null ? del : false;
     }
 
     public void setOrder(OrderEntity order) {

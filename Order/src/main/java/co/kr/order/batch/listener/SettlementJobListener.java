@@ -20,12 +20,12 @@ public class SettlementJobListener implements JobExecutionListener {
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
-        log.info("========================================");
+        log.info("=====");
         log.info("월간 정산 배치 Job 시작");
         log.info("Job 이름: {}", jobExecution.getJobInstance().getJobName());
         log.info("Job 파라미터: {}", jobExecution.getJobParameters());
         log.info("시작 시간: {}", jobExecution.getStartTime());
-        log.info("========================================");
+        log.info("=====");
     }
 
     @Override

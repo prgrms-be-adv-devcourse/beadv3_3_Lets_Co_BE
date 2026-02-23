@@ -6,11 +6,9 @@ import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
 
 public interface PaymentService {
-    PaymentResponse process(PaymentReq request);
+    void process(Long userIdx, PaymentReq request);
 
     PaymentResponse refund(RefundReq refundRequest);
 
-    PaymentResponse charge(ChargeReq request);
-
-    PaymentResponse findByOrdersIdx(Long ordersIdx);
+    PaymentResponse charge(Long userIdx, ChargeReq request);
 }

@@ -87,6 +87,7 @@ public class ClientController {
 
     // 상품의 판매자 다중 조회
     @GetMapping("/sellers")
+
     public Map<Long, Long> getSellersByProductIdxs(@RequestParam List<Long> productIds) {
         return productService.getSellersByProductIds(productIds);
     }

@@ -1,5 +1,7 @@
 package co.kr.order.service.impl;
 
+import co.kr.order.exception.CustomException;
+import co.kr.order.exception.ErrorCode;
 import co.kr.order.model.dto.SettlementInfo;
 import co.kr.order.model.entity.SettlementHistoryEntity;
 import co.kr.order.model.vo.SettlementType;
@@ -20,6 +22,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SettlementServiceImpl implements SettlementService {
 
+    /**
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * todo. 정민님 주석
+     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     */
+
     private final SettlementRepository settlementRepository;
 
     @Override
@@ -32,10 +40,22 @@ public class SettlementServiceImpl implements SettlementService {
             settlementList.add(SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
                     .paymentIdx(paymentIdx)
-                    .type(SettlementType.Orders_CONFIRMED)
+                    .type(SettlementType.ORDERS_CONFIRMED)
                     .amount(entry.getValue())
                     .build());
         }
+
+
+        /*
+         * 실제 정산 DB 에 저장되었는지
+         */
+        log.info("========== [정산 로그] DB 저장 (SettlementHistory) ==========");
+        log.info("결제번호(PaymentIdx): {}", paymentIdx);
+        for (SettlementHistoryEntity entity : settlementList) {
+            log.info(" - [저장] 판매자: {}, 타입: {}, 금액: {}",
+                    entity.getSellerIdx(), entity.getType(), entity.getAmount());
+        }
+        log.info("==============================================================");
 
         settlementRepository.saveAll(settlementList);
     }
@@ -67,11 +87,7 @@ public class SettlementServiceImpl implements SettlementService {
         }
     }
 
-    /*
-     * 정산목록 조회를 Order-service 쪽에서 할지, Member-service에서 할지?
-     * member에서 sellerIdx 주면 Order에서 sellerIdx 맞는거 찾아 List나 단건을 주기만 함면 될거같음
-     */
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<SettlementInfo> getSettlementList(Long sellerIdx) {
 
@@ -96,12 +112,14 @@ public class SettlementServiceImpl implements SettlementService {
         return returnSettlementList;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public SettlementInfo getSettlement(Long sellerIdx, Long paymentIdx) {
 
         SettlementHistoryEntity entity = settlementRepository
-        .findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx);
+                .findBySellerIdxAndPaymentIdx(sellerIdx, paymentIdx)
+                .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND,
+                        "정산 정보를 찾을 수 없습니다. sellerIdx=" + sellerIdx + ", paymentIdx=" + paymentIdx));
 
         return new SettlementInfo(
                 entity.getSettlementIdx(),

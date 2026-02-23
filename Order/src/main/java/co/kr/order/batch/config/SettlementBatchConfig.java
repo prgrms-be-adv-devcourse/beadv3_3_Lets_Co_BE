@@ -4,6 +4,7 @@ import co.kr.order.batch.dto.SellerSettlementSummary;
 import co.kr.order.batch.listener.SettlementJobListener;
 import co.kr.order.batch.processor.SettlementItemProcessor;
 import co.kr.order.batch.util.SettlementTimeUtil;
+import co.kr.order.exception.CustomException;
 import co.kr.order.batch.writer.SettlementItemWriter;
 import co.kr.order.model.vo.SettlementType;
 import lombok.RequiredArgsConstructor;
@@ -76,8 +77,12 @@ public class SettlementBatchConfig {
                 .processor(settlementItemProcessor)
                 .writer(settlementItemWriter)
                 .faultTolerant()
+                .retryLimit(3)
+                .retry(Exception.class)
+                .noRetry(CustomException.class)
                 .skipLimit(100)
-                .skip(Exception.class)
+                .skip(CustomException.class)
+                .noSkip(Exception.class)
                 .build();
     }
 

@@ -11,4 +11,8 @@ import lombok.Data;
 public class ClientRoleDTO {
     /** 사용자의 시스템 권한 (ADMIN, USERS, SELLER) */
     private UsersRole role;
+    private Long usersIdx;
+    private String userName;
+    private Long sellerIdx;
+    private String sellerName;
 }

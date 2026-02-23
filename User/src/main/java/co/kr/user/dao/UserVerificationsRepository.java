@@ -1,6 +1,7 @@
 package co.kr.user.dao;
 
 import co.kr.user.model.entity.UsersVerifications;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -19,7 +20,7 @@ public interface UserVerificationsRepository extends JpaRepository<UsersVerifica
      * @param del 삭제 상태
      * @return 조건에 맞는 최신 UsersVerifications 엔티티 (Optional)
      */
-    Optional<UsersVerifications> findTopByCodeAndDelOrderByCreatedAtDesc(String code, UserDel del);
+    Optional<UsersVerifications> findTopByCodeAndDelOrderByCreatedAtDesc(String code, PublicDel del);
 
     /**
      * 사용자 식별자와 삭제 상태로 인증 정보를 조회합니다.
@@ -29,5 +30,5 @@ public interface UserVerificationsRepository extends JpaRepository<UsersVerifica
      * @param del 삭제 상태
      * @return 조건에 맞는 최신 UsersVerifications 엔티티 (Optional)
      */
-    Optional<UsersVerifications> findTopByUsersIdxAndDelOrderByCreatedAtDesc(Long usersIdx, UserDel del);
+    Optional<UsersVerifications> findTopByUsersIdxAndDelOrderByCreatedAtDesc(Long usersIdx, PublicDel del);
 }

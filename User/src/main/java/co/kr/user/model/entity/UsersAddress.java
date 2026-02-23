@@ -1,5 +1,6 @@
 package co.kr.user.model.entity;
 
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.util.CryptoConverter;
 import jakarta.persistence.*;
@@ -58,7 +59,7 @@ public class UsersAddress {
 
     /** 삭제 여부 상태 */
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private UserDel del;
+    private PublicDel del;
 
     @Builder
     public UsersAddress(Long usersIdx, String recipient, String address, String addressDetail, String phoneNumber) {
@@ -70,7 +71,7 @@ public class UsersAddress {
         this.address = address;
         this.addressDetail = addressDetail;
         this.phoneNumber = phoneNumber;
-        this.del = UserDel.ACTIVE;
+        this.del = PublicDel.ACTIVE;
     }
 
     /** 주소 정보를 업데이트합니다. */
@@ -91,6 +92,6 @@ public class UsersAddress {
 
     /** 주소를 논리적으로 삭제 처리합니다. */
     public void deleteAddress() {
-        this.del = UserDel.DELETED;
+        this.del = PublicDel.DELETED;
     }
 }

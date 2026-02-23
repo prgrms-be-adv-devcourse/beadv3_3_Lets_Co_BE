@@ -7,9 +7,13 @@ import co.kr.user.service.SellerService;
 import co.kr.user.util.BaseResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 /**
  * 판매자(Seller) 관련 기능을 제공하는 REST 컨트롤러입니다.
@@ -90,5 +94,30 @@ public class SellerController {
     public ResponseEntity<BaseResponse<String>> deleteUser(@RequestHeader ("X-USERS-IDX") Long userIdx,
                                                            @RequestBody @Valid SellerDeleteSecondStepReq sellerDeleteSecondStepReq) {
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", sellerService.myDelete(userIdx, sellerDeleteSecondStepReq.getAuthCode())));
+    }
+
+    /**
+     * [PUT] 판매자 본인 프로필 이미지 등록 및 수정
+     * 등록과 수정을 PUT 메서드로 통합하여 처리합니다.
+     */
+    @PutMapping(value = "/my/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BaseResponse<String>> updateProfileImage(
+            @RequestHeader("X-USERS-IDX") Long userIdx,
+            @RequestParam("file") MultipartFile file) throws IOException {
+
+        String resultMessage = sellerService.updateProfileImage(userIdx, file);
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", resultMessage));
+    }
+
+    /**
+     * [POST] 판매자 본인 프로필 이미지 조회
+     * 본인의 이미지를 조회할 때도 POST 메서드를 사용합니다.
+     */
+    @PostMapping("/my/profile-image")
+    public ResponseEntity<BaseResponse<String>> getMyProfileImage(
+            @RequestHeader("X-USERS-IDX") Long userIdx) {
+
+        String imageUrl = sellerService.getMyProfileImage(userIdx);
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", imageUrl));
     }
 }

@@ -12,6 +12,8 @@ public class CookieUtil {
     public static final String ACCESS_TOKEN_NAME = "accessToken";
     // 리프레시 토큰 쿠키 이름 상수
     public static final String REFRESH_TOKEN_NAME = "refreshToken";
+    // 채팅 토큰 쿠기 이름 상수
+    public static final String CHAT_TOKEN_NAME = "chatToken";
     // 액세스 토큰 만료 시간 (초 단위): 15분 (15 * 60)
     public static final int ACCESS_TOKEN_EXPIRY = 15 * 60;
     // 리프레시 토큰 만료 시간 (초 단위): 7일 (7 * 24 * 60 * 60)

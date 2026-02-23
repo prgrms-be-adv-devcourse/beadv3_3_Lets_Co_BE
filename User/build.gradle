@@ -26,6 +26,7 @@ repositories {
 
 ext {
     set('springCloudVersion', "2025.0.1")
+    springAiVersion = "1.1.2"
 }
 
 dependencies {
@@ -38,7 +39,10 @@ dependencies {
     // --- [Database & Cache] ---
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'      // Spring Data JPA (ORM)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'    // Redis 캐시/데이터 저장소
+    implementation 'org.springframework.ai:spring-ai-tika-document-reader'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'                          // MariaDB 드라이버
+
+    implementation "software.amazon.awssdk:s3:2.41.20"
 
     // --- [Security & Authentication] ---
     implementation 'org.springframework.boot:spring-boot-starter-security'      // Spring Security (인증/인가)
@@ -62,15 +66,20 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'                                      // 컴파일 시점 코드 생성
     annotationProcessor 'org.projectlombok:lombok'                              // 어노테이션 기반 프로세싱
 
+    // --- [H2] ---
+    runtimeOnly 'com.h2database:h2'
+
     // --- [Testing] ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'      // 스프링 부트 통합 테스트
     testImplementation 'org.springframework.security:spring-security-test'      // 시큐리티 설정 테스트
+    testImplementation 'com.h2database:h2'                                     // H2 DB (IDE 인식용)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                // JUnit 플랫폼 런처
 }
 
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "org.springframework.ai:spring-ai-bom:$springAiVersion"
     }
 }
 

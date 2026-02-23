@@ -88,4 +88,16 @@ public class ClientController {
                                                          @RequestBody CardReq cardReq) {
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.searchCard(userIdx, cardReq.getCardCode())));
     }
+
+    /**
+     * [POST] 특정 판매자의 프로필 이미지 조회
+     * 조회 요청이지만 요구사항에 따라 POST 메서드를 사용합니다.
+     */
+    @PostMapping("/seller/{sellerIdx}/image")
+    public ResponseEntity<BaseResponse<String>> getSellerImage(
+            @PathVariable Long sellerIdx) {
+
+        String imageUrl = clientService.getSellerProfileImage(sellerIdx);
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", imageUrl));
+    }
 }

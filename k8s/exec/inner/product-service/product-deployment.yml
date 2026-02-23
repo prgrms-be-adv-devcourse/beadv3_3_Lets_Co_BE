@@ -49,6 +49,12 @@ spec:
                 name: db-secret
                 key: DB_PASSWORD 
 
+          - name: KAFKA_ENDPOINT
+            valueFrom: 
+              secretKeyRef:
+                name: kafka-secret
+                key: KAFKA_ENDPOINT 
+
           - name: ZIPKIN_ENDPOINT
             valueFrom: 
               secretKeyRef:

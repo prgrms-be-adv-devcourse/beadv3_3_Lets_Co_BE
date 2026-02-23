@@ -1,3 +1,5 @@
+# 미사용. statefulSet을 사용함
+
 apiVersion: apps/v1
 
 kind: Deployment

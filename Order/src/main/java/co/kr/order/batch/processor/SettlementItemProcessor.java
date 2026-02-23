@@ -28,7 +28,7 @@ public class SettlementItemProcessor implements ItemProcessor<SellerSettlementSu
     @Value("${custom.settlement.fee-rate:0.02}")
     private BigDecimal settlementFeeRate;
 
-        @Override
+    @Override
     public SellerSettlementSummary process(@NonNull SellerSettlementSummary item) throws Exception {
         Long sellerIdx = item.getSellerIdx();
         BigDecimal totalAmount = item.getTotalAmount();

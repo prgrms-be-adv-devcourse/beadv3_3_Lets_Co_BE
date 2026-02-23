@@ -141,7 +141,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductCheckStockRes getCheckStock(String productsCode) {
 
-        // TODO : option id or code 를 받아오는것이 훨 좋음
 
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
@@ -234,11 +233,11 @@ public class ProductServiceImpl implements ProductService {
         // > Fetch Join 쓰는 방법이 더 간단하고 성능적으로 좋다고 함. < 공부 필요
 
         // 1. List 내 optionIds 만 list 로 추출
-        List<Long> optionIds = requests.stream()
-                .map(ProductInfoToOrderReq::optionIdx).toList();
+        List<String> optionCodes = requests.stream()
+                .map(ProductInfoToOrderReq::optionCode).toList();
 
         // 2. 조회
-        List<ProductOptionEntity> options = productOptionRepository.findAllWithOptions(optionIds);
+        List<ProductOptionEntity> options = productOptionRepository.findAllWithOptions(optionCodes);
 
         // 3. 반환
         return options.stream().map(opt -> new ProductInfoToOrderRes(

@@ -34,7 +34,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
-                  key: JDBC_URL
+                  key: JDBC_URL_USER
             
             - name: DB_USER
               valueFrom:

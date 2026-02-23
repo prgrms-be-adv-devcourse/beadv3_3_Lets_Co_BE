@@ -54,4 +54,12 @@ public class ClientController {
     ) {
         orderService.orderFail(orderCode);
     }
+
+    @PostMapping("/refund/{orderCode}/{paymentIdx}")
+    void refundPayment(
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx
+    ) {
+        orderService.orderRefund(orderCode, paymentIdx);
+    }
 }

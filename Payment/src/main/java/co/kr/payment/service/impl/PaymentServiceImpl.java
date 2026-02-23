@@ -131,11 +131,16 @@ public class PaymentServiceImpl implements PaymentService {
         // 1. orderCode → ordersIdx 변환 (Order 서비스 통신)
         Long ordersIdx = orderClient.getOrderIdx(request.orderCode());
 
-        // 2. ordersIdx + PAYMENT 상태로 결제 내역 조회
+        // 2. ordersIdx + PAYMENT 상태로 원본 결제 조회
         PaymentEntity payment = paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.PAYMENT)
                 .orElseThrow(() -> new PaymentFailedException(ErrorCode.PAYMENT_NOT_FOUND));
 
-        // 3. 유저 유효성 검증
+        // 3. 중복 환불 방지
+        if (paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.REFUND).isPresent()) {
+            throw new PaymentFailedException(ErrorCode.ALREADY_CANCELLED_PAYMENT);
+        }
+
+        // 4. 유저 유효성 검증
         if (!payment.getUsersIdx().equals(request.userIdx())) {
             throw new PaymentFailedException(ErrorCode.USER_MISMATCH);
         }
@@ -178,6 +183,14 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentKey(payment.getPaymentKey())
                 .build();
         paymentRepository.save(refundPayment);
+
+        // 주문 상태 REFUNDED 변경 + 정산 레코드 CANCEL_ADJUST 처리
+        try {
+            orderClient.refundPayment(request.orderCode(), payment.getPaymentIdx());
+        } catch (Exception e) {
+            log.error("주문 환불 상태 변경 실패: orderCode={}, paymentIdx={}",
+                    request.orderCode(), payment.getPaymentIdx(), e);
+        }
 
         return PaymentMapper.toResponse(refundPayment);
     }

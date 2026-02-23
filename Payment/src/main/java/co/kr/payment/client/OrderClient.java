@@ -29,4 +29,10 @@ public interface OrderClient {
             @PathVariable("paymentIdx") Long paymentIdx,
             @RequestBody UserInfo userInfo
     );
+
+    @PostMapping("/refund/{orderCode}/{paymentIdx}")
+    void refundPayment(
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx
+    );
 }

@@ -486,6 +486,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /*
+     * 환불 시 호출 (주문 상태 REFUNDED + 정산 CANCEL_ADJUST)
+     */
+    @Transactional
+    @Override
+    public void orderRefund(String orderCode, Long paymentIdx) {
+
+        OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+        orderEntity.setStatus(OrderStatus.REFUNDED);
+        settlementService.refundSettlement(orderEntity.getId(), paymentIdx);
+    }
+
+    /*
      * 주문 상태 변경
      * @param orderCode: 주문 코드
      * @param status: 주문 상태

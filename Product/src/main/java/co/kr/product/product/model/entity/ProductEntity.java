@@ -30,12 +30,6 @@ public class ProductEntity {
     @Column(name = "Seller_IDX", nullable = false)
     private Long sellerIdx;
 
-    @Column(name = "Products_Category")
-    private Long categoryIdx;
-
-    @Column(name = "Products_IP")
-    private Long ipIdx;
-
     @Column(name = "Products_Code", nullable = false, length = 50, unique = true)
     private String productsCode;
 
@@ -60,6 +54,15 @@ public class ProductEntity {
     @Column(name = "Status", length = 20)
     private ProductStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Products_Category", nullable = false)
+    private ProductCategoryEntity category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Products_IP", nullable = false)
+    private ProductCategoryEntity ip;
+
+
     @Column(name = "View_Count", nullable = false)
     @ColumnDefault("0")
     private Long viewCount;
@@ -82,7 +85,9 @@ public class ProductEntity {
                          BigDecimal price,
                          BigDecimal salePrice,
                          Integer stock,
-                         ProductStatus status) {
+                         ProductStatus status,
+                         ProductCategoryEntity category,
+                         ProductCategoryEntity ip) {
 
         this.sellerIdx = sellerIdx;
         this.productsCode = productsCode;
@@ -92,18 +97,28 @@ public class ProductEntity {
         this.salePrice = (salePrice == null ? BigDecimal.ZERO : salePrice);
         this.stock = (stock == null ? 0 : stock);
         this.status = status;
+        this.category = category;
+        this.ip = ip;
         this.viewCount = 0L;
         this.del = false;
     }
 
-    public void update(String productsName, String description, BigDecimal price,
-                       BigDecimal salePrice, int stock,ProductStatus status) {
+    public void update(String productsName,
+                       String description,
+                       BigDecimal price,
+                       BigDecimal salePrice,
+                       int stock,
+                       ProductStatus status,
+                       ProductCategoryEntity category,
+                       ProductCategoryEntity ip) {
         this.productsName = productsName;
         this.description = description;
         this.price = price;
         this.salePrice = salePrice;
         this.stock = stock;
         this.status = status;
+        this.category =category;
+        this.ip = ip;
 
     }
 

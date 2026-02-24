@@ -23,6 +23,12 @@ ext {
 }
 
 dependencies {
+	// 1. Eureka Server 실행을 위한 필수 라이브러리 (직접 추가)
+	implementation 'com.google.guava:guava:33.0.0-jre'
+
+	// 2. 로그에 나타난 Validation 오류 해결을 위해 추가 추천
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

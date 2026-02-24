@@ -1,55 +1,57 @@
 package co.kr.user.dao;
 
 import co.kr.user.model.entity.UserCard;
+import co.kr.user.model.vo.PublicDel;
+import co.kr.user.model.vo.UserDel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * 사용자 결제 수단(UserCard) 엔티티의 데이터베이스 접근을 담당하는 리포지토리 인터페이스입니다.
- * 등록된 카드 목록 조회, 기본 카드 확인, 특정 카드 상세 조회 등의 기능을 처리합니다.
+ * UserCard 엔티티(사용자 카드 정보)의 데이터베이스 접근을 담당하는 리포지토리 인터페이스입니다.
  */
 public interface UserCardRepository extends JpaRepository<UserCard, Long> {
-    /**
-     * 특정 사용자의 '기본 결제 카드'를 조회하는 메서드입니다.
-     * Default_Card 값이 일치하는(보통 1) 가장 최근에 등록/수정된 카드를 가져옵니다.
-     *
-     * @param usersIdx 사용자 고유 식별자
-     * @param defaultCard 기본 카드 여부 (1: 기본, 0: 일반)
-     * @param del 삭제 상태 플래그 (0: 정상)
-     * @return 조건에 맞는 기본 카드 정보 (Optional)
-     */
-    Optional<UserCard> findFirstByUsersIdxAndDelOrderByCardIdxDesc(Long usersIdx, int del);
 
     /**
-     * 카드 코드(CardCode)를 이용하여 특정 사용자의 카드 정보를 조회하는 메서드입니다.
-     * 본인의 카드가 맞는지(usersIdx 일치 여부)와 삭제되지 않았는지(del=0)를 함께 검증합니다.
+     * 사용자 식별자와 카드 식별자(PK)로 특정 카드를 조회합니다.
+     * 기본 카드를 찾거나 특정 카드의 유효성을 검증할 때 사용합니다.
      *
-     * @param userIdx 사용자 고유 식별자
-     * @param cardCode 조회할 카드의 고유 코드
-     * @param del 삭제 상태 플래그 (0: 정상)
-     * @return 조건에 맞는 카드 정보 (Optional)
+     * @param usersIdx 사용자 식별자
+     * @param cardIdx 카드 식별자 (PK)
+     * @param del 삭제 상태
+     * @return 조건에 맞는 UserCard 엔티티 (Optional)
      */
-    Optional<UserCard> findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(Long userIdx, String cardCode, int del);
+    Optional<UserCard> findFirstByUsersIdxAndCardIdxAndDelOrderByCardIdxDesc(Long usersIdx, Long cardIdx, PublicDel del);
 
     /**
-     * 삭제되지 않은 사용자의 모든 등록 카드 목록을 조회하는 메서드입니다.
-     * 결제 수단 관리 페이지 등에서 사용됩니다.
+     * 사용자 식별자와 카드 코드(UUID)로 특정 카드를 조회합니다.
+     * 외부 클라이언트가 카드 코드로 접근할 때 사용합니다.
      *
-     * @param usersIdx 사용자 고유 식별자
-     * @param del 삭제 상태 플래그 (0: 정상)
-     * @return 사용자의 모든 정상 카드 리스트
+     * @param userIdx 사용자 식별자
+     * @param cardCode 카드 고유 코드
+     * @param del 삭제 상태
+     * @return 조건에 맞는 UserCard 엔티티 (Optional)
      */
-    List<UserCard> findAllByUsersIdxAndDel(Long usersIdx, int del);
+    Optional<UserCard> findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(Long userIdx, String cardCode, PublicDel del);
 
     /**
-     * 카드 코드(CardCode)만으로 카드 정보를 조회하는 메서드입니다.
-     * 특정 카드의 존재 여부를 확인하거나, 소유자 검증 전 단계에서 정보를 로드할 때 사용됩니다.
+     * 특정 사용자의 삭제되지 않은 모든 카드 목록을 조회합니다.
      *
-     * @param cardCode 조회할 카드의 고유 코드
-     * @param del
-     * @return 해당 코드를 가진 카드 정보 (Optional)
+     * @param usersIdx 사용자 식별자
+     * @param del 삭제 상태 (주로 ACTIVE)
+     * @return 해당 사용자의 카드 리스트
      */
-    Optional<UserCard> findByCardCodeAndDel(String cardCode, int del);
+    List<UserCard> findAllByUsersIdxAndDel(Long usersIdx, PublicDel del);
+
+    /**
+     * 카드 코드와 사용자 식별자로 특정 카드를 조회합니다.
+     * 카드 정보 수정/삭제 시 권한 확인 용도로도 사용됩니다.
+     *
+     * @param cardCode 카드 고유 코드
+     * @param usersIdx 사용자 식별자
+     * @param del 삭제 상태
+     * @return 조건에 맞는 UserCard 엔티티 (Optional)
+     */
+    Optional<UserCard> findByCardCodeAndUsersIdxAndDel(String cardCode, Long usersIdx, PublicDel del);
 }

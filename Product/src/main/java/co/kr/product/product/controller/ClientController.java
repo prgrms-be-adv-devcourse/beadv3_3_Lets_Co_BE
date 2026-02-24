@@ -3,6 +3,7 @@ package co.kr.product.product.controller;
 import co.kr.product.product.model.dto.request.DeductStockReq;
 import co.kr.product.product.model.dto.request.ProductIdxsReq;
 import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
+import co.kr.product.product.model.dto.response.ProductCheckStockRes;
 import co.kr.product.product.model.dto.response.ProductInfoRes;
 import co.kr.product.product.model.dto.response.ProductInfoToOrderRes;
 import co.kr.product.product.model.dto.response.ProductSellerRes;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/client/product")
+@RequestMapping("/client/products")
 public class ClientController {
 
     private final ProductService productService;
@@ -42,16 +43,16 @@ public class ClientController {
 
 
     // order에 보내 줄 상품 정보
-    @GetMapping("/{productsIdx}/{optionIdx}")
+    @GetMapping("/{productsCode}/{optionCode}")
     public ProductInfoToOrderRes getProductInfo(
-            @PathVariable("productsIdx") Long productsIdx,
-            @PathVariable("optionIdx") Long optionIdx
+            @PathVariable("productsCode") String productsCode,
+            @PathVariable("optionCode") String optionCode
     ) {
-        return productService.getProductInfo(productsIdx, optionIdx);
+        return productService.getProductInfo(productsCode, optionCode);
     }
 
     // order에 보내 줄 상품 정보 리스트
-    @GetMapping("/bulk")
+    @PostMapping("/bulk")
     public List<ProductInfoToOrderRes> getProductInfoList(
             @RequestBody @Valid List<ProductInfoToOrderReq> requests
     ) {
@@ -93,4 +94,15 @@ public class ClientController {
     }
 
 
+    /**
+     * 상품 재고 검사
+     * @param productsCode
+     * 상품 재고 여부 확인 후 boolean 반환
+     */
+    @GetMapping("/{productsCode}/checkStock")
+    public ProductCheckStockRes getCheckStock(
+            @PathVariable String productsCode){
+
+        return productService.getCheckStock(productsCode);
+    }
 }

@@ -27,13 +27,18 @@ public interface ProductOptionRepository extends JpaRepository<ProductOptionEnti
             " AND p.stock >= :quantity " +
             " AND p.del = false")
     int decreaseStock(@Param("id") Long id, @Param("quantity") int quantity);
+
     List<ProductOptionEntity> findByOptionGroupIdxInAndDelFalse(List<Long> optionIds);
 
 
     // fetch join
     @Query("SELECT o FROM ProductOptionEntity o JOIN FETCH o.product p " +
-            "WHERE o.optionGroupIdx IN :optionIds AND o.del = false AND p.del = false")
-    List<ProductOptionEntity> findAllWithOptions(@Param("optionIds") List<Long> optionIds);
+            "WHERE o.optionCode IN :optionCodes AND o.del = false AND p.del = false")
+    List<ProductOptionEntity> findAllWithOptions(@Param("optionCodes") List<String> optionCodes);
+
+    Optional<ProductOptionEntity> findByOptionCodeAndDelFalse(String optionCode);
+
+    List<ProductOptionEntity> findByOptionCodeInAndDelFalse(List<String> optionCode);
 }
 
 

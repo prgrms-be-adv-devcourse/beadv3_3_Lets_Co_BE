@@ -1,5 +1,6 @@
 package co.kr.product.product.service.impl;
 
+import co.kr.product.common.service.S3Service;
 import co.kr.product.product.model.document.ProductDocument;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.ProductListRes;
@@ -19,18 +20,26 @@ import java.util.List;
 public class ProductSearchServiceImpl implements ProductSearchService {
 
     private final ProductEsRepository productEsRepository;
-
+    private final S3Service s3Service;
 
     // 상품 리스트 전체/검색
     @Transactional(readOnly = true)
     public ProductListRes getProductsList(Pageable pageable, ProductListReq request){
 
-        String search = request.search();
+        // TODO 벡터검색 까지 하려면 지금 못건듬....어차피 싹 고쳐야함...
+        // Category 별 조회, ip별 조회까지 여기서 처리
 
-        // 1. 검색 (search 없을 시 전체 리스트 반환)
-        Page<ProductDocument> pageResult = (search == null || search.isBlank())
-                ? productEsRepository.findAll(pageable)
-                : productEsRepository.findByProductsNameAndDelFalse(search, pageable);
+        String search = request.search();
+        String category = request.category();
+        String ip = request.ip();
+
+        // 1. 검색
+        Page<ProductDocument> pageResult;
+
+
+        pageResult = productEsRepository.findByProductsNameAndDelFalse(search, pageable);
+
+
 
         // 2. Document -> Response DTO 변환
         List<ProductRes> items = pageResult.stream()
@@ -39,7 +48,10 @@ public class ProductSearchServiceImpl implements ProductSearchService {
                         doc.getProductsName(),
                         doc.getPrice(),
                         doc.getSalePrice(),
-                        doc.getViewCount()
+                        doc.getViewCount(),
+                        doc.getStatus(),
+                        doc.getCategoryNames(),
+                        s3Service.getFileUrl(doc.getThumbnailKey())
                 ))
                 .toList();
 

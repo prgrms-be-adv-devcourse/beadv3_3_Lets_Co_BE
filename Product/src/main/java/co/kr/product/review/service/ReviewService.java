@@ -22,22 +22,19 @@ public class ReviewService {
 
     // 리뷰 목록 조회(비회원/회원 모두)
     @Transactional(readOnly = true)
-    public ReviewListResponse getReviews(Long productsIdx) {
+    public List<ReviewResponse> getReviews(Long productsIdx) {
 
-        List<ReviewResponse> items = reviewRepository
+        return reviewRepository
                 .findByProductsIdxAndDelFalseOrderByCreatedAtDesc(productsIdx)
                 .stream()
                 .map(r -> new ReviewResponse(
-                        r.getReviewIdx(),
-                        r.getProductsIdx(),
-                        r.getUsersIdx(),
                         r.getEvaluation(),
                         r.getContent(),
                         r.getCreatedAt()
                 ))
                 .toList();
 
-        return new ReviewListResponse("SUCCESS", items);
+
     }
 
     // 리뷰 작성(회원 + 구매자만 + 상품당 1개)
@@ -76,9 +73,7 @@ public class ReviewService {
             Review saved = reviewRepository.save(review);
 
             return new ReviewResponse(
-                    saved.getReviewIdx(),
-                    saved.getProductsIdx(),
-                    saved.getUsersIdx(),
+
                     saved.getEvaluation(),
                     saved.getContent(),
                     saved.getCreatedAt()
@@ -110,9 +105,7 @@ public class ReviewService {
         review.update(req.getEvaluation(), req.getContent());
 
         return new ReviewResponse(
-                review.getReviewIdx(),
-                review.getProductsIdx(),
-                review.getUsersIdx(),
+
                 review.getEvaluation(),
                 review.getContent(),
                 review.getCreatedAt()

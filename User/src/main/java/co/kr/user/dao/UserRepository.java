@@ -1,44 +1,68 @@
 package co.kr.user.dao;
 
 import co.kr.user.model.entity.Users;
+import co.kr.user.model.vo.UserDel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * 사용자(Users) 엔티티의 데이터베이스 접근(CRUD)을 담당하는 리포지토리 인터페이스입니다.
- * JpaRepository를 상속받아 기본적인 저장, 조회, 수정, 삭제 메서드를 자동으로 제공합니다.
+ * Users 엔티티(사용자 계정 기본 정보)의 데이터베이스 접근을 담당하는 리포지토리 인터페이스입니다.
+ * 아이디, 비밀번호, 권한 등 인증과 관련된 핵심 정보를 관리합니다.
  */
 public interface UserRepository extends JpaRepository<Users, Long> {
 
-    boolean existsByIdAndDel(String id, int del);
+    /**
+     * 특정 아이디가 존재하는지 확인합니다.
+     * 회원가입 시 아이디 중복 체크에 사용됩니다.
+     *
+     * @param id 확인할 사용자 아이디
+     * @param del 삭제 상태
+     * @return 존재하면 true, 아니면 false
+     */
+    boolean existsByIdAndDel(String id, UserDel del);
 
     /**
-     * 아이디(이메일)를 기준으로 사용자 정보를 조회하는 메서드입니다.
-     * 로그인, 정보 찾기 등에서 특정 사용자를 식별할 때 주로 사용됩니다.
+     * 사용자 식별자(PK)로 계정 정보를 조회합니다.
      *
-     * @param ID 조회할 사용자 아이디
-     * @return 조회된 Users 객체를 감싼 Optional (존재하지 않을 경우 empty)
+     * @param usersIdx 사용자 식별자
+     * @param del 삭제 상태
+     * @return 조건에 맞는 Users 엔티티 (Optional)
      */
-    Optional<Users> findById(String id);
+    Optional<Users> findByUsersIdxAndDel(Long usersIdx, UserDel del);
 
     /**
-     * 삭제(탈퇴)되지 않은 모든 사용자를 생성일 역순(최신순)으로 조회하는 메서드입니다.
-     * 관리자 페이지 등에서 전체 회원 목록을 볼 때 사용될 수 있습니다.
+     * 특정 상태(예: ACTIVE)인 모든 사용자 계정을 조회합니다.
+     * 관리자 기능 등에서 전체 목록이 필요할 때 사용됩니다.
      *
-     * @param del 삭제 상태 플래그 (0: 정상, 1: 탈퇴)
-     * @return 조건에 맞는 Users 리스트
+     * @param del 삭제 상태
+     * @return 모든 Users 엔티티 리스트
      */
-    List<Users> findAllByDelOrderByCreatedAtDesc(int del);
+    List<Users> findAllByDel(UserDel del);
 
     /**
-     * 아이디(이메일)와 삭제 상태(Del)를 동시에 조건으로 하여 사용자를 조회하는 메서드입니다.
-     * 예를 들어, 탈퇴하지 않은(del=0) 특정 아이디의 회원을 찾을 때 유용합니다.
+     * [성능 최적화] 페이징 처리를 적용하여 특정 상태의 사용자 계정을 조회합니다.
+     * 기존 findAllByDel과 달리 LIMIT/OFFSET 쿼리를 사용하여 메모리 부하를 방지합니다.
      *
-     * @param ID 조회할 사용자 아이디
-     * @param del 삭제 상태 플래그
-     * @return 조건에 맞는 Users 객체를 감싼 Optional
+     * @param del 삭제 상태
+     * @param pageable 페이징 및 정렬 정보
+     * @return 페이지 처리된 Users 엔티티 목록
      */
-    Optional<Users> findByIdAndDel(String id, int del);
+    Page<Users> findAllByDel(UserDel del, Pageable pageable);
+
+    /**
+     * 아이디(String)로 사용자 계정 정보를 조회합니다.
+     * 로그인 시 아이디 기반으로 사용자를 찾을 때 주로 사용됩니다.
+     * (아이디는 암호화되어 저장되므로, 검색을 위해 결정적 암호화가 적용되어야 함)
+     *
+     * @param id 사용자 아이디
+     * @param del 삭제 상태
+     * @return 조건에 맞는 Users 엔티티 (Optional)
+     */
+    Optional<Users> findByIdAndDel(String id, UserDel del);
+
+    boolean existsById(String id);
 }

@@ -4,38 +4,34 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 
 /**
- * 보안성이 강화된 무작위 코드 생성 유틸리티 클래스입니다.
- * 영문 대소문자와 숫자를 조합하여 예측 불가능한 랜덤 문자열을 생성합니다.
- * 단순 java.util.Random 대신 암호학적으로 안전한 SecureRandom을 사용합니다.
+ * 인증 번호나 랜덤 코드를 생성하기 위한 유틸리티 클래스입니다.
+ * 보안성이 높은 난수 생성기(SecureRandom)를 사용합니다.
  */
 @Component
 public class RandomCodeUtil {
-    // 코드 생성에 사용할 문자 집합 (I, l, 1, O, 0 등 혼동하기 쉬운 문자는 일부 제외된 것으로 보임)
+    // 코드 생성에 사용할 문자셋 (영문 대소문자 + 숫자, 혼동하기 쉬운 0, 1, I, O 등은 제외하지 않고 포함됨)
     private static final String CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-
-    // 암호학적으로 강력한 난수 생성기
+    // 암호학적으로 강력한 난수 생성기 인스턴스
     private static final SecureRandom RANDOM = new SecureRandom();
-
-    // 코드의 최소 길이
+    // 생성될 코드의 최소 길이
     private static final int MIN_LENGTH = 10;
-
-    // 추가될 수 있는 최대 길이 (즉, 총 길이는 MIN_LENGTH ~ MIN_LENGTH + MAX_ADDITIONAL_LENGTH - 1)
-    private static final int MAX_ADDITIONAL_LENGTH = 30;
+    // 최소 길이에 더해질 수 있는 최대 추가 길이 (즉, 전체 길이는 10 ~ 29 사이)
+    private static final int MAX_ADDITIONAL_LENGTH = 20;
 
     /**
-     * 설정된 범위 내의 랜덤한 길이를 가진 무작위 문자열 코드를 생성합니다.
-     * 10자에서 최대 39자 사이의 길이로 생성됩니다.
-     *
-     * @return 생성된 랜덤 코드 문자열
+     * 랜덤한 길이와 구성을 가진 코드를 생성하여 반환합니다.
+     * @return 생성된 랜덤 문자열
      */
     public String getCode() {
-        // 10 이상 40 미만의 랜덤한 길이 결정
+        // 10에서 29 사이의 랜덤한 길이 결정
         int length = MIN_LENGTH + RANDOM.nextInt(MAX_ADDITIONAL_LENGTH);
 
+        // 문자열 조작 효율성을 위해 StringBuilder 사용
         StringBuilder code = new StringBuilder(length);
 
-        // 결정된 길이만큼 루프를 돌며 랜덤 문자 선택 및 추가
+        // 결정된 길이만큼 반복하며 랜덤 문자 추가
         for (int i = 0; i < length; i++) {
+            // CHARACTERS 문자열에서 랜덤한 인덱스의 문자를 선택하여 추가
             code.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
         }
 

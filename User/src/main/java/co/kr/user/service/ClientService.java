@@ -1,24 +1,77 @@
 package co.kr.user.service;
 
-import co.kr.user.model.dto.auth.TokenDto;
-import co.kr.user.model.dto.balance.BalanceReq;
-import co.kr.user.model.vo.UsersRole;
+import co.kr.user.model.dto.client.BalanceReq;
+import co.kr.user.model.dto.client.ClientAddressDTO;
+import co.kr.user.model.dto.client.ClientRoleDTO;
+import co.kr.user.model.dto.client.SellerBankDTO;
+
+import java.util.List;
 
 /**
- * 인증(Authentication) 및 권한(Authorization) 관련 공통 비즈니스 로직을 정의하는 인터페이스입니다.
- * 사용자 권한 조회와 리프레시 토큰을 이용한 토큰 재발급 기능을 명세합니다.
- * 구현체: AuthServiceImpl
+ * 클라이언트(사용자)의 편의 기능 및 결제 관련 동작을 지원하는 서비스 인터페이스입니다.
+ * 권한 조회, 잔액 관리, 배송지 및 카드 조회 등의 기능을 정의합니다.
  */
 public interface ClientService {
 
     /**
-     * 사용자 권한 조회 메서드 정의입니다.
-     * 특정 사용자의 현재 권한(Role)을 확인합니다. (예: USER, SELLER, ADMIN)
-     *
-     * @param userIdx 사용자 고유 식별자
-     * @return 사용자 권한 (UsersRole Enum)
+     * 특정 사용자의 현재 권한(Role)을 조회합니다.
+     * @param userIdx 사용자 식별자 (PK)
+     * @return 사용자의 권한 정보가 담긴 DTO (USERS, SELLER, ADMIN 등)
      */
-    UsersRole getRole(Long userIdx);
+    ClientRoleDTO getRole(Long userIdx);
 
-    String Balance(Long userIdx, BalanceReq balanceReq);
+    /**
+     * 사용자의 잔액(포인트/머니)을 변경합니다. (충전, 결제, 환불 등)
+     * @param userIdx 사용자 식별자 (PK)
+     * @param balanceReq 변경할 잔액 금액과 상태(CHARGE, PAYMENT, REFUND)가 담긴 요청 객체
+     * @return 처리 결과 메시지 ("잔액 처리가 완료되었습니다.")
+     */
+    String balance(Long userIdx, BalanceReq balanceReq);
+
+    /**
+     * 사용자의 기본 배송지 정보를 조회합니다.
+     * @param userIdx 사용자 식별자 (PK)
+     * @return 기본 배송지 정보 DTO (수령인, 주소, 연락처 등)
+     */
+    ClientAddressDTO defaultAddress(Long userIdx);
+
+    /**
+     * 특정 주소 코드로 사용자의 배송지 정보를 조회합니다.
+     * @param userIdx 사용자 식별자 (PK)
+     * @param addressCode 조회할 주소의 고유 코드
+     * @return 해당 배송지 정보 DTO
+     */
+    ClientAddressDTO searchAddress(Long userIdx, String addressCode);
+
+    /**
+     * 사용자의 기본 결제 카드 식별자(PK)를 조회합니다.
+     * 유효기간이 만료된 카드는 조회되지 않거나 예외가 발생할 수 있습니다.
+     * @param userIdx 사용자 식별자 (PK)
+     * @return 기본 카드의 식별자 (Card IDX)
+     */
+    Long defaultCard(Long userIdx);
+
+    /**
+     * 특정 카드 코드로 사용자의 카드 식별자(PK)를 조회합니다.
+     * @param userIdx 사용자 식별자 (PK)
+     * @param cardCode 조회할 카드의 고유 코드
+     * @return 해당 카드의 식별자 (Card IDX)
+     */
+    Long searchCard(Long userIdx, String cardCode);
+
+    /**
+     * 판매자 식별자(sellerIdx)를 이용해 프로필 이미지의 Presigned URL을 조회합니다.
+     * DB에 등록된 이미지가 없을 경우 기본 인덱스 이미지 URL을 반환합니다.
+     *
+     * @param sellerIdx 조회할 판매자의 PK
+     * @return S3 Presigned URL
+     */
+    String getSellerProfileImage(Long sellerIdx);
+
+    /**
+     * 여러 판매자 식별자 리스트를 받아 각 판매자의 은행 계좌 정보 목록을 조회합니다.
+     * @param sellerIdx 판매자 PK 리스트
+     * @return SellerBankDTO 리스트
+     */
+    List<SellerBankDTO> getSellerBankInfos(List<Long> sellerIdx);
 }

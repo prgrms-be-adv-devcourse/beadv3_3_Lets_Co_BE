@@ -1,22 +1,18 @@
 package co.kr.user.service;
 
 import co.kr.user.model.dto.auth.TokenDto;
-import co.kr.user.model.vo.UsersRole;
 
 /**
- * 인증(Authentication) 및 권한(Authorization) 관련 공통 비즈니스 로직을 정의하는 인터페이스입니다.
- * 사용자 권한 조회와 리프레시 토큰을 이용한 토큰 재발급 기능을 명세합니다.
- * 구현체: AuthServiceImpl
+ * 인증(Authentication) 및 토큰 관리를 위한 서비스 인터페이스입니다.
+ * JWT 토큰의 재발급(Refresh) 로직을 정의합니다.
  */
 public interface AuthService {
 
     /**
-     * 토큰 재발급(Refresh) 메서드 정의입니다.
-     * 만료된 Access Token을 대신하여, 유효한 Refresh Token으로 새로운 토큰 쌍을 발급받습니다.
-     * Refresh Token Rotation(RTR) 정책이 적용될 수 있습니다.
-     *
-     * @param refreshToken 클라이언트로부터 전달받은 Refresh Token
-     * @return TokenDto 새로 발급된 AccessToken 및 (선택적으로) RefreshToken
+     * Refresh Token을 사용하여 Access Token을 재발급합니다.
+     * Refresh Token의 만료가 임박한 경우(예: 3일 미만), Refresh Token도 함께 재발급(Rotation)합니다.
+     * @param refreshToken 클라이언트로부터 전달받은 Refresh Token 문자열
+     * @return 재발급된 Access Token과 (필요 시) Refresh Token이 담긴 DTO
      */
     TokenDto refreshToken(String refreshToken);
 }

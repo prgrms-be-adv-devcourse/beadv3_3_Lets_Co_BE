@@ -1,0 +1,7 @@
+
+FROM docker.elastic.co/logstash/logstash:9.2.2
+
+COPY ./ls/jars/mariadb-java-client-3.5.7.jar /usr/share/logstash/logstash-core/lib/jars/
+
+# http 플러그인 설치
+RUN bin/logstash-plugin install logstash-filter-http 

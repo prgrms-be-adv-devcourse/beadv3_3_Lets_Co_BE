@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+
+kind: StatefulSet
+
+metadata:
+  name: kafka
+
+spec:
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: kafka
+
+  serviceName: "kafka-service"
+
+  template:
+    metadata:
+      labels:
+        app: kafka
+
+    spec:
+      containers:
+        - name: kafka
+          image: apache/kafka:4.1.1
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 9090
+            - containerPort: 9091
+          
+          envFrom:
+            - configMapRef:
+                name: kafka-configmap
+                
+
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "local-path"
+        resources:
+          requests:
+            storage: 3Gi
+
+

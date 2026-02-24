@@ -85,6 +85,7 @@ public class TokenAuthenticationFilter extends AbstractGatewayFilterFactory<Toke
             // =================================================================
             Optional<String> tokenOptional = resolveToken(request);
             if (tokenOptional.isEmpty()) {
+
                 // 헤더 키는 있었으나 값이 비정상적인 경우 등
                 return writeUnauthorizedResponse(response, "인증 토큰을 찾을 수 없습니다.");
             }

@@ -40,7 +40,7 @@ public class ClientController {
     }
 
     @PostMapping("/success/{orderCode}/{paymentIdx}")
-    void successPayment(
+    public void successPayment(
             @PathVariable("orderCode") String orderCode,
             @PathVariable("paymentIdx") Long paymentIdx,
             @RequestBody UserInfo userInfo
@@ -49,14 +49,14 @@ public class ClientController {
     }
 
     @PostMapping("/fail/{orderCode}")
-    void failPayment(
+    public void failPayment(
             @PathVariable String orderCode
     ) {
         orderService.orderFail(orderCode);
     }
 
     @PostMapping("/refund/{orderCode}/{paymentIdx}")
-    void refundPayment(
+    public void refundPayment(
             @PathVariable("orderCode") String orderCode,
             @PathVariable("paymentIdx") Long paymentIdx
     ) {

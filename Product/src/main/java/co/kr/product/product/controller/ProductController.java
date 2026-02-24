@@ -1,25 +1,17 @@
 package co.kr.product.product.controller;
 
-import co.kr.product.common.service.S3Service;
 import co.kr.product.common.service.ViewCountService;
-import co.kr.product.product.model.dto.request.DeductStockReq;
-import co.kr.product.product.model.dto.request.ProductIdxsReq;
-import co.kr.product.product.model.dto.request.ProductInfoToOrderReq;
+import co.kr.product.product.controller.swagger.product.ProductDetailDocs;
+import co.kr.product.product.controller.swagger.product.ProductListDocs;
 import co.kr.product.product.model.dto.request.ProductListReq;
 import co.kr.product.product.model.dto.response.*;
 import co.kr.product.product.service.ProductSearchService;
 import co.kr.product.product.service.ProductService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -58,6 +50,7 @@ public class ProductController {
      * @param pageable
      * 상품 목록 검색, ElasticSearch에 연결
      */
+    @ProductListDocs
     @GetMapping
     public ResponseEntity<ProductListRes> getProducts(
             @PageableDefault(size = 20) Pageable pageable,
@@ -76,6 +69,7 @@ public class ProductController {
      * @param productsCode
      *  상품 코드를 통한 상품 정보 조회
      */
+    @ProductDetailDocs
     @GetMapping("/{productsCode}")
     public ResponseEntity<ProductDetailRes> getProductDetail(
             @PathVariable String productsCode) {
@@ -91,21 +85,6 @@ public class ProductController {
                 productDetail.detail()
                 );
     }
-
-
-    /**
-     * 상품 재고 검사
-     * @param productsCode
-     * 상품 재고 여부 확인 후 boolean 반환
-     */
-    @GetMapping("/{productsCode}/checkStock")
-    public ProductCheckStockRes getCheckStock(
-            @PathVariable String productsCode){
-
-        return productService.getCheckStock(productsCode);
-    }
-
-
 
 }
 

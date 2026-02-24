@@ -41,8 +41,10 @@ public record UpsertProductReq(
         String categoryCode,
 
         @NotNull(message = "IP 설정은 필수 입니다.")
-        String ipCode
+        String ipCode,
 
+        // 유지 할 이미지 목록 (수정시에만), null 가능
+        List<String> keepImageName
 
 
 ) {

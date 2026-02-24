@@ -7,6 +7,7 @@ import co.kr.product.product.model.entity.ProductCategoryEntity;
 import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.model.vo.CategoryType;
+import co.kr.product.review.model.dto.response.ReviewResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -19,7 +20,9 @@ public class ProductMapper {
              ProductEntity product,
              List<ProductOptionEntity> options,
              List<ImageInfoRes> images,
-             CategoryParentGroup parents) {
+             CategoryParentGroup parents,
+             List<ReviewResponse> reviews
+             ){
 
 
         return new ProductDetailRes(
@@ -36,7 +39,8 @@ public class ProductMapper {
                         .toList(),
                 parents.categoryParents(),
                 parents.ipParents(),
-                images
+                images,
+                reviews
                 );
 
 

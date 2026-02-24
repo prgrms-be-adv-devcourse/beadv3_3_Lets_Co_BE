@@ -7,10 +7,7 @@ import co.kr.product.common.service.S3Service;
 import co.kr.product.common.vo.UserRole;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.document.ProductDocument;
-import co.kr.product.product.model.dto.request.CategoryParentGroup;
-import co.kr.product.product.model.dto.request.ProductListReq;
-import co.kr.product.product.model.dto.request.ProductOptionsReq;
-import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.request.*;
 import co.kr.product.product.model.dto.response.*;
 import co.kr.product.product.model.entity.FileEntity;
 import co.kr.product.product.model.entity.ProductCategoryEntity;
@@ -19,6 +16,8 @@ import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.model.vo.CategoryType;
 import co.kr.product.product.repository.*;
 import co.kr.product.product.service.ProductManagerService;
+import co.kr.product.review.model.dto.response.ReviewResponse;
+import co.kr.product.review.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +46,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private final S3Service s3Service;
     private final AuthAdapter authAdapter;
     private final FileRepository fileRepository;
+    private final ReviewService reviewService;
+    private final ProductStockConsumer stockConsumer;
 
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
@@ -166,11 +167,21 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         List<ImageInfoRes> imagesInfo = ProductMapper.mapToImageInfos(imageEntities, fileUrls);
 
+        // 7. 재고 적용
+        List<AddStockReq> stockList = savedOpt.stream()
+                        .map(entity -> new AddStockReq(
+                                entity.getOptionCode(),
+                                entity.getStock()
+                        )).toList();
+
+        stockConsumer.addStockInRedis(stockList);
+
         return toProductDetail(
                 savedItem,
                 savedOpt,
                 imagesInfo,
-                parents);
+                parents,
+                null);
     }
 
 
@@ -226,12 +237,19 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 4.4 사진 이름 + url 반환
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
+
+        // 5. 리뷰 조회
+
+        List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
         // mapper 사용
         return toProductDetail(
                 product,
                 options,
                 imageInfo,
-                parents
+                parents,
+                reviews
+
         );
     }
 
@@ -375,12 +393,25 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 6.7 사진 이름 + url 반환
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
+        // 7. 리뷰 조회
+        List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
+        // 8. 재고 적용
+        List<AddStockReq> stockList = options.stream()
+                .map(entity -> new AddStockReq(
+                        entity.getOptionCode(),
+                        entity.getStock()
+                )).toList();
+
+        stockConsumer.addStockInRedis(stockList);
+
         // mapper 사용
         return toProductDetail(
                 product,
                 options,
                 imageInfo,
-                parents
+                parents,
+                reviews
         );
     }
 

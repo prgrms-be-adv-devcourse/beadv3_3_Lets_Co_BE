@@ -1,6 +1,7 @@
 package co.kr.user.dao;
 
 import co.kr.user.model.entity.UserCard;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -21,7 +22,7 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
      * @param del 삭제 상태
      * @return 조건에 맞는 UserCard 엔티티 (Optional)
      */
-    Optional<UserCard> findFirstByUsersIdxAndCardIdxAndDelOrderByCardIdxDesc(Long usersIdx, Long cardIdx, UserDel del);
+    Optional<UserCard> findFirstByUsersIdxAndCardIdxAndDelOrderByCardIdxDesc(Long usersIdx, Long cardIdx, PublicDel del);
 
     /**
      * 사용자 식별자와 카드 코드(UUID)로 특정 카드를 조회합니다.
@@ -32,7 +33,7 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
      * @param del 삭제 상태
      * @return 조건에 맞는 UserCard 엔티티 (Optional)
      */
-    Optional<UserCard> findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(Long userIdx, String cardCode, UserDel del);
+    Optional<UserCard> findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(Long userIdx, String cardCode, PublicDel del);
 
     /**
      * 특정 사용자의 삭제되지 않은 모든 카드 목록을 조회합니다.
@@ -41,7 +42,7 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
      * @param del 삭제 상태 (주로 ACTIVE)
      * @return 해당 사용자의 카드 리스트
      */
-    List<UserCard> findAllByUsersIdxAndDel(Long usersIdx, UserDel del);
+    List<UserCard> findAllByUsersIdxAndDel(Long usersIdx, PublicDel del);
 
     /**
      * 카드 코드와 사용자 식별자로 특정 카드를 조회합니다.
@@ -52,5 +53,5 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
      * @param del 삭제 상태
      * @return 조건에 맞는 UserCard 엔티티 (Optional)
      */
-    Optional<UserCard> findByCardCodeAndUsersIdxAndDel(String cardCode, Long usersIdx, UserDel del);
+    Optional<UserCard> findByCardCodeAndUsersIdxAndDel(String cardCode, Long usersIdx, PublicDel del);
 }

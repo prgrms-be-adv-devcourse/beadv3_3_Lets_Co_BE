@@ -1,6 +1,7 @@
 package co.kr.user.dao;
 
 import co.kr.user.model.entity.UsersAddress;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -21,7 +22,7 @@ public interface UserAddressRepository extends JpaRepository<UsersAddress, Long>
      * @param del 삭제 상태
      * @return 조건에 맞는 UsersAddress 엔티티 (Optional)
      */
-    Optional<UsersAddress> findFirstByUsersIdxAndAddressIdxAndDelOrderByAddressIdxDesc(Long usersIdx, Long addressIdx, UserDel del);
+    Optional<UsersAddress> findFirstByUsersIdxAndAddressIdxAndDelOrderByAddressIdxDesc(Long usersIdx, Long addressIdx, PublicDel del);
 
     /**
      * 사용자 식별자와 주소 코드(UUID)로 특정 배송지를 조회합니다.
@@ -32,7 +33,7 @@ public interface UserAddressRepository extends JpaRepository<UsersAddress, Long>
      * @param del 삭제 상태
      * @return 조건에 맞는 UsersAddress 엔티티 (Optional)
      */
-    Optional<UsersAddress> findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(Long usersIdx, String addressCode, UserDel del);
+    Optional<UsersAddress> findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(Long usersIdx, String addressCode, PublicDel del);
 
     /**
      * 특정 사용자의 삭제되지 않은 모든 배송지 목록을 조회합니다.
@@ -41,7 +42,7 @@ public interface UserAddressRepository extends JpaRepository<UsersAddress, Long>
      * @param del 삭제 상태 (주로 ACTIVE)
      * @return 해당 사용자의 배송지 리스트
      */
-    List<UsersAddress> findAllByUsersIdxAndDel(Long usersIdx, UserDel del);
+    List<UsersAddress> findAllByUsersIdxAndDel(Long usersIdx, PublicDel del);
 
     /**
      * 주소 코드와 사용자 식별자로 특정 배송지를 조회합니다.
@@ -52,5 +53,5 @@ public interface UserAddressRepository extends JpaRepository<UsersAddress, Long>
      * @param del 삭제 상태
      * @return 조건에 맞는 UsersAddress 엔티티 (Optional)
      */
-    Optional<UsersAddress> findByAddressCodeAndUsersIdxAndDel(String addressCode, Long usersIdx, UserDel del);
+    Optional<UsersAddress> findByAddressCodeAndUsersIdxAndDel(String addressCode, Long usersIdx, PublicDel del);
 }

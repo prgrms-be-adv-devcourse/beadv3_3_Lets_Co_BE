@@ -8,6 +8,7 @@ import co.kr.user.model.entity.Users;
 import co.kr.user.model.entity.UsersInformation;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.model.entity.UserCard;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
@@ -139,7 +140,7 @@ public class UserQueryServiceImpl implements UserQueryService {
      */
     @Override
     public List<UsersAddress> findActiveAddresses(Long userIdx) {
-        return userAddressRepository.findAllByUsersIdxAndDel(userIdx, UserDel.ACTIVE);
+        return userAddressRepository.findAllByUsersIdxAndDel(userIdx, PublicDel.ACTIVE);
     }
 
     /**
@@ -147,6 +148,6 @@ public class UserQueryServiceImpl implements UserQueryService {
      */
     @Override
     public List<UserCard> findActiveCards(Long userIdx) {
-        return userCardRepository.findAllByUsersIdxAndDel(userIdx, UserDel.ACTIVE);
+        return userCardRepository.findAllByUsersIdxAndDel(userIdx, PublicDel.ACTIVE);
     }
 }

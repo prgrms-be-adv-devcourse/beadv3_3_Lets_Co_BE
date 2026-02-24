@@ -5,6 +5,7 @@ import co.kr.user.model.dto.card.CardListDTO;
 import co.kr.user.model.dto.card.CardRequestReq;
 import co.kr.user.model.entity.UserCard;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.service.CardService;
 import co.kr.user.service.UserQueryService;
@@ -38,7 +39,7 @@ public class CardServiceImpl implements CardService {
         Long defaultCardIdx = usersInformation.getDefaultCard();
 
         // 삭제되지 않은(ACTIVE) 사용자의 모든 카드 목록을 조회합니다.
-        List<UserCard> userCardList = userCardRepository.findAllByUsersIdxAndDel(userIdx, UserDel.ACTIVE);
+        List<UserCard> userCardList = userCardRepository.findAllByUsersIdxAndDel(userIdx, PublicDel.ACTIVE);
 
         // 등록된 카드가 없으면 예외를 발생시켜 클라이언트에게 알립니다.
         if (userCardList.isEmpty()) {
@@ -116,7 +117,7 @@ public class CardServiceImpl implements CardService {
         userQueryService.findActiveUser(userIdx);
 
         // 카드 코드와 사용자 ID로 수정할 카드 엔티티 조회
-        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(req.getCardCode(), userIdx, UserDel.ACTIVE)
+        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(req.getCardCode(), userIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("요청하신 카드 정보가 없습니다."));
 
         // 엔티티 정보 업데이트 (Dirty Checking으로 자동 반영)
@@ -146,7 +147,7 @@ public class CardServiceImpl implements CardService {
         userQueryService.findActiveUser(userIdx);
 
         // 삭제할 카드 엔티티 조회
-        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(cardCode, userIdx, UserDel.ACTIVE)
+        UserCard userCard = userCardRepository.findByCardCodeAndUsersIdxAndDel(cardCode, userIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("요청하신 카드 정보가 없습니다."));
 
         // 상태를 DELETED로 변경

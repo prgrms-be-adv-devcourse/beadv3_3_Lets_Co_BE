@@ -12,15 +12,19 @@ import co.kr.user.service.ClientService;
 import co.kr.user.service.S3Service;
 import co.kr.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * ClientService 인터페이스의 구현체입니다.
  * 클라이언트(사용자)의 권한 조회, 잔액 관리, 기본 배송지/카드 조회 등 편의 기능을 처리합니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,17 +51,23 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ClientRoleDTO getRole(Long userIdx) {
+        log.info("Get role by userIdx = {}", userIdx);
         Users users = userQueryService.findActiveUser(userIdx);
+        log.info("Users entity found: {}", users);
         UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
+        log.info("Users information found: {}", usersInformation);
         Seller seller = sellerRepository.findByUsersIdxAndDel(userIdx, UserDel.ACTIVE).orElse(null);
+        log.info("Seller found: {}", seller);
         ClientRoleDTO dto = new ClientRoleDTO();
         dto.setRole(users.getRole());
         dto.setUsersIdx(users.getUsersIdx());
         dto.setUserName(usersInformation.getName());
+        log.info("DTO : {}", dto);
         if (seller != null) {
             dto.setSellerIdx(seller.getSellerIdx());
             dto.setSellerName(seller.getSellerName());
         }
+        log.info("DTO : {}", dto);
         return dto;
     }
 
@@ -103,7 +113,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         // 설정된 ID로 주소 엔티티 조회
-        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressIdxAndDelOrderByAddressIdxDesc(userIdx, defaultAddressIdx, UserDel.ACTIVE)
+        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressIdxAndDelOrderByAddressIdxDesc(userIdx, defaultAddressIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("기본 배송지를 찾을 수 없습니다."));
 
         ClientAddressDTO dto = new ClientAddressDTO();
@@ -123,7 +133,7 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ClientAddressDTO searchAddress(Long userIdx, String addressCode) {
-        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(userIdx, addressCode, UserDel.ACTIVE)
+        UsersAddress usersAddress = userAddressRepository.findFirstByUsersIdxAndAddressCodeAndDelOrderByAddressIdxDesc(userIdx, addressCode, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("배송지를 찾을 수 없습니다."));
 
         ClientAddressDTO dto = new ClientAddressDTO();
@@ -149,7 +159,7 @@ public class ClientServiceImpl implements ClientService {
             throw new IllegalArgumentException("기본 카드가 설정되어 있지 않습니다.");
         }
 
-        UserCard userCard = userCardRepository.findFirstByUsersIdxAndCardIdxAndDelOrderByCardIdxDesc(userIdx, defaultCardIdx, UserDel.ACTIVE)
+        UserCard userCard = userCardRepository.findFirstByUsersIdxAndCardIdxAndDelOrderByCardIdxDesc(userIdx, defaultCardIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("기본 카드를 찾을 수 없습니다."));
 
         // 카드의 유효기간(연/월)이 현재 시점보다 이전인지 확인
@@ -169,7 +179,7 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public Long searchCard(Long userIdx, String cardCode) {
-        UserCard userCard = userCardRepository.findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(userIdx, cardCode, UserDel.ACTIVE)
+        UserCard userCard = userCardRepository.findFirstByUsersIdxAndCardCodeAndDelOrderByCardIdxDesc(userIdx, cardCode, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("카드를 찾을 수 없습니다."));
 
         // 만료 여부 확인
@@ -203,13 +213,21 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public SellerBankDTO getSellerBankInfo(Long sellerIdx) {
-        Seller seller = sellerRepository.findById(sellerIdx)
-                .orElseThrow(() -> new IllegalArgumentException("판매자를 찾을 수 없습니다."));
-        SellerBankDTO dto = new SellerBankDTO();
-        dto.setBankBrand(seller.getBankBrand());
-        dto.setBankName(seller.getBankName());
-        dto.setBankToken(seller.getBankToken());
-        return dto;
+    public List<SellerBankDTO> getSellerBankInfos(List<Long> sellerIdx) {
+        log.info(sellerIdx.toString());
+        // 1. 전달받은 ID 리스트에 해당하는 모든 판매자 엔티티를 한 번에 조회합니다.
+        List<Seller> sellers = sellerRepository.findAllBySellerIdxInAndDel(sellerIdx, UserDel.ACTIVE);
+
+        log.info(sellers.toString());
+        // 2. 엔티티 리스트를 DTO 리스트로 변환합니다.
+        return sellers.stream()
+                .map(seller -> {
+                    SellerBankDTO dto = new SellerBankDTO();
+                    dto.setBankBrand(seller.getBankBrand());
+                    dto.setBankName(seller.getBankName());
+                    dto.setBankToken(seller.getBankToken());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

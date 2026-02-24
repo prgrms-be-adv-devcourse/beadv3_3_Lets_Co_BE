@@ -77,10 +77,16 @@ public class OrderServiceImpl implements OrderService {
         switch (request.orderType()) {
             case OrderType.DIRECT:
                 // 상품 정보 조회
-                ClientProductRes product = productClient.getProduct(
-                        request.productInfo().productCode(),
-                        request.productInfo().optionCode()
-                );
+                ClientProductRes product;
+                try {
+                    product = productClient.getProduct(
+                            request.productInfo().productCode(),
+                            request.productInfo().optionCode()
+                    );
+                } catch (Exception e) {
+                    log.error("상품조회 실패", e);
+                    throw e;
+                }
 
                 // 엔티티 생성
                 tempOrderItems.add(createOrderItemEntity(product, request.productInfo().quantity()));
@@ -99,7 +105,15 @@ public class OrderServiceImpl implements OrderService {
             case OrderType.CART:
                 Map<Long, Integer> quantityMap = cartService.getCartItemQuantities(userIdx);
                 List<ClientProductReq> productRequest = cartService.getProductByCart(userIdx);
-                List<ClientProductRes> productsResponse = productClient.getProductList(productRequest);
+
+
+                List<ClientProductRes> productsResponse;
+                try {
+                    productsResponse = productClient.getProductList(productRequest);
+                } catch (Exception e) {
+                    log.error("상품조회 실패", e);
+                    throw e;
+                }
 
                 for (ClientProductRes productRes : productsResponse) {
                     Integer quantity = quantityMap.getOrDefault(productRes.optionIdx(), 0);

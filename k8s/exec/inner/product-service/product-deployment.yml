@@ -110,6 +110,12 @@ spec:
                 name: db-secret
                 key: PRODUCT_DIRTY_KEY
 
+          - name: PRODUCT_STOCK_KEY
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: PRODUCT_STOCK_KEY 
+
           - name: AWS_ACCESS_KEY
             valueFrom:
               secretKeyRef:

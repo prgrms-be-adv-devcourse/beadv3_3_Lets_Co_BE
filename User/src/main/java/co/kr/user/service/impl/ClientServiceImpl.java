@@ -4,6 +4,7 @@ import co.kr.user.dao.*;
 import co.kr.user.model.dto.client.BalanceReq;
 import co.kr.user.model.dto.client.ClientAddressDTO;
 import co.kr.user.model.dto.client.ClientRoleDTO;
+import co.kr.user.model.dto.client.SellerBankDTO;
 import co.kr.user.model.entity.*;
 import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
@@ -199,5 +200,16 @@ public class ClientServiceImpl implements ClientService {
 
         // 결정된 경로를 바탕으로 S3에 URL 발급 요청 (Low-level 통신 위임)
         return s3Service.getPresignedUrl(finalImagePath);
+    }
+
+    @Override
+    public SellerBankDTO getSellerBankInfo(Long sellerIdx) {
+        Seller seller = sellerRepository.findById(sellerIdx)
+                .orElseThrow(() -> new IllegalArgumentException("판매자를 찾을 수 없습니다."));
+        SellerBankDTO dto = new SellerBankDTO();
+        dto.setBankBrand(seller.getBankBrand());
+        dto.setBankName(seller.getBankName());
+        dto.setBankToken(seller.getBankToken());
+        return dto;
     }
 }

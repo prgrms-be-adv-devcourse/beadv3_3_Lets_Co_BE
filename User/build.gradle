@@ -31,49 +31,50 @@ ext {
 
 dependencies {
     // --- [Spring Boot Starters: Core & Web] ---
-    implementation 'org.springframework.boot:spring-boot-starter-web'           // MVC를 이용한 RESTful 웹 개발
-    implementation 'org.springframework.boot:spring-boot-starter-validation'    // Bean Validation(유효성 검증)
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'      // 애플리케이션 상태 모니터링
-    implementation 'org.springframework.boot:spring-boot-starter-mail'          // 메일 발송 기능
+    implementation 'org.springframework.boot:spring-boot-starter-web'           // MVC를 이용한 RESTful 웹 API 개발
+    implementation 'org.springframework.boot:spring-boot-starter-validation'    // Hibernate Validator를 이용한 입력값 검증
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'      // 애플리케이션 상태 모니터링 및 메트릭 정보 제공
+    implementation 'org.springframework.boot:spring-boot-starter-mail'          // Java Mail Sender를 이용한 이메일 발송
 
     // --- [Database & Cache] ---
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'      // Spring Data JPA (ORM)
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'    // Redis 캐시/데이터 저장소
-    implementation 'org.springframework.ai:spring-ai-tika-document-reader'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'                          // MariaDB 드라이버
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'      // Spring Data JPA를 이용한 ORM 데이터베이스 관리
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'    // Redis를 이용한 캐싱, 세션 관리 및 데이터 저장
+    implementation 'org.springframework.ai:spring-ai-tika-document-reader'      // Apache Tika를 이용한 문서(PDF, Word 등) 텍스트 추출
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'                          // MariaDB 데이터베이스 연결 드라이버
 
-    implementation "software.amazon.awssdk:s3:2.41.20"
+    // --- [Cloud Storage] ---
+    implementation "software.amazon.awssdk:s3:2.41.20"                         // AWS S3 객체 저장소 연동을 위한 SDK
 
     // --- [Security & Authentication] ---
-    implementation 'org.springframework.boot:spring-boot-starter-security'      // Spring Security (인증/인가)
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // OAuth2 클라이언트 기능
-    implementation 'org.mindrot:jbcrypt:0.4'                                    // 비밀번호 해싱 (BCrypt)
+    implementation 'org.springframework.boot:spring-boot-starter-security'      // 인증 및 인가를 위한 Spring Security 프레임워크
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글, 카카오 등 외부 소셜 로그인 연동 기능
+    implementation 'org.mindrot:jbcrypt:0.4'                                    // 비밀번호 단방향 해싱(암호화) 유틸리티
 
     // --- [JWT (JSON Web Token)] ---
-    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'                           // JWT 생성 및 파싱을 위한 인터페이스
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'                             // JWT 실제 구현체
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'                          // JWT 페이로드 직렬화를 위한 Jackson 연동
 
     // --- [Cloud & Distributed Tracing (Microservices)] ---
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // Eureka 서비스 디스커버리
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'                        // Micrometer와 Brave 연동
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'                            // Zipkin으로 트레이스 리포팅
+    // implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // 서비스 디스커버리(Eureka) 서버 등록/탐색
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'                        // Micrometer와 Brave를 이용한 분산 트레이싱 가교
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'                            // 수집된 트레이스 정보를 Zipkin 서버로 전송
 
     // --- [Documentation] ---
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'   // Swagger/OpenAPI 3 UI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'   // Swagger UI를 이용한 REST API 문서 자동화
 
     // --- [Lombok: Productivity] ---
-    compileOnly 'org.projectlombok:lombok'                                      // 컴파일 시점 코드 생성
-    annotationProcessor 'org.projectlombok:lombok'                              // 어노테이션 기반 프로세싱
+    compileOnly 'org.projectlombok:lombok'                                      // 컴파일 시 Getter, Setter 등 자동 생성을 통한 생산성 향상
+    annotationProcessor 'org.projectlombok:lombok'                              // 컴파일 시점 어노테이션 기반 코드 처리
 
-    // --- [H2] ---
-    runtimeOnly 'com.h2database:h2'
+    // --- [H2 Database] ---
+    runtimeOnly 'com.h2database:h2' // 로컬 개발 및 테스트를 위한 인메모리 데이터베이스
 
     // --- [Testing] ---
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'      // 스프링 부트 통합 테스트
-    testImplementation 'org.springframework.security:spring-security-test'      // 시큐리티 설정 테스트
-    testImplementation 'com.h2database:h2'                                     // H2 DB (IDE 인식용)
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                // JUnit 플랫폼 런처
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'      // 스프링 부트 애플리케이션 통합 테스트 지원
+    testImplementation 'org.springframework.security:spring-security-test'      // 인증/인가 로직에 대한 보안 테스트 지원
+    testImplementation 'com.h2database:h2'                                     // 테스트 환경에서 사용할 H2 DB 설정
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                // JUnit 5 플랫폼 런처 설정
 }
 
 dependencyManagement {

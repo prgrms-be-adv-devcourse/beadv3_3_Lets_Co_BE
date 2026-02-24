@@ -3,6 +3,7 @@ package co.kr.user.service;
 import co.kr.user.model.dto.client.BalanceReq;
 import co.kr.user.model.dto.client.ClientAddressDTO;
 import co.kr.user.model.dto.client.ClientRoleDTO;
+import co.kr.user.model.dto.client.SellerBankDTO;
 
 /**
  * 클라이언트(사용자)의 편의 기능 및 결제 관련 동작을 지원하는 서비스 인터페이스입니다.
@@ -64,4 +65,6 @@ public interface ClientService {
      * @return S3 Presigned URL
      */
     String getSellerProfileImage(Long sellerIdx);
+
+    SellerBankDTO getSellerBankInfo(Long sellerIdx);
 }

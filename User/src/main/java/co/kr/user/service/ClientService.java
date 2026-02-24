@@ -5,6 +5,8 @@ import co.kr.user.model.dto.client.ClientAddressDTO;
 import co.kr.user.model.dto.client.ClientRoleDTO;
 import co.kr.user.model.dto.client.SellerBankDTO;
 
+import java.util.List;
+
 /**
  * 클라이언트(사용자)의 편의 기능 및 결제 관련 동작을 지원하는 서비스 인터페이스입니다.
  * 권한 조회, 잔액 관리, 배송지 및 카드 조회 등의 기능을 정의합니다.
@@ -66,5 +68,10 @@ public interface ClientService {
      */
     String getSellerProfileImage(Long sellerIdx);
 
-    SellerBankDTO getSellerBankInfo(Long sellerIdx);
+    /**
+     * 여러 판매자 식별자 리스트를 받아 각 판매자의 은행 계좌 정보 목록을 조회합니다.
+     * @param sellerIdx 판매자 PK 리스트
+     * @return SellerBankDTO 리스트
+     */
+    List<SellerBankDTO> getSellerBankInfos(List<Long> sellerIdx);
 }

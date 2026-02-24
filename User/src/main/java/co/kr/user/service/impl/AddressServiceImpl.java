@@ -5,6 +5,7 @@ import co.kr.user.model.dto.address.AddressListDTO;
 import co.kr.user.model.dto.address.AddressRequestReq;
 import co.kr.user.model.entity.UsersAddress;
 import co.kr.user.model.entity.UsersInformation;
+import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
 import co.kr.user.service.AddressService;
 import co.kr.user.service.UserQueryService;
@@ -39,7 +40,7 @@ public class AddressServiceImpl implements AddressService {
         Long defaultAddressIdx = usersInformation.getDefaultAddress();
 
         // 삭제되지 않은 정상 상태의 배송지들만 가져옵니다.
-        List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(userIdx, UserDel.ACTIVE);
+        List<UsersAddress> usersAddressList = userAddressRepository.findAllByUsersIdxAndDel(userIdx, PublicDel.ACTIVE);
 
         if (usersAddressList.isEmpty()) {
             throw new IllegalArgumentException("주소를 추가해 주세요");
@@ -109,7 +110,7 @@ public class AddressServiceImpl implements AddressService {
     public String updateAddress(Long userIdx, AddressRequestReq req) {
         userQueryService.findActiveUser(userIdx);
 
-        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(req.getAddressCode(), userIdx, UserDel.ACTIVE)
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(req.getAddressCode(), userIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드에 해당하는 정보가 없습니다."));
 
         // 엔티티 내부의 수정 로직을 통해 필드 정보를 갱신합니다.
@@ -135,7 +136,7 @@ public class AddressServiceImpl implements AddressService {
     public String deleteAddress(Long userIdx, String addressCode) {
         userQueryService.findActiveUser(userIdx);
 
-        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(addressCode, userIdx, UserDel.ACTIVE)
+        UsersAddress usersAddress = userAddressRepository.findByAddressCodeAndUsersIdxAndDel(addressCode, userIdx, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("요청하신 주소 코드에 해당하는 정보가 없습니다."));
 
         // DB에서 실제로 삭제하지 않고 삭제 플래그만 변경합니다.

@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 타 마이크로서비스(주문 서비스, 상품 서비스 등)와의 통신을 위한 전용 컨트롤러입니다.
  * 사용자 권한, 잔액, 주소, 결제 수단 조회 등 내부 시스템 연동 기능을 담당합니다.
@@ -116,8 +118,8 @@ public class ClientController {
      * @param sellerIdx 판매자 고유 식별자
      * @return 은행명, 예금주명, 암호화된 계좌 토큰을 포함한 DTO
      */
-    @PostMapping("/seller/{sellerIdx}")
-    public ResponseEntity<BaseResponse<SellerBankDTO>> getSellerBank(@PathVariable Long sellerIdx) {
-        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.getSellerBankInfo(sellerIdx)));
+    @PostMapping("/seller")
+    public ResponseEntity<BaseResponse<List<SellerBankDTO>>> getSellerBanks(@RequestBody List<Long> sellerIdx) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.getSellerBankInfos(sellerIdx)));
     }
 }

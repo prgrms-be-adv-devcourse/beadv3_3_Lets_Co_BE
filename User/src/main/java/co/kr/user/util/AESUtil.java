@@ -1,6 +1,7 @@
 package co.kr.user.util;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.security.SecureRandom;
  * AES 암호화 및 복호화를 처리하는 유틸리티 클래스입니다.
  * GCM(Galois/Counter Mode) 및 CBC(Cipher Block Chaining) 모드를 지원합니다.
  */
+@Slf4j
 @Component
 public class AESUtil {
     // application.yml 또는 properties 파일에서 설정된 비밀키를 주입받습니다.
@@ -150,7 +152,8 @@ public class AESUtil {
             byte[] decrypted = cipher.doFinal(encrypted);
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new RuntimeException("CBC 복호화 중 오류 발생: " + e.getMessage(), e);
+            log.error("CBC 복호화 실패 - 데이터: {}", encryptedValue, e); // 로그 추가
+            throw new RuntimeException("CBC 복호화 중 오류 발생", e);
         }
     }
 }

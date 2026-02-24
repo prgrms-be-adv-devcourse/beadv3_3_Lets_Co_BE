@@ -20,13 +20,13 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 정산 서비스 구현
+ * - 주문 확정 시 판매자별 정산 레코드 생성 (ORDERS_CONFIRMED)
+ * - 환불 시 정산 상태 변경 (CANCEL_ADJUST)
+ * - 판매자별 정산 내역 조회
+ */
 public class SettlementServiceImpl implements SettlementService {
-
-    /**
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-     * todo. 정민님 주석
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-     */
 
     private final SettlementRepository settlementRepository;
 

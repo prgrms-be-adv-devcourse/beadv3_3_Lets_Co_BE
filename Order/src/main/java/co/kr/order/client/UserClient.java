@@ -14,11 +14,8 @@ import java.util.Set;
 public interface UserClient {
 
     /**
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-     * todo. 정민님 주석
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * 판매자 계좌 정보 조회 (정산 배치에서 사용)
      */
-
     @GetMapping("/seller")
     SellerInfo getSellerData(
             Set<Long> sellerIdxList

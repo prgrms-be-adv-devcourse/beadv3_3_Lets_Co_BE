@@ -45,7 +45,6 @@ public class SettlementServiceImpl implements SettlementService {
                     .build());
         }
 
-
         /*
          * 실제 정산 DB 에 저장되었는지
          */

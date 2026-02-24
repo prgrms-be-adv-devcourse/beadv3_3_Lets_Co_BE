@@ -98,7 +98,9 @@ public class SellerController {
                 throw new IllegalArgumentException("비어있는 파일이 포함되어 있습니다.");
             }
 
-            // 2. MIME 타입 검사
+
+            // 2. MIME 타입 검사 (단순 확장자 검사보다 안전함)
+
             String contentType = file.getContentType();
             if (contentType == null || !allowedMimeTypes.contains(contentType)) {
                 throw new IllegalArgumentException("지원하지 않는 이미지 형식입니다. (JPEG, PNG, GIF, WEBP만 허용)");

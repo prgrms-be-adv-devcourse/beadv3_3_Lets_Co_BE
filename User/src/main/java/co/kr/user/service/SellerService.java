@@ -5,6 +5,9 @@ import co.kr.user.model.dto.seller.SellerAmendReq;
 import co.kr.user.model.dto.seller.SellerProfileDTO;
 import co.kr.user.model.dto.seller.SellerRegisterDTO;
 import co.kr.user.model.dto.seller.SellerRegisterReq;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 /**
  * 판매자(Seller)와 관련된 비즈니스 로직을 정의한 인터페이스입니다.
@@ -62,4 +65,8 @@ public interface SellerService {
      * @return 처리 결과 메시지 ("판매자 탈퇴가 정상 처리되었습니다.")
      */
     String myDelete(Long userIdx, String authCode);
+
+    String updateProfileImage(Long userIdx, MultipartFile file) throws IOException;
+
+    String getMyProfileImage(Long userIdx);
 }

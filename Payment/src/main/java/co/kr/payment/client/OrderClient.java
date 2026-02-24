@@ -1,15 +1,10 @@
 package co.kr.payment.client;
 
+import co.kr.payment.model.dto.UserInfo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
-@FeignClient(name = "ORDER-SERVICE", path = "/client/orders")
+@FeignClient(name = "order-service", path = "/client/orders")
 public interface OrderClient {
 
     @PostMapping("/{orderCode}/status")
@@ -18,11 +13,20 @@ public interface OrderClient {
             @RequestParam String status
     );
 
-    // 수동 테스트용: ordersIdx 없이 confirm 호출 시 Order 서비스에서 조회하기 위한 메서드
-    // 실제 운영 흐름에서는 Order 서비스가 ordersIdx를 포함하여 Payment를 호출하므로 사용되지 않음
-    @GetMapping("/orders/{orderCode}")
-    Map<String, Object> getOrder(
-            @PathVariable String orderCode,
-            @RequestHeader("X-USERS-IDX") Long userIdx
+    @GetMapping("/{orderCode}/idx")
+    Long getOrderIdx(
+            @PathVariable String orderCode
+    );
+
+    @PostMapping("/fail/{orderCode}")
+    void failPayment(
+            @PathVariable String orderCode
+    );
+
+    @PostMapping("/success/{orderCode}/{paymentIdx}")
+    void successPayment(
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx,
+            @RequestBody UserInfo userInfo
     );
 }

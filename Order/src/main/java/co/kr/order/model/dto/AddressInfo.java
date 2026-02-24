@@ -2,11 +2,12 @@ package co.kr.order.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-/**
- * @param recipient : 수신자
- * @param address : 주소
- * @param addressDetail : 상세 주소
- * @param phone : 핸드폰 번호
+/*
+ * 주소 정보
+ * @param recipient: 수령인
+ * @param address: 주소
+ * @param addressDetail: 상세 주소
+ * @param phone: 전화번호(핸드폰)
  */
 public record AddressInfo(
 

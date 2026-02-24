@@ -34,6 +34,7 @@ public class IpController {
                 categoryService.getCategory(CategoryType.IP));
     }
 
+
     /**
      * 가족 IP 출력
      * @param categoryCode
@@ -46,6 +47,7 @@ public class IpController {
     ) {
         return   ResponseEntity.ok(
                 categoryService.getFamilyCategory(categoryCode, CategoryType.IP));}
+
 
 
     /**
@@ -66,6 +68,7 @@ public class IpController {
     }
 
 
+
     /** IP 수정 (이름 , 부모IP)
      * @param usersIdx
      * @param categoryCode
@@ -83,6 +86,7 @@ public class IpController {
         return ResponseEntity.ok(
                 categoryService.updateCategory(usersIdx, categoryCode ,req, CategoryType.IP));
     }
+
 
     /** IP 삭제(하위 IP 포함)
      * @param usersIdx

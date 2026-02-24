@@ -5,6 +5,7 @@ import co.kr.user.model.dto.client.BalanceReq;
 import co.kr.user.model.dto.card.CardReq;
 import co.kr.user.model.dto.client.ClientAddressDTO;
 import co.kr.user.model.dto.client.ClientRoleDTO;
+import co.kr.user.model.dto.client.SellerBankDTO;
 import co.kr.user.service.ClientService;
 import co.kr.user.util.BaseResponse;
 import jakarta.validation.Valid;
@@ -13,8 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 내부 시스템(MSA 환경의 타 서비스) 또는 클라이언트 앱 전용 기능을 제공하는 컨트롤러입니다.
- * 사용자 권한 확인, 잔액 관리, 기본 배송지/카드 조회 등 서비스 간 연동에 필요한 API를 주로 포함합니다.
+ * 타 마이크로서비스(주문 서비스, 상품 서비스 등)와의 통신을 위한 전용 컨트롤러입니다.
+ * 사용자 권한, 잔액, 주소, 결제 수단 조회 등 내부 시스템 연동 기능을 담당합니다.
  */
 @RestController
 @RequiredArgsConstructor
@@ -24,8 +25,9 @@ public class ClientController {
 
     /**
      * 특정 사용자의 권한(Role) 정보를 조회합니다.
-     * @param userIdx 사용자 식별자 (Query Parameter)
-     * @return 사용자 권한 정보 DTO
+     *
+     * @param userIdx 사용자 고유 식별자 (Query Parameter)
+     * @return 사용자의 현재 권한 및 활성 상태 정보를 포함한 DTO
      */
     @GetMapping("/role")
     public ResponseEntity<BaseResponse<ClientRoleDTO>> getRole(@RequestParam @Valid Long userIdx) {
@@ -33,9 +35,11 @@ public class ClientController {
     }
 
     /**
-     * 사용자의 잔액(포인트/머니)을 변경합니다. (충전, 결제, 환불 등)
-     * @param userIdx 사용자 식별자 (Path Variable)
-     * @param balanceReq 잔액 변경 요청 정보 (금액, 유형)
+     * 사용자의 잔액(포인트/머니)을 변경 처리합니다.
+     * 결제 시 차감, 충전 시 증액, 취소 시 환급 등의 상황에서 주문/결제 서비스가 호출합니다.
+     *
+     * @param userIdx 사용자 고유 식별자 (Path Variable)
+     * @param balanceReq 잔액 변경 금액 및 작업 유형(결제, 충전 등)
      * @return 처리 성공 메시지
      */
     @PostMapping("/{userIdx}/balance")
@@ -45,10 +49,11 @@ public class ClientController {
     }
 
     /**
-     * 사용자의 기본 배송지 정보를 조회합니다.
-     * 주문 서비스 등에서 배송 정보를 불러올 때 사용됩니다.
-     * @param userIdx 사용자 식별자 (Path Variable)
-     * @return 기본 배송지 정보 DTO
+     * 사용자가 설정한 기본 배송지 정보를 조회합니다.
+     * 주문 시 사용자의 수동 입력 없이 기본 배송지를 불러올 때 활용됩니다.
+     *
+     * @param userIdx 사용자 고유 식별자
+     * @return 기본 배송지 상세 정보 (주소, 수령인, 연락처 등)
      */
     @PostMapping("/{userIdx}/address/default")
     public ResponseEntity<BaseResponse<ClientAddressDTO>> defaultAddress(@PathVariable Long userIdx) {
@@ -56,10 +61,11 @@ public class ClientController {
     }
 
     /**
-     * 특정 주소 코드로 배송지 정보를 조회합니다.
-     * @param userIdx 사용자 식별자 (Path Variable)
-     * @param addressReq 조회할 주소 코드 정보
-     * @return 해당 배송지 정보 DTO
+     * 특정 주소 코드로 배송지 상세 정보를 검색합니다.
+     *
+     * @param userIdx 사용자 고유 식별자
+     * @param addressReq 조회하고자 하는 배송지의 고유 코드
+     * @return 해당 배송지의 상세 정보
      */
     @PostMapping("/{userIdx}/address/search")
     public ResponseEntity<BaseResponse<ClientAddressDTO>> searchAddress(@PathVariable Long userIdx,
@@ -68,9 +74,10 @@ public class ClientController {
     }
 
     /**
-     * 사용자의 기본 카드 식별자(PK)를 조회합니다.
-     * @param userIdx 사용자 식별자 (Path Variable)
-     * @return 기본 카드 ID
+     * 사용자의 기본 결제 카드 식별자(PK)를 조회합니다.
+     *
+     * @param userIdx 사용자 고유 식별자
+     * @return 기본 결제 카드의 내부 식별 번호(Long)
      */
     @PostMapping("/{userIdx}/card/default")
     public ResponseEntity<BaseResponse<Long>> defaultCard(@PathVariable Long userIdx) {
@@ -78,14 +85,39 @@ public class ClientController {
     }
 
     /**
-     * 특정 카드 코드로 카드 식별자(PK)를 조회합니다.
-     * @param userIdx 사용자 식별자 (Path Variable)
-     * @param cardReq 조회할 카드 코드 정보
-     * @return 해당 카드 ID
+     * 특정 카드 코드로 카드 식별자(PK)를 검색합니다.
+     *
+     * @param userIdx 사용자 고유 식별자
+     * @param cardReq 조회하고자 하는 카드의 고유 코드
+     * @return 해당 카드의 내부 식별 번호(Long)
      */
     @PostMapping("/{userIdx}/card/search")
     public ResponseEntity<BaseResponse<Long>> searchCard(@PathVariable Long userIdx,
                                                          @RequestBody CardReq cardReq) {
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.searchCard(userIdx, cardReq.getCardCode())));
+    }
+
+    /**
+     * 특정 판매자의 프로필 이미지 URL을 조회합니다.
+     * 상품 상세 페이지 등에서 판매자 로고를 표시하기 위해 상품 서비스 등에서 호출합니다.
+     *
+     * @param sellerIdx 판매자 고유 식별자
+     * @return 판매자 프로필 이미지의 S3 접근 가능 주소
+     */
+    @PostMapping("/seller/{sellerIdx}/image")
+    public ResponseEntity<BaseResponse<String>> getSellerImage(@PathVariable Long sellerIdx) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.getSellerProfileImage(sellerIdx)));
+    }
+
+    /**
+     * 판매자의 정산용 계좌 정보를 조회합니다.
+     * 정산 서비스에서 판매 대금을 입금해줄 때 필요한 정보를 얻기 위해 사용됩니다.
+     *
+     * @param sellerIdx 판매자 고유 식별자
+     * @return 은행명, 예금주명, 암호화된 계좌 토큰을 포함한 DTO
+     */
+    @PostMapping("/seller/{sellerIdx}")
+    public ResponseEntity<BaseResponse<SellerBankDTO>> getSellerBank(@PathVariable Long sellerIdx) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.getSellerBankInfo(sellerIdx)));
     }
 }

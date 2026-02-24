@@ -70,6 +70,8 @@ public class LoginController {
         CookieUtil.deleteCookie(response, CookieUtil.ACCESS_TOKEN_NAME);
         // 클라이언트 브라우저의 Refresh Token 쿠키 삭제
         CookieUtil.deleteCookie(response, CookieUtil.REFRESH_TOKEN_NAME);
+        //클라이언트 브라우저의 Chat Token 쿠키 삭제
+        CookieUtil.deleteCookie(response, CookieUtil.CHAT_TOKEN_NAME);
 
         // 서비스 계층을 호출하여 Redis 등에서 토큰 정보를 삭제하거나 블랙리스트 처리
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", loginService.logout(refreshToken)));

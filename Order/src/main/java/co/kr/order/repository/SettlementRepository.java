@@ -10,13 +10,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SettlementRepository extends JpaRepository<SettlementHistoryEntity, Long> {
 
     List<SettlementHistoryEntity> findAllBySellerIdx(Long sellerIdx);
 
-    SettlementHistoryEntity findBySellerIdxAndPaymentIdx(Long sellerIdx, Long paymentIdx);
+    Optional<SettlementHistoryEntity> findBySellerIdxAndPaymentIdx(Long sellerIdx, Long paymentIdx);
 
     /**
      * Update settlement type (ORDERS_CONFIRMED -> SETTLE_PAYOUT).
@@ -27,7 +28,7 @@ public interface SettlementRepository extends JpaRepository<SettlementHistoryEnt
             UPDATE SettlementHistoryEntity s
             SET s.type = :newType
             WHERE s.sellerIdx = :sellerIdx
-              AND s.type = co.kr.order.model.vo.SettlementType.Orders_CONFIRMED
+              AND s.type = co.kr.order.model.vo.SettlementType.ORDERS_CONFIRMED
               AND s.del = false
               AND s.createdAt >= :startDate
               AND s.createdAt <= :endDate

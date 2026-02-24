@@ -10,11 +10,6 @@ spring:
       server:
         webflux:
           routes:
-            - id: client-User
-              uri: lb://USER
-              predicates:
-                - Path=/client/users/**
-
             - id: seller-PRODUCT
               uri: lb://PRODUCT
               predicates:
@@ -157,6 +152,11 @@ spring:
               predicates:
                 - Path=/inquiries/**
                 - Method=GET
+
+            - id: Assistant
+              uri: lb://ASSISTANT
+              predicates:
+                - Path=/assistant/**
 
 springdoc:
   api-docs:

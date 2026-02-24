@@ -20,6 +20,7 @@ public class CategoryController {
 
     private final ProductCategoryService categoryService;
 
+
     /** 모든 카테고리 목록 출력
      * 순서 ㅇ, 정렬 ㅇ
      * @return 카테고리 전체 목록
@@ -27,6 +28,7 @@ public class CategoryController {
     @CategoryListDocs
     @GetMapping
     public ResponseEntity<List<CategorySortedRes>> getCategory(
+
     ){
         return ResponseEntity.ok(
                 categoryService.getCategory(CategoryType.CATEGORY));

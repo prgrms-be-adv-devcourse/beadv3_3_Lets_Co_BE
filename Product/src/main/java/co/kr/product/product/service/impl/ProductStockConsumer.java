@@ -2,6 +2,7 @@ package co.kr.product.product.service.impl;
 
 
 import co.kr.product.product.model.dto.message.StockUpdateMsg;
+import co.kr.product.product.model.dto.request.AddStockReq;
 import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductOptionRepository;
@@ -212,5 +213,33 @@ public class ProductStockConsumer {
         }
 
         return uniqueMessages;
+    }
+
+    public void addStockInRedis(List<AddStockReq> request){
+
+        // Map < key , stock>
+        Map<String,Integer> stockMap = request.stream()
+                .collect(Collectors.toMap(
+                        req -> PRODUCT_STOCK_KEY + req.optionCode(),
+                        AddStockReq::stocks
+                ));
+
+        stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+
+            RedisSerializer<String> stringSerializer = stringRedisTemplate.getStringSerializer();
+
+            for (Map.Entry<String, Integer> entry : stockMap.entrySet()) {
+
+                try {
+                    byte[] keyBytes = stringSerializer.serialize(entry.getKey());
+
+                    // incrBy: 키가 존재하면 기존 값에 더하고, 없으면 0으로 초기화 후 더함
+                    connection.stringCommands().incrBy(keyBytes, entry.getValue());
+                } catch (IllegalArgumentException e) {
+                    log.error("Redis 재고 추가 중 에러 발생. OptionCode={}", entry.getKey(), e);
+                }
+            }
+            return null;
+        });
     }
 }

@@ -176,9 +176,9 @@ public class OrderServiceImpl implements OrderService {
             throw e;
         }
 
-//        if(request.orderType().equals(OrderType.CART)) {
-//            cartService.deleteCartAll(orderEntity.getUserIdx());
-//        }
+        if(request.orderType().equals(OrderType.CART)) {
+            cartService.deleteCartAll(orderEntity.getUserIdx());
+        }
 
         // 응답 생성
         List<OrderItemRes> responseItems = tempOrderItems.stream()
@@ -224,9 +224,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 상태 변경
-        orderEntity.setUserData(userInfo);
-        orderEntity.setStatus(OrderStatus.PAID);
-        orderRepository.saveAndFlush((orderEntity));
+        setOrderStatus(userInfo, orderEntity);
 
         // 주문 상품 리스트 조회 (재고 이벤트를 위해 필요)
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
@@ -243,6 +241,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         processSettlement(orderCode, paymentIdx, itemEntities);
+    }
+
+    @Transactional
+    public void setOrderStatus(UserInfo userInfo, OrderEntity orderEntity) {
+        orderEntity.setUserData(userInfo);
+        orderEntity.setStatus(OrderStatus.PAID);
+        orderRepository.saveAndFlush(orderEntity);
     }
 
     /*

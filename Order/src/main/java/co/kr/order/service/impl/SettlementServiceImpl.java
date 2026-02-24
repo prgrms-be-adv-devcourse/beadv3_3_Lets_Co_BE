@@ -45,6 +45,8 @@ public class SettlementServiceImpl implements SettlementService {
                     .build());
         }
 
+        settlementRepository.saveAll(settlementList);
+
         /*
          * 실제 정산 DB 에 저장되었는지
          */
@@ -55,8 +57,6 @@ public class SettlementServiceImpl implements SettlementService {
                     entity.getSellerIdx(), entity.getType(), entity.getAmount());
         }
         log.info("==============================================================");
-
-        settlementRepository.saveAll(settlementList);
     }
 
     @Override

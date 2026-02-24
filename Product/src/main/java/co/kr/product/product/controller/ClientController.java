@@ -51,7 +51,7 @@ public class ClientController {
     }
 
     // order에 보내 줄 상품 정보 리스트
-    @GetMapping("/bulk")
+    @PostMapping("/bulk")
     public List<ProductInfoToOrderRes> getProductInfoList(
             @RequestBody @Valid List<ProductInfoToOrderReq> requests
     ) {

@@ -40,7 +40,6 @@ dependencies {
 
     // Web 및 Cloud 설정
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     // OpenAI
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
@@ -50,6 +49,7 @@ dependencies {
     // 편의 도구
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
 
     // 테스트
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

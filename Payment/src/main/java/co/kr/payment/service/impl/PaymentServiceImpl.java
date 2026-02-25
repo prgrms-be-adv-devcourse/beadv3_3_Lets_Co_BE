@@ -199,7 +199,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(amount)
                 .build();
 
-        PaymentEntity saved = paymentRepository.save(payment);
+        PaymentEntity saved = paymentRepository.saveAndFlush(payment);
 
         return PaymentMapper.toResponse(saved);
     }
@@ -225,7 +225,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(amount)
                 .build();
 
-        PaymentEntity saved = paymentRepository.save(payment);
+        PaymentEntity saved = paymentRepository.saveAndFlush(payment);
 
         return PaymentMapper.toResponse(saved);
     }
@@ -253,7 +253,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentKey(paymentKey)
                 .build();
 
-        PaymentEntity saved = paymentRepository.save(payment);
+        PaymentEntity saved = paymentRepository.saveAndFlush(payment);
 
         return PaymentMapper.toResponse(saved);
     }

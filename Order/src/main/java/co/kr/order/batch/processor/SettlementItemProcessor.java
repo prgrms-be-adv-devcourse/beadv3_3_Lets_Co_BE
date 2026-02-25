@@ -49,21 +49,21 @@ public class SettlementItemProcessor implements ItemProcessor<SellerSettlementSu
         SellerInfo sellerInfo = sellerInfoCache.get(sellerIdx);
 
         if (sellerInfo == null) {
-            log.error("판매자 정보 조회 실패 - sellerIdx: {}", sellerIdx);
-            return item.withPayoutResult(payoutAmount, false,
-                    "판매자 정보를 찾을 수 없습니다");
+            log.warn("판매자 {} 정산 보류 - 사유: 판매자 정보를 찾을 수 없습니다, 총액: {}, 레코드 수: {}",
+                    sellerIdx, totalAmount, item.getRecordCount());
+            return null;
         }
 
         if (sellerInfo.bankBrand() == null || sellerInfo.bankBrand().isBlank()) {
-            log.error("판매자 계좌 브랜드 누락 - sellerIdx: {}", sellerIdx);
-            return item.withPayoutResult(payoutAmount, false,
-                    "은행 브랜드 정보가 없습니다");
+            log.warn("판매자 {} 정산 보류 - 사유: 은행 브랜드 정보가 없습니다, 총액: {}, 레코드 수: {}",
+                    sellerIdx, totalAmount, item.getRecordCount());
+            return null;
         }
 
         if (sellerInfo.bankToken() == null || sellerInfo.bankToken().isBlank()) {
-            log.error("판매자 계좌 토큰 누락 - sellerIdx: {}", sellerIdx);
-            return item.withPayoutResult(payoutAmount, false,
-                    "계좌 토큰 정보가 없습니다");
+            log.warn("판매자 {} 정산 보류 - 사유: 계좌 토큰 정보가 없습니다, 총액: {}, 레코드 수: {}",
+                    sellerIdx, totalAmount, item.getRecordCount());
+            return null;
         }
 
         log.info("판매자 {} 검증 성공 - 은행: {}, 지급액: {}",

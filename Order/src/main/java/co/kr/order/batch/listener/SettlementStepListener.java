@@ -42,12 +42,13 @@ public class SettlementStepListener implements StepExecutionListener {
                 ? Duration.between(startTime, endTime).toMillis()
                 : 0;
 
-        log.info("[{}] 파티션 완료 - Seller_IDX [{} ~ {}] | 소요: {}ms | Read: {} | Write: {} | Skip: {} | 상태: {}",
+        log.info("[{}] 파티션 완료 - Seller_IDX [{} ~ {}] | 소요: {}ms | Read: {} | Write: {} | Filter: {} | Skip: {} | 상태: {}",
                 stepExecution.getStepName(),
                 minSellerIdx, maxSellerIdx,
                 durationMs,
                 stepExecution.getReadCount(),
                 stepExecution.getWriteCount(),
+                stepExecution.getFilterCount(),
                 stepExecution.getSkipCount(),
                 stepExecution.getStatus());
 

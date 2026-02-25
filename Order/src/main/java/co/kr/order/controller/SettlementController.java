@@ -6,10 +6,7 @@ import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -62,7 +59,7 @@ public class SettlementController {
 
     /**
      * 전월 기준으로 정산 배치를 수동 실행한다.
-     * - 데모 또는 운영 긴급 대응 목적
+     * - 데모 목적
      * - 요청 스레드에서 동기 실행
      * - Job 중복 실행 방지를 위해 timestamp 파라미터를 포함한다.
      */
@@ -82,10 +79,19 @@ public class SettlementController {
             );
 
             if (execution.getStatus() == BatchStatus.COMPLETED) {
-                return ResponseEntity.ok(
-                        new BaseResponse<>("ok",
-                                "수동 정산 완료 (대상: " + targetMonthStr + " 월)")
+                long successCount = 0;
+                long filterCount = 0;
+
+                for (StepExecution step : execution.getStepExecutions()) {
+                    successCount += step.getWriteCount();
+                    filterCount += step.getFilterCount();
+                }
+
+                String message = String.format(
+                        "수동 정산 완료 (대상: %s) - 성공: %d건, 보류: %d건",
+                        targetMonthStr, successCount, filterCount
                 );
+                return ResponseEntity.ok(new BaseResponse<>("ok", message));
             }
 
             return ResponseEntity.internalServerError()

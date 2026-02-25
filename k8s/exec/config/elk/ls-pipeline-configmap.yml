@@ -26,51 +26,62 @@ data:
     #  path.config: "/usr/share/logstash/pipeline/logstash-image.conf"
 
   logstash-products.conf: |
-
     input {
-      # jdbc 플러그인 → DB 연동 관련
-    jdbc {
-        jdbc_validate_connection => true
-        jdbc_driver_library => "/usr/share/logstash/logstash-core/lib/jars/mariadb-java-client-3.5.7.jar"
-        jdbc_driver_class => "org.mariadb.jdbc.Driver"
-        jdbc_connection_string => "${JDBC_URL}"
-        jdbc_user => "${DB_USER}"
-        jdbc_password => "${DB_PASSWORD}"
-        sql_log_level => "debug"
-        use_column_value => true
-        tracking_column => "unix_ts_tracking"
-        tracking_column_type => "numeric"
-        schedule => "*/1 * * * *"	
-        # 커넥션 풀 검증
-        jdbc_validate_connection => true
-        # 풀 타임아웃
-        jdbc_pool_timeout => 1200
+        # jdbc 플러그인 → DB 연동 관련
+        jdbc {
+            jdbc_validate_connection => true
+            jdbc_driver_library => "/usr/share/logstash/logstash-core/lib/jars/mariadb-java-client-3.5.7.jar"
+            jdbc_driver_class => "org.mariadb.jdbc.Driver"
+            jdbc_connection_string => "${JDBC_URL}"
+            jdbc_user => "${DB_USER}"
+            jdbc_password => "${DB_PASSWORD}"
+            sql_log_level => "debug"
+            use_column_value => true
+            tracking_column => "unix_ts_tracking"
+            tracking_column_type => "numeric"
+            schedule => "*/1 * * * *"	
+            # 커넥션 풀 검증
+            jdbc_validate_connection => true
+            # 풀 타임아웃
+            jdbc_pool_timeout => 1200
 
-        # (참고) JDBC 페이징
-        # 한 번에 많은 데이터를 가져올 때 필요
-        # jdbc_paging_enabled => true
-        # jdbc_page_size => 100000
+            # (참고) JDBC 페이징
+            # 한 번에 많은 데이터를 가져올 때 필요
+            # jdbc_paging_enabled => true
+            # jdbc_page_size => 100000
 
-        statement => 
-        "SELECT
-            Products.Products_IDX,
-            Products.Seller_IDX,
-            Products.Products_Code,
-            Products.Products_Name,
-            Products.Price,
-            Products.Sale_Price,
-            Products.Status,
-            Products.View_Count,
-            Products.Del,
+            statement => 
+            "SELECT
+                p.Products_IDX,
+                p.Seller_IDX,
+                p.Products_Code,
+                p.Products_Name,
+                p.Price,
+                p.Sale_Price,
+                p.Status,
+                p.View_Count,
+                p.Del,
+                p.Updated_at,           
+                c_cat.Path As category_path_str,
+                c_ip.Path As ip_path_str,
 
-            Products.Updated_at,           -- :sql_last_value 추적을 위함
-                UNIX_TIMESTAMP(Products.Updated_at) AS unix_ts_tracking,    -- last value 추적용 임시 데이터
-                :sql_last_value AS last_tracking_value
+                ( SELECT CONCAT(File_Path, File_Name)
+                FROM File
+                WHERE Ref_Table = 'Products'
+                    AND Ref_Index = p.Products_IDX
+                    AND Del = 0
+                LIMIT 1
+                ) AS thumbnail_key,
+
+
+                UNIX_TIMESTAMP(p.Updated_at) AS unix_ts_tracking  
                 
-            FROM GutJJeu.Products as Products
+            FROM GutJJeu.Products as  p
+                LEFT JOIN Products_Category c_cat ON p.Products_Category = c_cat.Category_IDX
+                LEFT JOIN Products_Category c_ip ON p.Products_IP = c_ip.Category_IDX
 
             WHERE 
-                UNIX_TIMESTAMP(Products.Updated_at) > :sql_last_value
+                UNIX_TIMESTAMP(p.Updated_at) > :sql_last_value
         
             ORDER BY
                 unix_ts_tracking ASC"
@@ -80,13 +91,97 @@ data:
         }
     }
     filter{
-        # 임시 변수 제거
-        mutate {  
-            remove_field => ["@version","unix_ts_tracking", "last_tracking_value"]
+        # 1. 카테고리 idx 분리
+        if [category_path_str] {
+            mutate {
+                gsub => [ "category_path_str", "/", "," ]
+            }
         }
+
+        # 2. 카테고리 이름 조회 (DB 부하 방어: 캐싱 사용)
+        if [category_path_str] {
+            jdbc_streaming {
+                jdbc_driver_library => "/usr/share/logstash/logstash-core/lib/jars/mariadb-java-client-3.5.7.jar"
+                jdbc_driver_class => "org.mariadb.jdbc.Driver"
+                jdbc_connection_string => "${JDBC_URL}"
+                jdbc_user => "${DB_USER}"
+                jdbc_password => "${DB_PASSWORD}"
+
+                parameters => { "cat_ids" => "category_path_str" }
+
+                # FIELD 함수로 순서 보장 (대분류 -> 중분류 -> 소분류)
+                statement => "
+                    SELECT Category_Name as c_name
+                    FROM Products_Category 
+                    WHERE FIND_IN_SET(Category_IDX, :cat_ids)
+                    ORDER BY FIND_IN_SET(Category_IDX, :cat_ids)
+                "
+
+                target => "category_details"
+                
+                # 카테고리 구조는 자주 안 바뀌므로 1시간 캐싱
+                use_cache => true
+                cache_expiration => 3600 
+                cache_size => 2000
+            }
+        }
+
+        # 3. ip idx 분리
+        if [ip_path_str] {
+            mutate {
+                gsub => [ "ip_path_str", "/", "," ]
+            }
+        }
+
+        # 4. ip 이름 조회 (DB 부하 방어: 캐싱 사용)
+        if [ip_path_str] {
+            jdbc_streaming {
+                jdbc_driver_library => "/usr/share/logstash/logstash-core/lib/jars/mariadb-java-client-3.5.7.jar"
+                jdbc_driver_class => "org.mariadb.jdbc.Driver"
+                jdbc_connection_string => "${JDBC_URL}"
+                jdbc_user => "${DB_USER}"
+                jdbc_password => "${DB_PASSWORD}"
+
+                parameters => { "cat_ids" => "ip_path_str" }
+
+                # FIELD 함수로 순서 보장 (대분류 -> 중분류 -> 소분류)
+                statement => "
+                    SELECT Category_Name as c_name
+                    FROM Products_Category 
+                    WHERE FIND_IN_SET(Category_IDX, :cat_ids)
+                    ORDER BY FIND_IN_SET(Category_IDX, :cat_ids)
+                "
+
+                target => "ip_details"
+                
+                # 카테고리 구조는 자주 안 바뀌므로 1시간 캐싱
+                use_cache => true
+                cache_expiration => 3600 
+                cache_size => 2000
+            }
+        }
+
+        # 3. 데이터 예쁘게 정리
+        ruby {
+            code => "
+            details = event.get('category_details')
+            if details
+                # [{'name':'의류'}, {'name':'상의'}] -> ['의류', '상의'] 로 변환
+                names = details.map { |x| x['c_name'] }
+                event.set('category_names', names)
+            end
+
+            ip_details = event.get('ip_details')
+            if ip_details
+                ip_names = ip_details.map { |x| x['c_name'] }
+                event.set('ip_names', ip_names)
+            end
+            "
+        }
+        # 타입 지정
         mutate{
             convert =>{
-                # 타입 지정
+                
                 "price"        => "float"
                 "sale_price"   => "float"
                 
@@ -94,11 +189,21 @@ data:
                 "status"        => "string"
             }
         }
+
         # 날짜 형식 변환 (문자열 -> 날짜 객체)
         date {
             match => [ "updated_at", "ISO8601", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" ]
             target => "updated_at"
         }
+        
+        # 임시 변수 제거
+        mutate {  
+            remove_field => ["@version","unix_ts_tracking", "last_tracking_value",
+                "category_path_str", "category_details", "cat_ids",
+                "ip_path_str","ip_details"]
+        
+        }
+
     }
     output{
         elasticsearch{

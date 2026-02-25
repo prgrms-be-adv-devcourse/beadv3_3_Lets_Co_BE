@@ -36,7 +36,10 @@ public class SettlementServiceImpl implements SettlementService {
 
         List<SettlementHistoryEntity> settlementList = new ArrayList<>();
 
+        int temp = 1;
+        log.info("************정산금 엔티티 세팅 전************");
         for (Map.Entry<Long, BigDecimal> entry : sellerSettlementMap.entrySet()) {
+            log.info("************{}번째 세팅************", temp++);
             settlementList.add(SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
                     .paymentIdx(paymentIdx)
@@ -44,6 +47,11 @@ public class SettlementServiceImpl implements SettlementService {
                     .amount(entry.getValue())
                     .build());
         }
+
+
+        log.info("************정산금 엔티티 저장 전************");
+        settlementRepository.saveAll(settlementList);
+        log.info("************정산금 엔티티 저장 완료************");
 
         /*
          * 실제 정산 DB 에 저장되었는지
@@ -55,8 +63,6 @@ public class SettlementServiceImpl implements SettlementService {
                     entity.getSellerIdx(), entity.getType(), entity.getAmount());
         }
         log.info("==============================================================");
-
-        settlementRepository.saveAll(settlementList);
     }
 
     @Override

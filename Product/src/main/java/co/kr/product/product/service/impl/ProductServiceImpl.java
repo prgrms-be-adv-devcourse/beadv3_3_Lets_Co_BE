@@ -17,6 +17,8 @@ import co.kr.product.product.repository.ProductCategoryRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductService;
+import co.kr.product.review.model.dto.response.ReviewResponse;
+import co.kr.product.review.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +43,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductCategoryRepository categoryRepository;
     private final FileRepository fileRepository;
     private final S3Service s3Service;
-
+    private final ReviewService reviewService;
 
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
@@ -120,14 +122,19 @@ public class ProductServiceImpl implements ProductService {
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
 
+        // 5. 해당 상품 리뷰 목록
+        List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
+
         return
             new IdxAndDetailRes(
                 product.getProductsIdx(),
                 toProductDetail(
-                    product,
-                    options,
-                    imageInfo,
-                    parents)
+                        product,
+                        options,
+                        imageInfo,
+                        parents,
+                        reviews)
             );
     }
 

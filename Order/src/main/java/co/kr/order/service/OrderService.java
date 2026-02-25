@@ -18,4 +18,8 @@ public interface OrderService {
 
     void orderSuccess(String orderCode, Long paymentIdx, UserInfo userInfo);
     void orderFail(String orderCode);
+    void orderRefund(String orderCode, Long paymentIdx);
+
+    Long findOrderItemIdxByProduct(String productsCode);
 }
+    

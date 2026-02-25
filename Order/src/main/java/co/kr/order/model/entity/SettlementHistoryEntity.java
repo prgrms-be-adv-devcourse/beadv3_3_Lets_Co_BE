@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "Settlement_History")
 @Getter
+@DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SettlementHistoryEntity {
 
@@ -51,8 +54,9 @@ public class SettlementHistoryEntity {
     @Column(name = "Created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(columnDefinition = "TINYINT")
-    private boolean del;
+    @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
+    private Boolean del = false;
 
     @Builder
     public SettlementHistoryEntity(Long sellerIdx, Long paymentIdx, SettlementType type, BigDecimal amount) {

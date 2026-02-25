@@ -11,6 +11,7 @@ import co.kr.payment.model.dto.request.PaymentReq;
 import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.model.entity.PaymentEntity;
+import co.kr.payment.model.event.PaymentSuccessEvent;
 import co.kr.payment.model.vo.PaymentStatus;
 import co.kr.payment.model.vo.PaymentType;
 import co.kr.payment.repository.PaymentJpaRepository;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
+
+    private final ApplicationEventPublisher eventPublisher;
 
     private final PaymentJpaRepository paymentRepository;
     private final OrderClient orderClient;
@@ -100,23 +104,13 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("결제 실패", e);
         }
 
-        try {
-            // 결제 성공 후 주문 서비스에 알림
-            orderClient.successPayment(request.orderCode(), paymentResponse.paymentIdx(), request.userInfo());
-
-        } catch (Exception e) {
-            log.error("주문 성공 처리(정산/후처리) 호출 중 실패. orderCode={}", request.orderCode(), e);
-
-            try {
-                RefundReq refundReq = new RefundReq(userIdx, request.orderCode());
-                refund(refundReq);
-                // 토스 환불 요청
-            } catch (Exception noRefund) {
-                log.error("환불이 진행되지 않음. 관리자 호출 필요!!!!");
-            }
-
-            throw new RuntimeException("주문 마무리 실패", e);
-        }
+        eventPublisher.publishEvent(
+                new PaymentSuccessEvent(
+                    request.orderCode(),
+                    paymentResponse.paymentIdx(),
+                    request.userInfo()
+                )
+        );
     }
 
     /**
@@ -131,11 +125,16 @@ public class PaymentServiceImpl implements PaymentService {
         // 1. orderCode → ordersIdx 변환 (Order 서비스 통신)
         Long ordersIdx = orderClient.getOrderIdx(request.orderCode());
 
-        // 2. ordersIdx + PAYMENT 상태로 결제 내역 조회
+        // 2. ordersIdx + PAYMENT 상태로 원본 결제 조회
         PaymentEntity payment = paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.PAYMENT)
                 .orElseThrow(() -> new PaymentFailedException(ErrorCode.PAYMENT_NOT_FOUND));
 
-        // 3. 유저 유효성 검증
+        // 3. 중복 환불 방지
+        if (paymentRepository.findByOrdersIdxAndStatus(ordersIdx, PaymentStatus.REFUND).isPresent()) {
+            throw new PaymentFailedException(ErrorCode.ALREADY_CANCELLED_PAYMENT);
+        }
+
+        // 4. 유저 유효성 검증
         if (!payment.getUsersIdx().equals(request.userIdx())) {
             throw new PaymentFailedException(ErrorCode.USER_MISMATCH);
         }
@@ -179,6 +178,14 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
         paymentRepository.save(refundPayment);
 
+        // 주문 상태 REFUNDED 변경 + 정산 레코드 CANCEL_ADJUST 처리
+        try {
+            orderClient.refundPayment(request.orderCode(), payment.getPaymentIdx());
+        } catch (Exception e) {
+            log.error("주문 환불 상태 변경 실패: orderCode={}, paymentIdx={}",
+                    request.orderCode(), payment.getPaymentIdx(), e);
+        }
+
         return PaymentMapper.toResponse(refundPayment);
     }
 
@@ -195,7 +202,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(amount)
                 .build();
 
-        PaymentEntity saved = paymentRepository.save(payment);
+        PaymentEntity saved = paymentRepository.saveAndFlush(payment);
 
         return PaymentMapper.toResponse(saved);
     }
@@ -221,7 +228,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(amount)
                 .build();
 
-        PaymentEntity saved = paymentRepository.save(payment);
+        PaymentEntity saved = paymentRepository.saveAndFlush(payment);
 
         return PaymentMapper.toResponse(saved);
     }
@@ -249,7 +256,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentKey(paymentKey)
                 .build();
 
-        PaymentEntity saved = paymentRepository.save(payment);
+        PaymentEntity saved = paymentRepository.saveAndFlush(payment);
 
         return PaymentMapper.toResponse(saved);
     }

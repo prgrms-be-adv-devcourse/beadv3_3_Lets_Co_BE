@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 @Getter
 @Entity
+@DynamicInsert
 @NoArgsConstructor
 @Table(name = "Orders")
 public class OrderEntity {
@@ -71,8 +74,9 @@ public class OrderEntity {
     @Column(name = "Created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private Boolean del;
+    @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
+    private Boolean del = false;
 
     @Builder
     public OrderEntity(Long userIdx, String orderCode, BigDecimal itemsAmount, BigDecimal totalAmount) {

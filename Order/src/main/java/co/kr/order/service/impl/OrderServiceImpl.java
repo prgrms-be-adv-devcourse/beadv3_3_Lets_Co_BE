@@ -77,10 +77,16 @@ public class OrderServiceImpl implements OrderService {
         switch (request.orderType()) {
             case OrderType.DIRECT:
                 // 상품 정보 조회
-                ClientProductRes product = productClient.getProduct(
-                        request.productInfo().productCode(),
-                        request.productInfo().optionCode()
-                );
+                ClientProductRes product;
+                try {
+                    product = productClient.getProduct(
+                            request.productInfo().productCode(),
+                            request.productInfo().optionCode()
+                    );
+                } catch (Exception e) {
+                    log.error("상품조회 실패", e);
+                    throw e;
+                }
 
                 // 엔티티 생성
                 tempOrderItems.add(createOrderItemEntity(product, request.productInfo().quantity()));
@@ -99,7 +105,15 @@ public class OrderServiceImpl implements OrderService {
             case OrderType.CART:
                 Map<Long, Integer> quantityMap = cartService.getCartItemQuantities(userIdx);
                 List<ClientProductReq> productRequest = cartService.getProductByCart(userIdx);
-                List<ClientProductRes> productsResponse = productClient.getProductList(productRequest);
+
+
+                List<ClientProductRes> productsResponse;
+                try {
+                    productsResponse = productClient.getProductList(productRequest);
+                } catch (Exception e) {
+                    log.error("상품조회 실패", e);
+                    throw e;
+                }
 
                 for (ClientProductRes productRes : productsResponse) {
                     Integer quantity = quantityMap.getOrDefault(productRes.optionIdx(), 0);
@@ -213,6 +227,7 @@ public class OrderServiceImpl implements OrderService {
         // 상태 변경
         orderEntity.setUserData(userInfo);
         orderEntity.setStatus(OrderStatus.PAID);
+        orderRepository.saveAndFlush(orderEntity);
 
         // 주문 상품 리스트 조회 (재고 이벤트를 위해 필요)
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
@@ -287,13 +302,14 @@ public class OrderServiceImpl implements OrderService {
         try {
             Object redisValue = redisTemplate.opsForValue().get(key);
             if (redisValue != null) {
-                // Redis에 저장된 JSON 문자열을 Map으로 복원
-                // RedisTemplate<String, Object>라서 String으로 캐스팅 필요할 수 있음
+                log.info("************레디스 정산금 조회 전************");
                 String jsonStr = String.valueOf(redisValue);
                 settlementMap = objectMapper.readValue(jsonStr, new TypeReference<Map<Long, BigDecimal>>() {});
+                log.info("************레디스 정산금 조회 완료: {}************", settlementMap);
             }
         } catch (Exception e) {
-            log.warn("Redis 정산 정보 조회/파싱 실패 (재계산 수행 예정): {}", orderCode, e);
+            log.info("Redis 정산 정보 조회/파싱 실패: {}", orderCode, e);
+            throw new RuntimeException("정산 정보 조회 실패");
         }
 
         // Redis에 없으면 DB/Feign으로 재계산 (Fallback)
@@ -304,9 +320,11 @@ public class OrderServiceImpl implements OrderService {
 
         // 정산 서비스 호출
         if (!settlementMap.isEmpty()) {
+            log.info("************정산금 생성 메서드 진입************");
             settlementService.createSettlement(paymentIdx, settlementMap);
             // 처리 후 Redis 키 삭제
             redisTemplate.delete(key);
+            log.info("************정산금 redis 삭제 완료************");
         }
     }
 
@@ -487,6 +505,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /*
+     * 환불 시 호출 (주문 상태 REFUNDED + 정산 CANCEL_ADJUST)
+     */
+    @Transactional
+    @Override
+    public void orderRefund(String orderCode, Long paymentIdx) {
+
+        OrderEntity orderEntity = orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+        orderEntity.setStatus(OrderStatus.REFUNDED);
+        settlementService.refundSettlement(orderEntity.getId(), paymentIdx);
+    }
+
+    /*
      * 주문 상태 변경
      * @param orderCode: 주문 코드
      * @param status: 주문 상태
@@ -519,4 +551,11 @@ public class OrderServiceImpl implements OrderService {
         return order.getId();
     }
 
+
+    public Long findOrderItemIdxByProduct(String productsCode){
+
+        OrderItemEntity orderItem = orderItemRepository.findByProductCode(productsCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+        return orderItem.getId();
+    }
 }

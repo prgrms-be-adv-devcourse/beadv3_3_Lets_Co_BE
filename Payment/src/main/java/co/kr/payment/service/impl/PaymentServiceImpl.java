@@ -11,6 +11,7 @@ import co.kr.payment.model.dto.request.PaymentReq;
 import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.model.entity.PaymentEntity;
+import co.kr.payment.model.event.PaymentSuccessEvent;
 import co.kr.payment.model.vo.PaymentStatus;
 import co.kr.payment.model.vo.PaymentType;
 import co.kr.payment.repository.PaymentJpaRepository;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
+
+    private final ApplicationEventPublisher eventPublisher;
 
     private final PaymentJpaRepository paymentRepository;
     private final OrderClient orderClient;
@@ -100,14 +104,13 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("결제 실패", e);
         }
 
-        try {
-            // 결제 성공 후 주문 서비스에 알림
-            orderClient.successPayment(request.orderCode(), paymentResponse.paymentIdx(), request.userInfo());
-
-        } catch (Exception e) {
-            log.error("주문 성공 처리(정산/후처리) 호출 중 실패. orderCode={}", request.orderCode(), e);
-            throw new RuntimeException("관리자를 부르세요.", e);
-        }
+        eventPublisher.publishEvent(
+                new PaymentSuccessEvent(
+                    request.orderCode(),
+                    paymentResponse.paymentIdx(),
+                    request.userInfo()
+                )
+        );
     }
 
     /**

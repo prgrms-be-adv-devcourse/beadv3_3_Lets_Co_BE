@@ -1,5 +1,6 @@
 package co.kr.assistant.service;
 
+import co.kr.assistant.model.dto.chat.ChatDTO;
 import co.kr.assistant.model.dto.list.ChatListDTO;
 
 import java.util.List;
@@ -10,6 +11,6 @@ public interface ChatService {
 
     List<ChatListDTO> list(String chatToken);
 
-    String ask(String chatToken, String question);
+    ChatDTO ask(String chatToken, String question);
 
 }

@@ -83,13 +83,15 @@ public class SettlementController {
                 long filterCount = 0;
 
                 for (StepExecution step : execution.getStepExecutions()) {
-                    successCount += step.getWriteCount();
-                    filterCount += step.getFilterCount();
+                    if (step.getStepName().startsWith("settlementWorkerStep")) {
+                        successCount += step.getWriteCount();
+                        filterCount += step.getFilterCount();
+                    }
                 }
 
                 String message = String.format(
-                        "수동 정산 완료 (대상: %s) - 성공: %d건, 보류: %d건",
-                        targetMonthStr, successCount, filterCount
+                        "수동 정산 완료 (대상월: %s) - 정산 완료: %d명, 보류: %d명 (총 판매자: %d명)",
+                        targetMonthStr, successCount, filterCount, successCount + filterCount
                 );
                 return ResponseEntity.ok(new BaseResponse<>("ok", message));
             }

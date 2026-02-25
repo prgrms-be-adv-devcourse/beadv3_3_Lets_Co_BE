@@ -17,8 +17,8 @@ import java.time.YearMonth;
 
 /**
  * 정산 처리 Writer
- * - 검증 성공 시: SETTLE_PAYOUT으로 상태 업데이트
- * - 검증 실패 시: 상태 유지 + 에러 로그
+ * - Processor에서 검증 통과된 판매자만 수신
+ * - ORDERS_CONFIRMED → SETTLE_PAYOUT으로 상태 업데이트
  */
 @Slf4j
 @Component

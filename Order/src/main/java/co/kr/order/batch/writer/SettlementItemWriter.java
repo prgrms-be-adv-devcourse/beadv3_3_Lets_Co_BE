@@ -43,38 +43,20 @@ public class SettlementItemWriter implements ItemWriter<SellerSettlementSummary>
         LocalDateTime startDate = SettlementTimeUtil.startOfMonth(yearMonth);
         LocalDateTime endDate = SettlementTimeUtil.endOfMonth(yearMonth);
 
-        int successCount = 0;
-        int failCount = 0;
-
         for (SellerSettlementSummary summary : chunk) {
             Long sellerIdx = summary.getSellerIdx();
 
-            if (summary.isValidated()) {
-                // 검증 성공: SETTLE_PAYOUT으로 업데이트
-                int updatedCount = settlementRepository.updateTypeBySellerIdxAndPeriod(
-                        sellerIdx,
-                        SettlementType.SETTLE_PAYOUT,
-                        startDate,
-                        endDate
-                );
+            int updatedCount = settlementRepository.updateTypeBySellerIdxAndPeriod(
+                    sellerIdx,
+                    SettlementType.SETTLE_PAYOUT,
+                    startDate,
+                    endDate
+            );
 
-                log.info("판매자 {} 정산 완료 - 업데이트 건수: {}, 지급액: {}",
-                        sellerIdx, updatedCount, summary.getPayoutAmount());
-
-                successCount++;
-
-            } else {
-                // 검증 실패: 상태 유지 (ORDERS_CONFIRMED -> 에러 로그
-                log.warn("판매자 {} 정산 보류 - 사유: {}, 총액: {}, 레코드 수: {}",
-                        sellerIdx,
-                        summary.getValidationMessage(),
-                        summary.getTotalAmount(),
-                        summary.getRecordCount());
-
-                failCount++;
-            }
+            log.info("판매자 {} 정산 완료 - 업데이트 건수: {}, 지급액: {}",
+                    sellerIdx, updatedCount, summary.getPayoutAmount());
         }
 
-        log.info("Chunk 처리 완료 - 성공: {}, 실패: {}", successCount, failCount);
+        log.info("Chunk 처리 완료 - 처리 건수: {}", chunk.size());
     }
 }

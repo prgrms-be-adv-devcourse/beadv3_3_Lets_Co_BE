@@ -1,6 +1,7 @@
 package co.kr.assistant.controller;
 
 import co.kr.assistant.model.dto.chat.AskReq;
+import co.kr.assistant.model.dto.chat.ChatDTO;
 import co.kr.assistant.model.dto.list.ChatListDTO;
 import co.kr.assistant.service.ChatService;
 import co.kr.assistant.util.BaseResponse;
@@ -59,8 +60,8 @@ public class ChatController {
     }
 
     @PostMapping("/ask")
-    public ResponseEntity<BaseResponse<String>> ask(HttpServletRequest request,
-                                                    @RequestBody @Valid AskReq askReq) {
+    public ResponseEntity<BaseResponse<ChatDTO>> ask(HttpServletRequest request,
+                                                     @RequestBody @Valid AskReq askReq) {
         // 1. 쿠키에서 chatToken 추출
         String chatToken = TokenUtil.getCookieValue(request, CookieUtil.CHAT_TOKEN_NAME);
 
@@ -69,8 +70,7 @@ public class ChatController {
         }
 
         // 2. 서비스 호출 및 결과 반환
-        String answer = chatService.ask(chatToken, askReq.getQuestion());
 
-        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", answer));
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", chatService.ask(chatToken, askReq.getQuestion())));
     }
 }

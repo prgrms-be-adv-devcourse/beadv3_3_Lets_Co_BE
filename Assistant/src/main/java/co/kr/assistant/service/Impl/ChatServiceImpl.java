@@ -1,6 +1,7 @@
 package co.kr.assistant.service.Impl;
 
 import co.kr.assistant.client.RagServiceClient;
+import co.kr.assistant.model.dto.chat.ChatDTO;
 import co.kr.assistant.model.dto.list.ChatListDTO;
 import co.kr.assistant.model.dto.rag.RagItem;
 import co.kr.assistant.model.dto.rag.RagRes;
@@ -93,8 +94,8 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    @Transactional
-    public String ask(String chatToken, String question) {
+    // 🚨 속도 및 안정성을 위해 @Transactional 제거 (외부 통신 중 DB 커넥션 점유 방지)
+    public ChatDTO ask(String chatToken, String question) {
         // 1. 세션 확인 및 질문 정제
         Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0)
                 .orElseThrow(() -> new IllegalArgumentException("세션이 만료되었습니다."));
@@ -107,15 +108,29 @@ public class ChatServiceImpl implements ChatService {
 
         // 2. RAG 서버 호출 및 검색 결과 필터링
         RagRes ragRes = ragServiceClient.searchKnowledge(processedQuestion, 5);
-        String intent = (ragRes != null) ? ragRes.getIntent() : "GENERAL_CHAT";
+        String intent = (ragRes != null && ragRes.getIntent() != null) ? ragRes.getIntent() : "GENERAL_CHAT";
 
-        // 유사도 점수가 임계값(0.1) 이상인 데이터만 추출하여 환각 현상 방지
-        String retrievedContext = (ragRes != null && ragRes.getResults() != null)
-                ? ragRes.getResults().stream()
-                .filter(item -> item.getScore() >= MIN_SCORE_THRESHOLD)
-                .map(RagItem::getText)
-                .collect(Collectors.joining("\n\n"))
-                : "";
+        // LLM 프롬프트용 텍스트와 프론트엔드용 JSON 맵 리스트를 분리해서 준비
+        List<Map<String, Object>> responseDataList = new ArrayList<>();
+        String retrievedContext = "";
+
+        if (ragRes != null && ragRes.getResults() != null) {
+            List<RagItem> validItems = ragRes.getResults().stream()
+                    .filter(item -> item.getScore() != null && item.getScore() >= MIN_SCORE_THRESHOLD)
+                    .collect(Collectors.toList());
+
+            if (!validItems.isEmpty()) {
+                StringBuilder ctxBuilder = new StringBuilder();
+                for (int i = 0; i < validItems.size(); i++) {
+                    RagItem item = validItems.get(i);
+                    // LLM이 참고할 텍스트 문맥 생성
+                    ctxBuilder.append(formatRagItemForLLM(item, i + 1)).append("\n");
+                    // 프론트엔드에 내려줄 깔끔한 맞춤형 Map 추출
+                    responseDataList.add(extractDataForFrontend(item));
+                }
+                retrievedContext = ctxBuilder.toString();
+            }
+        }
 
         if (retrievedContext.isEmpty()) {
             retrievedContext = "관련된 직접적인 지식을 찾지 못했습니다. 일반적인 가이드라인에 따라 답변하십시오.";
@@ -127,17 +142,14 @@ public class ChatServiceImpl implements ChatService {
 
         StringBuilder pb = new StringBuilder();
 
-        // [MANDATORY] 언어 및 안전 정책
         pb.append("# MANDATORY POLICIES\n");
         pb.append("- RESPONSE LANGUAGE: MUST match the user's input language.\n");
         ((List<String>) common.get("language_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
         ((List<String>) common.get("safety_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
         ((List<String>) common.get("fallback_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
 
-        // [PERSONA] 역할 정의
         pb.append("\n## YOUR IDENTITY\n").append(intentConfig.get("persona")).append("\n\n");
 
-        // [INSTRUCTIONS] 상세 지침 및 제약 사항
         pb.append("## OPERATIONAL GUIDELINES\n");
         if (intentConfig.containsKey("instructions")) {
             ((List<String>) intentConfig.get("instructions")).forEach(i -> pb.append("- ").append(i).append("\n"));
@@ -147,28 +159,26 @@ public class ChatServiceImpl implements ChatService {
             ((List<String>) intentConfig.get("negative_constraints")).forEach(nc -> pb.append("- ").append(nc).append("\n"));
         }
 
-        // [CoT] 사고 과정 주입
         if (intentConfig.containsKey("cot_steps")) {
             pb.append("\n## THINKING PROCESS\n");
             ((List<String>) intentConfig.get("cot_steps")).forEach(step -> pb.append(step).append("\n"));
         }
 
-        // [EXAMPLES] Few-shot 예시
         if (intentConfig.containsKey("examples")) {
             pb.append("\n## REFERENCE EXAMPLES\n");
             List<Map<String, String>> examples = (List<Map<String, String>>) intentConfig.get("examples");
             examples.forEach(ex -> pb.append("Q: ").append(ex.get("q")).append("\nA: ").append(ex.get("a")).append("\n\n"));
         }
 
-        // [KNOWLEDGE] 필터링된 지식 및 대화 내역
         pb.append("## [REFERENCE KNOWLEDGE]\n").append(retrievedContext).append("\n\n");
 
         List<ChatListDTO> history = this.list(chatToken).stream().limit(5).collect(Collectors.toList());
         pb.append("## [CONVERSATION HISTORY]\n");
         for (int i = history.size() - 1; i >= 0; i--) {
             ChatListDTO h = history.get(i);
-            pb.append("User: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getQuestion()))).append("\n");
-            pb.append("Assistant: ").append(privacyUtil.maskAll(profanityFilter.filter(h.getAnswer()))).append("\n\n");
+            // 🚨 필터링이 영어 문맥을 부수지 않도록, 대화 기록에는 마스킹을 제외하여 원본을 유지합니다.
+            pb.append("User: ").append(h.getQuestion()).append("\n");
+            pb.append("Assistant: ").append(h.getAnswer()).append("\n\n");
         }
 
         pb.append("\nFinal Step: Apply self-correction to ensure the response follows all constraints.");
@@ -177,19 +187,127 @@ public class ChatServiceImpl implements ChatService {
         log.info("Final System Prompt for ChatToken {}: \n{}", chatToken, finalSystemPrompt);
         log.info("User Question after processing: {}", processedQuestion);
 
-        // 4. AI 호출 및 결과 저장
+        // 4. AI 호출 및 결과 저장 (DB 커넥션을 물고 있지 않으므로 안전함)
         String answer = chatClientBuilder.build()
                 .prompt(finalSystemPrompt)
                 .user(processedQuestion)
                 .call()
                 .content();
 
+        // 5. DB 저장 (명시적으로 처리)
         assistantChatRepository.save(AssistantChat.builder()
                 .prompt(finalSystemPrompt).assistant(assistant).question(question).answer(answer).build());
 
         assistant.updateActivity();
+        assistantRepository.save(assistant); // @Transactional이 없으므로 직접 save 호출
+
         redisTemplate.delete("chat_history:" + chatToken);
 
-        return answer;
+        // 프론트엔드가 요구한 궁극의 JSON 포맷 리턴
+        return ChatDTO.builder()
+                .answer(answer)
+                .data(responseDataList)
+                .build();
+    }
+
+    /**
+     * [프론트엔드 제공용]
+     * RagItem의 전체 필드 중 데이터의 유형(Product, Notice, QnA)에 따라
+     * 꼭 필요한 알짜배기 필드들만 골라서 맞춤형 JSON(Map)으로 변환합니다.
+     */
+    private Map<String, Object> extractDataForFrontend(RagItem item) {
+        // 순서를 보장하기 위해 LinkedHashMap 사용
+        Map<String, Object> map = new LinkedHashMap<>();
+
+        // 1. 상품 (Product) 데이터인 경우
+        if (item.getProductsName() != null && item.getTitle() == null) {
+            map.put("type", "PRODUCT"); // 프론트엔드 식별용 타입
+            map.put("Link", item.getLink());
+            map.put("Products_Name", item.getProductsName());
+            map.put("Description", item.getDescription());
+            map.put("Price", item.getPrice());
+            map.put("Sale_Price", item.getSalePrice());
+            map.put("View_Count", item.getViewCount());
+            map.put("Review", item.getReviewCount());
+        }
+        // 2. 문의 내역 (QnA) 데이터인 경우
+        else if (item.getTitle() != null && item.getAnswer() != null) {
+            map.put("type", "QNA");
+            map.put("Link", item.getLink());
+            if (item.getProductsName() != null) {
+                map.put("Products_Name", item.getProductsName());
+            }
+            map.put("Title", item.getTitle());
+            map.put("Question", item.getQuestion() != null ? item.getQuestion() : item.getText());
+            map.put("Answer", item.getAnswer());
+            map.put("Created_at", item.getCreatedAt());
+        }
+        // 3. 공지사항 (Notice) 데이터인 경우
+        else if (item.getTitle() != null && item.getContent() != null) {
+            map.put("type", "NOTICE");
+            map.put("Link", item.getLink());
+            map.put("Title", item.getTitle());
+            map.put("Content", item.getContent());
+            map.put("Published_at", item.getPublishedAt() != null ? item.getPublishedAt() : item.getCreatedAt());
+        }
+        // 4. 그 외 기본 텍스트 데이터인 경우
+        else {
+            map.put("type", "GENERAL");
+            map.put("Text", item.getText());
+        }
+
+        return map;
+    }
+
+    /**
+     * [LLM 제공용]
+     * 파이썬에서 온 JSON 데이터를 LLM이 읽기 쉽게 포맷팅
+     */
+    private String formatRagItemForLLM(RagItem item, int index) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[참고자료 ").append(index).append("]\n");
+
+        if (item.getLink() != null) {
+            sb.append("- 바로가기 링크: ").append(item.getLink()).append("\n");
+        }
+
+        if (item.getProductsName() != null && item.getTitle() == null) {
+            sb.append("- 데이터 종류: 상품 정보\n");
+            sb.append("- 상품명: ").append(item.getProductsName()).append("\n");
+            if (item.getCategoryName() != null) sb.append("- 카테고리/IP: ").append(item.getCategoryName()).append(" / ").append(item.getIpName()).append("\n");
+            if (item.getDescription() != null) sb.append("- 설명: ").append(item.getDescription()).append("\n");
+
+            if (item.getPrice() != null) {
+                sb.append("- 가격: ").append(item.getPrice()).append("원");
+                if (item.getSalePrice() != null && !item.getSalePrice().toString().isEmpty()) {
+                    sb.append(" (현재 할인가: ").append(item.getSalePrice()).append("원)");
+                }
+                sb.append("\n");
+            }
+
+            if (item.getOptions() != null && !item.getOptions().isEmpty()) {
+                sb.append("- 선택 가능 옵션:\n");
+                for (RagItem.RagOption opt : item.getOptions()) {
+                    sb.append("  * ").append(opt.getOptionName()).append(" (+").append(opt.getOptionPrice()).append("원)\n");
+                }
+            }
+        } else if (item.getTitle() != null && item.getAnswer() != null) {
+            sb.append("- 데이터 종류: 쇼핑몰 문의내역(QnA)\n");
+            sb.append("- 관련 상품: ").append(item.getProductsName() != null ? item.getProductsName() : "일반 문의").append("\n");
+            sb.append("- 문의 제목: ").append(item.getTitle()).append("\n");
+            String questionText = item.getQuestion() != null ? item.getQuestion() : item.getText();
+            sb.append("- 고객 질문 원문: ").append(questionText).append("\n");
+            String answer = item.getAnswer();
+            sb.append("- 관리자 답변: ").append((answer == null || answer.trim().isEmpty()) ? "아직 답변이 등록되지 않았습니다." : answer).append("\n");
+        } else if (item.getTitle() != null && item.getContent() != null) {
+            sb.append("- 데이터 종류: 쇼핑몰 공지사항\n");
+            sb.append("- 공지 제목: ").append(item.getTitle()).append("\n");
+            sb.append("- 작성 일자: ").append(item.getPublishedAt() != null ? item.getPublishedAt() : item.getCreatedAt()).append("\n");
+            sb.append("- 공지 내용: ").append(item.getContent()).append("\n");
+        } else {
+            sb.append("- 내용: ").append(item.getText()).append("\n");
+        }
+
+        return sb.toString();
     }
 }

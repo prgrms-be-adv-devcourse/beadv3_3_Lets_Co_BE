@@ -145,6 +145,8 @@
 
 ### 🎬 화면
 
+<img width="2865" height="1537" alt="image" src="https://github.com/user-attachments/assets/2a4ea8e1-c778-43be-8db7-0cd93649fdf7" />
+
 ---
 
 ### 📪 링크

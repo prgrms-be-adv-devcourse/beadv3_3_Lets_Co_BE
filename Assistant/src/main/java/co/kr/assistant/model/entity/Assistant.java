@@ -1,5 +1,6 @@
 package co.kr.assistant.model.entity;
 
+import co.kr.assistant.model.vo.PublicDel;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
@@ -39,7 +40,7 @@ public class Assistant {
     private LocalDateTime lastActivityAt;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private Integer del = 0;
+    private PublicDel del;
 
     @Builder
     public Assistant(String assistantCode, Long usersIdx, String ipAddress, String userAgent) {
@@ -50,7 +51,7 @@ public class Assistant {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         this.lastActivityAt = LocalDateTime.now();
-        this.del = 0;
+        this.del = PublicDel.ACTIVE;
     }
 
     // 활동 시간 갱신 메서드

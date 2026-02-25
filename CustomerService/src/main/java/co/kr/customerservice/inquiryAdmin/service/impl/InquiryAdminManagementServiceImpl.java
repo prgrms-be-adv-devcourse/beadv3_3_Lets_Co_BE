@@ -1,12 +1,15 @@
 package co.kr.customerservice.inquiryAdmin.service.impl;
 
 import co.kr.customerservice.client.AuthServiceClient;
+import co.kr.customerservice.client.dto.ClientRoleDTO;
+import co.kr.customerservice.common.auth.AuthAdapter;
 import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
 import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
+import co.kr.customerservice.common.model.vo.UserRole;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.inquiryAdmin.mapper.InquiryMapper;
@@ -35,17 +38,19 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
 
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
-    private final AuthServiceClient authServiceClient;
+    private final AuthAdapter authAdapter;
 
     // 문의 목록 조회
     @Override
     @Transactional(readOnly = true)
     public InquiryListRes getInquiryList(Pageable pageable, Long usersIdx){
 
-        // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("관리자 권한이 없습니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 2. 엔티티 조회
@@ -75,11 +80,14 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     @Transactional
     public InquiryDetailRes addInquiryAnswer(Long userId, String inquiryCode, InquiryAnswerUpsertReq request) {
 
-        //1. 권한 확인
-        String role = authServiceClient.getUserRole(userId).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("관리자 권한이 없습니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userId);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
+
         // 2. entity 조회
         CustomerServiceEntity foundInquiry = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 문의입니다."));
@@ -124,10 +132,12 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     @Transactional
     public ResultResponse deleteInquiryAnswer(String inquiryCode, InquiryAnswerDeleteReq request, Long usersIdx){
 
-        // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("관리자 권한이 없습니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 엔티티 조회
@@ -152,10 +162,12 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     @Transactional
     public InquiryDetailRes updateInquiry(String inquiryCode, InquiryUpsertReq request, Long usersIdx){
 
-        // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("관리자 권한이 없습니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 2. 엔티티 조회'및 유효성 검사
@@ -199,12 +211,13 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     @Transactional
     public ResultResponse deleteInquiry(String inquiryCode, Long usersIdx){
 
-        // 1. 관리자 권환 확인
-        String role = authServiceClient.getUserRole(usersIdx).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("관리자 권한이 없습니다.");
-        }
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
 
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
+        }
 
         // 2. 엔티티 조회'및 유효성 검사
         CustomerServiceEntity inquiryEntity = customerServiceRepository.findByCodeAndDelFalse(inquiryCode)

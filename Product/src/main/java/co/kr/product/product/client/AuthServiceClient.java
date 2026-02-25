@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 // @FeignClient(name = "auth-service")
 @FeignClient(name = "user-service", url = "http://user-service:8080")
 public interface AuthServiceClient {
-    @GetMapping("/client/auth/role")
+    @GetMapping("/client/users/role")
     ResponseEntity<BaseResponse<ClientRoleDTO>> getUserRole(@RequestParam("userIdx") Long userIdx);
 }

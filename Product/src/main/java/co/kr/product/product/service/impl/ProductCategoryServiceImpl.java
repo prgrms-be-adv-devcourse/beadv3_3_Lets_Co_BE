@@ -3,6 +3,7 @@ package co.kr.product.product.service.impl;
 import co.kr.product.common.auth.AuthAdapter;
 import co.kr.product.common.exceptionHandler.ForbiddenException;
 import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.client.dto.ClientRoleDTO;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.dto.request.CategoryUpsertReq;
 import co.kr.product.product.model.dto.response.CategoryFamilyRes;
@@ -129,16 +130,17 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Transactional
     public CategoryRes addCategory(Long usersIdx, CategoryUpsertReq req, CategoryType type) {
 
-        // 1. 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // ADMIN이 아닌경우
-        if (!UserRole.isAdmin(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
 
         ProductCategoryEntity savedCategory;
 
-        //임시
+        // 미리 선언
         String parentCode;
 
         // 최상위 카테고리 추가
@@ -195,10 +197,11 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Transactional
     public String updateCategory(Long usersIdx,String categoryCode ,CategoryUpsertReq req, CategoryType type) {
 
-        // 1. 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // ADMIN이 아닌경우
-        if (!UserRole.isAdmin(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -279,13 +282,13 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Transactional
     public String deleteCategory(Long usersIdx,String categoryCode, CategoryType type) {
 
-        // 1. 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // ADMIN이 아닌경우
-        if (!UserRole.isAdmin(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
-
         // 검색
         ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, type)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 카테고리 입니다."));

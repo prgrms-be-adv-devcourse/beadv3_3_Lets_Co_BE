@@ -62,4 +62,12 @@ public class ClientController {
     ) {
         orderService.orderRefund(orderCode, paymentIdx);
     }
+
+    @GetMapping("/client/orders/getIdx/{productsCode}")
+    public Long getOrderItemIdxByCode(
+            @PathVariable("productsCode") String productsCode
+    ){
+        return orderService.findOrderItemIdxByProduct(productsCode);
+    }
+
 }

@@ -551,4 +551,11 @@ public class OrderServiceImpl implements OrderService {
         return order.getId();
     }
 
+
+    public Long findOrderItemIdxByProduct(String productsCode){
+
+        OrderItemEntity orderItem = orderItemRepository.findByProductCode(productsCode)
+                .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+        return orderItem.getId();
+    }
 }

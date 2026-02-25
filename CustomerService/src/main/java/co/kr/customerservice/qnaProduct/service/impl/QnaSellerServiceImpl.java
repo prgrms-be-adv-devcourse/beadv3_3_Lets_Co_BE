@@ -3,6 +3,8 @@ package co.kr.customerservice.qnaProduct.service.impl;
 
 import co.kr.customerservice.client.AuthServiceClient;
 import co.kr.customerservice.client.ProductServiceClient;
+import co.kr.customerservice.client.dto.ClientRoleDTO;
+import co.kr.customerservice.common.auth.AuthAdapter;
 import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.request.ProductIdxsRequest;
 import co.kr.customerservice.common.model.dto.response.ProductInfoResponse;
@@ -11,6 +13,7 @@ import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
+import co.kr.customerservice.common.model.vo.UserRole;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
@@ -34,8 +37,9 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
-    private final AuthServiceClient authServiceClient;
+    private final AuthAdapter authAdapter;
     private final ProductServiceClient productServiceClient;
+
 
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
     @Override
@@ -43,11 +47,19 @@ public class QnaSellerServiceImpl implements QnaSellerService {
     public QnaAndProductInfoListRes getMyQnaList(Long userIdx, Pageable pageable){
 
 
-        // 1. 유저 확인
-        String role = authServiceClient.getUserRole(userIdx).getBody();
-        if (!"SELLER".equals(role) && !"ADMIN".equals(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userIdx);
+
+        // 1.1 권한 확인 , 판매자가 아닌경우
+        if (!UserRole.isSeller(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
+
+        // 1.2 seller idx 확인
+        if (userData.sellerIdx() == null){
+            throw new IllegalArgumentException("seller IDX를 받아오지 못했습니다.");
+        }
+        Long sellerIdx = userData.sellerIdx();
 
         // 2. 엔티티 조회
         Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType.QNA_PRODUCT, userIdx, pageable);
@@ -123,6 +135,19 @@ public class QnaSellerServiceImpl implements QnaSellerService {
     @Transactional
     public QnaProductDetailRes addAnswer(String qnaCode, Long userIdx, QnaAnswerUpsertReq request){
 
+        // 0. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userIdx);
+
+        // 0.1 권한 확인 , 판매자가 아닌경우
+        if (!UserRole.isSeller(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
+        }
+
+        // 1.2 seller idx 확인
+        if (userData.sellerIdx() == null){
+            throw new IllegalArgumentException("seller IDX를 받아오지 못했습니다.");
+        }
+        Long sellerIdx = userData.sellerIdx();
 
         // 1. entity 가져오기
         CustomerServiceEntity questionEntity = customerServiceRepository.findByCodeAndDelFalse(qnaCode)
@@ -138,7 +163,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
         // FeignClient로 판매자 IDX를 받아옴. 문의에 대한 답변의 경우 한차례 통신, 검사를 하더라도 문제 없다고 판단
         ProductSellerResponse sellerIdxDto = productServiceClient.getSellerIdx(questionEntity.getProductsIdx());
 
-        if (!Objects.equals(userIdx, sellerIdxDto.sellerIdx())){
+        if (!Objects.equals(sellerIdx, sellerIdxDto.sellerIdx())){
             throw new ForbiddenException("해당 상품의 판매자가 아닙니다.");
         }
 

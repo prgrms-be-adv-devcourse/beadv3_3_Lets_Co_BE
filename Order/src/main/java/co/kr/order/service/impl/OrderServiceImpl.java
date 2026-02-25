@@ -227,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
         // 상태 변경
         orderEntity.setUserData(userInfo);
         orderEntity.setStatus(OrderStatus.PAID);
-        orderRepository.save(orderEntity);
+        orderRepository.saveAndFlush(orderEntity);
 
         // 주문 상품 리스트 조회 (재고 이벤트를 위해 필요)
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);

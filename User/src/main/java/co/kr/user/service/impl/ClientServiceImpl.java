@@ -223,6 +223,7 @@ public class ClientServiceImpl implements ClientService {
         return sellers.stream()
                 .map(seller -> {
                     SellerBankDTO dto = new SellerBankDTO();
+                    dto.setSellerIdx(seller.getSellerIdx());
                     dto.setBankBrand(seller.getBankBrand());
                     dto.setBankName(seller.getBankName());
                     dto.setBankToken(seller.getBankToken());

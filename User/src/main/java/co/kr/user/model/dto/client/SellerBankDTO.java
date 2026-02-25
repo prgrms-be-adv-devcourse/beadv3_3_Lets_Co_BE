@@ -9,6 +9,11 @@ import lombok.Data;
 public class SellerBankDTO {
 
     /**
+     * 판매자 고유 식별자 (UserIdx와 동일한 값)
+     */
+    private Long sellerIdx;
+
+    /**
      * 은행 브랜드 명칭 (예: 신한은행, 국민은행 등)
      */
     private String bankBrand;

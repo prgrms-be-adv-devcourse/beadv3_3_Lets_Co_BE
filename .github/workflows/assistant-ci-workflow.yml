@@ -1,0 +1,16 @@
+name: 어시스턴트 서비스 CI 스크립트
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - "Assistant/**"
+
+jobs:
+  execute-test:
+    uses: ./.github/workflows/ci-workflow.yml
+    secrets: inherit
+    with:
+      service-name: Assistant

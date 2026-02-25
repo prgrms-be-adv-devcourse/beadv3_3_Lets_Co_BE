@@ -1,5 +1,6 @@
 package co.kr.assistant.model.entity;
 
+import co.kr.assistant.model.vo.PublicDel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -32,7 +33,7 @@ public class AssistantChat {
     private LocalDateTime createdAt;
 
     @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private Integer del = 0;
+    private PublicDel del;
 
     @Builder
     public AssistantChat(Assistant assistant, String prompt, String question, String answer) {
@@ -41,6 +42,6 @@ public class AssistantChat {
         this.question = question;
         this.answer = answer;
         this.createdAt = LocalDateTime.now();
-        this.del = 0;
+        this.del = PublicDel.ACTIVE;
     }
 }

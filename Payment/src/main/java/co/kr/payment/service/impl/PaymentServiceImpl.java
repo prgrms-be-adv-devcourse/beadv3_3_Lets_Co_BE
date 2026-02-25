@@ -106,16 +106,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         } catch (Exception e) {
             log.error("주문 성공 처리(정산/후처리) 호출 중 실패. orderCode={}", request.orderCode(), e);
-
-            try {
-                RefundReq refundReq = new RefundReq(userIdx, request.orderCode());
-                refund(refundReq);
-                // 토스 환불 요청
-            } catch (Exception noRefund) {
-                log.error("환불이 진행되지 않음. 관리자 호출 필요!!!!");
-            }
-
-            throw new RuntimeException("주문 마무리 실패", e);
+            throw new RuntimeException("관리자를 부르세요.", e);
         }
     }
 

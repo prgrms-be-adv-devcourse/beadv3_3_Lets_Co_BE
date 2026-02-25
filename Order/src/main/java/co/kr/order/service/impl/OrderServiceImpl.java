@@ -6,6 +6,8 @@ import co.kr.order.exception.OrderNotFoundException;
 import co.kr.order.model.dto.ItemInfo;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.UserInfo;
+import co.kr.order.model.dto.event.StockUpdateEvent;
+import co.kr.order.model.dto.event.StockUpdateMsg;
 import co.kr.order.model.dto.request.ClientProductReq;
 import co.kr.order.model.dto.request.OrderReq;
 import co.kr.order.model.dto.response.ClientProductRes;
@@ -225,6 +227,7 @@ public class OrderServiceImpl implements OrderService {
         // 상태 변경
         orderEntity.setUserData(userInfo);
         orderEntity.setStatus(OrderStatus.PAID);
+        orderRepository.save(orderEntity);
 
         // 주문 상품 리스트 조회 (재고 이벤트를 위해 필요)
         List<OrderItemEntity> itemEntities = orderItemRepository.findAllByOrder(orderEntity);
@@ -232,15 +235,15 @@ public class OrderServiceImpl implements OrderService {
         processSettlement(orderCode, paymentIdx, itemEntities);
 
         // Kafka 이벤트 발행 (Product Service DB 재고 차감용)
-//        for (OrderItemEntity item : itemEntities) {
-//            StockUpdateMsg msg = new StockUpdateMsg(
-//                    UUID.randomUUID().toString(),
-//                    item.getProductCode(),
-//                    item.getOptionCode(),
-//                    (long) item.getQuantity()
-//            );
-//            eventPublisher.publishEvent(new StockUpdateEvent(msg));
-//        }
+        for (OrderItemEntity item : itemEntities) {
+            StockUpdateMsg msg = new StockUpdateMsg(
+                    UUID.randomUUID().toString(),
+                    item.getProductCode(),
+                    item.getOptionCode(),
+                    (long) item.getQuantity()
+            );
+            eventPublisher.publishEvent(new StockUpdateEvent(msg));
+        }
     }
 
     /*

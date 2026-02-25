@@ -5,6 +5,7 @@ import co.kr.product.common.auth.AuthAdapter;
 import co.kr.product.common.exceptionHandler.ForbiddenException;
 import co.kr.product.common.service.S3Service;
 import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.client.dto.ClientRoleDTO;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.document.ProductDocument;
 import co.kr.product.product.model.dto.request.*;
@@ -56,23 +57,24 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private String productTableName;
 
 
-    // TODO !! ! ! userIdx로 권환은 물론 sellerIdx 까지 필요함!!! ! ! !
 
     @Override
     @Transactional
     public ProductDetailRes addProduct(Long usersIdx, UpsertProductReq request, List<MultipartFile> images){
-/*
 
         // 1. 본인확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자가 아닌경우
+        if (!UserRole.isSeller(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
-*/
-        // 1.1 seller idx 받아와야함
-        // 임시
-        Long sellerIdx = 6L;
+
+        // 1.2 seller idx 확인
+        if (userData.sellerIdx() == null){
+            throw new IllegalArgumentException("seller IDX를 받아오지 못했습니다.");
+        }
+        Long sellerIdx = userData.sellerIdx();
 
         // 2. 카테고리 및 ip 불러오기
         // 2.1. in 쿼리로 카테고리, ip 동시 조회
@@ -192,12 +194,14 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     @Transactional
     public ProductDetailRes getManagerProductDetail(Long usersIdx, String code){
 
-        // 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isStaff(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
+
 
         // 1. 상품 조회
         ProductEntity product =  productRepository.findByProductsCodeAndDelFalse(code)
@@ -269,10 +273,11 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             UserRole inputRole
             ){
 
-        // 1.  권한 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isStaff(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -420,10 +425,11 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     @Transactional
     public void deleteProduct(Long usersIdx, String code, UserRole inputRole){
 
-        // 1. 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isStaff(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -482,16 +488,24 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductListRes getListsBySeller(Long usersIdx, Pageable pageable, ProductListReq requests){
 
 
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER가 아닌경우
-        if (!UserRole.isSeller(role)) {
-            throw new ForbiddenException("판매자가 아닙니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isSeller(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
+
+        // 1.2 seller idx 확인
+        if (userData.sellerIdx() == null){
+            throw new IllegalArgumentException("seller IDX를 받아오지 못했습니다.");
+        }
+        Long sellerIdx = userData.sellerIdx();
 
         // 검색어 존재 시 검색 진행
         Page<ProductDocument> pageResult = (requests.search() == null || requests.search().isBlank())
                 ? productEsRepository.findAll(pageable)
-                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(usersIdx,requests.search() ,pageable);
+                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(sellerIdx,requests.search() ,pageable);
         
         // 2. Document -> Response DTO 변환
         List<ProductRes> items = pageResult.stream()

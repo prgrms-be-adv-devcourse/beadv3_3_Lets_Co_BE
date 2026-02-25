@@ -1,10 +1,11 @@
 package co.kr.order.client;
 
-import co.kr.order.model.dto.SellerInfo;
+import co.kr.order.model.dto.response.SellerBulkResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.Set;
+import java.util.List;
 
 /*
  * FeignClient
@@ -14,13 +15,12 @@ import java.util.Set;
 public interface UserClient {
 
     /**
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-     * todo. 정민님 주석
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+     * 판매자 계좌 정보 Bulk 조회 (정산 배치에서 사용)
+     * @param sellerIdxList 조회할 판매자 IDX 리스트
+     * @return resultCode + 판매자 계좌 정보 리스트
      */
-
-    @GetMapping("/seller")
-    SellerInfo getSellerData(
-            Set<Long> sellerIdxList
+    @PostMapping("/seller")
+    SellerBulkResponse getSellerDataBulk(
+            @RequestBody List<Long> sellerIdxList
     );
 }

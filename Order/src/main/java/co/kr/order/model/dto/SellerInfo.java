@@ -1,16 +1,14 @@
 package co.kr.order.model.dto;
 
-/*
- * return 받을 판매자 정보
- * @param sellerIdx: 판매자 인덱스
- * @param businessLicense: 사업자 등록번호
- * @param bankBrand: 은행 브래드
- * @param bankName: 은행명
- * @param bankToken: 은행 토큰키 (혹은 계좌)
+/**
+ * User 서비스에서 반환받는 판매자 계좌 정보
+ * @param sellerIdx 판매자 인덱스
+ * @param bankBrand 은행 브랜드 (예: KB국민은행)
+ * @param bankName 예금주명 (예: (주)용희)
+ * @param bankToken 계좌 토큰
  */
 public record SellerInfo (
         Long sellerIdx,
-        String businessLicense,
         String bankBrand,
         String bankName,
         String bankToken

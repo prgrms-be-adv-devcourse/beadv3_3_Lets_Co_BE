@@ -29,7 +29,7 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       APPLICATION_YML: ${{ secrets.Assistant_PROD_YML }} # Assistant 전용 YML 전달
     with: # 필요한 파라미터 전달
-      service-name: Assistant-service
+      service-name: assistant-service
       service-dir: Assistant
       file-name: Dockerfile
       tag-prefix: "v" # v1.0.0 형식으로 생성됨
@@ -41,6 +41,6 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     with:
-      service-name: Assistant-service
+      service-name: assistant-service
       # releasing 단계에서 만들어진 태그(버전)를 넘겨받아 배포에 사용
       image-tag: ${{ needs.releasing.outputs.tag_name }}

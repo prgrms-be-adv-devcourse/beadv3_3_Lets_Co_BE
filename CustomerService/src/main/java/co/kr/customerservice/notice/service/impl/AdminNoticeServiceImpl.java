@@ -13,6 +13,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.model.vo.UserRole;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.RagUpdateService;
 import co.kr.customerservice.notice.model.dto.request.NoticeUpsertReq;
 import co.kr.customerservice.notice.model.dto.response.AdminNoticeDetailRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
@@ -40,6 +41,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
 
     private final AuthAdapter authAdapter;
 
+    private final RagUpdateService ragUpdateService;
 
     // 공지 추가
     @Override
@@ -87,7 +89,10 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
         // 4. 상세내용 entity 저장
         customerServiceDetailRepository.save(detailEntity);
 
-        // 5. 매퍼를 통해 반환데이터 생성 및 반환
+        // 5.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(requestEntity.getIdx());
+
+        // 6. 매퍼를 통해 반환데이터 생성 및 반환
         return toDetailMapper(
                 requestEntity,
                 detailEntity);
@@ -180,16 +185,16 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
         }
 
         // 2. 위와 똑같이 Entity 조회 및 유효성 검사
-        CustomerServiceEntity serviceEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
+        CustomerServiceEntity noticeEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지입니다."));
-        if(serviceEntity.getType() != CustomerServiceType.NOTICE){
+        if(noticeEntity.getType() != CustomerServiceType.NOTICE){
             throw new IllegalArgumentException("해당 게시글은 공지사항이 아닙니다.");
         }
-        CustomerServiceDetailEntity detailEntity = customerServiceDetailRepository.findByCustomerServiceAndDelFalse(serviceEntity)
+        CustomerServiceDetailEntity detailEntity = customerServiceDetailRepository.findByCustomerServiceAndDelFalse(noticeEntity)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지 내용입니다."));
 
         // 3. request 기반 update
-        serviceEntity.update(
+        noticeEntity.update(
                 request.category(),
                 request.status(),
                 request.title(),
@@ -199,9 +204,12 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
         // 3.1 detailEntity에서는 수정할 항목이 content밖에 없음
         detailEntity.update(request.content());
 
-        // 4. 매퍼를 통한 반환 데이터 생성 및 반환
+        // 5.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(noticeEntity.getIdx());
+
+        // 6. 매퍼를 통한 반환 데이터 생성 및 반환
         return toDetailMapper(
-                serviceEntity,
+                noticeEntity,
                 detailEntity);
 
 

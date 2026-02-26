@@ -41,7 +41,6 @@ dependencies {
     // 2. spring-boot-starter-zipkin 제거 후 아래 Reporter 추가
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
     // ----------------------------------------
-
     //JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
     implementation 'org.springframework.boot:spring-boot-starter-mail'

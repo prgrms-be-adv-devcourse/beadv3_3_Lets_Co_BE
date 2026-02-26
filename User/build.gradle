@@ -75,6 +75,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'      // 인증/인가 로직에 대한 보안 테스트 지원
     testImplementation 'com.h2database:h2'                                     // 테스트 환경에서 사용할 H2 DB 설정
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                // JUnit 5 플랫폼 런처 설정
+
 }
 
 dependencyManagement {

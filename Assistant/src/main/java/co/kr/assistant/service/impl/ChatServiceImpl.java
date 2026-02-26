@@ -1,16 +1,20 @@
 package co.kr.assistant.service.impl;
 
 import co.kr.assistant.client.RagServiceClient;
+import co.kr.assistant.client.UserServiceClient;
 import co.kr.assistant.model.dto.chat.ChatDTO;
 import co.kr.assistant.model.dto.list.ChatListDTO;
 import co.kr.assistant.model.dto.rag.RagItem;
+import co.kr.assistant.model.dto.rag.RagReq;
 import co.kr.assistant.model.dto.rag.RagRes;
+import co.kr.assistant.model.dto.user.UserContextDTO;
 import co.kr.assistant.model.entity.Assistant;
 import co.kr.assistant.model.entity.AssistantChat;
 import co.kr.assistant.dao.AssistantChatRepository;
 import co.kr.assistant.dao.AssistantRepository;
 import co.kr.assistant.model.vo.PublicDel;
 import co.kr.assistant.service.ChatService;
+import co.kr.assistant.util.BaseResponse;
 import co.kr.assistant.util.PrivacyUtil;
 import co.kr.assistant.util.ProfanityFilter;
 import co.kr.assistant.util.TokenUtil;
@@ -48,6 +52,7 @@ public class ChatServiceImpl implements ChatService {
     private final ProfanityFilter profanityFilter;
     private final PrivacyUtil privacyUtil;
     private final RagServiceClient ragServiceClient;
+    private final UserServiceClient userServiceClient; // 추가된 통신 클라이언트
     private final Executor aiThreadPoolTaskExecutor;
 
     private final Map<String, Object> promptTemplates = new HashMap<>();
@@ -107,7 +112,6 @@ public class ChatServiceImpl implements ChatService {
 
         Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, PublicDel.ACTIVE).orElseThrow(() -> new IllegalArgumentException("Invalid Session"));
 
-        // [개선 1] Repository에서 최신 5건만 가져오도록 최적화된 쿼리 호출
         List<ChatListDTO> dbChats = assistantChatRepository.findTop5ByAssistant_AssistantIdxAndDelOrderByCreatedAtDesc(assistant.getAssistantIdx(), PublicDel.ACTIVE)
                 .stream().map(chat -> ChatListDTO.builder().question(chat.getQuestion()).answer(chat.getAnswer()).time(chat.getCreatedAt()).build()).collect(Collectors.toList());
 
@@ -155,12 +159,44 @@ public class ChatServiceImpl implements ChatService {
             assistantChatRepository.save(chatEntry);
 
             try {
+                // ===== [전략 1 적용] 유저 정보 조회 및 메타데이터 세팅 =====
+                String ageGroup = null;
+                String gender = null;
+                String userContextString = "";
+
+                Long usersIdx = assistant.getUsersIdx();
+                if (usersIdx != null) {
+                    try {
+                        BaseResponse<UserContextDTO> res = userServiceClient.getUserContext(usersIdx);
+                        if (res != null && res.getData() != null) {
+                            UserContextDTO userContext = res.getData();
+                            ageGroup = userContext.getAgeGroup();
+                            gender = userContext.getGender();
+
+                            String genderStr = "MALE".equals(gender) ? "남성" : ("FEMALE".equals(gender) ? "여성" : "고객");
+                            userContextString = String.format("해당 사용자는 %s %s이며, 쇼핑몰 %s 등급의 %s입니다.",
+                                    ageGroup, genderStr, userContext.getMembership(), userContext.getRole());
+                        }
+                    } catch (Exception e) {
+                        log.warn("사용자 개인정보 조회 실패 (비로그인/기본 조건 진행): {}", e.getMessage());
+                    }
+                }
+                // ==========================================================
+
                 String searchKeyword = processedQuestion;
                 if (searchKeyword.length() > MAX_SEARCH_KEYWORD_LENGTH) {
                     searchKeyword = searchKeyword.substring(0, MAX_SEARCH_KEYWORD_LENGTH);
                 }
 
-                RagRes ragRes = ragServiceClient.searchKnowledge(searchKeyword, 5);
+                // RagReq 객체를 빌더로 생성하여 메타데이터 포함
+                RagReq ragReq = RagReq.builder()
+                        .q(searchKeyword)
+                        .topK(5)
+                        .ageGroup(ageGroup) // 비로그인이면 null
+                        .gender(gender)     // 비로그인이면 null
+                        .build();
+
+                RagRes ragRes = ragServiceClient.searchKnowledge(ragReq);
                 String intent = (ragRes != null && ragRes.getIntent() != null) ? ragRes.getIntent() : "GENERAL_CHAT";
 
                 List<Map<String, Object>> responseDataList = new ArrayList<>();
@@ -196,7 +232,8 @@ public class ChatServiceImpl implements ChatService {
                     retrievedContext = "검색된 내부 지식이 없습니다. [MANDATORY POLICIES]의 'fallback_rules'를 엄격히 준수하십시오.";
                 }
 
-                String finalSystemPrompt = buildSystemPrompt(intent, retrievedContext, chatToken);
+                // 파라미터로 userContextString과 ageGroup 추가 전달
+                String finalSystemPrompt = buildSystemPrompt(intent, retrievedContext, chatToken, userContextString, ageGroup);
 
                 long startTime = System.currentTimeMillis();
 
@@ -231,7 +268,6 @@ public class ChatServiceImpl implements ChatService {
 
                 try {
                     redisTemplate.delete("chat_history:" + chatToken);
-                    // [개선 2] 활동 완료 시 Redis 만료 시간 연장 (1시간)
                     redisTemplate.expire("session:" + chatToken, 1, TimeUnit.HOURS);
                 } catch (Exception e) {
                     log.error("Redis 갱신 실패: {}", e.getMessage());
@@ -259,16 +295,15 @@ public class ChatServiceImpl implements ChatService {
         }
     }
 
-    private String buildSystemPrompt(String intent, String retrievedContext, String chatToken) {
+    // 메서드 시그니처 수정 및 상태별 대화형 프로파일링 적용
+    private String buildSystemPrompt(String intent, String retrievedContext, String chatToken, String userContextString, String ageGroup) {
         Map<String, Object> common = (Map<String, Object>) promptTemplates.get("COMMON");
         Map<String, Object> intentConfig = (Map<String, Object>) promptTemplates.getOrDefault(intent, promptTemplates.get("GENERAL_CHAT"));
 
         StringBuilder pb = new StringBuilder();
         pb.append("# MANDATORY POLICIES\n");
         pb.append("- RESPONSE LANGUAGE: MUST match the user's input language.\n");
-        // [추가] 답변 내 링크 포함 금지 지침
         pb.append("- NO LINKS IN ANSWER: NEVER include any URLs or clickable links in your 'answer'. Link information is already provided in the structured data.\n");
-        // [개선 3] 마스킹 태그 노출 제어 및 순화 지침 추가
         pb.append("- PRIVACY PROTECTION: NEVER disclose raw masking tags like '<이름_숨김>'. Instead, use polite natural terms like '고객님'.\n");
 
         ((List<String>) common.get("language_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
@@ -276,9 +311,22 @@ public class ChatServiceImpl implements ChatService {
         ((List<String>) common.get("fallback_rules")).forEach(rule -> pb.append("- ").append(rule).append("\n"));
 
         pb.append("\n## YOUR IDENTITY\n").append(intentConfig.get("persona")).append("\n\n");
+
+        // ===== [전략 3 적용] 유저 컨텍스트 주입 =====
+        pb.append("## [USER CONTEXT & PERSONALIZATION RULE]\n");
+        if (ageGroup != null) {
+            pb.append(userContextString).append("\n");
+            pb.append("- 당신은 위의 사용자 프로필(연령대, 성별, 등급)을 분석하여 가장 적합한 상품을 최우선으로 추천해야 합니다.\n");
+        } else {
+            pb.append("- 현재 사용자는 비로그인(게스트) 상태이거나 연령/성별 정보가 없습니다.\n");
+            pb.append("- [중요] 상품 추천 시 사용자의 정보가 없으므로 무난하고 대중적인 베스트셀러 위주로 제안하십시오.\n");
+            pb.append("- [중요] 답변의 마지막에 자연스럽게 '혹시 찾으시는 연령대나 선호하는 스타일이 있으신가요?'라고 질문하여 사용자의 니즈를 구체화하도록 유도하십시오.\n");
+        }
+        pb.append("\n");
+        // ============================================
+
         pb.append("## [REFERENCE KNOWLEDGE]\n").append(retrievedContext).append("\n\n");
 
-        // [개선 1] 시스템 프롬프트용 히스토리 조회도 최적화된 Repository 메서드 사용
         List<ChatListDTO> history = this.list(chatToken);
 
         pb.append("## [CONVERSATION HISTORY]\n");
@@ -296,9 +344,8 @@ public class ChatServiceImpl implements ChatService {
 
     private Map<String, Object> extractDataForFrontend(RagItem item) {
         Map<String, Object> map = new LinkedHashMap<>();
-        // 1. 상품 (Product) 데이터인 경우
         if (item.getProductsName() != null && item.getTitle() == null) {
-            map.put("type", "PRODUCT"); // 프론트엔드 식별용 타입
+            map.put("type", "PRODUCT");
             map.put("Link", item.getLink());
             map.put("Products_Name", item.getProductsName());
             map.put("Description", item.getDescription());
@@ -306,29 +353,21 @@ public class ChatServiceImpl implements ChatService {
             map.put("Sale_Price", item.getSalePrice());
             map.put("View_Count", item.getViewCount());
             map.put("Review", item.getReviewCount());
-        }
-        // 2. 문의 내역 (QnA) 데이터인 경우
-        else if (item.getTitle() != null && item.getAnswer() != null) {
+        } else if (item.getTitle() != null && item.getAnswer() != null) {
             map.put("type", "QNA");
             map.put("Link", item.getLink());
-            if (item.getProductsName() != null) {
-                map.put("Products_Name", item.getProductsName());
-            }
+            if (item.getProductsName() != null) map.put("Products_Name", item.getProductsName());
             map.put("Title", item.getTitle());
             map.put("Question", item.getQuestion() != null ? item.getQuestion() : item.getText());
             map.put("Answer", item.getAnswer());
             map.put("Created_at", item.getCreatedAt());
-        }
-        // 3. 공지사항 (Notice) 데이터인 경우
-        else if (item.getTitle() != null && item.getContent() != null) {
+        } else if (item.getTitle() != null && item.getContent() != null) {
             map.put("type", "NOTICE");
             map.put("Link", item.getLink());
             map.put("Title", item.getTitle());
             map.put("Content", item.getContent());
             map.put("Published_at", item.getPublishedAt() != null ? item.getPublishedAt() : item.getCreatedAt());
-        }
-        // 4. 그 외 기본 텍스트 데이터인 경우
-        else {
+        } else {
             map.put("type", "GENERAL");
             map.put("Text", item.getText());
         }

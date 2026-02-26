@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Set;
 
 @Slf4j
+@EnableFeignClients // 추가됨: Feign Client 활성화
 @SpringBootApplication
 @RequiredArgsConstructor
 public class AssistantApplication {

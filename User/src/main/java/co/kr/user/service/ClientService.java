@@ -1,9 +1,6 @@
 package co.kr.user.service;
 
-import co.kr.user.model.dto.client.BalanceReq;
-import co.kr.user.model.dto.client.ClientAddressDTO;
-import co.kr.user.model.dto.client.ClientRoleDTO;
-import co.kr.user.model.dto.client.SellerBankDTO;
+import co.kr.user.model.dto.client.*;
 
 import java.util.List;
 
@@ -74,4 +71,6 @@ public interface ClientService {
      * @return SellerBankDTO 리스트
      */
     List<SellerBankDTO> getSellerBankInfos(List<Long> sellerIdx);
+
+    UserContextDTO getUserContext(Long userIdx);
 }

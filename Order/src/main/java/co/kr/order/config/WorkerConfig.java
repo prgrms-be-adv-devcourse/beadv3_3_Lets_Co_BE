@@ -21,17 +21,17 @@ public class WorkerConfig {
      * 대기열 시스템 Worker
      * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
      */
-    // [입장] 1초마다 10명씩 입장 (유량 제어)
-    @Scheduled(fixedDelay = 1000)
+    // [입장] 1초마다 1명씩 입장 (유량 제어)
+    @Scheduled(fixedDelay = 3000)
     public void workerEnter() {
-        queueService.allowEnterUser(10L);
+        queueService.allowEnterUser(1L);
     }
 
     // [주문] 1초마다 빈 자리(50명 제한) 체크해서 입장
     @Scheduled(fixedDelay = 1000)
     public void workerOrder() {
-        // 최대 동시 주문 가능 인원을 50명으로 가정
-        queueService.allowOrderUser(50L);
+        // 최대 동시 주문 가능 인원을 2명으로 가정
+        queueService.allowOrderUser(2L);
     }
 
     // [청소] 1분마다 잠수탄 주문 유저 정리

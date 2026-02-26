@@ -1,9 +1,13 @@
 package co.kr.order.controller;
 
 import co.kr.order.batch.util.SettlementTimeUtil;
+import co.kr.order.controller.swagger.settlement.SettlementDetailDocs;
+import co.kr.order.controller.swagger.settlement.SettlementListDocs;
+import co.kr.order.controller.swagger.settlement.SettlementManualDocs;
 import co.kr.order.model.dto.SettlementInfo;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.service.SettlementService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -27,6 +31,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/settlement")
+@Tag(name = "Settlement", description = "정산 API")
 public class SettlementController {
 
     private final SettlementService settlementService;
@@ -36,6 +41,7 @@ public class SettlementController {
     /**
      * 특정 판매자의 정산 내역 목록을 조회한다.
      */
+    @SettlementListDocs
     @GetMapping("/{sellerIdx}")
     public ResponseEntity<BaseResponse<List<SettlementInfo>>> getSettlementList(
             @PathVariable("sellerIdx") Long sellerIdx) {
@@ -47,6 +53,7 @@ public class SettlementController {
     /**
      * 특정 판매자의 결제 건에 대한 정산 상세 정보를 조회한다.
      */
+    @SettlementDetailDocs
     @GetMapping("/{sellerIdx}/{paymentIdx}")
     public ResponseEntity<BaseResponse<SettlementInfo>> getSettlement(
             @PathVariable("sellerIdx") Long sellerIdx,
@@ -63,6 +70,7 @@ public class SettlementController {
      * - 요청 스레드에서 동기 실행
      * - Job 중복 실행 방지를 위해 timestamp 파라미터를 포함한다.
      */
+    @SettlementManualDocs
     @PostMapping("/manual")
     public ResponseEntity<BaseResponse<String>> runManualSettlement() {
 

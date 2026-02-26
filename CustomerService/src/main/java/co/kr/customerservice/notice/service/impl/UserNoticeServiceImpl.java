@@ -31,7 +31,7 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     public NoticeListRes getNoticeList(Pageable pageable){
 
         // 1. NOTICE 타입 데이터 검색
-        Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
+        Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType.NOTICE,pageable);
 
         // 2. Page > List
         List<NoticeRes> result = noticeEntityPage.stream()

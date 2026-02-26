@@ -15,11 +15,11 @@ public interface CustomerServiceRepository extends JpaRepository<CustomerService
 
     Optional<CustomerServiceEntity> findByCodeAndDelFalse(String code);
 
-    Page<CustomerServiceEntity> findAllByTypeAndIsPrivateFalseAndDelFalse(CustomerServiceType type, Pageable pageable);
+    Page<CustomerServiceEntity> findAllByTypeAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType type, Pageable pageable);
 
 
     Page<CustomerServiceEntity> findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType customerServiceType, Long userId, Pageable pageable);
 
-    Page<CustomerServiceEntity> findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalse(CustomerServiceType type,Long productsIdx ,Pageable pageable);
+    Page<CustomerServiceEntity> findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType type,Long productsIdx ,Pageable pageable);
 
 }

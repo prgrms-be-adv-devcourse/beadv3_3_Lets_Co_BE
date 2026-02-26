@@ -23,7 +23,7 @@ public class RagUpdateService {
     private String productPrefix;
 
     public RagUpdateService(WebClient.Builder webClientBuilder,
-                            @Value("${rag.server.url:http://localhost:8077}") String baseUrl) {
+                            @Value("${custom.rag.url}") String baseUrl) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 

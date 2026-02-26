@@ -48,6 +48,18 @@ spec:
                 name: db-secret
                 key: DB_PASSWORD 
 
+          - name: REDIS_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_ENDPOINT 
+
+          - name: REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: REDIS_PORT 
+
           - name: ZIPKIN_ENDPOINT
             valueFrom: 
               secretKeyRef:
@@ -60,19 +72,31 @@ spec:
                 name: zipkin-secret
                 key: ZIPKIN_ENDPOINT 
 
-
-          - name: EMBEDDING_BASE_URL
+          - name: RAG_URL
             valueFrom:
               secretKeyRef:
                 name: ai-secret
-                key: EMBEDDING_BASE_URL
+                key: RAG_URL
 
-          - name: EMBEDDING_PATH
+          - name: RAG_TIMEOUT
             valueFrom:
               secretKeyRef:
                 name: ai-secret
-                key: EMBEDDING_PATH
-                
+                key: RAG_TIMEOUT
+
+
+          - name:  NOTICE_VIEW_COUNT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key:  NOTICE_VIEW_COUNT_KEY
+
+          - name: NOTICE_DIRTY_KEY
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: NOTICE_DIRTY_KEY
+        
           ports:
             - containerPort: 8080
 

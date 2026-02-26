@@ -152,6 +152,18 @@ spec:
                 name: aws-secret
                 key: AWS_PRODUCT_PREFIX
 
+
+          - name: EMBEDDING_BASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: ai-secret
+                key: EMBEDDING_BASE_URL
+
+          - name: EMBEDDING_PATH
+            valueFrom:
+              secretKeyRef:
+                name: ai-secret
+                key: EMBEDDING_PATH
           ports:
             - containerPort: 8080
 

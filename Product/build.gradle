@@ -77,7 +77,6 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 
-    // 임시
     //WebClient
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 

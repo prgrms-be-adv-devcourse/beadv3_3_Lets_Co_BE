@@ -16,6 +16,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.model.vo.UserRole;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.RagUpdateService;
 import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
 import co.kr.customerservice.qnaProduct.model.request.QnaAnswerUpsertReq;
 import co.kr.customerservice.qnaProduct.model.response.*;
@@ -39,6 +40,7 @@ public class QnaSellerServiceImpl implements QnaSellerService {
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
     private final AuthAdapter authAdapter;
     private final ProductServiceClient productServiceClient;
+    private final RagUpdateService ragUpdateService;
 
 
     // 본인상품에 온 모든 문의 조회(상품이 달라도)
@@ -193,6 +195,9 @@ public class QnaSellerServiceImpl implements QnaSellerService {
 
         // 6. 반환용 리스트 추가
         qnaDetailEntity.add(requestDetailEntity);
+
+        // 7. 실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(questionEntity.getProductsIdx());
 
         return QnaMapper.toDetail(
                 questionEntity,

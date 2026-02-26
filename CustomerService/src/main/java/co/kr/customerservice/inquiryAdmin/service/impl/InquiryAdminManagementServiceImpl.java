@@ -12,6 +12,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.model.vo.UserRole;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.RagUpdateService;
 import co.kr.customerservice.inquiryAdmin.mapper.InquiryMapper;
 import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDTO;
 import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryAnswerDeleteReq;
@@ -39,6 +40,7 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
     private final AuthAdapter authAdapter;
+    private final RagUpdateService ragUpdateService;
 
     // 문의 목록 조회
     @Override
@@ -119,7 +121,10 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
         // 5. Status 업데이트
         foundInquiry.updateStatus(CustomerServiceStatus.ANSWERED);
 
-        // 6. 문의 상세 내용 반환
+        // 6.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(foundInquiry.getIdx());
+
+        // 7. 문의 상세 내용 반환
         return InquiryMapper.toDetailResponse(
                 true,
                 foundInquiry,
@@ -198,7 +203,10 @@ public class InquiryAdminManagementServiceImpl implements InquiryAdminManagement
 
         willUpdate.update(request.content());
 
-        // 4. 반환
+        // 4.실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(inquiryEntity.getIdx());
+
+        // 5. 반환
         return InquiryMapper.toDetailResponse(
                 true,
                 inquiryEntity,

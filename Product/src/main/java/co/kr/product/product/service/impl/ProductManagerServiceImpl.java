@@ -49,6 +49,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private final FileRepository fileRepository;
     private final ReviewService reviewService;
     private final ProductStockConsumer stockConsumer;
+    private final RagUpdateService ragUpdateService;
 
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
@@ -105,13 +106,13 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 .ip(ip)
                 .build();
 
-        ProductEntity savedItem = productRepository.save(item);
+        ProductEntity product = productRepository.save(item);
 
 
         // 4. Option 저장
         List<ProductOptionEntity> options = request.options().stream()
                 .map(requestOpt ->  ProductOptionEntity.builder()
-                        .product(savedItem)
+                        .product(product)
                         .optionCode(UUID.randomUUID().toString())
                         .optionName(requestOpt.name())
                         .sortOrders(requestOpt.sortOrder())
@@ -124,7 +125,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 ).toList();
 
 
-        List<ProductOptionEntity> savedOpt = optionRepository.saveAll(options);
+        List<ProductOptionEntity> option = optionRepository.saveAll(options);
 
         // 5. 이미지 저장
         // 5-1. S3에 이미지 업로드
@@ -133,7 +134,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 5-2. DB 저장 용 이미지 정보 생성
         List<FileEntity> imageEntities = imageInfos.stream()
                 .map(image -> FileEntity.builder()
-                        .refIndex(savedItem.getProductsIdx())
+                        .refIndex(product.getProductsIdx())
                         .filePath(image.filePath())
                         .fileType(image.fileType())
                         .storedFileName(image.storedFileName())
@@ -170,7 +171,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         List<ImageInfoRes> imagesInfo = ProductMapper.mapToImageInfos(imageEntities, fileUrls);
 
         // 7. 재고 적용
-        List<AddStockReq> stockList = savedOpt.stream()
+        List<AddStockReq> stockList = option.stream()
                         .map(entity -> new AddStockReq(
                                 entity.getOptionCode(),
                                 entity.getStock()
@@ -178,9 +179,12 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         stockConsumer.addStockInRedis(stockList);
 
+        // 8. 실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(product.getProductsIdx());
+
         return toProductDetail(
-                savedItem,
-                savedOpt,
+                product,
+                option,
                 imagesInfo,
                 parents,
                 null);
@@ -419,6 +423,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 )).toList();
 
         stockConsumer.addStockInRedis(stockList);
+
+        // 9. 실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(product.getProductsIdx());
 
         // mapper 사용
         return toProductDetail(

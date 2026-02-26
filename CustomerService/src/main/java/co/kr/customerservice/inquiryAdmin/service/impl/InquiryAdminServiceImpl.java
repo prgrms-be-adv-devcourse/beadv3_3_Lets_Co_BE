@@ -36,7 +36,7 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
     @Transactional(readOnly = true)
     public InquiryListRes getInquiryList(Pageable pageable){
 
-        Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_ADMIN, pageable);
+        Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType.QNA_ADMIN, pageable);
 
         List<InquiryDTO> result = inquiryPage.stream()
                 .map(entity -> new InquiryDTO(

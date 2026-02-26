@@ -9,6 +9,7 @@ import co.kr.assistant.model.entity.Assistant;
 import co.kr.assistant.model.entity.AssistantChat;
 import co.kr.assistant.dao.AssistantChatRepository;
 import co.kr.assistant.dao.AssistantRepository;
+import co.kr.assistant.model.vo.PublicDel;
 import co.kr.assistant.service.ChatService;
 import co.kr.assistant.util.PrivacyUtil;
 import co.kr.assistant.util.ProfanityFilter;
@@ -83,8 +84,8 @@ public class ChatServiceImpl implements ChatService {
             try { return objectMapper.readValue(cachedData, new TypeReference<List<ChatListDTO>>() {}); }
             catch (JsonProcessingException e) { log.error("Cache parsing error", e); }
         }
-        Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0).orElseThrow(() -> new IllegalArgumentException("Invalid Session"));
-        List<ChatListDTO> dbChats = assistantChatRepository.findByAssistant_AssistantIdxAndDelOrderByCreatedAtDesc(assistant.getAssistantIdx(), 0)
+        Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, PublicDel.ACTIVE).orElseThrow(() -> new IllegalArgumentException("Invalid Session"));
+        List<ChatListDTO> dbChats = assistantChatRepository.findByAssistant_AssistantIdxAndDelOrderByCreatedAtDesc(assistant.getAssistantIdx(), PublicDel.ACTIVE)
                 .stream().map(chat -> ChatListDTO.builder().question(chat.getQuestion()).answer(chat.getAnswer()).time(chat.getCreatedAt()).build()).collect(Collectors.toList());
         if (!dbChats.isEmpty()) {
             try { redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(dbChats), 1, TimeUnit.HOURS); }
@@ -97,7 +98,7 @@ public class ChatServiceImpl implements ChatService {
     // 🚨 속도 및 안정성을 위해 @Transactional 제거 (외부 통신 중 DB 커넥션 점유 방지)
     public ChatDTO ask(String chatToken, String question) {
         // 1. 세션 확인 및 질문 정제
-        Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, 0)
+        Assistant assistant = assistantRepository.findByAssistantCodeAndDel(chatToken, PublicDel.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("세션이 만료되었습니다."));
 
         if (profanityFilter.getCleanLength(question) <= 1) {

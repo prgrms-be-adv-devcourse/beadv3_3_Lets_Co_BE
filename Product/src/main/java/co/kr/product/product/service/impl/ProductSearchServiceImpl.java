@@ -7,6 +7,7 @@ import co.kr.product.product.model.dto.response.ProductListRes;
 import co.kr.product.product.model.dto.response.ProductRes;
 import co.kr.product.product.repository.ProductEsCustomRepository;
 import co.kr.product.product.repository.ProductEsRepository;
+import co.kr.product.product.service.EmbeddingService;
 import co.kr.product.product.service.ProductSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,15 +26,12 @@ public class ProductSearchServiceImpl implements ProductSearchService {
     private final ProductEsRepository productEsRepository;
     private final ProductEsCustomRepository productEsCustomRepository;
     private final S3Service s3Service;
-
-    // 임시
-    private final LmStudioEmbeddingService embeddingService;
+    private final EmbeddingService embeddingService;
 
     // 상품 리스트 전체/검색
     @Transactional(readOnly = true)
     public ProductListRes getProductsList(Pageable pageable, ProductListReq request){
 
-        // TODO 벡터검색 까지 하려면 지금 못건듬....어차피 싹 고쳐야함...
         // Category 별 조회, ip별 조회까지 여기서 처리
         String search = request.search();
         String category = request.category();
@@ -43,7 +41,7 @@ public class ProductSearchServiceImpl implements ProductSearchService {
         List<Float> embeddedSearch = null;
         if (!(search == null || search.isBlank())){
             log.info("임베딩 시도");
-            embeddedSearch = embeddingService.getVectorEmbedding(search);
+            embeddedSearch = embeddingService.getEmbedded(search);
             log.info("임베딩 성공 : " + embeddedSearch);
         }
 

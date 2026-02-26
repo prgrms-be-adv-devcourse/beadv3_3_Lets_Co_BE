@@ -2,6 +2,7 @@ package co.kr.order.controller;
 
 import co.kr.order.model.dto.UserInfo;
 import co.kr.order.service.OrderService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/client/orders")
+@Hidden
 public class ClientController {
 
     private final OrderService orderService;

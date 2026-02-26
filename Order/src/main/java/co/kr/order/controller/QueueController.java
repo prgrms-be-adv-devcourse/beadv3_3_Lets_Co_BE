@@ -1,7 +1,9 @@
 package co.kr.order.controller;
 
+import co.kr.order.controller.swagger.queue.*;
 import co.kr.order.model.redis.WaitingQueue;
 import co.kr.order.service.QueueService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/queue")
+@Tag(name = "Queue", description = "대기열 API")
 public class QueueController {
 
     private final QueueService queueService;
@@ -23,6 +26,7 @@ public class QueueController {
      */
 
     // 입장 대기열 등록 (POST)
+    @QueueEnterRegisterDocs
     @PostMapping("/enter/register")
     public String enterQueue(
             HttpServletRequest servletRequest
@@ -48,6 +52,7 @@ public class QueueController {
     }
 
     // 대기열 번호 요청 (GET)
+    @QueueEnterStatusDocs
     @GetMapping("/enter/status")
     public WaitingQueue getEnterStatus(
             // Header의 Key가 "X-QUEUE-TOKEN"
@@ -66,6 +71,7 @@ public class QueueController {
      */
 
     // 주문 대기열 등록 (POST)
+    @QueueOrderEnterDocs
     @PostMapping("/orders/enter")
     public String orderQueue(
             HttpServletRequest servletRequest
@@ -82,6 +88,7 @@ public class QueueController {
     }
 
     // 대기열 번호 요청 (GET)
+    @QueueOrderStatusDocs
     @GetMapping("/orders/status")
     public WaitingQueue getOrderStatus(
             HttpServletRequest servletRequest
@@ -95,6 +102,7 @@ public class QueueController {
     }
 
     // 주문 완료 시 대기열 퇴장
+    @QueueOrderSuccessDocs
     @PostMapping("/orders/success")
     public String exitOrder(
             HttpServletRequest servletRequest

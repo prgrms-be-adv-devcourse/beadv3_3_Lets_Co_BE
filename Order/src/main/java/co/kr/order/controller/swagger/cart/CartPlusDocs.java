@@ -1,4 +1,4 @@
-package co.kr.order.controller.swagger.settlement;
+package co.kr.order.controller.swagger.cart;
 
 import co.kr.order.model.dto.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,46 +15,47 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Operation(
-        summary = "정산 상세 조회",
+        summary = "장바구니 수량 +1",
         description = """
-                특정 판매자의 결제 건에 대한 정산 상세 정보를 조회한다.
+                장바구니 상품의 수량을 1 증가시킨다.
 
-                - 판매자 idx, 결제 idx 필수
+                - 사용자 idx 필수 (헤더)
+                - 옵션 코드로 대상 상품 지정
                 """
 )
 
 @Parameters({
         @Parameter(
-                name = "sellerIdx",
-                in = ParameterIn.PATH,
-                description = "판매자 idx",
+                name = "X-USERS-IDX",
+                in = ParameterIn.HEADER,
+                description = "사용자 idx",
                 required = true,
                 example = "1"
         ),
         @Parameter(
-                name = "paymentIdx",
+                name = "optionCode",
                 in = ParameterIn.PATH,
-                description = "결제 idx",
+                description = "상품 옵션 코드",
                 required = true,
-                example = "1"
+                example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         )
 })
 
 // 예시 응답들 설정
 @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "정산 상세 조회 성공"),
-        @ApiResponse(responseCode = "400", description = """
-                - SETTLEMENT_NOT_FOUND: 정산 정보를 찾을 수 없음""",
+        @ApiResponse(responseCode = "200", description = "수량 증가 성공"),
+        @ApiResponse(responseCode = "404", description = """
+                - CART_NOT_FOUND: 장바구니 정보를 찾을 수 없음""",
                 content = @Content(
                         mediaType = "application/json",
                         schema = @Schema(implementation = BaseResponse.class),
                         examples = @ExampleObject(value = """
                                     {
-                                      "resultCode": "SETTLEMENT_NOT_FOUND",
-                                      "data": "정산 정보를 찾을 수 없습니다."
+                                      "resultCode": "CART_NOT_FOUND",
+                                      "data": "장바구니 정보를 찾을 수 없습니다."
                                     }
                                     """)
                 ))
 })
-public @interface SettlementDetailDocs {
+public @interface CartPlusDocs {
 }

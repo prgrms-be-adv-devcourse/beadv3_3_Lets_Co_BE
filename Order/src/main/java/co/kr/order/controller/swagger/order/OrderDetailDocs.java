@@ -1,4 +1,4 @@
-package co.kr.order.controller.swagger.settlement;
+package co.kr.order.controller.swagger.order;
 
 import co.kr.order.model.dto.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,46 +15,47 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Operation(
-        summary = "정산 상세 조회",
+        summary = "주문 상세 조회",
         description = """
-                특정 판매자의 결제 건에 대한 정산 상세 정보를 조회한다.
+                주문 코드로 주문 상세 정보를 조회한다.
 
-                - 판매자 idx, 결제 idx 필수
+                - 사용자 idx 필수 (헤더)
+                - 본인의 주문만 조회 가능
                 """
 )
 
 @Parameters({
         @Parameter(
-                name = "sellerIdx",
-                in = ParameterIn.PATH,
-                description = "판매자 idx",
+                name = "X-USERS-IDX",
+                in = ParameterIn.HEADER,
+                description = "사용자 idx",
                 required = true,
                 example = "1"
         ),
         @Parameter(
-                name = "paymentIdx",
+                name = "orderCode",
                 in = ParameterIn.PATH,
-                description = "결제 idx",
+                description = "주문 코드",
                 required = true,
-                example = "1"
+                example = "c06cda42-c907-4342-9bcd-41d7a7c1d7cd"
         )
 })
 
 // 예시 응답들 설정
 @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "정산 상세 조회 성공"),
-        @ApiResponse(responseCode = "400", description = """
-                - SETTLEMENT_NOT_FOUND: 정산 정보를 찾을 수 없음""",
+        @ApiResponse(responseCode = "200", description = "주문 상세 조회 성공"),
+        @ApiResponse(responseCode = "404", description = """
+                - ORDER_NOT_FOUND: 주문 정보를 찾을 수 없음""",
                 content = @Content(
                         mediaType = "application/json",
                         schema = @Schema(implementation = BaseResponse.class),
                         examples = @ExampleObject(value = """
                                     {
-                                      "resultCode": "SETTLEMENT_NOT_FOUND",
-                                      "data": "정산 정보를 찾을 수 없습니다."
+                                      "resultCode": "ORDER_NOT_FOUND",
+                                      "data": "주문 정보를 찾을 수 없습니다"
                                     }
                                     """)
                 ))
 })
-public @interface SettlementDetailDocs {
+public @interface OrderDetailDocs {
 }

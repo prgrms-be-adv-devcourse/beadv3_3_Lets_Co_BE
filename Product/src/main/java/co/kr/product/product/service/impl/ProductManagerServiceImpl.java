@@ -272,13 +272,23 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             UpsertProductReq request,
             UserRole inputRole
             ){
-
         // 1. 본인확인
         ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
 
         // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
         if (!UserRole.isStaff(userData.role())){
-            throw new ForbiddenException("권한이 없습니다.");
+            throw new ForbiddenException("권한이 없습니다. code 1");
+        }
+        // 1.2 판매자에 대해 한 번 더 권한 확인
+        // 판매자가 관리자 페이지로 접근 시
+        if (UserRole.isSeller(userData.role()) && inputRole.equals(UserRole.ADMIN)){
+            throw new ForbiddenException("권한이 없습니다. code 2");
+        }
+
+        // 1.3 seller idx 가져오기
+        Long sellerIdx = null;
+        if (userData.sellerIdx() != null && UserRole.isSeller(userData.role()) ){
+            sellerIdx = userData.sellerIdx();
         }
 
         // 2.  Entity 가져오기
@@ -286,8 +296,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
         // 2.1 판매자 본인인지 확인(판매자일 경우, 관리자의 경우 스킵)
-        if(!usersIdx.equals(product.getSellerIdx()) && inputRole.equals(UserRole.SELLER)){
-            throw new ForbiddenException("해당 상품의 판매자 본인이 아닙니다.");
+        if (!product.getSellerIdx().equals(sellerIdx) && inputRole.equals(UserRole.SELLER) ){
+            throw new ForbiddenException("판매자 본인이 아닙니다.");
         }
 
         // 2.2 option 가져오기
@@ -430,15 +440,27 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
         if (!UserRole.isStaff(userData.role())){
-            throw new ForbiddenException("권한이 없습니다.");
+            throw new ForbiddenException("권한이 없습니다. code 1");
         }
+        // 1.2 판매자에 대해 한 번 더 권한 확인
+        // 판매자가 관리자 페이지로 접근 시
+        if (UserRole.isSeller(userData.role()) && inputRole.equals(UserRole.ADMIN)){
+            throw new ForbiddenException("권한이 없습니다. code 2");
+        }
+
+        // 1.3 seller idx 가져오기
+        Long sellerIdx = null;
+        if (userData.sellerIdx() != null && UserRole.isSeller(userData.role()) ){
+            sellerIdx = userData.sellerIdx();
+        }
+
 
         // 2.1 엔티티 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
         // 2.2 판매자 본인인지 확인(판매자일 경우, 관리자의 경우 스킵)
-        if (!product.getSellerIdx().equals(usersIdx) && inputRole.equals(UserRole.SELLER) ){
+        if (!product.getSellerIdx().equals(sellerIdx) && inputRole.equals(UserRole.SELLER) ){
             throw new ForbiddenException("판매자 본인이 아닙니다.");
         }
 
@@ -504,7 +526,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         // 검색어 존재 시 검색 진행
         Page<ProductDocument> pageResult = (requests.search() == null || requests.search().isBlank())
-                ? productEsRepository.findAll(pageable)
+                ? productEsRepository.findAllBySellerIdxAndDelFalse(sellerIdx,pageable)
                 : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(sellerIdx,requests.search() ,pageable);
         
         // 2. Document -> Response DTO 변환

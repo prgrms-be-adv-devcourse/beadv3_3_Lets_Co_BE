@@ -1,9 +1,11 @@
 package co.kr.order.controller.swagger.settlement;
 
+import co.kr.order.model.dto.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.*;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -40,7 +42,19 @@ import java.lang.annotation.*;
 
 // 예시 응답들 설정
 @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "정산 상세 조회 성공")
+        @ApiResponse(responseCode = "200", description = "정산 상세 조회 성공"),
+        @ApiResponse(responseCode = "400", description = """
+                - SETTLEMENT_NOT_FOUND: 정산 정보를 찾을 수 없음""",
+                content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(implementation = BaseResponse.class),
+                        examples = @ExampleObject(value = """
+                                    {
+                                      "resultCode": "SETTLEMENT_NOT_FOUND",
+                                      "data": "정산 정보를 찾을 수 없습니다."
+                                    }
+                                    """)
+                ))
 })
 public @interface SettlementDetailDocs {
 }

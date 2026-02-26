@@ -231,9 +231,15 @@
 
 ### 🖥 System 아키텍쳐
 
+<img width="1792" height="1063" alt="Web App Reference Architecture" src="https://github.com/user-attachments/assets/3527bfad-70e0-4777-aaf5-1bcee6b96375" />
+
+
 ---
 
 ### 🖥 ERD Diagram
+
+
+<img width="797" height="473" alt="image" src="https://github.com/user-attachments/assets/4da897be-4b55-416e-90da-97a758c3fe35" />
 
 ---
 

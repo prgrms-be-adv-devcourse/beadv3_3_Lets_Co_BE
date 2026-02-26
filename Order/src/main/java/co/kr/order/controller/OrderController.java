@@ -1,9 +1,13 @@
 package co.kr.order.controller;
 
+import co.kr.order.controller.swagger.order.OrderCreateDocs;
+import co.kr.order.controller.swagger.order.OrderDetailDocs;
+import co.kr.order.controller.swagger.order.OrderListDocs;
 import co.kr.order.model.dto.request.OrderReq;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.OrderRes;
 import co.kr.order.service.OrderService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/orders")
+@Tag(name = "Order", description = "주문 API")
 public class OrderController {
 
     private final OrderService orderService;
@@ -26,6 +31,7 @@ public class OrderController {
      * 주문 요청 (POST)
      * @param request: 주문 요청 정보
      */
+    @OrderCreateDocs
     @PostMapping
     public ResponseEntity<BaseResponse<OrderRes>> createOrder (
             HttpServletRequest servletRequest,
@@ -48,6 +54,7 @@ public class OrderController {
      * 주문 리스트 정보 요청 (GET)
      * @param pageable: 페이징
      */
+    @OrderListDocs
     @GetMapping
     public ResponseEntity<BaseResponse<Page<OrderRes>>> getOrderList (
             HttpServletRequest servletRequest,
@@ -73,6 +80,7 @@ public class OrderController {
      * 주문 상세정보 요청 (GET)
      * @param orderCode: 주문 코드
      */
+    @OrderDetailDocs
     @GetMapping("/{orderCode}")
     public ResponseEntity<BaseResponse<OrderRes>> getOrderDetails (
             @PathVariable("orderCode") String orderCode,

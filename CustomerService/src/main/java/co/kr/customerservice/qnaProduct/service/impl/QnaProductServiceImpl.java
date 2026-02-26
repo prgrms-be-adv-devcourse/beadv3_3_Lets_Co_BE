@@ -43,7 +43,7 @@ public class QnaProductServiceImpl implements QnaProductService {
         Long productsIdx = productServiceClient.getIdxByCode(productsCode);
 
         // productsIdx 기반 해당 상품의 qna 리스트 조회
-        Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_PRODUCT,productsIdx ,pageable);
+        Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType.QNA_PRODUCT,productsIdx ,pageable);
 
         List<QnaProductRes> result = qnaPage.stream()
                 .map(entity -> new QnaProductRes(

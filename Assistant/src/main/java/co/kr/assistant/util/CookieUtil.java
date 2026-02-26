@@ -5,7 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * HTTP 쿠키 생성, 설정, 삭제 등을 처리하는 유틸리티 클래스입니다.
- * JWT 토큰(Access Token, Refresh Token)을 쿠키에 저장하고 관리하는 데 주로 사용됩니다.
+ * JWT 토큰 및 챗봇 세션(chatToken)을 쿠키에 저장하고 관리하는 데 사용됩니다.
+ * XSS 및 CSRF 공격 방어를 위한 보안 속성이 강화되었습니다.
  */
 public class CookieUtil {
 
@@ -21,7 +22,7 @@ public class CookieUtil {
 
     /**
      * 쿠키를 생성하여 응답(Response)에 추가합니다.
-     * 보안을 위해 HttpOnly 속성을 true로 설정하여 자바스크립트를 통한 접근을 차단합니다.
+     * 보안을 위해 HttpOnly, Secure, SameSite=Strict 속성을 엄격하게 설정합니다.
      * * @param response HttpServletResponse 객체
      * @param name 쿠키 이름
      * @param value 쿠키 값 (토큰 문자열 등)
@@ -30,8 +31,18 @@ public class CookieUtil {
     public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/"); // 모든 경로에서 쿠키 접근 가능
-        cookie.setAttribute("SameSite", "Lax");
-        cookie.setHttpOnly(true); // XSS 공격 방지를 위해 JavaScript에서 쿠키 접근 불가 설정
+
+        // 1. XSS 공격 방어: JavaScript(document.cookie)를 통한 토큰 탈취 원천 차단
+        cookie.setHttpOnly(true);
+
+        // 2. 네트워크 스니핑 방어: 오직 HTTPS 암호화 통신에서만 쿠키 전송 허용
+        // (주의: 로컬 환경(http://localhost)에서 테스트 시 브라우저가 쿠키를 저장하지 않을 수 있습니다.
+        // 로컬 테스트가 필요하다면 개발 환경 설정에 따라 잠시 주석 처리할 수 있습니다.)
+        cookie.setSecure(true);
+
+        // 3. CSRF 공격 방어: 외부 사이트(Cross-Site)에서 출발하는 요청에는 쿠키 전송을 완전 차단
+        cookie.setAttribute("SameSite", "Strict");
+
         cookie.setMaxAge(maxAge); // 만료 시간 설정
         response.addCookie(cookie); // 응답 헤더에 쿠키 추가
     }
@@ -45,7 +56,12 @@ public class CookieUtil {
     public static void deleteCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, null); // 값을 null로 설정
         cookie.setPath("/"); // 생성 시 설정한 경로와 동일하게 설정해야 삭제됨
+
+        // 삭제할 때도 생성 시와 동일한 보안 속성을 부여하여 확실히 덮어쓰도록 유도
         cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "Strict");
+
         cookie.setMaxAge(0); // 만료 시간을 0으로 설정하여 즉시 삭제
         response.addCookie(cookie);
     }

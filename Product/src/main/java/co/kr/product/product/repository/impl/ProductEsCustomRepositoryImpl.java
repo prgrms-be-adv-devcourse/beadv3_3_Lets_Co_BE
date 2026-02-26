@@ -55,6 +55,9 @@ public class ProductEsCustomRepositoryImpl implements ProductEsCustomRepository 
             filters.add(Query.of(q -> q.term(t -> t.field("ip.keyword").value(ip))));
         }
 
+        // 1.1 del false 인 데이터만 검색
+        filters.add(Query.of(q -> q.term(t -> t.field("del").value(false))));
+
         // 2. 쿼리문 생성
         // 2.1 검색어가 존재 시
         if(hasSearch) {

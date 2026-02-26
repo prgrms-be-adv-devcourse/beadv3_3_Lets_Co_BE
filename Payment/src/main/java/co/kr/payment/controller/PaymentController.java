@@ -33,12 +33,12 @@ public class PaymentController {
     }
 
     @PaymentRefundDocs
-    @PostMapping("/refund")
+    @PostMapping("/refund/{orderCode}")
     public ResponseEntity<PaymentResponse> refund(
             @RequestHeader("X-USERS-IDX") Long userIdx,
-            @RequestBody RefundReq request
+            @PathVariable String orderCode
     ) {
-        RefundReq refundReq = new RefundReq(userIdx, request.orderCode());
+        RefundReq refundReq = new RefundReq(userIdx, orderCode);
         return ResponseEntity.ok(paymentService.refund(refundReq));
     }
 

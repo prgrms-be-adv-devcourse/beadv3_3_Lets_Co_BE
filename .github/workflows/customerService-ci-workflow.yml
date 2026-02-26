@@ -6,11 +6,11 @@ on:
       - main
       - dev
     paths:
-      - "customerService/**"
+      - "CustomerService/**"
 
 jobs:
   execute-test:
     uses: ./.github/workflows/ci-workflow.yml
     secrets: inherit
     with:
-      service-name: customerService
+      service-name: CustomerService

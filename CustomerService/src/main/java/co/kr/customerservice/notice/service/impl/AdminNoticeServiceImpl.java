@@ -2,12 +2,15 @@ package co.kr.customerservice.notice.service.impl;
 
 
 import co.kr.customerservice.client.AuthServiceClient;
+import co.kr.customerservice.client.dto.ClientRoleDTO;
+import co.kr.customerservice.common.auth.AuthAdapter;
 import co.kr.customerservice.common.exception.ForbiddenException;
 import co.kr.customerservice.common.model.dto.response.ResultResponse;
 import co.kr.customerservice.common.model.entity.CustomerServiceDetailEntity;
 import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
+import co.kr.customerservice.common.model.vo.UserRole;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
 import co.kr.customerservice.notice.model.dto.request.NoticeUpsertReq;
@@ -35,7 +38,7 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
 
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
 
-    private final AuthServiceClient authServiceClient;
+    private final AuthAdapter authAdapter;
 
 
     // 공지 추가
@@ -43,10 +46,14 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional
     public AdminNoticeDetailRes addNotice(Long userId, NoticeUpsertReq request){
 
-        String role = authServiceClient.getUserRole(userId).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("판매자 권한이 없습니다.");
+        // 0. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userId);
+
+        // 0.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
+
         // 1. 받은 request 기반 새로운 CustomerServiceEntity 생성
         CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
                 .code(UUID.randomUUID().toString())
@@ -93,11 +100,14 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional(readOnly = true)
     public NoticeListRes getNoticeList(Long userId, Pageable pageable){
 
-        // 1. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId).getBody();
-        if (!"ADMIN".equals(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userId);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
+
         // 2. 목록 조회(Page)
         Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
 
@@ -129,10 +139,12 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Transactional(readOnly = true)
     public AdminNoticeDetailRes getNoticeDetail(Long userId, String noticeCode){
 
-        // 0. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("권한이 없습니다.");
+        // 0. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userId);
+
+        // 0.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
 
         // 1. CustomerServiceEntity 조회
@@ -158,11 +170,15 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Override
     @Transactional
     public AdminNoticeDetailRes updateNotice(Long userId, String noticeCode, NoticeUpsertReq request){
-        // 1. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId).getBody();
-        if (!"ADMIN".equals(role)) {
-            throw new ForbiddenException("판매자 권한이 없습니다.");
+
+        // 0. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userId);
+
+        // 0.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
+
         // 2. 위와 똑같이 Entity 조회 및 유효성 검사
         CustomerServiceEntity serviceEntity = customerServiceRepository.findByCodeAndDelFalse(noticeCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지입니다."));
@@ -195,9 +211,12 @@ public class AdminNoticeServiceImpl implements AdminNoticeService {
     @Override
     @Transactional
     public ResultResponse deleteNotice(Long userId, String noticeCode){
-        // 1. 관리자 권한 확인
-        String role = authServiceClient.getUserRole(userId).getBody();
-        if (!"ADMIN".equals(role)) {
+
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(userId);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
 

@@ -5,6 +5,7 @@ import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.ViewCountService;
 import co.kr.customerservice.notice.model.dto.response.NoticeDetailRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeRes;
@@ -25,6 +26,8 @@ public class UserNoticeServiceImpl implements UserNoticeService {
     private final CustomerServiceRepository customerServiceRepository;
 
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
+
+    private final ViewCountService viewCountService;
 
     @Override
     @Transactional(readOnly = true)
@@ -69,12 +72,14 @@ public class UserNoticeServiceImpl implements UserNoticeService {
         CustomerServiceDetailEntity result = customerServiceDetailRepository.findByCustomerServiceAndDelFalse(noticeEntity)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지 내용입니다."));
 
+        Long viewCount = viewCountService.increaseViewCountProduct(noticeEntity.getIdx());
+
         // 반환, 한 번 밖에 안 쓰일거 같아서 mapper처리 x
         return new NoticeDetailRes(
                 noticeEntity.getCategory(),
                 noticeEntity.getTitle(),
                 result.getContent(),
-                noticeEntity.getViewCount(),
+                viewCount,
                 noticeEntity.getPublishedAt(),
                 result.getUpdatedAt()
         );

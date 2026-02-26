@@ -52,12 +52,13 @@ public class ChatServiceImpl implements ChatService {
     private final ProfanityFilter profanityFilter;
     private final PrivacyUtil privacyUtil;
     private final RagServiceClient ragServiceClient;
-    private final UserServiceClient userServiceClient; // 추가된 통신 클라이언트
+    private final UserServiceClient userServiceClient;
     private final Executor aiThreadPoolTaskExecutor;
 
     private final Map<String, Object> promptTemplates = new HashMap<>();
 
-    @Value("${rag.score.threshold:0.0006}")
+    // ⭐ 파이썬 RAG 서버의 필터링 기준과 동기화하여 기본 임계값을 0.15로 상향 조정
+    @Value("${rag.score.threshold:0.15}")
     private double minScoreThreshold;
 
     @Value("${llm.server.timeout:30}")
@@ -159,7 +160,6 @@ public class ChatServiceImpl implements ChatService {
             assistantChatRepository.save(chatEntry);
 
             try {
-                // ===== [전략 1 적용] 유저 정보 조회 및 메타데이터 세팅 =====
                 String ageGroup = null;
                 String gender = null;
                 String userContextString = "";
@@ -168,8 +168,8 @@ public class ChatServiceImpl implements ChatService {
                 if (usersIdx != null) {
                     try {
                         BaseResponse<UserContextDTO> res = userServiceClient.getUserContext(usersIdx);
-                        if (res != null && res.getData() != null) {
-                            UserContextDTO userContext = res.getData();
+                        if (res != null && res.data() != null) { // getData() -> data()
+                            UserContextDTO userContext = res.data(); // getData() -> data()
                             ageGroup = userContext.getAgeGroup();
                             gender = userContext.getGender();
 
@@ -178,22 +178,20 @@ public class ChatServiceImpl implements ChatService {
                                     ageGroup, genderStr, userContext.getMembership(), userContext.getRole());
                         }
                     } catch (Exception e) {
-                        log.warn("사용자 개인정보 조회 실패 (비로그인/기본 조건 진행): {}", e.getMessage());
+                        log.warn("사용자 개인정보 조회 실패 (비로그인 진행): {}", e.getMessage());
                     }
                 }
-                // ==========================================================
 
                 String searchKeyword = processedQuestion;
                 if (searchKeyword.length() > MAX_SEARCH_KEYWORD_LENGTH) {
                     searchKeyword = searchKeyword.substring(0, MAX_SEARCH_KEYWORD_LENGTH);
                 }
 
-                // RagReq 객체를 빌더로 생성하여 메타데이터 포함
                 RagReq ragReq = RagReq.builder()
                         .q(searchKeyword)
                         .topK(5)
-                        .ageGroup(ageGroup) // 비로그인이면 null
-                        .gender(gender)     // 비로그인이면 null
+                        .ageGroup(ageGroup)
+                        .gender(gender)
                         .build();
 
                 RagRes ragRes = ragServiceClient.searchKnowledge(ragReq);
@@ -232,7 +230,6 @@ public class ChatServiceImpl implements ChatService {
                     retrievedContext = "검색된 내부 지식이 없습니다. [MANDATORY POLICIES]의 'fallback_rules'를 엄격히 준수하십시오.";
                 }
 
-                // 파라미터로 userContextString과 ageGroup 추가 전달
                 String finalSystemPrompt = buildSystemPrompt(intent, retrievedContext, chatToken, userContextString, ageGroup);
 
                 long startTime = System.currentTimeMillis();
@@ -295,7 +292,6 @@ public class ChatServiceImpl implements ChatService {
         }
     }
 
-    // 메서드 시그니처 수정 및 상태별 대화형 프로파일링 적용
     private String buildSystemPrompt(String intent, String retrievedContext, String chatToken, String userContextString, String ageGroup) {
         Map<String, Object> common = (Map<String, Object>) promptTemplates.get("COMMON");
         Map<String, Object> intentConfig = (Map<String, Object>) promptTemplates.getOrDefault(intent, promptTemplates.get("GENERAL_CHAT"));
@@ -312,7 +308,6 @@ public class ChatServiceImpl implements ChatService {
 
         pb.append("\n## YOUR IDENTITY\n").append(intentConfig.get("persona")).append("\n\n");
 
-        // ===== [전략 3 적용] 유저 컨텍스트 주입 =====
         pb.append("## [USER CONTEXT & PERSONALIZATION RULE]\n");
         if (ageGroup != null) {
             pb.append(userContextString).append("\n");
@@ -323,7 +318,6 @@ public class ChatServiceImpl implements ChatService {
             pb.append("- [중요] 답변의 마지막에 자연스럽게 '혹시 찾으시는 연령대나 선호하는 스타일이 있으신가요?'라고 질문하여 사용자의 니즈를 구체화하도록 유도하십시오.\n");
         }
         pb.append("\n");
-        // ============================================
 
         pb.append("## [REFERENCE KNOWLEDGE]\n").append(retrievedContext).append("\n\n");
 
@@ -353,6 +347,12 @@ public class ChatServiceImpl implements ChatService {
             map.put("Sale_Price", item.getSalePrice());
             map.put("View_Count", item.getViewCount());
             map.put("Review", item.getReviewCount());
+            // ⭐ 추가: 옵션이 있는 경우에만 리스트를 담아 보냅니다.
+            if (item.getOptions() != null && !item.getOptions().isEmpty()) {
+                map.put("Options", item.getOptions());
+            } else {
+                map.put("Options", Collections.emptyList());
+            }
         } else if (item.getTitle() != null && item.getAnswer() != null) {
             map.put("type", "QNA");
             map.put("Link", item.getLink());
@@ -374,12 +374,21 @@ public class ChatServiceImpl implements ChatService {
         return map;
     }
 
+    /**
+     * ⭐ 수정됨: AI에게 상품의 주요 구매층(Target_Info)을 전달하여 고객 맞춤형 멘트를 유도합니다.
+     */
     private String formatRagItemForLLM(RagItem item, int index) {
         StringBuilder sb = new StringBuilder();
         sb.append("[참고자료 ").append(index).append("]\n");
         if (item.getProductsName() != null) sb.append("- 상품명: ").append(item.getProductsName()).append("\n");
         if (item.getText() != null) sb.append("- 내용: ").append(item.getText()).append("\n");
         if (item.getAnswer() != null) sb.append("- 답변: ").append(item.getAnswer()).append("\n");
+
+        // ⭐ 실 판매 데이터를 기반으로 산출된 주요 타겟층 정보 주입
+        if (item.getTargetInfo() != null && !item.getTargetInfo().contains("무관")) {
+            sb.append("- 주요 구매층: ").append(item.getTargetInfo()).append("\n");
+        }
+
         return sb.toString();
     }
 }

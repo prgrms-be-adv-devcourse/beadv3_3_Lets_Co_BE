@@ -164,6 +164,20 @@ spec:
               secretKeyRef:
                 name: ai-secret
                 key: EMBEDDING_PATH
+
+          
+          - name: RAG_URL
+            valueFrom:
+              secretKeyRef:
+                name: ai-secret
+                key: RAG_URL
+
+          - name: RAG_TIMEOUT
+            valueFrom:
+              secretKeyRef:
+                name: ai-secret
+                key: RAG_TIMEOUT
+
           ports:
             - containerPort: 8080
 

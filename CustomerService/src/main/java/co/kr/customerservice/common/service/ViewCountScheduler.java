@@ -28,7 +28,7 @@ public class ViewCountScheduler {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Scheduled(fixedDelay = 1000 * 30 * 1)
+    @Scheduled(fixedDelay = 1000 * 10 * 1)
     public void setViewCount(){
 
         /**

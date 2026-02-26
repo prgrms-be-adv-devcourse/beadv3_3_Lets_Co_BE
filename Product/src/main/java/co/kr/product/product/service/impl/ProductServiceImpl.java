@@ -1,7 +1,6 @@
 package co.kr.product.product.service.impl;
 
 import co.kr.product.common.service.S3Service;
-import co.kr.product.common.service.ViewCountService;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.dto.request.CategoryParentGroup;
 import co.kr.product.product.model.dto.request.DeductStockReq;
@@ -23,8 +22,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,10 +108,12 @@ public class ProductServiceImpl implements ProductService {
         // 4. Image
         // 4.1 해당 상품에 대한 이미지 조회
         List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse(productTableName,product.getProductsIdx());
+
         // 4.2 S3 조회용 키
         List<String> keys = images.stream()
                 .map( image -> image.getFilePath() + image.getStoredFileName())
                 .toList();
+
         // 4.3 S3 조회
         List<String> fileUrls = s3Service.getFileUrls(keys);
 

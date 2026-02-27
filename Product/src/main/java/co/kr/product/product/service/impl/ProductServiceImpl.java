@@ -41,6 +41,7 @@ public class ProductServiceImpl implements ProductService {
     private final FileRepository fileRepository;
     private final S3Service s3Service;
     private final ReviewService reviewService;
+    private final ProductStockConsumer stockConsumer;
 
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
@@ -123,6 +124,9 @@ public class ProductServiceImpl implements ProductService {
 
         // 5. 해당 상품 리뷰 목록
         List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
+        // 6. 레디스에 재고 등록( 없으면 )
+        stockConsumer.loadStocks(options);
 
 
         return

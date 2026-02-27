@@ -127,7 +127,7 @@ public class SettlementBatchConfig {
             SettlementItemWriter settlementItemWriter
     ) {
         return new StepBuilder("settlementWorkerStep", jobRepository)
-                .<SellerSettlementSummary, SellerSettlementSummary>chunk(600, transactionManager)
+                .<SellerSettlementSummary, SellerSettlementSummary>chunk(400, transactionManager)
                 .reader(settlementReader)
                 .processor(settlementItemProcessor)
                 .writer(settlementItemWriter)
@@ -166,7 +166,7 @@ public class SettlementBatchConfig {
         JdbcPagingItemReader<SellerSettlementSummary> reader = new JdbcPagingItemReader<>();
         reader.setDataSource(dataSource);
         reader.setName("settlementReader");
-        reader.setPageSize(600);
+        reader.setPageSize(400);
         reader.setRowMapper((rs, rowNum) -> new SellerSettlementSummary(
                 rs.getLong("seller_idx"),
                 rs.getBigDecimal("total_amount"),

@@ -48,13 +48,22 @@ public class SettlementItemWriter implements ItemWriter<SellerSettlementSummary>
                 .map(SellerSettlementSummary::getSellerIdx)
                 .toList();
 
-        int updatedCount = settlementRepository.bulkUpdateTypeBySellerIdxListAndPeriod(
-                sellerIdxList,
-                SettlementType.SETTLE_PAYOUT,
-                startDate,
-                endDate
-        );
+        try {
+            int updatedCount = settlementRepository.bulkUpdateTypeBySellerIdxListAndPeriod(
+                    sellerIdxList,
+                    SettlementType.SETTLE_PAYOUT,
+                    startDate,
+                    endDate
+            );
 
-        log.info("Chunk 처리 완료 - 판매자 {}명, 업데이트 건수: {}", sellerIdxList.size(), updatedCount);
+            log.info("Chunk 처리 완료 - 판매자 {}명, 업데이트 건수: {}", sellerIdxList.size(), updatedCount);
+        } catch (Exception e) {
+            log.error("Chunk 처리 실패 - 판매자 {}명, sellerIdx 범위: [{} ~ {}], 에러: {}",
+                    sellerIdxList.size(),
+                    sellerIdxList.getFirst(),
+                    sellerIdxList.getLast(),
+                    e.getMessage());
+            throw e;
+        }
     }
 }

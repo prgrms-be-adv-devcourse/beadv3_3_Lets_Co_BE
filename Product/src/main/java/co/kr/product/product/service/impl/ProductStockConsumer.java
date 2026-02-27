@@ -7,6 +7,7 @@ import co.kr.product.product.model.entity.ProductEntity;
 import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
+import co.kr.product.product.service.ProductCategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -215,6 +216,7 @@ public class ProductStockConsumer {
         return uniqueMessages;
     }
 
+    // redis 값에 오류가 있을때 강제로 재입력
     public void addStockInRedis(List<AddStockReq> request){
 
         // Map < key , stock>
@@ -241,5 +243,22 @@ public class ProductStockConsumer {
             }
             return null;
         });
+    }
+
+    // redis 에 값이 없을 경우 재고 수 등록
+    public void loadStockToRedisIfNotExists(String optionCode, Integer stock) {
+        String key = PRODUCT_STOCK_KEY + optionCode;
+
+        // setIfAbsent: 키가 존재하지 않을 때만 값을 세팅 (성공시 true, 이미 존재하면 false 반환)
+        Boolean isSet = stringRedisTemplate.opsForValue().setIfAbsent(key, String.valueOf(stock));
+
+        if (Boolean.TRUE.equals(isSet)) {
+            log.info("Redis에 재고 정보가 없어 새로 등록했습니다. OptionCode: {}", optionCode);
+        }
+    }
+
+    public void loadStocks(List<ProductOptionEntity> options){
+        options.stream()
+                .forEach( option -> loadStockToRedisIfNotExists(option.getOptionCode(), option.getStock()) );
     }
 }

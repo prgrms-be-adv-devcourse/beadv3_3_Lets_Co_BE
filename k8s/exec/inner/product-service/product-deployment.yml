@@ -91,13 +91,6 @@ spec:
                 name: db-secret
                 key: REDIS_PORT 
 
-
-          - name: REDIS_PORT
-            valueFrom:
-              secretKeyRef:
-                name: db-secret
-                key: REDIS_PORT 
-
           - name:  PRODUCT_VIEW_COUNT_KEY
             valueFrom:
               secretKeyRef:

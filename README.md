@@ -1,210 +1,291 @@
-# 🙋‍♂️ 상품 판매 사이트 개발 프로젝트
+# 🙋‍♂️ 개인 제작 상품 판매 사이트 개발 프로젝트
 
 ## ❗팀 소개
 
 ### ℹ️ 팀 이름 : Let's Co
 
-| 역할     | 이름   | 학과       | 이메일               |
-| -------- | ------ | ---------- | -------------------- |
-| PO       | 문민규 | 소프트웨어 | germ47@naver.com     |
-| Backend  | 정운석 | 소프트웨어 | jjh326326@naver.com  |
-| Backend  | 이용희 | 소프트웨어 | dydgmlzaa@naver.com  |
-| Database | 안수현 | 컴퓨터공학 | soxyxs4996@gmail.com |
-| Backend  | 최정민 | 컴퓨터공학 | gnb0804@gmail.com    |
+| 문민규                                                                            | 정운석                                                                             | 이용희                                                                                 | 안수현                                                                                  | 최정민                                                                             |
+|:-------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
+| <img src=""> | <img src=""> | <img src=""> | <img src=""> | <img src=""> |
+| PO/BE                                  | BE                                           | BE/DevOps                                          | BE/DB                                                                            | BE                                             |
+| [GitHub](https://github.com/germ47)                                                               | [GitHub](https://github.com/JammySeok)                                                                 | [GitHub](https://github.com/Lujol)                                                                     | [GitHub](https://github.com/Ahn-SooHyun)                                                              | [GitHub](https://github.com/gnb1202)                                                                     |
+
+<details>
+<summary><strong>👥 팀원별 작업</strong></summary>
+  
+### 문민규 (PO / Backend)
+> **핵심 역할: 상품 리뷰 시스템, 전략 및 로드맵 수립, 각 협업 페이지 관리 및 운영**
+
+**상품 리뷰 시스템**
+- 리뷰 CRUD 시스템 구축
+- 효율적인 상품 탐색을 위한 목록 필터링 및 상세 정보 조회 API 설계 및 구현
+  
+**전략 및 로드맵 수립**
+- 사용자 요구사항과 기술적 부채를 분석하여 MVP(Minimum Viable Product) 정의 및 단계별 배포 전략 수립
+- 기획 단계에서 발생 가능한 기술적 제약 사항을 선제적으로 파악하여 아키텍처 설계와 구현 일정 간의 정합성 확보
+- 프로젝트 생애주기별 마일스톤을 설정하고, 변동 상황에 따른 유연한 리소스 재배치를 통해 목표 일정 준수 및 리스크 관리
+
+**각 협업 페이지 관리 및 운영**
+- GitHub Issue/PR 템플릿 표준화로 팀 협업 생산성 향상
+- daily scrum, 주간회의, 멘토링 진행 시 Notion에 기록하며 균등하게 작업 분배 및 일정 상시 확인  
 
 ---
 
-## ❗ 서비스 소개
+### 정운석 (Backend)
+> **핵심 역할: 주문/장바구니 도메인 구축, 테스트 코드 작성**
 
-### ℹ️ 상품 판매 사이트 GutJJeu
+**주문 도메인**
+- 장바구니 기반 주문 생성 로직
+- 주문 상태 관리(Created -> Paied -> Completed)
+- 구매자/판매자별 주문 목록 조회 API 개발
+- Kafka 이벤트 기반 재고 처리 로직 구현
+  
+**장바구니 시스템**
+- 장바구니 CRUD 및 상품 추가/삭제 기능 구현
+- 결제 대상 상품 관리 로직 개발
+- Redis 도입하여 성능 향상, 영속성 유지
 
----
+**테스트 코드**
+- JUnit5를 활용하여 비즈니스 로직의 신뢰성을 확보하는 단위 테스트 작성
+- Testcontainers 기반의 독립적 DB 환경에서 API 엔드포인트 간 상호작용 검증 
 
-## 🎬 구현 화면
-
----
-
-## 🛠️ Diagram
-
----
-
-## ➡️ 참조 URL
-
----
-
-# 🌲 Git Branch
-
----
-
-## 🍀 Description
-
-- Used when you need to copy code or develop independently regardless of the original code.
-- After using the BRANCH command, you can see at a glance what has changed based on the standard.
-- It is easy to restore the original state after creating a BRANCH.
-
-## 🗒️ Type
-
-| Type   | :Comment:                |
-| ------ | ------------------------ |
-| Feat   | Add new features         |
-| Update | Modify existing features |
-| Fix    | Fix bugs                 |
-
-```bash
-git branch Type/Subject
-git branch Type/Page/Subject
-
-# Example
-git branch Feat/InsertMember
-git branch Update/InsertMember
-```
-
-- First letter capitalized.
-- Write in English.
-- Use clear nouns or verbs.
-
-### Do not use the master branch. (Master serves as the standard for code recovery.)
-
-### It is easier to operate by creating separate branches for dev and production.
-
-## 💬 Commands
-
-| Command                       | function                                                                         |
-| ----------------------------- | -------------------------------------------------------------------------------- |
-| git branch                    | Shows local branch information.                                                  |
-| git branch -v                 | Shows local branch information along with the last commit history.               |
-| git branch -r                 | Shows remote repository branch information.                                      |
-| git branch -a                 | Shows all branch information (local/remote).                                     |
-| git branch [Name]             | Creates a branch with [Name].                                                    |
-| git branch —merged            | Shows only branches that have been MERGED in GIT.                                |
-| git branch —no-merged         | Shows only branches that have NOT been MERGED in GIT.                            |
-| git branch -d                 | Deletes a branch. Will not delete if it contains unmerged commits.               |
-| git branch -D                 | Ignores delete warnings and force deletes the branch.                            |
-| git branch -m [Name1] [Name2] | Renames branch [Name1] to [Name2]. (Cannot change if the name already exists)    |
-| git branch -M [Name1] [Name2] | Force renames branch [Name1] to [Name2]. (Overwrites if the name already exists) |
-| git branch -m [Name1]         | Renames the current branch to [Name1].                                           |
-
-# 🏅 Git Add
+**대용량 트래픽 대비 대기열 시스템**
+- **유량 제어 대기열**: 설정 시간당 허용 진입자 수 제어
+- **트래픽 분산**: 금격한 요청 증가 시 애플리케이션 계층의 부하를 대기열 단계에서 차단
 
 ---
 
-## 🍀 Description
+### 이용희 (Backend / DevOps)
+> **핵심 역할: 상품/게시판 도메인 및 Elastic Search기반 검색, 인프라(K3S/CI/CD) 구축**
 
-- Applies the status of all things where the source has been changed, including additions, modifications, and deletions.
-- When the source is modified, use the add command to stage the modified list.
-- Files not targeted by ADD cannot be saved to the GIT SERVER.
+**상품 Seller, Admin Service**
+- **상품 CRUD API**: Seller 본인 상품 조회/등록/수정/삭제 (필터링, 페이징)
+- **상품 Admin API**: 상품 목록 조회/수정/제거 (필터링, 페이징)
 
-## 🗣️ Usage
+**게시판 도메인**
+- **Q&A CRUD API**: 관리자, 상품 문의 등록/수정/삭제/조회(상세조회, 목록조회)
+- **관리자 공지 CRUD API**: Admin 공지 작성/수정/삭제/상세조회
+- **문의 관련 API**: 문의 조회/답변 등록/삭제
+- **공지 관련 API**: 공지 목록 조회, 상세 조회
 
-```html
-git add [File Path/File Name] // Used when targeting only one specific file to
-add. git add [File Path] // Used to add everything under that file path. git add
-. // Used when targeting everything modified, without distinction.
-```
+**검색 시스템 (Elasticsearch)**
+- **통합 검색**: 복합 필터(이미지, 카테고리)를 지원하는 고성능 검색 API 구현
+- **추천 알고리즘**:
+  - **알고리즘1**:
+  - **알고리즘2**:
+  - **알고리즘3**:
 
-### 💣 Do not use git add \*
+**DevOps 인프라**
+- **K3S(K8S 경량화 버전)** 클러스터 구축 및 서비스별 Mainfest 관리
+- **GitHub Actions** 연동 자동화 CI/CD 파이프라인 구축
+- Docker Compose 기반 로컬 개발 환경 표준화
 
-- \* means everything (all files), and . means the current path.
-- Since - includes everything without distinction (including ignored files sometimes), it should be avoided if possible.
 
-# 💾 Commit Message
-
----
-
-## 🍀 Description
-
-- Command to move contents from Git's Staging Area to the Repository.
-- When saving git, you can add comments explaining that specific section.
-
-| Type    | Comment                              |
-| ------- | ------------------------------------ |
-| Fix     | Fixes/Corrections                    |
-| Feat    | Add new feature                      |
-| Remove  | Deletion                             |
-| Update  | Modification                         |
-| Move    | Move code files                      |
-| Rename  | Change name                          |
-| Comment | Add or change comments               |
-| Degin   | CSS changes                          |
-| Style   | Code formatting, missing semi-colons |
-
-- You can use the Comment to announce what the work is about.
-
-## 🔔 Usage
 
 ---
 
-```bash
-# Usage 1
-git commit -m "Update: Modification details"
+### 안수현 (Backend / Database)
+> **핵심 역할: 사용자 도메인/DB 구축, MSA 아키텍처 설계**
 
-# Usage 2
-git commit -m "Feat: Add details
+**사용자 도메인**
+- **세션 및 계정 관리**: 안전한 로그아웃 메커니즘과 세션 만료 전략 구현 및 패스워드 재설정(Find/Reset) 설계
+- **인가 아키텍처**: 역할 기반 권한 제어(RBAC)를 적용하여 일반 유저와 관리자 간의 API 접근 권한 엄격히 분리
+- **자산 관리 서비스**: 예치금 변동 이력 추적 및 실시간 잔액 조회 API 개발
+- **판매자 전환 프로세스**: 일반 유저의 Seller 등급 승격 신청 및 상태 관리 로직 구현(사업자 등록증 필요)
 
-- Brief description of
-```
 
-- The first line is the Title of the commit.
-- From the second line onwards, it is the comment content (body).
-- Markdown features are supported. Line break is 'Space twice'.
-- No full sentences, no long explanations.
-- Write in the style of a Title and Subtitle.
+**인증/보안 (Auth & Security)**
+- **Spring Cloud Gateway** 기반 중앙 집중식 인증 분리 및 라우팅 설정
+- OAuth2 소셜 로그인 (Google,Naver,Kakao) 및 JWT 토큰 발급/검증 시스템 구현
+- Refresh Token 재발급 메커니즘과 메일 인증 프로세스를 구현하여 서비스 안정성 및 사용자 보안 확보
+- 무결성 검증이 포함된 AES-256 양방향 암호화 및 BCrypt 해시 알고리즘을 통한 데이터 보호 강화
 
-# 📌 Git Push
+**Database 설계 및 운영**
+- 상품, 옵션, SKU(Stock Keeping Unit) 단위의 다차원 관계를 체계화하여 정밀한 재고 관리 및 유연한 상품 확장성 확보
+- Self-Referencing(셀프 참조) 구조를 활용한 무제한 계층형 카테고리를 설계, 데이터 조회 효율성을 고려한 트리 구조 최적화
+- 외래 키(FK) 제약 조건과 트랜잭션 격리 수준 설정으로 도메인 간 참조 무결성 확보
+- 생성/수정/삭제 시점 및 주체에 대한 이력 보존(Audit) 메커니즘을 구축하여 데이터 변경에 대한 가시성 및 비즈니스 로그 확보
 
----
-
-- Command to move the contents of the local git repository to the remote git repository.
-- By moving from Local to Git Remote, you can retrieve Git contents saved by others or on other PCs.
-
-```bash
-# When creating a git branch for the first time and the branch does not exist on remote
-git push --set-upstream origin master
-
-# When local and remote git branches are connected
-git push
-
-# When the git push target Local Branch and Remote Branch are different
-git push origin <branch1>:<branch2>
-```
-
-- To push git, identical Branches must exist on both local and remote.
-- When creating a new Branch, since there is no corresponding Branch on Remote, you must create a Branch with the same name on Remote.
-- If the same Branch exists, you can simply push.
-- It is generally forbidden to treat master as a regular branch, but there are situations where you need to merge (combine source code) into master after a push. Therefore, local and remote branches might differ, which can be solved at once. However, depending on the situation, this may also be forbidden. If merged directly without going through a pipeline, there is a risk of issues arising in the master source.
-
-![Untitled](Untitled.png)
-
-# 💗 Git pull
+**아키텍처 확장**
+- Eureka 서비스 디스커버리 구성
+- AI 서비스 모듈 구성 및 통합
 
 ---
 
-```bash
-# Command used when Local Branch and Remote Branch are the same
-# Most commonly used command when pulling the master branch.
-git pull
+### 최정민 (Backend)
+> **핵심 역할: 결제/예치금 시스템 구축 및 Spring Batch 정산 시스템 구축**
 
-# Command used when Local Branch and Remote Branch names are different
-# Used when merging master content or viewing a branch created by someone else.
-git pull origin <branch_name>
-```
+**결제 시스템**
+- Toss Payments API 연동을 통한 결제 승인/취소/환불 프로세스 구현
+- 결제 서비스를 독립적인 마이크로서비스로 분리하여 유연성 확보
+- 멱등성 보장을 통한 중복 결제 방지 시스템 구현
 
-- git pull is frequently used in cases where branches need to be pulled regularly, like master.
-- git pull origin <branch_name> is frequently used to fetch a teammate's branch.
+**예치금(deposit) 시스템**
+- 사용자 예치금 충전 로직 및 트랜잭션 기록 시스템 구축
+- 결제와 예치금을 연동한 복합 결제 흐름 설계
 
-# ☠️ Git Ignore
+**Spring Batch 정산 시스템**
+- Chunk 방식 배치 처리
+- 실패 정산 자동 재시도 배치 스케줄러 구현
+- Payment Service 연동 정산 금액 계산 로직
+
+</details>
 
 ---
 
-### Handles exceptions for git updates in the working directory.
+## ❗ 사이트 소개
 
-- When there are Server configuration files that should not be modified.
-- When configuration files (Values) are different for each Branch.
-- When Pathing specific IDE files.
-- When source modifications should not be shared.
+<img width="128" height="128" alt="Image" src="https://github.com/user-attachments/assets/4653b880-a8b5-4542-9447-a17ead852646" />
 
-### 🍁 Git Ignore applies only locally. Therefore, if Git Ignore is modified, you should recommend collaborators to pull it.
+### ℹ️ 사이트 이름 : GutJJeu
+> **세상에 없던 나만의 굿즈 판매 이커머스 플랫폼**
 
-### 🎵 To use, simply enter the paths shown when typing git status into .gitignore line by line.
+> 예치금 시스템과 나에게 맞는 상품 추천 시스템을 갖춘 안전한 거래 환경 제공
 
-- Can specify directory paths or single files.
+> Spring Cloud MSA + Kafka + Elasticsearch + AI + Toss Payments 기반 실무형 플랫폼
+
+---
+
+### 🎬 화면
+
+<img width="2865" height="1537" alt="image" src="https://github.com/user-attachments/assets/2a4ea8e1-c778-43be-8db7-0cd93649fdf7" />
+
+---
+
+### 📪 링크
+배포 링크 참조 예정
+
+---
+
+## ❗개발
+
+### 🔊주요 기능
+
+
+<details>
+<summary><h3>🔐 User Service - 회원 및 인증</h3></summary>
+
+#### 인증 (Auth)
+- OAuth 2.0 Google 로그인 (isNewUser 분기 처리)
+- Access Token 재발급 (Refresh Token 기반)
+- 로그아웃 (Redis Token 삭제 + Cookie 만료)
+- JWT 토큰 관리 (HttpOnly Cookie 방식)
+
+#### 회원 (User)
+- 회원가입 
+- 회원정보 조회 
+- 회원정보 수정 
+- 
+
+#### 판매자 권한
+- SMS 인증 코드 발송 (자리)
+- 인증 코드 검증 후 SELLER 권한 부여
+
+</details>
+
+
+<details>
+<summary><h3>🎁 Product Service - 상품</h3></summary>
+- 
+
+</details>
+
+
+<details>
+<summary><h3>📞 Order Service - 주문, 장바구니</h3></summary>
+- 
+  
+</details>
+
+
+<details>
+<summary><h3>💸 Payment Service - 결제, 정산</h3></summary>
+- 
+
+</details>
+
+
+<details>
+<summary><h3>⁉️ Board Service - Q&A, 공지</h3></summary>
+- 
+  
+</details>
+
+
+<details>
+<summary><h3>🤖 AI Service - 상품 추천</h3></summary>
+- 
+
+</details>
+
+---
+
+### 📆 개발 기간
+<img width="1410" height="599" alt="image" src="https://github.com/user-attachments/assets/43461cca-edcd-4eb1-b1c7-3a7676da3aa2" />
+
+
+---
+
+### 🖥 System 아키텍쳐
+
+<img width="1792" height="1063" alt="Web App Reference Architecture" src="https://github.com/user-attachments/assets/3527bfad-70e0-4777-aaf5-1bcee6b96375" />
+
+
+---
+
+### 🖥 ERD Diagram
+
+
+<img width="797" height="473" alt="image" src="https://github.com/user-attachments/assets/4da897be-4b55-416e-90da-97a758c3fe35" />
+
+---
+
+### 🛠 기술 스택
+
+#### 💻 Language
+![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=openjdk&logoColor=white)
+
+#### ⚙ Framework & Library
+![Spring Boot](https://img.shields.io/badge/SpringBoot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/SpringSecurity-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
+![Spring Data JPA](https://img.shields.io/badge/SpringDataJPA-6DB33F?style=for-the-badge&logo=hibernate&logoColor=white)
+![Spring Batch](https://img.shields.io/badge/SpringBatch-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Spring AI](https://img.shields.io/badge/SpringAI-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![Google OAuth](https://img.shields.io/badge/Google_OAuth2.0-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![Toss Payments](https://img.shields.io/badge/Toss_Payment-FF3B30?style=for-the-badge&logoColor=white)
+
+![OpenFeign](https://img.shields.io/badge/OpenFeign-00CCFF?style=for-the-badge&logo=apache-feign&logoColor=white)
+
+#### 🗄 Database & Search
+
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+
+
+![Elasticsearch](https://img.shields.io/badge/Elasticsearch-005571?style=for-the-badge&logo=elasticsearch&logoColor=white)
+![Logstash](https://img.shields.io/badge/Logstash-005571?style=for-the-badge&logo=logstash&logoColor=white)
+![Kibana](https://img.shields.io/badge/Kibana-005571?style=for-the-badge&logo=kibana&logoColor=white)
+
+#### 🛠 Infra
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
+
+![AWS ECS](https://img.shields.io/badge/AWS%20ECS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![Amazon S3](https://img.shields.io/badge/AmazonS3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
+![Nginx Proxy Manager](https://img.shields.io/badge/Nginx_Proxy_Manager-009639?style=for-the-badge&logo=nginx&logoColor=white)
+
+#### 🌐 MSA & Messaging
+![Eureka](https://img.shields.io/badge/Eureka-0061A8?style=for-the-badge&logo=netflix&logoColor=white)
+![Spring Cloud Gateway](https://img.shields.io/badge/Spring_Cloud_Gateway-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Kafka](https://img.shields.io/badge/Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
+
+#### 🔧 Collaboration Tools
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
+![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)
+![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
+![Zep](https://img.shields.io/badge/Zep-008080?style=for-the-badge&logo=artstation&logoColor=white)
+![ERDCloud](https://img.shields.io/badge/ERDCloud-4A90E2?style=for-the-badge&logo=icloud&logoColor=white)
+
+---

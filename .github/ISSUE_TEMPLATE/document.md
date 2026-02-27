@@ -2,7 +2,7 @@
 name: Document
 about: Describe Doucument here
 title: ''
-labels: documentation
+labels: "\U0001F4DDDocs"
 assignees: ''
 
 ---

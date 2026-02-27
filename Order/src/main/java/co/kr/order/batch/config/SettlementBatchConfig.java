@@ -75,8 +75,8 @@ public class SettlementBatchConfig {
     @Bean
     public TaskExecutor settlementTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
+        executor.setCorePoolSize(6);
+        executor.setMaxPoolSize(6);
         executor.setThreadNamePrefix("settlement-");
         executor.initialize();
         return executor;
@@ -109,7 +109,7 @@ public class SettlementBatchConfig {
         return new StepBuilder("settlementManagerStep", jobRepository)
                 .partitioner("settlementWorkerStep", sellerIdxRangePartitioner)
                 .step(settlementWorkerStep)
-                .gridSize(4)
+                .gridSize(6)
                 .taskExecutor(settlementTaskExecutor())
                 .build();
     }
@@ -127,7 +127,7 @@ public class SettlementBatchConfig {
             SettlementItemWriter settlementItemWriter
     ) {
         return new StepBuilder("settlementWorkerStep", jobRepository)
-                .<SellerSettlementSummary, SellerSettlementSummary>chunk(50, transactionManager)
+                .<SellerSettlementSummary, SellerSettlementSummary>chunk(600, transactionManager)
                 .reader(settlementReader)
                 .processor(settlementItemProcessor)
                 .writer(settlementItemWriter)
@@ -166,7 +166,7 @@ public class SettlementBatchConfig {
         JdbcPagingItemReader<SellerSettlementSummary> reader = new JdbcPagingItemReader<>();
         reader.setDataSource(dataSource);
         reader.setName("settlementReader");
-        reader.setPageSize(500);
+        reader.setPageSize(600);
         reader.setRowMapper((rs, rowNum) -> new SellerSettlementSummary(
                 rs.getLong("seller_idx"),
                 rs.getBigDecimal("total_amount"),

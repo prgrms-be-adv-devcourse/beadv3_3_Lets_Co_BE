@@ -4,11 +4,14 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.math.BigDecimal;
 
 @Getter
 @Entity
+@DynamicInsert
 @NoArgsConstructor
 @Table(name = "Orders_Item")
 public class OrderItemEntity {
@@ -43,8 +46,9 @@ public class OrderItemEntity {
     @Column(name = "Quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "Del", nullable = false, columnDefinition = "TINYINT")
-    private Boolean del;
+    @Column(name = "Del", nullable = false)
+    @ColumnDefault("0")
+    private Boolean del = false;
 
     @Builder
     public OrderItemEntity(OrderEntity order, String productCode, String optionCode,

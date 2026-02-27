@@ -1,7 +1,6 @@
 package co.kr.product.product.service.impl;
 
 import co.kr.product.common.service.S3Service;
-import co.kr.product.common.service.ViewCountService;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.dto.request.CategoryParentGroup;
 import co.kr.product.product.model.dto.request.DeductStockReq;
@@ -17,12 +16,12 @@ import co.kr.product.product.repository.ProductCategoryRepository;
 import co.kr.product.product.repository.ProductOptionRepository;
 import co.kr.product.product.repository.ProductRepository;
 import co.kr.product.product.service.ProductService;
+import co.kr.product.review.model.dto.response.ReviewResponse;
+import co.kr.product.review.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +40,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductCategoryRepository categoryRepository;
     private final FileRepository fileRepository;
     private final S3Service s3Service;
-
+    private final ReviewService reviewService;
+    private final ProductStockConsumer stockConsumer;
 
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
@@ -109,10 +109,12 @@ public class ProductServiceImpl implements ProductService {
         // 4. Image
         // 4.1 해당 상품에 대한 이미지 조회
         List<FileEntity> images = fileRepository.findAllByRefTableAndRefIndexAndDelFalse(productTableName,product.getProductsIdx());
+
         // 4.2 S3 조회용 키
         List<String> keys = images.stream()
                 .map( image -> image.getFilePath() + image.getStoredFileName())
                 .toList();
+
         // 4.3 S3 조회
         List<String> fileUrls = s3Service.getFileUrls(keys);
 
@@ -120,14 +122,22 @@ public class ProductServiceImpl implements ProductService {
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
 
+        // 5. 해당 상품 리뷰 목록
+        List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
+        // 6. 레디스에 재고 등록( 없으면 )
+        stockConsumer.loadStocks(options);
+
+
         return
             new IdxAndDetailRes(
                 product.getProductsIdx(),
                 toProductDetail(
-                    product,
-                    options,
-                    imageInfo,
-                    parents)
+                        product,
+                        options,
+                        imageInfo,
+                        parents,
+                        reviews)
             );
     }
 
@@ -141,7 +151,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductCheckStockRes getCheckStock(String productsCode) {
 
-        // TODO : option id or code 를 받아오는것이 훨 좋음
 
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(productsCode)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
@@ -234,11 +243,11 @@ public class ProductServiceImpl implements ProductService {
         // > Fetch Join 쓰는 방법이 더 간단하고 성능적으로 좋다고 함. < 공부 필요
 
         // 1. List 내 optionIds 만 list 로 추출
-        List<Long> optionIds = requests.stream()
-                .map(ProductInfoToOrderReq::optionIdx).toList();
+        List<String> optionCodes = requests.stream()
+                .map(ProductInfoToOrderReq::optionCode).toList();
 
         // 2. 조회
-        List<ProductOptionEntity> options = productOptionRepository.findAllWithOptions(optionIds);
+        List<ProductOptionEntity> options = productOptionRepository.findAllWithOptions(optionCodes);
 
         // 3. 반환
         return options.stream().map(opt -> new ProductInfoToOrderRes(

@@ -6,6 +6,7 @@ import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import co.kr.customerservice.notice.service.UserNoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,8 @@ public class UserNoticeController {
      */
     @GetMapping
     public ResponseEntity<NoticeListRes> getNoticeList(
-            @PageableDefault Pageable pageable
+            @PageableDefault(sort = "updatedAt", direction = Sort.Direction.DESC)
+            Pageable pageable
             ){
         return ResponseEntity.ok(userNoticeService.getNoticeList(pageable));
     }

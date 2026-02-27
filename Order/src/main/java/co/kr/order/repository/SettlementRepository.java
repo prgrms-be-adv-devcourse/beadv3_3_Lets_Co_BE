@@ -15,8 +15,10 @@ import java.util.Optional;
 @Repository
 public interface SettlementRepository extends JpaRepository<SettlementHistoryEntity, Long> {
 
+    /** 판매자의 전체 정산 내역 조회 */
     List<SettlementHistoryEntity> findAllBySellerIdx(Long sellerIdx);
 
+    /** 판매자의 특정 결제 건 정산 조회 */
     Optional<SettlementHistoryEntity> findBySellerIdxAndPaymentIdx(Long sellerIdx, Long paymentIdx);
 
     /**
@@ -40,5 +42,23 @@ public interface SettlementRepository extends JpaRepository<SettlementHistoryEnt
             @Param("endDate") LocalDateTime endDate
     );
 
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE SettlementHistoryEntity s
+            SET s.type = :newType
+            WHERE s.sellerIdx IN :sellerIdxList
+              AND s.type = co.kr.order.model.vo.SettlementType.ORDERS_CONFIRMED
+              AND s.del = false
+              AND s.createdAt >= :startDate
+              AND s.createdAt <= :endDate
+            """)
+    int bulkUpdateTypeBySellerIdxListAndPeriod(
+            @Param("sellerIdxList") List<Long> sellerIdxList,
+            @Param("newType") SettlementType newType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    /** 결제 건의 정산 내역 조회 (환불 시 사용) */
     List<SettlementHistoryEntity> findAllByPaymentIdx(Long paymentIdx);
 }

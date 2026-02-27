@@ -8,6 +8,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.RagUpdateService;
 import co.kr.customerservice.inquiryAdmin.mapper.InquiryMapper;
 import co.kr.customerservice.inquiryAdmin.model.dto.InquiryDTO;
 import co.kr.customerservice.inquiryAdmin.model.dto.request.InquiryUpsertReq;
@@ -31,12 +32,13 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
+    private final RagUpdateService ragUpdateService;
 
     @Override
     @Transactional(readOnly = true)
     public InquiryListRes getInquiryList(Pageable pageable){
 
-        Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_ADMIN, pageable);
+        Page<CustomerServiceEntity> inquiryPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType.QNA_ADMIN, pageable);
 
         List<InquiryDTO> result = inquiryPage.stream()
                 .map(entity -> new InquiryDTO(
@@ -88,7 +90,10 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
         // 3.1 저장
         customerServiceDetailRepository.save(requestDetailEntity);
 
-        // 4 반환
+        // 4.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(requestEntity.getIdx());
+
+        // 5. 반환
         return InquiryMapper.toDetailResponse(
                 true,
                 requestEntity,
@@ -181,7 +186,10 @@ public class InquiryAdminServiceImpl implements InquiryAdminService {
 
         willUpdate.update(request.content());
 
-        // 5. 반환
+        // 5.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(inquiryEntity.getIdx());
+
+        // 6. 반환
         return InquiryMapper.toDetailResponse(
                 isOwner,
                 inquiryEntity,

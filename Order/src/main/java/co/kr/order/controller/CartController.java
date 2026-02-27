@@ -1,9 +1,11 @@
 package co.kr.order.controller;
 
+import co.kr.order.controller.swagger.cart.*;
 import co.kr.order.model.dto.ProductInfo;
 import co.kr.order.model.dto.response.BaseResponse;
 import co.kr.order.model.dto.response.CartItemRes;
 import co.kr.order.service.CartService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/carts")
+@Tag(name = "Cart", description = "장바구니 API")
 public class CartController {
 
     private final CartService cartService;
@@ -24,6 +27,7 @@ public class CartController {
      * 장바구니에 제품 추가 요청 (POST)
      * @param productInfo: 장바구니 제품 추가 요청 정보
      */
+    @CartAddDocs
     @PostMapping("/add")
     public ResponseEntity<BaseResponse<CartItemRes>> addCartItem(
             HttpServletRequest servletRequest,
@@ -46,6 +50,7 @@ public class CartController {
      * 장바구니 상품 개수 +1 요청 (POST)
      * @param optionCode: 상품 옵션 코드
      */
+    @CartPlusDocs
     @PostMapping("/plus/{optionCode}")
     public ResponseEntity<BaseResponse<CartItemRes>> plusCartItem(
             HttpServletRequest servletRequest,
@@ -68,6 +73,7 @@ public class CartController {
      * 장바구니 상품 개수 -1 (POST)
      * @param optionCode: 상품 옵션 코드
      */
+    @CartMinusDocs
     @PostMapping("/minus/{optionCode}")
     public ResponseEntity<BaseResponse<CartItemRes>> minusCartItem(
             HttpServletRequest servletRequest,
@@ -89,6 +95,7 @@ public class CartController {
     /*
      * 장바구니에 추가한 상품 리스트 요청 (GET)
      */
+    @CartListDocs
     @GetMapping
     public ResponseEntity<BaseResponse<List<CartItemRes>>> getCartList(
             HttpServletRequest servletRequest
@@ -110,6 +117,7 @@ public class CartController {
      * 장바구니 제품 삭제 요청 (DELETE)
      * @param optionCode: 제품 옵션 코드
      */
+    @CartDeleteDocs
     @DeleteMapping("/{optionCode}")
     public ResponseEntity<BaseResponse<Void>> deleteCartItem(
             HttpServletRequest servletRequest,

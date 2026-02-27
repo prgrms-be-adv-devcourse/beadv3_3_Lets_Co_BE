@@ -5,12 +5,10 @@ import co.kr.product.common.auth.AuthAdapter;
 import co.kr.product.common.exceptionHandler.ForbiddenException;
 import co.kr.product.common.service.S3Service;
 import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.client.dto.ClientRoleDTO;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.document.ProductDocument;
-import co.kr.product.product.model.dto.request.CategoryParentGroup;
-import co.kr.product.product.model.dto.request.ProductListReq;
-import co.kr.product.product.model.dto.request.ProductOptionsReq;
-import co.kr.product.product.model.dto.request.UpsertProductReq;
+import co.kr.product.product.model.dto.request.*;
 import co.kr.product.product.model.dto.response.*;
 import co.kr.product.product.model.entity.FileEntity;
 import co.kr.product.product.model.entity.ProductCategoryEntity;
@@ -19,6 +17,8 @@ import co.kr.product.product.model.entity.ProductOptionEntity;
 import co.kr.product.product.model.vo.CategoryType;
 import co.kr.product.product.repository.*;
 import co.kr.product.product.service.ProductManagerService;
+import co.kr.product.review.model.dto.response.ReviewResponse;
+import co.kr.product.review.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +47,9 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private final S3Service s3Service;
     private final AuthAdapter authAdapter;
     private final FileRepository fileRepository;
+    private final ReviewService reviewService;
+    private final ProductStockConsumer stockConsumer;
+    private final RagUpdateService ragUpdateService;
 
     @Value("${custom.aws.s3.product-prefix}")
     private String productPrefix;
@@ -55,23 +58,24 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     private String productTableName;
 
 
-    // TODO !! ! ! userIdx로 권환은 물론 sellerIdx 까지 필요함!!! ! ! !
 
     @Override
     @Transactional
     public ProductDetailRes addProduct(Long usersIdx, UpsertProductReq request, List<MultipartFile> images){
-/*
 
         // 1. 본인확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자가 아닌경우
+        if (!UserRole.isSeller(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
-*/
-        // 1.1 seller idx 받아와야함
-        // 임시
-        Long sellerIdx = 6L;
+
+        // 1.2 seller idx 확인
+        if (userData.sellerIdx() == null){
+            throw new IllegalArgumentException("seller IDX를 받아오지 못했습니다.");
+        }
+        Long sellerIdx = userData.sellerIdx();
 
         // 2. 카테고리 및 ip 불러오기
         // 2.1. in 쿼리로 카테고리, ip 동시 조회
@@ -102,13 +106,13 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 .ip(ip)
                 .build();
 
-        ProductEntity savedItem = productRepository.save(item);
+        ProductEntity product = productRepository.save(item);
 
 
         // 4. Option 저장
         List<ProductOptionEntity> options = request.options().stream()
                 .map(requestOpt ->  ProductOptionEntity.builder()
-                        .product(savedItem)
+                        .product(product)
                         .optionCode(UUID.randomUUID().toString())
                         .optionName(requestOpt.name())
                         .sortOrders(requestOpt.sortOrder())
@@ -121,7 +125,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 ).toList();
 
 
-        List<ProductOptionEntity> savedOpt = optionRepository.saveAll(options);
+        List<ProductOptionEntity> option = optionRepository.saveAll(options);
 
         // 5. 이미지 저장
         // 5-1. S3에 이미지 업로드
@@ -130,7 +134,7 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 5-2. DB 저장 용 이미지 정보 생성
         List<FileEntity> imageEntities = imageInfos.stream()
                 .map(image -> FileEntity.builder()
-                        .refIndex(savedItem.getProductsIdx())
+                        .refIndex(product.getProductsIdx())
                         .filePath(image.filePath())
                         .fileType(image.fileType())
                         .storedFileName(image.storedFileName())
@@ -166,11 +170,24 @@ public class ProductManagerServiceImpl implements ProductManagerService {
 
         List<ImageInfoRes> imagesInfo = ProductMapper.mapToImageInfos(imageEntities, fileUrls);
 
+        // 7. 재고 적용
+        List<AddStockReq> stockList = option.stream()
+                        .map(entity -> new AddStockReq(
+                                entity.getOptionCode(),
+                                entity.getStock()
+                        )).toList();
+
+        stockConsumer.addStockInRedis(stockList);
+
+        // 8. 실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(product.getProductsIdx());
+
         return toProductDetail(
-                savedItem,
-                savedOpt,
+                product,
+                option,
                 imagesInfo,
-                parents);
+                parents,
+                null);
     }
 
 
@@ -181,12 +198,14 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     @Transactional
     public ProductDetailRes getManagerProductDetail(Long usersIdx, String code){
 
-        // 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isStaff(userData.role())){
             throw new ForbiddenException("권한이 없습니다.");
         }
+
 
         // 1. 상품 조회
         ProductEntity product =  productRepository.findByProductsCodeAndDelFalse(code)
@@ -226,12 +245,19 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 4.4 사진 이름 + url 반환
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
+
+        // 5. 리뷰 조회
+
+        List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
         // mapper 사용
         return toProductDetail(
                 product,
                 options,
                 imageInfo,
-                parents
+                parents,
+                reviews
+
         );
     }
 
@@ -250,12 +276,23 @@ public class ProductManagerServiceImpl implements ProductManagerService {
             UpsertProductReq request,
             UserRole inputRole
             ){
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
 
-        // 1.  권한 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
-            throw new ForbiddenException("권한이 없습니다.");
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isStaff(userData.role())){
+            throw new ForbiddenException("권한이 없습니다. code 1");
+        }
+        // 1.2 판매자에 대해 한 번 더 권한 확인
+        // 판매자가 관리자 페이지로 접근 시
+        if (UserRole.isSeller(userData.role()) && inputRole.equals(UserRole.ADMIN)){
+            throw new ForbiddenException("권한이 없습니다. code 2");
+        }
+
+        // 1.3 seller idx 가져오기
+        Long sellerIdx = null;
+        if (userData.sellerIdx() != null && UserRole.isSeller(userData.role()) ){
+            sellerIdx = userData.sellerIdx();
         }
 
         // 2.  Entity 가져오기
@@ -263,8 +300,8 @@ public class ProductManagerServiceImpl implements ProductManagerService {
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
         // 2.1 판매자 본인인지 확인(판매자일 경우, 관리자의 경우 스킵)
-        if(!usersIdx.equals(product.getSellerIdx()) && inputRole.equals(UserRole.SELLER)){
-            throw new ForbiddenException("해당 상품의 판매자 본인이 아닙니다.");
+        if (!product.getSellerIdx().equals(sellerIdx) && inputRole.equals(UserRole.SELLER) ){
+            throw new ForbiddenException("판매자 본인이 아닙니다.");
         }
 
         // 2.2 option 가져오기
@@ -375,12 +412,28 @@ public class ProductManagerServiceImpl implements ProductManagerService {
         // 6.7 사진 이름 + url 반환
         List<ImageInfoRes> imageInfo = ProductMapper.mapToImageInfos(images, fileUrls);
 
+        // 7. 리뷰 조회
+        List<ReviewResponse> reviews = reviewService.getReviews(product.getProductsIdx());
+
+        // 8. 재고 적용
+        List<AddStockReq> stockList = options.stream()
+                .map(entity -> new AddStockReq(
+                        entity.getOptionCode(),
+                        entity.getStock()
+                )).toList();
+
+        stockConsumer.addStockInRedis(stockList);
+
+        // 9. 실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(product.getProductsIdx());
+
         // mapper 사용
         return toProductDetail(
                 product,
                 options,
                 imageInfo,
-                parents
+                parents,
+                reviews
         );
     }
 
@@ -389,19 +442,32 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     @Transactional
     public void deleteProduct(Long usersIdx, String code, UserRole inputRole){
 
-        // 1. 본인 확인
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER 또는 ADMIN이 아닌경우
-        if (!UserRole.isStaff(role)) {
-            throw new ForbiddenException("권한이 없습니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isStaff(userData.role())){
+            throw new ForbiddenException("권한이 없습니다. code 1");
         }
+        // 1.2 판매자에 대해 한 번 더 권한 확인
+        // 판매자가 관리자 페이지로 접근 시
+        if (UserRole.isSeller(userData.role()) && inputRole.equals(UserRole.ADMIN)){
+            throw new ForbiddenException("권한이 없습니다. code 2");
+        }
+
+        // 1.3 seller idx 가져오기
+        Long sellerIdx = null;
+        if (userData.sellerIdx() != null && UserRole.isSeller(userData.role()) ){
+            sellerIdx = userData.sellerIdx();
+        }
+
 
         // 2.1 엔티티 가져오기
         ProductEntity product = productRepository.findByProductsCodeAndDelFalse(code)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 상품입니다."));
 
         // 2.2 판매자 본인인지 확인(판매자일 경우, 관리자의 경우 스킵)
-        if (!product.getSellerIdx().equals(usersIdx) && inputRole.equals(UserRole.SELLER) ){
+        if (!product.getSellerIdx().equals(sellerIdx) && inputRole.equals(UserRole.SELLER) ){
             throw new ForbiddenException("판매자 본인이 아닙니다.");
         }
 
@@ -451,16 +517,24 @@ public class ProductManagerServiceImpl implements ProductManagerService {
     public ProductListRes getListsBySeller(Long usersIdx, Pageable pageable, ProductListReq requests){
 
 
-        String role = authAdapter.getUserRole(usersIdx);
-        // SELLER가 아닌경우
-        if (!UserRole.isSeller(role)) {
-            throw new ForbiddenException("판매자가 아닙니다.");
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 판매자 or 관리자가 아닌경우
+        if (!UserRole.isSeller(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
         }
+
+        // 1.2 seller idx 확인
+        if (userData.sellerIdx() == null){
+            throw new IllegalArgumentException("seller IDX를 받아오지 못했습니다.");
+        }
+        Long sellerIdx = userData.sellerIdx();
 
         // 검색어 존재 시 검색 진행
         Page<ProductDocument> pageResult = (requests.search() == null || requests.search().isBlank())
-                ? productEsRepository.findAll(pageable)
-                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(usersIdx,requests.search() ,pageable);
+                ? productEsRepository.findAllBySellerIdxAndDelFalse(sellerIdx,pageable)
+                : productEsRepository.findAllBySellerIdxAndProductsNameAndDelFalse(sellerIdx,requests.search() ,pageable);
         
         // 2. Document -> Response DTO 변환
         List<ProductRes> items = pageResult.stream()

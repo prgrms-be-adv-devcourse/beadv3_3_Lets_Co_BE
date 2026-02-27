@@ -1,9 +1,14 @@
 package co.kr.product.product.service.impl;
 
+import co.kr.product.common.auth.AuthAdapter;
+import co.kr.product.common.exceptionHandler.ForbiddenException;
+import co.kr.product.common.vo.UserRole;
+import co.kr.product.product.client.dto.ClientRoleDTO;
 import co.kr.product.product.mapper.ProductMapper;
 import co.kr.product.product.model.dto.request.CategoryUpsertReq;
 import co.kr.product.product.model.dto.response.CategoryFamilyRes;
 import co.kr.product.product.model.dto.response.CategoryRes;
+import co.kr.product.product.model.dto.response.CategorySortedRes;
 import co.kr.product.product.model.entity.ProductCategoryEntity;
 import co.kr.product.product.model.vo.CategoryType;
 import co.kr.product.product.repository.ProductCategoryRepository;
@@ -23,32 +28,49 @@ import java.util.stream.Collectors;
 public class ProductCategoryServiceImpl implements ProductCategoryService {
 
     private final ProductCategoryRepository categoryRepository;
+    private final AuthAdapter authAdapter;
 
+    /**
+     * 모든 카테고리 조회, 순서 o
+     * @param type
+     * @return
+     */
     @Override
-    public List<CategoryRes> getCategory(CategoryType type) {
+    public List<CategorySortedRes> getCategory(CategoryType type) {
 
         List<ProductCategoryEntity> categoryList = categoryRepository.findAllByTypeAndDelFalse(type);
 
-        List<CategoryRes> item = categoryList.stream()
+        Map<Long, List<ProductCategoryEntity>> groupedByParent = categoryList.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getParentIdx() == null ? 0L : c.getParentIdx()
+                ));
 
-                .map( entity -> new CategoryRes(
-                        entity.getCategoryCode(),
-                        entity.getCategoryName(),
-                        entity.getPath(),
-                        // 부모의 code를 가져오는 작업
-                        categoryList.stream()
-                                // 1. 리스트의 categoryIdx 와  부모 ID(parentIdx)가 같은지 비교
-                                .filter(c -> c.getCategoryIdx().equals(entity.getParentIdx()))
-                                // 2. 찾은 객체에서 CategoryCode만 추출
-                                .map(ProductCategoryEntity::getCategoryCode)
-                                // 3. 첫 번째 결과 반환 (없으면 0 반환)
-                                .findFirst()
-                                .orElse("0")
+        return createTree(0L, groupedByParent);
+    }
+
+    private List<CategorySortedRes> createTree(Long parentId ,Map<Long, List<ProductCategoryEntity>> groupedByParent){
+
+        List<ProductCategoryEntity> children;
+
+        // 해당 부모를 가진 자식들, 없으면 빈 리스트
+        children = groupedByParent.getOrDefault(parentId, Collections.emptyList());
 
 
-                ) ).toList();
+        return children.stream()
 
-        return item;
+                .map( child -> new CategorySortedRes(
+                        child.getCategoryCode(),
+                        child.getCategoryName(),
+
+                        // level 계산
+                        (int) child.getPath().chars()
+                                .filter(c -> c == '/')
+                                .count(),
+                        // 재귀 호출, 아래 자식 카테고리들 채워넣음
+                        createTree(child.getCategoryIdx(), groupedByParent)
+
+                        ) ).toList();
+
     }
 
     @Override
@@ -108,9 +130,17 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Transactional
     public CategoryRes addCategory(Long usersIdx, CategoryUpsertReq req, CategoryType type) {
 
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
+        }
+
         ProductCategoryEntity savedCategory;
 
-        //임시
+        // 미리 선언
         String parentCode;
 
         // 최상위 카테고리 추가
@@ -166,6 +196,14 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Override
     @Transactional
     public String updateCategory(Long usersIdx,String categoryCode ,CategoryUpsertReq req, CategoryType type) {
+
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
+        }
 
         // 이름 변경 및 부모 변경
         
@@ -244,6 +282,13 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     @Transactional
     public String deleteCategory(Long usersIdx,String categoryCode, CategoryType type) {
 
+        // 1. 본인확인
+        ClientRoleDTO userData = authAdapter.getUserData(usersIdx);
+
+        // 1.1 권한 확인 , 관리자가 아닌경우
+        if (!UserRole.isAdmin(userData.role())){
+            throw new ForbiddenException("권한이 없습니다.");
+        }
         // 검색
         ProductCategoryEntity entity = categoryRepository.findByCategoryCodeAndTypeAndDelFalse(categoryCode, type)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 카테고리 입니다."));

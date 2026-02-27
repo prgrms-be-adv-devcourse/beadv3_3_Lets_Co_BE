@@ -34,7 +34,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
-                  key: JDBC_URL
+                  key: JDBC_URL_USER
             
             - name: DB_USER
               valueFrom:
@@ -120,6 +120,12 @@ spec:
                   name: jwt-secret
                   key: REFRESH 
 
+            - name: BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-secret
+                  key: BASE_URL 
+
             - name: GOOGLE_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -157,6 +163,42 @@ spec:
                   key: KAKAO_CLIENT_SECRET 
                              
 
+
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: AWS_ACCESS_KEY 
+                       
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: AWS_SECRET_KEY 
+
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: AWS_REGION   
+
+            - name: AWS_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: AWS_BUCKET_NAME 
+
+            - name: PRESIGNED_DURATION
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: PRESIGNED_DURATION   
+                  
+            - name: AWS_USER_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: AWS_USER_PREFIX   
           ports:
             - containerPort: 8080
 

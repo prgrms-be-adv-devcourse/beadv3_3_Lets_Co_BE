@@ -5,6 +5,7 @@ import co.kr.customerservice.common.model.entity.CustomerServiceEntity;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.ViewCountService;
 import co.kr.customerservice.notice.model.dto.response.NoticeDetailRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeListRes;
 import co.kr.customerservice.notice.model.dto.response.NoticeRes;
@@ -26,12 +27,14 @@ public class UserNoticeServiceImpl implements UserNoticeService {
 
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
 
+    private final ViewCountService viewCountService;
+
     @Override
     @Transactional(readOnly = true)
     public NoticeListRes getNoticeList(Pageable pageable){
 
         // 1. NOTICE 타입 데이터 검색
-        Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndDelFalse(CustomerServiceType.NOTICE,pageable);
+        Page<CustomerServiceEntity> noticeEntityPage = customerServiceRepository.findAllByTypeAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType.NOTICE,pageable);
 
         // 2. Page > List
         List<NoticeRes> result = noticeEntityPage.stream()
@@ -69,12 +72,14 @@ public class UserNoticeServiceImpl implements UserNoticeService {
         CustomerServiceDetailEntity result = customerServiceDetailRepository.findByCustomerServiceAndDelFalse(noticeEntity)
                 .orElseThrow(() -> new EntityNotFoundException("존재 하지 않는 공지 내용입니다."));
 
+        Long viewCount = viewCountService.increaseViewCountProduct(noticeEntity.getIdx());
+
         // 반환, 한 번 밖에 안 쓰일거 같아서 mapper처리 x
         return new NoticeDetailRes(
                 noticeEntity.getCategory(),
                 noticeEntity.getTitle(),
                 result.getContent(),
-                noticeEntity.getViewCount(),
+                viewCount,
                 noticeEntity.getPublishedAt(),
                 result.getUpdatedAt()
         );

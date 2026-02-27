@@ -12,6 +12,7 @@ import co.kr.customerservice.common.model.vo.CustomerServiceStatus;
 import co.kr.customerservice.common.model.vo.CustomerServiceType;
 import co.kr.customerservice.common.repository.CustomerServiceDetailRepository;
 import co.kr.customerservice.common.repository.CustomerServiceRepository;
+import co.kr.customerservice.common.service.RagUpdateService;
 import co.kr.customerservice.qnaProduct.mapper.QnaMapper;
 import co.kr.customerservice.qnaProduct.model.request.QnaProductUpsertReq;
 import co.kr.customerservice.qnaProduct.model.response.*;
@@ -34,7 +35,9 @@ public class QnaProductServiceImpl implements QnaProductService {
     private final CustomerServiceRepository customerServiceRepository;
     private final CustomerServiceDetailRepository customerServiceDetailRepository;
     private final ProductServiceClient productServiceClient;
+    private final RagUpdateService ragUpdateService;
 
+    // 상품 문의 목록 조회
     @Override
     @Transactional(readOnly = true)
     public QnaProductListRes getProductQnaList(String productsCode, Pageable pageable) {
@@ -43,7 +46,7 @@ public class QnaProductServiceImpl implements QnaProductService {
         Long productsIdx = productServiceClient.getIdxByCode(productsCode);
 
         // productsIdx 기반 해당 상품의 qna 리스트 조회
-        Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalse(CustomerServiceType.QNA_PRODUCT,productsIdx ,pageable);
+        Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndProductsIdxAndIsPrivateFalseAndDelFalseOrderByUpdatedAtDesc(CustomerServiceType.QNA_PRODUCT,productsIdx ,pageable);
 
         List<QnaProductRes> result = qnaPage.stream()
                 .map(entity -> new QnaProductRes(
@@ -65,6 +68,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     }
 
+    // 상품 문의 상세 조회
     @Override
     @Transactional(readOnly = true)
     public QnaProductDetailRes getProductQnaDetail(String qnaCode, Long userIdx){
@@ -106,7 +110,7 @@ public class QnaProductServiceImpl implements QnaProductService {
         Long ProductsIdx = productServiceClient.getIdxByCode(productsCode);
 
         // 2. new entity 생성
-        CustomerServiceEntity requestEntity = CustomerServiceEntity.builder()
+        CustomerServiceEntity qnaEntity = CustomerServiceEntity.builder()
                 .code(UUID.randomUUID().toString())
                 .type(CustomerServiceType.QNA_PRODUCT)
                 .category(request.category())
@@ -120,22 +124,25 @@ public class QnaProductServiceImpl implements QnaProductService {
                 .build();
 
         // 2.1 저장
-        customerServiceRepository.save(requestEntity);
+        customerServiceRepository.save(qnaEntity);
 
         // 3. detailEntity 생성
         CustomerServiceDetailEntity requestDetailEntity = CustomerServiceDetailEntity.builder()
                 .detailCode(UUID.randomUUID().toString())
                 .usersIdx(userIdx)
-                .userName(requestEntity.getUserName())
-                .customerService(requestEntity)
+                .userName(qnaEntity.getUserName())
+                .customerService(qnaEntity)
                 .content(request.content())
                 .build();
 
         // 3.2 저장
         customerServiceDetailRepository.save(requestDetailEntity);
 
+        // 4.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(qnaEntity.getIdx());
+
         return QnaMapper.toDetail(
-                requestEntity,
+                qnaEntity,
                 List.of(requestDetailEntity)
         );
     }
@@ -183,6 +190,9 @@ public class QnaProductServiceImpl implements QnaProductService {
         // 4.1 디테일도 업데이트
         willUpdate.update(request.content());
 
+        // 5.  실시간 인덱싱을 위해 RAG서버에 요청
+        ragUpdateService.triggerSync(questionEntity.getIdx());
+
         return QnaMapper.toDetail(
                 questionEntity,
                 qnaDetailEntity
@@ -223,6 +233,7 @@ public class QnaProductServiceImpl implements QnaProductService {
 
     @Override
     @Transactional(readOnly = true)
+    // 내 상품 문의 조회
     public QnaAndProductInfoListRes getMyProductQnaList(Long userIdx, Pageable pageable){
         // 1. entity 조회
         Page<CustomerServiceEntity> qnaPage = customerServiceRepository.findAllByTypeAndUsersIdxAndDelFalse(CustomerServiceType.QNA_PRODUCT,userIdx ,pageable);

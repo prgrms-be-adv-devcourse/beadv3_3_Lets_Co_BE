@@ -1,8 +1,8 @@
 package co.kr.user.service;
 
-import co.kr.user.model.dto.client.BalanceReq;
-import co.kr.user.model.dto.client.ClientAddressDTO;
-import co.kr.user.model.dto.client.ClientRoleDTO;
+import co.kr.user.model.dto.client.*;
+
+import java.util.List;
 
 /**
  * 클라이언트(사용자)의 편의 기능 및 결제 관련 동작을 지원하는 서비스 인터페이스입니다.
@@ -55,4 +55,22 @@ public interface ClientService {
      * @return 해당 카드의 식별자 (Card IDX)
      */
     Long searchCard(Long userIdx, String cardCode);
+
+    /**
+     * 판매자 식별자(sellerIdx)를 이용해 프로필 이미지의 Presigned URL을 조회합니다.
+     * DB에 등록된 이미지가 없을 경우 기본 인덱스 이미지 URL을 반환합니다.
+     *
+     * @param sellerIdx 조회할 판매자의 PK
+     * @return S3 Presigned URL
+     */
+    String getSellerProfileImage(Long sellerIdx);
+
+    /**
+     * 여러 판매자 식별자 리스트를 받아 각 판매자의 은행 계좌 정보 목록을 조회합니다.
+     * @param sellerIdx 판매자 PK 리스트
+     * @return SellerBankDTO 리스트
+     */
+    List<SellerBankDTO> getSellerBankInfos(List<Long> sellerIdx);
+
+    UserContextDTO getUserContext(Long userIdx);
 }

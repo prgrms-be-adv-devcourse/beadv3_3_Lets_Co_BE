@@ -5,16 +5,18 @@ public enum UserRole {
     SELLER,
     ADMIN;
 
-    public static boolean isSeller(String inputRole){
-        return UserRole.SELLER.name().equals(inputRole);
+    public static boolean isSeller(UserRole inputRole){
+        return UserRole.SELLER.equals(inputRole);
     }
 
-    public static boolean isAdmin(String inputRole){
-        return UserRole.ADMIN.name().equals(inputRole);
+    public static boolean isAdmin(UserRole inputRole){
+        return UserRole.ADMIN.equals(inputRole);
     }
 
-    public static boolean isStaff(String inputRole){
-        return UserRole.SELLER.name().equals(inputRole) ||
-                UserRole.ADMIN.name().equals(inputRole);
+    public static boolean isStaff(UserRole inputRole){
+        return UserRole.SELLER.equals(inputRole) ||
+                UserRole.ADMIN.equals(inputRole);
     }
+
+
 }

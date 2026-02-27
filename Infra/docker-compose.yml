@@ -13,13 +13,26 @@ services:
     ports:
       - "6379:6379"
 
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
+  kafka-1:
+    image: apache/kafka:4.1.1
     ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama # 다운로드한 모델을 내 컴퓨터에 저장
+      - "9092:9092"
+    environment:
+      - KAFKA_NODE_ID=1
+      - CLUSTER_ID=ZWU1Y2JiNDctNDg3ZC
+      - KAFKA_PROCESS_ROLES=controller, broker
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka-1:9091
+      - KAFKA_LISTENERS=PLAINTEXT://:9090,CONTROLLER://:9091,EXTERNAL://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-1:9090,EXTERNAL://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
 
-volumes:
-  ollama_data: # 저장 공간 이름 정의
+    #   # JVM 힙 메모리: 컨테이너 제한(256m)보다 작게 설정해야 함 (약 70~80%)
+    #   # 남은 공간은 JVM 자체 오버헤드와 OS 캐시로 사용됨
+    #   - KAFKA_HEAP_OPTS=-Xmx200m -Xms200m
+    # deploy:
+    #   resources:
+    #     limits:
+    #       # Docker 컨테이너 최대 메모리 제한
+    #       memory: 256m

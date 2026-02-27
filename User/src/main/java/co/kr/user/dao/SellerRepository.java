@@ -4,6 +4,7 @@ import co.kr.user.model.entity.Seller;
 import co.kr.user.model.vo.UserDel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,4 +31,7 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
      * @return 존재하면 true, 아니면 false
      */
     boolean existsByUsersIdxAndDel(Long usersIdx, UserDel del);
+
+    // Users_IDX 리스트로 ACTIVE 상태인 판매자 목록 조회
+    List<Seller> findAllBySellerIdxInAndDel(List<Long> sellerIdx, UserDel del);
 }

@@ -14,11 +14,12 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.List;
 
 /**
  * 정산 처리 Writer
- * - 검증 성공 시: SETTLE_PAYOUT으로 상태 업데이트
- * - 검증 실패 시: 상태 유지 + 에러 로그
+ * - Processor에서 검증 통과된 판매자만 수신
+ * - ORDERS_CONFIRMED → SETTLE_PAYOUT으로 상태 업데이트
  */
 @Slf4j
 @Component
@@ -43,38 +44,17 @@ public class SettlementItemWriter implements ItemWriter<SellerSettlementSummary>
         LocalDateTime startDate = SettlementTimeUtil.startOfMonth(yearMonth);
         LocalDateTime endDate = SettlementTimeUtil.endOfMonth(yearMonth);
 
-        int successCount = 0;
-        int failCount = 0;
+        List<Long> sellerIdxList = chunk.getItems().stream()
+                .map(SellerSettlementSummary::getSellerIdx)
+                .toList();
 
-        for (SellerSettlementSummary summary : chunk) {
-            Long sellerIdx = summary.getSellerIdx();
+        int updatedCount = settlementRepository.bulkUpdateTypeBySellerIdxListAndPeriod(
+                sellerIdxList,
+                SettlementType.SETTLE_PAYOUT,
+                startDate,
+                endDate
+        );
 
-            if (summary.isValidated()) {
-                // 검증 성공: SETTLE_PAYOUT으로 업데이트
-                int updatedCount = settlementRepository.updateTypeBySellerIdxAndPeriod(
-                        sellerIdx,
-                        SettlementType.SETTLE_PAYOUT,
-                        startDate,
-                        endDate
-                );
-
-                log.info("판매자 {} 정산 완료 - 업데이트 건수: {}, 지급액: {}",
-                        sellerIdx, updatedCount, summary.getPayoutAmount());
-
-                successCount++;
-
-            } else {
-                // 검증 실패: 상태 유지 (ORDERS_CONFIRMED -> 에러 로그
-                log.warn("판매자 {} 정산 보류 - 사유: {}, 총액: {}, 레코드 수: {}",
-                        sellerIdx,
-                        summary.getValidationMessage(),
-                        summary.getTotalAmount(),
-                        summary.getRecordCount());
-
-                failCount++;
-            }
-        }
-
-        log.info("Chunk 처리 완료 - 성공: {}, 실패: {}", successCount, failCount);
+        log.info("Chunk 처리 완료 - 판매자 {}명, 업데이트 건수: {}", sellerIdxList.size(), updatedCount);
     }
 }

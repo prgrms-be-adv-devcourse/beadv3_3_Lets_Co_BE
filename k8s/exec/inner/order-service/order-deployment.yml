@@ -72,7 +72,12 @@ spec:
               secretKeyRef:
                 name: zipkin-secret
                 key: ZIPKIN_ENDPOINT 
-
+                
+          - name: KAFKA_ENDPOINT
+            valueFrom: 
+              secretKeyRef:
+                name: kafka-secret
+                key: KAFKA_ENDPOINT 
           ports:
             - containerPort: 8080
 

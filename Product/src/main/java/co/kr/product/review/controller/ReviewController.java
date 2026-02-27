@@ -17,34 +17,36 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
 
     private final ReviewService reviewService;
+/*
 
     // 리뷰 목록 조회 (비회원/회원)
     @GetMapping("/{productsIdx}/reviews")
     public ReviewListResponse getReviews(@PathVariable Long productsIdx) {
         return reviewService.getReviews(productsIdx);
     }
+*/
 
     // 리뷰 작성 (회원)
-    @PostMapping("/{productsIdx}/reviews")
-    public ReviewResponse createReview(@PathVariable Long productsIdx,
+    @PostMapping("/{productsCode}/reviews")
+    public ReviewResponse createReview(@PathVariable String productsCode,
                                        @RequestBody @Valid ReviewUpsertRequest req,
                                        @RequestHeader("X-USERS-IDX") Long usersIdx) {
-        return reviewService.createReview(productsIdx, req, usersIdx);
+        return reviewService.createReview(productsCode, req, usersIdx);
     }
 
     // 리뷰 수정 (회원 + 본인)
-    @PatchMapping("/reviews/{reviewIdx}")
-    public ReviewResponse updateReview(@PathVariable Long reviewIdx,
+    @PatchMapping("/reviews/{productsCode}")
+    public ReviewResponse updateReview(@PathVariable String productsCode,
                                        @RequestBody @Valid ReviewUpsertRequest req,
                                        @RequestHeader("X-USERS-IDX") Long usersIdx) {
-        return reviewService.updateReview(reviewIdx, req, usersIdx);
+        return reviewService.updateReview(productsCode, req, usersIdx);
     }
 
     // 리뷰 삭제 (회원 + 본인)
-    @DeleteMapping("/reviews/{reviewIdx}")
-    public CommonResponse deleteReview(@PathVariable Long reviewIdx,
+    @DeleteMapping("/reviews/{productsCode}")
+    public CommonResponse deleteReview(@PathVariable String productsCode,
                                        @RequestHeader("X-USERS-IDX") Long usersIdx) {
-        reviewService.deleteReview(reviewIdx, usersIdx);
+        reviewService.deleteReview(productsCode, usersIdx);
         return new CommonResponse("SUCCESS");
     }
 

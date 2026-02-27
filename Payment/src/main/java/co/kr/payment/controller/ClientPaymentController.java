@@ -3,6 +3,7 @@ package co.kr.payment.controller;
 import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.PaymentResponse;
 import co.kr.payment.service.PaymentService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/client/payments")
+@Hidden
 public class ClientPaymentController {
 
     private final PaymentService paymentService;

@@ -4,7 +4,7 @@ import co.kr.payment.model.dto.UserInfo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "order-service", path = "/client/orders")
+@FeignClient(name = "order-service", path = "/client/orders", url = "http://order-service:8080")
 public interface OrderClient {
 
     @PostMapping("/{orderCode}/status")
@@ -28,5 +28,11 @@ public interface OrderClient {
             @PathVariable("orderCode") String orderCode,
             @PathVariable("paymentIdx") Long paymentIdx,
             @RequestBody UserInfo userInfo
+    );
+
+    @PostMapping("/refund/{orderCode}/{paymentIdx}")
+    void refundPayment(
+            @PathVariable("orderCode") String orderCode,
+            @PathVariable("paymentIdx") Long paymentIdx
     );
 }

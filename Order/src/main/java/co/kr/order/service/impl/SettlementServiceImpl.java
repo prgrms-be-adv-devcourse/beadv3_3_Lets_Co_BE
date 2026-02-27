@@ -20,13 +20,13 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * 정산 서비스 구현
+ * - 주문 확정 시 판매자별 정산 레코드 생성 (ORDERS_CONFIRMED)
+ * - 환불 시 정산 상태 변경 (CANCEL_ADJUST)
+ * - 판매자별 정산 내역 조회
+ */
 public class SettlementServiceImpl implements SettlementService {
-
-    /**
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-     * todo. 정민님 주석
-     * ㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-     */
 
     private final SettlementRepository settlementRepository;
 
@@ -36,7 +36,10 @@ public class SettlementServiceImpl implements SettlementService {
 
         List<SettlementHistoryEntity> settlementList = new ArrayList<>();
 
+        int temp = 1;
+        log.info("************정산금 엔티티 세팅 전************");
         for (Map.Entry<Long, BigDecimal> entry : sellerSettlementMap.entrySet()) {
+            log.info("************{}번째 세팅************", temp++);
             settlementList.add(SettlementHistoryEntity.builder()
                     .sellerIdx(entry.getKey())
                     .paymentIdx(paymentIdx)
@@ -45,6 +48,10 @@ public class SettlementServiceImpl implements SettlementService {
                     .build());
         }
 
+
+        log.info("************정산금 엔티티 저장 전************");
+        settlementRepository.saveAll(settlementList);
+        log.info("************정산금 엔티티 저장 완료************");
 
         /*
          * 실제 정산 DB 에 저장되었는지
@@ -56,8 +63,6 @@ public class SettlementServiceImpl implements SettlementService {
                     entity.getSellerIdx(), entity.getType(), entity.getAmount());
         }
         log.info("==============================================================");
-
-        settlementRepository.saveAll(settlementList);
     }
 
     @Override

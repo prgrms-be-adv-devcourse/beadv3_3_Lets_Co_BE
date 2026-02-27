@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -68,15 +69,15 @@ public class SettlementBatchConfig {
 
     /**
      * Partitioning용 TaskExecutor
-     * - corePoolSize: 4 (동시 실행 Worker Step 수)
-     * - maxPoolSize: 8 (최대 Worker Step 수)
+     * - corePoolSize: 10 (동시 실행 Worker Step 수)
+     * - maxPoolSize: 10 (최대 Worker Step 수)
      * - 각 Worker가 독립된 Reader로 DB를 병렬 조회
      */
     @Bean
     public TaskExecutor settlementTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(6);
-        executor.setMaxPoolSize(6);
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(10);
         executor.setThreadNamePrefix("settlement-");
         executor.initialize();
         return executor;
@@ -97,7 +98,7 @@ public class SettlementBatchConfig {
 
     /**
      * Manager Step - Partitioner로 Worker Step을 분산 실행
-     * - gridSize: 4 (Seller_IDX 범위를 4등분)
+     * - gridSize: 10 (Seller_IDX 범위를 10등분)
      * - TaskExecutor로 Worker Step 병렬 실행
      */
     @Bean
@@ -109,14 +110,15 @@ public class SettlementBatchConfig {
         return new StepBuilder("settlementManagerStep", jobRepository)
                 .partitioner("settlementWorkerStep", sellerIdxRangePartitioner)
                 .step(settlementWorkerStep)
-                .gridSize(6)
+                .gridSize(10)
                 .taskExecutor(settlementTaskExecutor())
                 .build();
     }
 
     /**
      * Worker Step - 파티션 범위 내 데이터를 Chunk 단위로 처리
-     * - Chunk 크기: 50 (판매자 50명씩 처리)
+     * - Chunk 크기: 100 (판매자 100명씩 처리)
+     * - Retry: 3회 (Exponential Backoff 1s → 2s → 4s, 데드락 대응)
      * - Skip 정책: 최대 100건 스킵 허용 (개별 판매자 실패가 전체 영향 없도록)
      */
     @Bean
@@ -127,7 +129,7 @@ public class SettlementBatchConfig {
             SettlementItemWriter settlementItemWriter
     ) {
         return new StepBuilder("settlementWorkerStep", jobRepository)
-                .<SellerSettlementSummary, SellerSettlementSummary>chunk(400, transactionManager)
+                .<SellerSettlementSummary, SellerSettlementSummary>chunk(100, transactionManager)
                 .reader(settlementReader)
                 .processor(settlementItemProcessor)
                 .writer(settlementItemWriter)
@@ -136,10 +138,25 @@ public class SettlementBatchConfig {
                 .retryLimit(3)
                 .retry(Exception.class)
                 .noRetry(CustomException.class)
+                .backOffPolicy(exponentialBackOffPolicy())
                 .skipLimit(100)
                 .skip(CustomException.class)
                 .noSkip(Exception.class)
                 .build();
+    }
+
+    /**
+     * 재시도 시 Exponential Backoff 정책
+     * - 초기 대기: 1초 → 2초 → 4초 (최대 5초)
+     * - 데드락 발생 시 즉시 재시도 대신 간격을 두어 락 경합 회피
+     */
+    @Bean
+    public ExponentialBackOffPolicy exponentialBackOffPolicy() {
+        ExponentialBackOffPolicy policy = new ExponentialBackOffPolicy();
+        policy.setInitialInterval(1000);
+        policy.setMultiplier(2.0);
+        policy.setMaxInterval(5000);
+        return policy;
     }
 
     /**
@@ -166,7 +183,7 @@ public class SettlementBatchConfig {
         JdbcPagingItemReader<SellerSettlementSummary> reader = new JdbcPagingItemReader<>();
         reader.setDataSource(dataSource);
         reader.setName("settlementReader");
-        reader.setPageSize(400);
+        reader.setPageSize(100);
         reader.setRowMapper((rs, rowNum) -> new SellerSettlementSummary(
                 rs.getLong("seller_idx"),
                 rs.getBigDecimal("total_amount"),

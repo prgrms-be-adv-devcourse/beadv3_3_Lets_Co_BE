@@ -56,7 +56,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'                          // JWT 페이로드 직렬화를 위한 Jackson 연동
 
     // --- [Cloud & Distributed Tracing (Microservices)] ---
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // 서비스 디스커버리(Eureka) 서버 등록/탐색
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // 서비스 디스커버리(Eureka) 서버 등록/탐색
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'                        // Micrometer와 Brave를 이용한 분산 트레이싱 가교
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'                            // 수집된 트레이스 정보를 Zipkin 서버로 전송
 

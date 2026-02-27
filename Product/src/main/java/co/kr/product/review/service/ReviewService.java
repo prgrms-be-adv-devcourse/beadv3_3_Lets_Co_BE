@@ -35,8 +35,7 @@ public class ReviewService {
                 .stream()
                 .map(r -> new ReviewResponse(
                         r.getEvaluation(),
-                        r.getContent(),
-                        r.getCreatedAt()
+                        r.getContent()
                 ))
                 .toList();
 
@@ -88,8 +87,7 @@ public class ReviewService {
             return new ReviewResponse(
 
                     saved.getEvaluation(),
-                    saved.getContent(),
-                    saved.getCreatedAt()
+                    saved.getContent()
             );
 
         } catch (DataIntegrityViolationException e) {
@@ -123,8 +121,7 @@ public class ReviewService {
         return new ReviewResponse(
 
                 review.getEvaluation(),
-                review.getContent(),
-                review.getCreatedAt()
+                review.getContent()
         );
     }
 

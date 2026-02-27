@@ -4,8 +4,7 @@ import java.time.LocalDateTime;
 
 public record ReviewResponse(
     Integer evaluation,
-    String content,
-    LocalDateTime createdAt
+    String content
 ) {
 
 

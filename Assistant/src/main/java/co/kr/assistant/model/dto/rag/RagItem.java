@@ -1,25 +1,28 @@
-package co.kr.assistant.model.dto.rag; // 패키지명 유지
+package co.kr.assistant.model.dto.rag;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RagItem {
-
+    @JsonProperty("score")
     private Double score;
 
-    @JsonProperty("text")
-    private String text; // 파이썬의 기본 텍스트 필드 (컴파일 에러 방지용)
+    @JsonProperty("source")
+    private String source;
 
     @JsonProperty("Link")
     private String link;
 
-    // ==========================================
-    // 🛍️ 상품(Product) 전용 필드
-    // ==========================================
     @JsonProperty("Products_Name")
     private String productsName;
 
@@ -29,14 +32,11 @@ public class RagItem {
     @JsonProperty("Category_Name")
     private String categoryName;
 
-    @JsonProperty("IP_Name")
-    private String ipName;
-
     @JsonProperty("Price")
     private Double price;
 
     @JsonProperty("Sale_Price")
-    private Object salePrice; // 할인가가 없을 경우 빈 문자열("") 대비 Object 처리
+    private Object salePrice;
 
     @JsonProperty("View_Count")
     private Integer viewCount;
@@ -47,20 +47,22 @@ public class RagItem {
     @JsonProperty("Review")
     private Integer reviewCount;
 
-    @JsonProperty("Option")
+    // ⭐ Python RAG에서 계산된 "20대,30대/MALE" 등 주요 구매층 요약 정보
+    @JsonProperty("Target_Info")
+    private String targetInfo;
+
+    // ⭐ 상품의 상세 옵션 리스트
+    @JsonProperty("Options")
     private List<RagOption> options;
 
-    // ==========================================
-    // 📢 게시판(Notice / QnA) 전용 필드
-    // ==========================================
     @JsonProperty("Title")
     private String title;
 
     @JsonProperty("Category")
     private String category;
 
-    @JsonProperty("Content")
-    private String content;
+    @JsonProperty("Status")
+    private String status;
 
     @JsonProperty("Question")
     private String question;
@@ -68,11 +70,8 @@ public class RagItem {
     @JsonProperty("Answer")
     private String answer;
 
-    @JsonProperty("Status")
-    private String status;
-
-    @JsonProperty("Is_Pinned")
-    private Integer isPinned;
+    @JsonProperty("Content")
+    private String content;
 
     @JsonProperty("Published_at")
     private String publishedAt;
@@ -80,6 +79,12 @@ public class RagItem {
     @JsonProperty("Created_at")
     private String createdAt;
 
+    @JsonProperty("Text")
+    private String text;
+
+    /**
+     * 상품 옵션 상세 정보를 담는 내부 클래스
+     */
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class RagOption {

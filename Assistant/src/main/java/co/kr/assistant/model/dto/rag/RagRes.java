@@ -1,14 +1,24 @@
 package co.kr.assistant.model.dto.rag;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
-/**
- * Python RAG 서버의 새로운 응답 형식을 담는 DTO입니다.
- * 최상위에 의도(intent)가 있고, 결과 목록(results)이 포함됩니다.
- */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RagRes {
-    private String intent;          // 파악된 질문의 의도 (예: PRODUCT_INFO)
-    private List<RagItem> results;  // 검색된 지식 리스트
+    // Python 서버의 batch_processor가 반환하는 "intent" 필드와 매핑
+    @JsonProperty("intent")
+    private String intent;
+
+    // Python 서버의 batch_processor가 반환하는 "results" 필드와 매핑
+    @JsonProperty("results")
+    private List<RagItem> results;
 }

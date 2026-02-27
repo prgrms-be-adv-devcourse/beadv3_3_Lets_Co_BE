@@ -1,11 +1,8 @@
 package co.kr.user.controller;
 
 import co.kr.user.model.dto.address.AddressReq;
-import co.kr.user.model.dto.client.BalanceReq;
+import co.kr.user.model.dto.client.*;
 import co.kr.user.model.dto.card.CardReq;
-import co.kr.user.model.dto.client.ClientAddressDTO;
-import co.kr.user.model.dto.client.ClientRoleDTO;
-import co.kr.user.model.dto.client.SellerBankDTO;
 import co.kr.user.service.ClientService;
 import co.kr.user.util.BaseResponse;
 import jakarta.validation.Valid;
@@ -121,5 +118,13 @@ public class ClientController {
     @PostMapping("/seller")
     public ResponseEntity<BaseResponse<List<SellerBankDTO>>> getSellerBanks(@RequestBody List<Long> sellerIdx) {
         return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.getSellerBankInfos(sellerIdx)));
+    }
+
+    /**
+     * AI 맞춤 추천용: 사용자의 권한, 멤버십, 성별, 생년월일 조회
+     */
+    @GetMapping("/{userIdx}/context")
+    public ResponseEntity<BaseResponse<UserContextDTO>> getUserContext(@PathVariable Long userIdx) {
+        return ResponseEntity.ok(new BaseResponse<>("SUCCESS", clientService.getUserContext(userIdx)));
     }
 }

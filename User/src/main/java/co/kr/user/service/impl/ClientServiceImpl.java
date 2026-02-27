@@ -1,10 +1,7 @@
 package co.kr.user.service.impl;
 
 import co.kr.user.dao.*;
-import co.kr.user.model.dto.client.BalanceReq;
-import co.kr.user.model.dto.client.ClientAddressDTO;
-import co.kr.user.model.dto.client.ClientRoleDTO;
-import co.kr.user.model.dto.client.SellerBankDTO;
+import co.kr.user.model.dto.client.*;
 import co.kr.user.model.entity.*;
 import co.kr.user.model.vo.PublicDel;
 import co.kr.user.model.vo.UserDel;
@@ -230,5 +227,19 @@ public class ClientServiceImpl implements ClientService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserContextDTO getUserContext(Long userIdx) {
+        log.info("AI 맞춤 추천을 위한 사용자 컨텍스트 조회 userIdx = {}", userIdx);
+        Users users = userQueryService.findActiveUser(userIdx);
+        UsersInformation usersInformation = userQueryService.findActiveUserInfo(userIdx);
+
+        UserContextDTO dto = new UserContextDTO();
+        dto.setRole(users.getRole().name());
+        dto.setMembership(users.getMembership().name());
+        dto.setGender(usersInformation.getGender().name());
+        dto.setBirth(usersInformation.getBirth());
+        return dto;
     }
 }

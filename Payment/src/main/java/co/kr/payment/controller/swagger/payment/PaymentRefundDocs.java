@@ -1,13 +1,11 @@
 package co.kr.payment.controller.swagger.payment;
 
-import co.kr.payment.model.dto.request.RefundReq;
 import co.kr.payment.model.dto.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.*;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -33,24 +31,15 @@ import java.lang.annotation.*;
                 description = "사용자 idx",
                 required = true,
                 example = "1"
+        ),
+        @Parameter(
+                name = "orderCode",
+                in = ParameterIn.PATH,
+                description = "주문 코드",
+                required = true,
+                example = "ORD-20260226-001"
         )
 })
-
-@RequestBody(
-        content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = RefundReq.class),
-                examples = {
-                        @ExampleObject(
-                                value = """
-                                    {
-                                      "orderCode": "ORD-20260226-001"
-                                    }
-                                    """
-                        )
-                }
-        )
-)
 
 // 예시 응답들 설정
 @ApiResponses({

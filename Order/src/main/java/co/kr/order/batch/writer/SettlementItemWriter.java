@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.List;
 
 /**
  * 정산 처리 Writer
@@ -43,20 +44,17 @@ public class SettlementItemWriter implements ItemWriter<SellerSettlementSummary>
         LocalDateTime startDate = SettlementTimeUtil.startOfMonth(yearMonth);
         LocalDateTime endDate = SettlementTimeUtil.endOfMonth(yearMonth);
 
-        for (SellerSettlementSummary summary : chunk) {
-            Long sellerIdx = summary.getSellerIdx();
+        List<Long> sellerIdxList = chunk.getItems().stream()
+                .map(SellerSettlementSummary::getSellerIdx)
+                .toList();
 
-            int updatedCount = settlementRepository.updateTypeBySellerIdxAndPeriod(
-                    sellerIdx,
-                    SettlementType.SETTLE_PAYOUT,
-                    startDate,
-                    endDate
-            );
+        int updatedCount = settlementRepository.bulkUpdateTypeBySellerIdxListAndPeriod(
+                sellerIdxList,
+                SettlementType.SETTLE_PAYOUT,
+                startDate,
+                endDate
+        );
 
-            log.info("판매자 {} 정산 완료 - 업데이트 건수: {}, 지급액: {}",
-                    sellerIdx, updatedCount, summary.getPayoutAmount());
-        }
-
-        log.info("Chunk 처리 완료 - 처리 건수: {}", chunk.size());
+        log.info("Chunk 처리 완료 - 판매자 {}명, 업데이트 건수: {}", sellerIdxList.size(), updatedCount);
     }
 }

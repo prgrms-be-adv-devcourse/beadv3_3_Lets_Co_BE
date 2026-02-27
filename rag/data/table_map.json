@@ -1,0 +1,25 @@
+{
+  "Products": {
+    "id": "p.Products_IDX",
+    "text_cols": ["Products_Name", "Description", "Category_Name", "IP_Name"],
+    "query": "SELECT p.*, c1.Category_Name AS Category_Name, c2.Category_Name AS IP_Name, (SELECT COUNT(*) FROM Review r WHERE r.Products_IDX = p.Products_IDX AND r.Del = 0) AS Review_Count, (SELECT IFNULL(SUM(oi.Quantity), 0) FROM Orders_Item oi WHERE oi.Products_Code = p.Products_Code AND oi.Del = 0) AS Order_Count FROM Products p LEFT JOIN Products_Category c1 ON p.Products_Category = c1.Category_IDX AND c1.Type = 'CATEGORY' LEFT JOIN Products_Category c2 ON p.Products_IP = c2.Category_IDX AND c2.Type = 'IP' WHERE p.Stock >= 1 AND p.Status IN ('SALE', 'ON_SALE') AND p.Del = 0"
+  },
+
+  "Product_Option": {
+    "id": "po.Option_Group_IDX",
+    "text_cols": ["Option_Name"],
+    "query": "SELECT po.* FROM Product_Option po WHERE po.Status IN ('SALE', 'ON_SALE') AND po.Del = 0"
+  },
+
+  "Customer_Service": {
+    "id": "cs.Customer_Service_IDX",
+    "text_cols": ["Title", "Category", "Type"],
+    "query": "SELECT cs.*, p.Products_Name FROM Customer_Service cs LEFT JOIN Products p ON cs.Products_IDX = p.Products_IDX WHERE cs.Status IN ('PUBLISHED', 'ANSWERED') AND cs.Del = 0"
+  },
+
+  "Customer_Service_Detail": {
+    "id": "csd.Customer_Service_Detail_IDX",
+    "text_cols": ["Title", "Content"],
+    "query": "SELECT csd.*, cs.Title FROM Customer_Service_Detail csd JOIN Customer_Service cs ON csd.Customer_Service_IDX = cs.Customer_Service_IDX WHERE cs.Status IN ('PUBLISHED', 'ANSWERED') AND cs.Del = 0 AND csd.Del = 0"
+  }
+}
